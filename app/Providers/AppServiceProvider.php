@@ -22,9 +22,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 1. Tambahan khusus agar tidak Error 500 saat di-deploy ke Vercel
+        // 1. Perbaikan Vercel: Buat otomatis folder storage & view yang dibutuhkan Laravel
         if (isset($_ENV['VERCEL'])) {
-            app()->useStoragePath('/tmp/storage');
+            $storagePath = '/tmp/storage';
+            app()->useStoragePath($storagePath);
+
+            foreach (['/framework/views', '/framework/cache/data', '/framework/sessions', '/logs'] as $path) {
+                if (!is_dir($storagePath . $path)) {
+                    mkdir($storagePath . $path, 0755, true);
+                }
+            }
         }
 
         // 2. Kode asli Anda (Mengirimkan variabel $keranjangCount ke semua view)
