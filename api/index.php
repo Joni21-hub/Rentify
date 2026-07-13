@@ -15,10 +15,8 @@ if (isset($_ENV['VERCEL'])) {
     $storagePath = '/tmp/storage';
     $cachePath = '/tmp/cache';
 
-    // Gunakan folder /tmp untuk storage
     $app->useStoragePath($storagePath);
 
-    // Buat folder-folder sementara yang dibutuhkan Laravel
     foreach (['/framework/views', '/framework/cache/data', '/framework/sessions', '/logs'] as $folder) {
         if (!is_dir($storagePath . $folder)) {
             mkdir($storagePath . $folder, 0755, true);
@@ -28,7 +26,6 @@ if (isset($_ENV['VERCEL'])) {
         mkdir($cachePath, 0755, true);
     }
 
-    // Paksa Laravel menulis manifest (packages & services) ke /tmp/cache agar tidak error Read-Only!
     foreach ([
         'APP_SERVICES_CACHE' => $cachePath . '/services.php',
         'APP_PACKAGES_CACHE' => $cachePath . '/packages.php',
@@ -42,14 +39,10 @@ if (isset($_ENV['VERCEL'])) {
     }
 }
 
-// 4. Jalankan aplikasi dengan Penangkap Error yang Aman (Anti Headers Already Sent)
+// 4. Jalankan aplikasi standar Laravel 11 dengan Penangkap Error
 try {
-    $request = Request::capture();
-    $response = $app->handleRequest($request);
-    $response->send();
-    $app->terminate();
+    $app->handleRequest(Request::capture());
 } catch (\Throwable $e) {
-    // PENGAMAN BARU: Cek dulu apakah header sudah terkirim. Jika belum, baru atur header!
     if (!headers_sent()) {
         header('Content-Type: text/html; charset=utf-8');
         http_response_code(500);
