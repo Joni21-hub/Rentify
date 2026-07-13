@@ -42,15 +42,20 @@ if (isset($_ENV['VERCEL'])) {
     }
 }
 
-// 4. Jalankan aplikasi dengan Penangkap Error Lapis demi Lapis
+// 4. Jalankan aplikasi dengan Penangkap Error yang Aman (Anti Headers Already Sent)
 try {
     $request = Request::capture();
     $response = $app->handleRequest($request);
     $response->send();
     $app->terminate();
 } catch (\Throwable $e) {
-    header('Content-Type: text/html; charset=utf-8');
-    echo "<div style='font-family: Arial, sans-serif; padding: 20px; background: #fff3cd; border: 2px solid #ffeeba; border-radius: 8px; margin: 20px;'>";
+    // PENGAMAN BARU: Cek dulu apakah header sudah terkirim. Jika belum, baru atur header!
+    if (!headers_sent()) {
+        header('Content-Type: text/html; charset=utf-8');
+        http_response_code(500);
+    }
+    
+    echo "<div style='font-family: Arial, sans-serif; padding: 20px; background: #fff3cd; border: 2px solid #ffeeba; border-radius: 8px; margin: 20px; position: relative; z-index: 999999;'>";
     echo "<h2 style='color: #856404; margin-top:0;'>⚠️ DIAGNOSIS ERROR LAPIS DEMI LAPIS:</h2>";
     
     $currentException = $e;
