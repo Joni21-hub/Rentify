@@ -69,9 +69,9 @@
 
     <div class="animate-premium-entry bg-slate-900/50 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.6)] max-w-md w-full border border-white/10 z-10 relative">
         
-       <!-- Logo  -->
+       <!-- Logo -->
 <div class="flex justify-center mb-4">
-    <img src="{{ asset('images/logo.png') }}" alt="Logo Rentify" class="w-20 h-20 object-contain">
+    <img src="{{ asset('images/logo_rentify.png') }}" alt="Logo Rentify" class="w-20 h-20 object-contain">
 </div>
 
         <form action="/login" method="POST" class="space-y-5">
