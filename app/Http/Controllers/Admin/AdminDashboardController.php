@@ -8,7 +8,8 @@ use App\Models\Barang;
 use App\Models\Banner;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB; // WAJIB DITAMBAHKAN UNTUK AKSES TABEL ORDERS
+use Illuminate\Support\Facades\DB;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class AdminDashboardController extends Controller
 {
@@ -64,8 +65,11 @@ class AdminDashboardController extends Controller
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            $path = $request->file('gambar')->store('banners', 'public');
-            $banner->gambar_url = Storage::url($path);
+            // Mengupload file gambar langsung ke server Cloudinary
+            $uploadedFile = $request->file('gambar')->storeOnCloudinary('rentify/banners');
+            
+            // Menyimpan link URL dari Cloudinary ke database
+            $banner->gambar_url = $uploadedFile->getSecurePath();
         }
         $banner->save();
 
@@ -75,10 +79,27 @@ class AdminDashboardController extends Controller
     public function destroyBanner($id)
     {
         $banner = Banner::findOrFail($id);
-        $filePath = str_replace('/storage/', '', $banner->gambar_url);
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
+
+        if ($banner->gambar_url) {
+            $path = parse_url($banner->gambar_url, PHP_URL_PATH);
+            $pathSegments = explode('/', $path);
+            $uploadIndex = array_search('upload', $pathSegments);
+
+            if ($uploadIndex !== false) {
+                $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
+                if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
+                    array_shift($slicedSegments);
+                }
+                
+                $publicIdWithExt = implode('/', $slicedSegments);
+                $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
+                $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
+                $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
+
+                Cloudinary::destroy($finalPublicId);
+            }
         }
+
         $banner->delete();
 
         return redirect()->back()->with('success', 'Banner promosi berjaya dipadam.');

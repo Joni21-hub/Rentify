@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class VendorPengaturanController extends Controller
 {
@@ -33,17 +34,32 @@ class VendorPengaturanController extends Controller
         $user->email = $request->email;
         $user->whatsapp_vendor = $request->whatsapp_vendor;
 
-        // PROSES UPLOAD FOTO PROFIL
+        // PROSES UPLOAD FOTO PROFIL KE CLOUDINARY
         if ($request->hasFile('foto_profil')) {
-            $foto = $request->file('foto_profil');
-            $namaFoto = time() . '_' . $foto->hashName();
-            $foto->move(public_path('vendor_profil'), $namaFoto);
-            
-            // Hapus foto lama jika ada
-            if ($user->foto_profil && file_exists(public_path($user->foto_profil))) {
+            // Hapus foto profil lama dari Cloudinary jika ada
+            if ($user->foto_profil && str_contains($user->foto_profil, 'cloudinary')) {
+                $path = parse_url($user->foto_profil, PHP_URL_PATH);
+                $pathSegments = explode('/', $path);
+                $uploadIndex = array_search('upload', $pathSegments);
+                if ($uploadIndex !== false) {
+                    $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
+                    if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
+                        array_shift($slicedSegments);
+                    }
+                    $publicIdWithExt = implode('/', $slicedSegments);
+                    $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
+                    $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
+                    $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
+                    Cloudinary::destroy($finalPublicId);
+                }
+            } elseif ($user->foto_profil && file_exists(public_path($user->foto_profil))) {
+                // Fallback aman: hapus foto lokal lama jika sebelumnya bukan dari Cloudinary
                 unlink(public_path($user->foto_profil));
             }
-            $user->foto_profil = 'vendor_profil/' . $namaFoto;
+
+            // Upload foto baru ke Cloudinary
+            $uploadedFoto = $request->file('foto_profil')->storeOnCloudinary('rentify/vendor_profil');
+            $user->foto_profil = $uploadedFoto->getSecurePath();
         }
 
         if ($request->filled('password')) {

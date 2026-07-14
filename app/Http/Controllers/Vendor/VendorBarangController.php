@@ -9,6 +9,7 @@ use App\Models\FotoBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class VendorBarangController extends Controller
 {
@@ -56,10 +57,10 @@ class VendorBarangController extends Controller
         $vendorId = Auth::user()->id;
         $fotos = $request->file('fotos');
 
+        // UPLOAD COVER PHOTO KE CLOUDINARY
         $fileCover = $fotos[0];
-        $namaCover = $fileCover->hashName();
-        $fileCover->move(public_path('barang'), $namaCover);
-        $pathCover = 'public/barang/' . $namaCover;
+        $uploadedCover = $fileCover->storeOnCloudinary('rentify/barang');
+        $pathCover = $uploadedCover->getSecurePath();
 
         $barang = Barang::create([
             'vendor_id' => $vendorId,
@@ -83,15 +84,15 @@ class VendorBarangController extends Controller
             'longitude' => $request->longitude,
         ]);
 
+        // UPLOAD FOTO GALERI TAMBAHAN KE CLOUDINARY
         if (count($fotos) > 1) {
             for ($i = 1; $i < count($fotos); $i++) {
                 $foto = $fotos[$i];
-                $namaTambahan = $foto->hashName();
-                $foto->move(public_path('barang/galeri'), $namaTambahan);
+                $uploadedGaleri = $foto->storeOnCloudinary('rentify/barang/galeri');
                 
                 FotoBarang::create([
                     'barang_id' => $barang->id,
-                    'foto_path' => 'public/barang/galeri/' . $namaTambahan
+                    'foto_path' => $uploadedGaleri->getSecurePath()
                 ]);
             }
         }
@@ -124,10 +125,33 @@ class VendorBarangController extends Controller
     public function destroy($id)
     {
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
-        $oldCover = str_replace('public/', '', $barang->cover_photo);
-        if ($barang->cover_photo && file_exists(public_path($oldCover))) {
-            unlink(public_path($oldCover));
+        
+        // HAPUS FOTO DARI CLOUDINARY (Jika foto barunya sudah dari Cloudinary)
+        if ($barang->cover_photo && str_contains($barang->cover_photo, 'cloudinary')) {
+            $path = parse_url($barang->cover_photo, PHP_URL_PATH);
+            $pathSegments = explode('/', $path);
+            $uploadIndex = array_search('upload', $pathSegments);
+
+            if ($uploadIndex !== false) {
+                $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
+                if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
+                    array_shift($slicedSegments);
+                }
+                $publicIdWithExt = implode('/', $slicedSegments);
+                $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
+                $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
+                $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
+
+                Cloudinary::destroy($finalPublicId);
+            }
+        } else {
+            // FALLBACK AMAN: Hapus foto lokal lama jika ada (agar tidak error saat menghapus barang lama)
+            $oldCover = str_replace('public/', '', $barang->cover_photo);
+            if ($barang->cover_photo && file_exists(public_path($oldCover))) {
+                unlink(public_path($oldCover));
+            }
         }
+
         $barang->delete();
         return redirect()->route('vendor.barang.index')->with('success', 'Barang dihapus.');
     }
