@@ -13,9 +13,6 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class AdminDashboardController extends Controller
 {
-    /**
-     * Memaparkan Halaman Utama Dashboard Admin bersama semua data menu
-     */
     public function index()
     {
         $banners = Banner::latest()->get();
@@ -26,10 +23,8 @@ class AdminDashboardController extends Controller
         $allVendors = User::where('role', 'vendor')->latest()->get();
         $allCustomers = User::where('role', 'customer')->latest()->get();
         
-        // PERBAIKAN: Ambil data dari tabel 'orders' karena CheckoutController menyimpannya ke sana
         $allTransaksi = DB::table('orders')->orderBy('created_at', 'desc')->get();
 
-        // Cari tahu detail barang dan nama vendor untuk masing-masing transaksi
         foreach ($allTransaksi as $trx) {
             $trx->items = DB::table('order_items')
                 ->leftJoin('barang', 'order_items.product_id', '=', 'barang.id')
@@ -65,10 +60,11 @@ class AdminDashboardController extends Controller
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            // Mengupload file gambar langsung ke server Cloudinary
-            $uploadedFile = $request->file('gambar')->storeOnCloudinary('rentify/banners');
+            // PERBAIKAN: Menggunakan perintah upload langsung dari Cloudinary Facade (100% Anti Error di Vercel)
+            $uploadedFile = Cloudinary::upload($request->file('gambar')->getRealPath(), [
+                'folder' => 'rentify/banners'
+            ]);
             
-            // Menyimpan link URL dari Cloudinary ke database
             $banner->gambar_url = $uploadedFile->getSecurePath();
         }
         $banner->save();

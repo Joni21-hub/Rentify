@@ -18,12 +18,11 @@ class VendorBarangController extends Controller
         $vendorId = Auth::user()->id;
         $query = Barang::with('kategori')->where('vendor_id', $vendorId);
 
-        // FITUR PENCARIAN & FILTER BERFUNGSI SEKARANG
         if ($request->has('search') && $request->search != '') {
             $query->where('nama', 'like', '%' . $request->search . '%');
         }
         if ($request->has('status') && $request->status != '') {
-            $query->where('status_barang', $request->status); // Sesuaikan dengan nama kolom status kurasi Anda
+            $query->where('status_barang', $request->status);
         }
 
         $barangs = $query->latest()->get();
@@ -47,9 +46,9 @@ class VendorBarangController extends Controller
             'denda_per_hari' => 'required|numeric|min:0',
             'kondisi' => 'required|string',
             'stok_total' => 'required|integer|min:1',
-            'alamat' => 'required|string', // Tambahan Validasi
-            'latitude' => 'required',      // Tambahan Validasi
-            'longitude' => 'required',     // Tambahan Validasi
+            'alamat' => 'required|string',
+            'latitude' => 'required',
+            'longitude' => 'required',
             'fotos' => 'required|array|min:1',
             'fotos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -57,9 +56,11 @@ class VendorBarangController extends Controller
         $vendorId = Auth::user()->id;
         $fotos = $request->file('fotos');
 
-        // UPLOAD COVER PHOTO KE CLOUDINARY
+        // PERBAIKAN: Upload Cover ke Cloudinary (Metode Langsung Anti Error)
         $fileCover = $fotos[0];
-        $uploadedCover = $fileCover->storeOnCloudinary('rentify/barang');
+        $uploadedCover = Cloudinary::upload($fileCover->getRealPath(), [
+            'folder' => 'rentify/barang'
+        ]);
         $pathCover = $uploadedCover->getSecurePath();
 
         $barang = Barang::create([
@@ -76,19 +77,19 @@ class VendorBarangController extends Controller
             'status' => 'tersedia',
             'is_approved' => 0, 
             'cover_photo' => $pathCover,
-            
-            // SIMPAN DATA LOKASI KE DATABASE
             'is_delivery_supported' => $request->is_delivery_supported ? 1 : 0,
             'alamat' => $request->alamat,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ]);
 
-        // UPLOAD FOTO GALERI TAMBAHAN KE CLOUDINARY
+        // PERBAIKAN: Upload Galeri Tambahan ke Cloudinary (Metode Langsung Anti Error)
         if (count($fotos) > 1) {
             for ($i = 1; $i < count($fotos); $i++) {
                 $foto = $fotos[$i];
-                $uploadedGaleri = $foto->storeOnCloudinary('rentify/barang/galeri');
+                $uploadedGaleri = Cloudinary::upload($foto->getRealPath(), [
+                    'folder' => 'rentify/barang/galeri'
+                ]);
                 
                 FotoBarang::create([
                     'barang_id' => $barang->id,
@@ -100,25 +101,17 @@ class VendorBarangController extends Controller
         return redirect()->route('vendor.barang.index')->with('success', 'Barang berhasil diajukan!');
     }
 
-    // FITUR TOMBOL LIHAT DETAIL
     public function show($id)
     {
-        // 1. Cari data barang berdasarkan ID dan pastikan itu milik vendor yang sedang login
         $barang = Barang::with('kategori')->where('vendor_id', Auth::user()->id)->findOrFail($id);
-        
-        // 2. Ambil juga foto-foto tambahan dari galeri (jika ada)
         $fotoTambahans = \App\Models\FotoBarang::where('barang_id', $barang->id)->get();
-
-        // 3. Tampilkan ke halaman detail khusus vendor
         return view('vendor.barang.show', compact('barang', 'fotoTambahans'));
     }
 
-    // FITUR TOMBOL EDIT (Mencegah Error BadMethodCallException)
     public function edit($id)
     {
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
         $kategoris = Kategori::where('is_active', 1)->get();
-        // Catatan: Pastikan Anda sudah punya file resources/views/vendor/barang/edit.blade.php
         return view('vendor.barang.edit', compact('barang', 'kategoris'));
     }
 
@@ -126,7 +119,6 @@ class VendorBarangController extends Controller
     {
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
         
-        // HAPUS FOTO DARI CLOUDINARY (Jika foto barunya sudah dari Cloudinary)
         if ($barang->cover_photo && str_contains($barang->cover_photo, 'cloudinary')) {
             $path = parse_url($barang->cover_photo, PHP_URL_PATH);
             $pathSegments = explode('/', $path);
@@ -145,7 +137,6 @@ class VendorBarangController extends Controller
                 Cloudinary::destroy($finalPublicId);
             }
         } else {
-            // FALLBACK AMAN: Hapus foto lokal lama jika ada (agar tidak error saat menghapus barang lama)
             $oldCover = str_replace('public/', '', $barang->cover_photo);
             if ($barang->cover_photo && file_exists(public_path($oldCover))) {
                 unlink(public_path($oldCover));

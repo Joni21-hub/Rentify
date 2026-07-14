@@ -26,7 +26,7 @@ class VendorPengaturanController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id,
             'whatsapp_vendor' => 'nullable|string|max:20',
-            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048' // Validasi Foto
+            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
         $user->vendor_name = $request->vendor_name;
@@ -34,9 +34,7 @@ class VendorPengaturanController extends Controller
         $user->email = $request->email;
         $user->whatsapp_vendor = $request->whatsapp_vendor;
 
-        // PROSES UPLOAD FOTO PROFIL KE CLOUDINARY
         if ($request->hasFile('foto_profil')) {
-            // Hapus foto profil lama dari Cloudinary jika ada
             if ($user->foto_profil && str_contains($user->foto_profil, 'cloudinary')) {
                 $path = parse_url($user->foto_profil, PHP_URL_PATH);
                 $pathSegments = explode('/', $path);
@@ -53,12 +51,13 @@ class VendorPengaturanController extends Controller
                     Cloudinary::destroy($finalPublicId);
                 }
             } elseif ($user->foto_profil && file_exists(public_path($user->foto_profil))) {
-                // Fallback aman: hapus foto lokal lama jika sebelumnya bukan dari Cloudinary
                 unlink(public_path($user->foto_profil));
             }
 
-            // Upload foto baru ke Cloudinary
-            $uploadedFoto = $request->file('foto_profil')->storeOnCloudinary('rentify/vendor_profil');
+            // PERBAIKAN: Upload Foto Profil ke Cloudinary (Metode Langsung Anti Error)
+            $uploadedFoto = Cloudinary::upload($request->file('foto_profil')->getRealPath(), [
+                'folder' => 'rentify/vendor_profil'
+            ]);
             $user->foto_profil = $uploadedFoto->getSecurePath();
         }
 
