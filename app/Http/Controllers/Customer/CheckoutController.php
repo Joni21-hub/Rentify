@@ -190,20 +190,86 @@ class CheckoutController extends Controller
         return redirect()->route($request->metode_pembayaran === 'COD' ? 'customer.struk' : 'customer.qris', ['id' => $gabunganInvoice]);
     }
 
-    public function qris($id) { return view('customer.checkout.qris', ['id' => $id, 'total' => session('total_bayar_semua', 0)]); }
+    public function qris($id) 
+    { 
+        $total = session('total_bayar_semua', 0);
+        
+        // JIKA SESSION HILANG / RP 0 (KARENA LIMIT COOKIE VERCEL), AMBIL ASLINYA DARI DATABASE
+        if ($total == 0) {
+            $orderIds = [];
+            foreach (explode('_', $id) as $part) {
+                if (str_starts_with($part, 'INV-')) $orderIds[] = (int) str_replace('INV-', '', $part);
+            }
+            $total = DB::table('orders')->whereIn('id', $orderIds)->sum('total_price');
+        }
+
+        return view('customer.checkout.qris', ['id' => $id, 'total' => $total]); 
+    }
 
     public function struk($id)
     {
+        $keranjangPerVendor = session('keranjang_per_vendor', collect());
+        $metode = session('metode_pembayaran', 'COD');
+        $total = session('total_bayar_semua', 0);
+        $no_hp = session('no_hp', '');
+        $waktu_pesan = session('waktu_pesan', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
+        $durasi_sewa_array = session('durasi_sewa_array', []);
+        $jaminan_array = session('jaminan_array', []);
+        $opsi_array = session('opsi_array', []);
+
+        // JIKA SESSION KOSONG / RP 0 (KARENA LIMIT COOKIE 4KB DI VERCEL), TARIK LANGSUNG DARI DATABASE!
+        if ($total == 0 || $keranjangPerVendor->isEmpty()) {
+            $orderIds = [];
+            foreach (explode('_', $id) as $part) {
+                if (str_starts_with($part, 'INV-')) $orderIds[] = (int) str_replace('INV-', '', $part);
+            }
+
+            $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
+
+            if ($orders->isNotEmpty()) {
+                $total = $orders->sum('total_price');
+                $metode = $orders->first()->payment_method ?? 'COD';
+                $no_hp = $orders->first()->customer_whatsapp ?? '';
+                $waktu_pesan = $orders->first()->created_at ?? Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+
+                // Rekonstruksi data barang dari tabel order_items & barang
+                $mockKeranjangList = collect();
+                foreach ($orders as $order) {
+                    $durasi_sewa_array[$order->vendor_id] = $order->duration_days;
+                    $jaminan_array[$order->vendor_id] = $order->jaminan;
+                    $opsi_array[$order->vendor_id] = $order->shipping_method;
+
+                    $items = DB::table('order_items')->where('order_id', $order->id)->get();
+                    foreach ($items as $item) {
+                        $barang = Barang::with('vendor')->find($item->product_id);
+                        if ($barang) {
+                            $mockItem = new Keranjang();
+                            $mockItem->id = $item->id;
+                            $mockItem->user_id = $order->user_id;
+                            $mockItem->barang_id = $item->product_id;
+                            $mockItem->jumlah = $item->quantity;
+                            $mockItem->setRelation('barang', $barang);
+                            $mockKeranjangList->push($mockItem);
+                        }
+                    }
+                }
+
+                if ($mockKeranjangList->isNotEmpty()) {
+                    $keranjangPerVendor = $mockKeranjangList->groupBy(fn($item) => $item->barang->vendor_id);
+                }
+            }
+        }
+
         return view('customer.checkout.struk', [
             'id' => $id,
-            'keranjangPerVendor' => session('keranjang_per_vendor', collect()),
-            'metode' => session('metode_pembayaran', 'COD'),
-            'total' => session('total_bayar_semua', 0),
-            'no_hp' => session('no_hp', ''),
-            'waktu_pesan' => session('waktu_pesan', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s')),
-            'durasi_sewa_array' => session('durasi_sewa_array', []),
-            'jaminan_array' => session('jaminan_array', []),
-            'opsi_array' => session('opsi_array', []) 
+            'keranjangPerVendor' => $keranjangPerVendor,
+            'metode' => $metode,
+            'total' => $total,
+            'no_hp' => $no_hp,
+            'waktu_pesan' => $waktu_pesan,
+            'durasi_sewa_array' => $durasi_sewa_array,
+            'jaminan_array' => $jaminan_array,
+            'opsi_array' => $opsi_array 
         ]);
     }
 }
