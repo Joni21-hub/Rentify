@@ -9,7 +9,6 @@ use App\Models\FotoBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class VendorBarangController extends Controller
 {
@@ -56,12 +55,16 @@ class VendorBarangController extends Controller
         $vendorId = Auth::user()->id;
         $fotos = $request->file('fotos');
 
-        // PERBAIKAN: Upload Cover ke Cloudinary (Metode Langsung Anti Error)
+        // JALUR PINTAS PAMUNGKAS: Inisialisasi Mesin Asli Cloudinary
+        $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+        $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
+
+        // UPLOAD COVER PHOTO KE CLOUDINARY
         $fileCover = $fotos[0];
-        $uploadedCover = Cloudinary::upload($fileCover->getRealPath(), [
+        $uploadCover = $cloudinary->uploadApi()->upload($fileCover->getRealPath(), [
             'folder' => 'rentify/barang'
         ]);
-        $pathCover = $uploadedCover->getSecurePath();
+        $pathCover = $uploadCover['secure_url'];
 
         $barang = Barang::create([
             'vendor_id' => $vendorId,
@@ -83,17 +86,17 @@ class VendorBarangController extends Controller
             'longitude' => $request->longitude,
         ]);
 
-        // PERBAIKAN: Upload Galeri Tambahan ke Cloudinary (Metode Langsung Anti Error)
+        // UPLOAD FOTO GALERI TAMBAHAN KE CLOUDINARY
         if (count($fotos) > 1) {
             for ($i = 1; $i < count($fotos); $i++) {
                 $foto = $fotos[$i];
-                $uploadedGaleri = Cloudinary::upload($foto->getRealPath(), [
+                $uploadGaleri = $cloudinary->uploadApi()->upload($foto->getRealPath(), [
                     'folder' => 'rentify/barang/galeri'
                 ]);
                 
                 FotoBarang::create([
                     'barang_id' => $barang->id,
-                    'foto_path' => $uploadedGaleri->getSecurePath()
+                    'foto_path' => $uploadGaleri['secure_url']
                 ]);
             }
         }
@@ -120,27 +123,31 @@ class VendorBarangController extends Controller
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
         
         if ($barang->cover_photo && str_contains($barang->cover_photo, 'cloudinary')) {
-            $path = parse_url($barang->cover_photo, PHP_URL_PATH);
-            $pathSegments = explode('/', $path);
-            $uploadIndex = array_search('upload', $pathSegments);
+            try {
+                $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+                $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
 
-            if ($uploadIndex !== false) {
-                $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
-                if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
-                    array_shift($slicedSegments);
+                $path = parse_url($barang->cover_photo, PHP_URL_PATH);
+                $pathSegments = explode('/', $path);
+                $uploadIndex = array_search('upload', $pathSegments);
+
+                if ($uploadIndex !== false) {
+                    $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
+                    if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
+                        array_shift($slicedSegments);
+                    }
+                    $publicIdWithExt = implode('/', $slicedSegments);
+                    $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
+                    $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
+                    $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
+
+                    $cloudinary->uploadApi()->destroy($finalPublicId);
                 }
-                $publicIdWithExt = implode('/', $slicedSegments);
-                $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
-                $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
-                $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
-
-                Cloudinary::destroy($finalPublicId);
+            } catch (\Exception $e) {
+                // Abaikan jika error hapus di cloud agar tidak menghambat hapus data di database
             }
-        } else {
-            $oldCover = str_replace('public/', '', $barang->cover_photo);
-            if ($barang->cover_photo && file_exists(public_path($oldCover))) {
-                unlink(public_path($oldCover));
-            }
+        } elseif ($barang->cover_photo && file_exists(public_path(str_replace('public/', '', $barang->cover_photo)))) {
+            @unlink(public_path(str_replace('public/', '', $barang->cover_photo)));
         }
 
         $barang->delete();
