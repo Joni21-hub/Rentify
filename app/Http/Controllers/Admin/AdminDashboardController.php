@@ -49,19 +49,23 @@ class AdminDashboardController extends Controller
         ));
     }
 
-    public function storeBanner(Request $request)
+   public function storeBanner(Request $request)
     {
         $request->validate([
             'judul_promo' => 'required|string|max:255',
             'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
+        // PAKSA LOAD KONFIGURASI AGAR TIDAK MENGANDALKAN CACHE YANG ERROR
+        config(['cloudinary.cloud_name' => env('CLOUDINARY_CLOUD_NAME')]); 
+        // ATAU jika kamu pakai CLOUDINARY_URL, pastikan package membaca env tersebut langsung.
+
         $banner = new Banner();
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            // PERBAIKAN: Menggunakan perintah upload langsung dari Cloudinary Facade (100% Anti Error di Vercel)
-            $uploadedFile = Cloudinary::upload($request->file('gambar')->getRealPath(), [
+             // Coba gunakan cara ini yang lebih "keras" untuk memanggil engine
+             $uploadedFile = app('cloudinary')->upload($request->file('gambar')->getRealPath(), [
                 'folder' => 'rentify/banners'
             ]);
             
