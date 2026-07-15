@@ -71,7 +71,7 @@
         
        <!-- Logo -->
 <div class="flex justify-center mb-4">
-     <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784128533/logo_lzsrcn.png" alt="Logo Rentify">
+    <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784128533/logo_lzsrcn.png" alt="Logo Rentify" class="w-20 h-20 object-contain">
 </div>
 
         <form action="/login" method="POST" class="space-y-5">
