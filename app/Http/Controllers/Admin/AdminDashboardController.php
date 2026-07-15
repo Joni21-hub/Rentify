@@ -60,7 +60,6 @@ class AdminDashboardController extends Controller
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            // Karena ServiceProvider sudah didaftarkan, perintah resmi ini sekarang 100% bisa dibaca Vercel
             $uploadedFile = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($request->file('gambar')->getRealPath(), [
                 'folder' => 'rentify/banners'
             ]);
