@@ -22,7 +22,7 @@
             <div class="relative z-10">
                 <div class="flex items-center space-x-3 mb-10">
                     <div class="w-11 h-11 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg overflow-hidden">
-                       <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784127537/logo_zupvig.jpg" alt="Logo Rentify">
+                       <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784127537/logo_zupvig.png" alt="Logo Rentify">
                     </div>
                     <span class="text-xl font-bold tracking-widest uppercase">Rentify</span>
                 </div>
