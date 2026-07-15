@@ -60,11 +60,17 @@ class AdminDashboardController extends Controller
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            $uploadedFile = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($request->file('gambar')->getRealPath(), [
+            // JALUR PINTAS PAMUNGKAS: Memanggil mesin asli Cloudinary langsung (Tanpa Facade Laravel)
+            $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+            $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
+            
+            // Upload langsung menggunakan API asli Cloudinary
+            $uploadResult = $cloudinary->uploadApi()->upload($request->file('gambar')->getRealPath(), [
                 'folder' => 'rentify/banners'
             ]);
             
-            $banner->gambar_url = $uploadedFile->getSecurePath();
+            // Mengambil link URL aman langsung dari balikan data
+            $banner->gambar_url = $uploadResult['secure_url'];
         }
         $banner->save();
 
