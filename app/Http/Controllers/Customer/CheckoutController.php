@@ -13,15 +13,13 @@ class CheckoutController extends Controller
 {
     public function index(Request $request)
     {
-        // JALUR 1: SEWA SEKARANG (Pesanan Instan dari Halaman Detail Barang)
         if ($request->filled('direct_barang_id')) {
             $barangId = $request->direct_barang_id;
             session(['checkout_direct_id' => $barangId]); 
-            session()->forget('checkout_selected_ids'); // Bersihkan memori keranjang
+            session()->forget('checkout_selected_ids'); 
             
             $barang = Barang::with('vendor')->findOrFail($barangId);
             
-            // Buat keranjang virtual di dalam memori (TIDAK disimpan ke database)
             $mockItem = new Keranjang();
             $mockItem->id = 0; 
             $mockItem->user_id = auth()->id();
@@ -31,13 +29,10 @@ class CheckoutController extends Controller
             
             $keranjangs = collect([$mockItem]);
             
-        } 
-        // JALUR 2: CHECKOUT DARI KERANJANG (Hanya ambil yang dicentang!)
-        else {
+        } else {
             session()->forget('checkout_direct_id');
             $query = Keranjang::with('barang.vendor')->where('user_id', auth()->id());
             
-            // Menangkap array ID barang yang dicentang (name="selected_items[]")
             $selectedIds = $request->input('selected_items', $request->input('keranjang_id', []));
             
             if (!empty($selectedIds)) {
@@ -45,7 +40,6 @@ class CheckoutController extends Controller
                 $query->whereIn('id', $selectedIdsArray);
                 session(['checkout_selected_ids' => $selectedIdsArray]); 
             } else {
-                // Jika tidak ada yang dicentang sama sekali, tolak ke halaman keranjang
                 return redirect()->route('customer.keranjang')->with('error', 'Silakan centang minimal satu barang yang ingin disewa.');
             }
             
@@ -77,7 +71,6 @@ class CheckoutController extends Controller
         $waktuSekarang = Carbon::now('Asia/Jakarta'); 
         $isDirectCheckout = false;
         
-        // Pastikan jalur mana yang sedang diproses saat simpan ke database
         if (session()->has('checkout_direct_id')) {
             $isDirectCheckout = true;
             $barangId = session('checkout_direct_id');
@@ -156,12 +149,13 @@ class CheckoutController extends Controller
                     'created_at' => $waktuSekarang,
                     'updated_at' => $waktuSekarang
                 ]);
+
+                // FITUR BARU: Kurangi stok di gudang secara otomatis saat barang resmi disewa!
+                \App\Models\Barang::where('id', $item->barang_id)->decrement('stok_total', $item->jumlah);
             }
         }
 
-        // PENGHAPUSAN KERANJANG YANG AKURAT
         if (!$isDirectCheckout) {
-            // Hanya hapus barang yang TEPAT DICENTANG saat checkout
             if (session()->has('checkout_selected_ids')) {
                 $selectedSession = session('checkout_selected_ids');
                 $selectedSessionArray = is_array($selectedSession) ? $selectedSession : [$selectedSession];
@@ -171,7 +165,6 @@ class CheckoutController extends Controller
                 Keranjang::where('user_id', auth()->id())->delete();
             }
         } else {
-            // Jika jalur 'Sewa Sekarang', keranjang di database TIDAK DISENTUH SAMA SEKALI
             session()->forget('checkout_direct_id');
         }
 
@@ -194,7 +187,6 @@ class CheckoutController extends Controller
     { 
         $total = session('total_bayar_semua', 0);
         
-        // JIKA SESSION HILANG / RP 0 (KARENA LIMIT COOKIE VERCEL), AMBIL ASLINYA DARI DATABASE
         if ($total == 0) {
             $orderIds = [];
             foreach (explode('_', $id) as $part) {
@@ -217,7 +209,6 @@ class CheckoutController extends Controller
         $jaminan_array = session('jaminan_array', []);
         $opsi_array = session('opsi_array', []);
 
-        // JIKA SESSION KOSONG / RP 0 (KARENA LIMIT COOKIE 4KB DI VERCEL), TARIK LANGSUNG DARI DATABASE!
         if ($total == 0 || $keranjangPerVendor->isEmpty()) {
             $orderIds = [];
             foreach (explode('_', $id) as $part) {
@@ -232,7 +223,6 @@ class CheckoutController extends Controller
                 $no_hp = $orders->first()->customer_whatsapp ?? '';
                 $waktu_pesan = $orders->first()->created_at ?? Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
 
-                // Rekonstruksi data barang dari tabel order_items & barang
                 $mockKeranjangList = collect();
                 foreach ($orders as $order) {
                     $durasi_sewa_array[$order->vendor_id] = $order->duration_days;

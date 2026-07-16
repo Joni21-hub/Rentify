@@ -19,9 +19,10 @@
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
 
-    <!-- AREA SLIDER GAMBAR -->
+   <!-- AREA SLIDER GAMBAR -->
     <div class="swiper productSwiper w-full aspect-square bg-white border-b border-slate-100">
         <div class="swiper-wrapper">
+            <!-- 1. Tampilkan Foto Utama (Cover Photo) -->
             <div class="swiper-slide flex items-center justify-center p-4">
                 @if($barang->cover_photo)
                     <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
@@ -30,10 +31,12 @@
                 @endif
             </div>
 
-            @if(isset($barang->galeri) && $barang->galeri->count() > 0)
-                @foreach($barang->galeri as $foto)
+            <!-- 2. PERBAIKAN: Menggunakan $barang->fotos (bukan galeri) agar semua foto tambahan muncul -->
+            @if(isset($barang->fotos) && $barang->fotos->count() > 0)
+                @foreach($barang->fotos as $foto)
                 <div class="swiper-slide flex items-center justify-center p-4">
-                    <img src="{{ asset(str_replace('public/', '', $foto->gambar)) }}" class="w-full h-full object-contain">
+                    {{-- Sesuaikan nama kolom gambar di tabel foto_barang kamu, biasanya 'foto' atau 'gambar' --}}
+                    <img src="{{ asset(str_replace('public/', '', $foto->foto ?? $foto->gambar)) }}" class="w-full h-full object-contain">
                 </div>
                 @endforeach
             @endif

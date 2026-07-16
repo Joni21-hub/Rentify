@@ -9,7 +9,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        /* Transisi halus saat ganti tab */
         .tab-content { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -96,7 +95,6 @@
 
         <div class="flex-1 overflow-y-auto p-8">
             
-            {{-- Alert Notifikasi --}}
             @if(session('success'))
             <div class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center shadow-sm">
                 <i class="fas fa-check-circle text-emerald-500 mr-2 text-base"></i>{{ session('success') }}
@@ -264,7 +262,7 @@
                                 <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
                                     <th class="p-4 pl-6">Invoice</th>
                                     <th class="p-4">Customer</th>
-                                    <th class="p-4">Total Biaya</th>
+                                    <th class="p-4">Pendapatan Fee & Total</th>
                                     <th class="p-4">Tanggal Order</th>
                                     <th class="p-4 text-center">Status</th>
                                     <th class="p-4 text-center">Tindakan</th>
@@ -273,20 +271,27 @@
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($allTransaksi ?? [] as $trx)
                                 <tr class="hover:bg-slate-50/60 transition">
-                                    <td class="p-4 pl-6 font-black text-slate-700">#{{ $trx->kode_penyewaan ?? $trx->kode_transaksi ?? $trx->id ?? '...' }}</td>
-                                    <td class="p-4 font-bold text-slate-600">{{ $trx->user->name ?? $trx->customer->name ?? 'User' }}</td>
-                                    <td class="p-4 font-bold text-emerald-600 text-sm">Rp {{ number_format($trx->total_harga ?? $trx->total_bayar ?? 0, 0, ',', '.') }}</td>
+                                    <td class="p-4 pl-6 font-black text-slate-700">#INV-{{ $trx->id }}</td>
+                                    <td class="p-4 font-bold text-slate-600">{{ $trx->customer_name ?? 'User' }}</td>
+                                    
+                                    <td class="p-4">
+                                        <span class="font-black text-emerald-600 text-sm block">
+                                            Rp {{ number_format($trx->rentify_fee ?? (($trx->total_price - ($trx->shipping_fee ?? 0)) - (($trx->total_price - ($trx->shipping_fee ?? 0)) / 1.05)), 0, ',', '.') }}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-semibold">Total Nilai: Rp {{ number_format($trx->total_price ?? 0, 0, ',', '.') }}</span>
+                                    </td>
+
                                     <td class="p-4 text-slate-500">
-                                    {{ $trx->created_at ? \Carbon\Carbon::parse($trx->created_at)->format('d M Y, H:i') : '-' }}
+                                        {{ $trx->created_at ? \Carbon\Carbon::parse($trx->created_at)->format('d M Y, H:i') : '-' }}
                                     </td>
                                     <td class="p-4 text-center">
                                         <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
                                             {{ strtolower($trx->status ?? '') == 'selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700' }}">
-                                            {{ $trx->status ?? $trx->status_pembayaran ?? 'Pending' }}
+                                            {{ $trx->status ?? 'Pending' }}
                                         </span>
                                     </td>
                                     <td class="p-4 text-center">
-                                        <button onclick="alert('Fitur Struk Dinamis Admin menyusul!')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
+                                        <button onclick="openTransaksiModal('{{ json_encode($trx) }}')" class="bg-sky-50 hover:bg-sky-100 text-sky-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
                                             <i class="fas fa-file-invoice mr-1"></i> Detail
                                         </button>
                                     </td>
@@ -322,8 +327,12 @@
                                 @foreach($allBarangs as $p)
                                 <tr class="hover:bg-slate-50/60 transition">
                                     <td class="p-4 pl-6">
-                                        <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
-                                            <img src="{{ $p->cover_photo ? Storage::url($p->cover_photo) : 'https://placehold.co/50' }}" class="w-full h-full object-cover">
+                                        <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm flex items-center justify-center">
+                                            @if($p->cover_photo)
+                                                <img src="{{ asset(str_replace('public/', '', $p->cover_photo)) }}" class="w-full h-full object-contain">
+                                            @else
+                                                <i class="fas fa-box text-slate-300 text-lg"></i>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate">{{ $p->nama }}</td>
@@ -476,23 +485,67 @@
         </div>
     </div>
 
+    {{-- MODAL STRUK DETAIL TRANSAKSI --}}
+    <div id="transaksiModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-t-4 border-emerald-500 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <div>
+                    <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Struk Rincian Pesanan</h3>
+                    <p id="tx_invoice" class="text-xs font-bold text-emerald-600"></p>
+                </div>
+                <button onclick="closeTransaksiModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition">&times;</button>
+            </div>
+            
+            <div class="space-y-4 text-xs">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between">
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 uppercase">PEMBELI</span>
+                        <span id="tx_customer" class="font-bold text-slate-800 text-sm"></span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-[9px] font-black text-slate-400 uppercase">METODE & STATUS</span>
+                        <span id="tx_method" class="font-bold text-blue-600"></span> | <span id="tx_status" class="font-bold text-emerald-600"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <span class="block text-[10px] font-black text-slate-400 uppercase mb-2">DAFTAR BARANG DISEWA:</span>
+                    <div id="tx_items" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3 space-y-1.5 text-xs">
+                    <div class="flex justify-between text-slate-500">
+                        <span>Durasi Sewa:</span>
+                        <span id="tx_duration" class="font-bold text-slate-700"></span>
+                    </div>
+                    <div class="flex justify-between text-slate-500">
+                        <span>Total Ongkos Kirim:</span>
+                        <span id="tx_ongkir" class="font-bold text-slate-700"></span>
+                    </div>
+                    <div class="flex justify-between text-slate-800 text-sm font-black pt-2 border-t border-dashed">
+                        <span>Total Nilai Transaksi:</span>
+                        <span id="tx_total" class="text-blue-600"></span>
+                    </div>
+                    <div class="flex justify-between bg-emerald-50 p-2 rounded-lg text-emerald-800 font-black text-sm mt-2 border border-emerald-100">
+                        <span>Pendapatan Rentify (Fee):</span>
+                        <span id="tx_fee"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // SCRIPT UNTUK SISTEM TAB HALAMAN (SINGLE PAGE APP STYLE)
         function switchTab(tabId, titleText) {
-            // 1. Sembunyikan semua tab konten
             document.querySelectorAll('.tab-content').forEach(el => {
                 el.classList.add('hidden');
                 el.classList.remove('block');
             });
             
-            // 2. Tampilkan tab yang dipilih
             document.getElementById(tabId).classList.remove('hidden');
             document.getElementById(tabId).classList.add('block');
-            
-            // 3. Ubah Judul Header Atas
             document.getElementById('header-title').innerText = titleText;
 
-            // 4. Ubah warna tombol menu aktif di sidebar (Opsional agar terlihat lebih interaktif)
             document.querySelectorAll('.menu-btn').forEach(btn => {
                 btn.classList.remove('bg-[#e0f2fe]', 'text-[#0369a1]');
                 btn.classList.add('text-slate-600');
@@ -504,7 +557,6 @@
             }
         }
 
-        // Script Modals
         function openProductModal(dataString) {
             const data = JSON.parse(dataString);
             document.getElementById('md_nama').innerText = data.nama || '-';
@@ -528,6 +580,46 @@
             document.getElementById('vendorModal').classList.remove('hidden');
         }
         function closeVendorModal() { document.getElementById('vendorModal').classList.add('hidden'); }
+
+        function openTransaksiModal(dataString) {
+            const data = JSON.parse(dataString);
+            const fmt = (val) => 'Rp ' + parseFloat(val || 0).toLocaleString('id-ID');
+            
+            document.getElementById('tx_invoice').innerText = '#INV-' + data.id;
+            document.getElementById('tx_customer').innerText = data.customer_name || 'User';
+            document.getElementById('tx_method').innerText = data.payment_method || 'COD';
+            document.getElementById('tx_status').innerText = data.status || 'Pending';
+            document.getElementById('tx_duration').innerText = (data.duration_days || 1) + ' Hari';
+            document.getElementById('tx_ongkir').innerText = fmt(data.shipping_fee);
+            document.getElementById('tx_total').innerText = fmt(data.total_price);
+            
+            let ongkir = parseFloat(data.shipping_fee || 0);
+            let total = parseFloat(data.total_price || 0);
+            let sewaMarkup = total - ongkir;
+            let sewaAsli = sewaMarkup / 1.05;
+            let fee = data.rentify_fee ? parseFloat(data.rentify_fee) : (sewaMarkup - sewaAsli);
+            document.getElementById('tx_fee').innerText = fmt(fee);
+
+            let itemsHtml = '';
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    itemsHtml += `
+                        <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-100">
+                            <div>
+                                <div class="font-bold text-slate-800">${item.product_name || item.barang_nama || 'Barang'}</div>
+                                <div class="text-[10px] text-slate-400">Toko: ${item.vendor_name || '-'} | ${item.quantity} Unit</div>
+                            </div>
+                            <div class="font-bold text-slate-700">${fmt(item.price * item.quantity)}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                itemsHtml = '<div class="text-center text-slate-400 py-2">Rincian barang tidak ditemukan.</div>';
+            }
+            document.getElementById('tx_items').innerHTML = itemsHtml;
+            document.getElementById('transaksiModal').classList.remove('hidden');
+        }
+        function closeTransaksiModal() { document.getElementById('transaksiModal').classList.add('hidden'); }
     </script>
 </body>
 </html>

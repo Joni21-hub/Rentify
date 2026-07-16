@@ -11,7 +11,6 @@ class PesananController extends Controller
 {
     public function index()
     {
-        // PERBAIKAN: Menghapus 'vendors.no_hp' dari select karena kolom yang benar adalah 'whatsapp_vendor'
         $orders = DB::table('orders')
             ->leftJoin('users as vendors', 'orders.vendor_id', '=', 'vendors.id')
             ->select('orders.*', 'vendors.name as vendor_name', 'vendors.whatsapp_vendor')
@@ -19,7 +18,6 @@ class PesananController extends Controller
             ->orderBy('orders.created_at', 'desc')
             ->get();
 
-        // Mengambil rincian barang menggunakan leftJoin
         foreach ($orders as $order) {
             $order->items = DB::table('order_items')
                 ->leftJoin('barang', 'order_items.product_id', '=', 'barang.id')
@@ -43,7 +41,6 @@ class PesananController extends Controller
             return redirect()->back()->with('error', 'Pesanan ini sudah selesai sebelumnya.');
         }
 
-        // RUMUS AUTOMATIC MARKETPLACE FEE (MARKUP 5%)
         $ongkir = $order->shipping_fee;
         $totalSewaMarkup = $order->total_price - $ongkir;
         
@@ -51,7 +48,12 @@ class PesananController extends Controller
         $feeRentify = $totalSewaMarkup - $sewaAsliVendor;
         $pendapatanVendor = $sewaAsliVendor + $ongkir;
 
-        // UPDATE STATUS DAN SIMPAN FEE KE DATABASE
+        // FITUR BARU: Kembalikan stok barang ke gudang karena masa sewa sudah selesai dan barang dipulangkan!
+        $orderItems = DB::table('order_items')->where('order_id', $id)->get();
+        foreach ($orderItems as $item) {
+            \App\Models\Barang::where('id', $item->product_id)->increment('stok_total', $item->quantity);
+        }
+
         DB::table('orders')->where('id', $id)->update([
             'status' => 'Selesai',
             'vendor_earning' => round($pendapatanVendor, 2),
