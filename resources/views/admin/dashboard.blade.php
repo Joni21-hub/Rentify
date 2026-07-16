@@ -274,9 +274,20 @@
                                     <td class="p-4 pl-6 font-black text-slate-700">#INV-{{ $trx->id }}</td>
                                     <td class="p-4 font-bold text-slate-600">{{ $trx->customer_name ?? 'User' }}</td>
                                     
-                                    <td class="p-4">
+                                   <td class="p-4">
+                                        @php
+                                            // Jika fee di database 0, hitung otomatis 5% dari harga sewa bersih
+                                            $ongkir = parseFloat($trx->shipping_fee ?? 0);
+                                            $total = parseFloat($trx->total_price ?? 0);
+                                            $sewaBersih = $total - $ongkir;
+                                            $sewaAsli = $sewaBersih / 1.05;
+                                            
+                                            $feeHitung = ($trx->rentify_fee && $trx->rentify_fee > 0) 
+                                                ? $trx->rentify_fee 
+                                                : ($sewaBersih - $sewaAsli);
+                                        @endphp
                                         <span class="font-black text-emerald-600 text-sm block">
-                                            Rp {{ number_format($trx->rentify_fee ?? (($trx->total_price - ($trx->shipping_fee ?? 0)) - (($trx->total_price - ($trx->shipping_fee ?? 0)) / 1.05)), 0, ',', '.') }}
+                                            Rp {{ number_format($feeHitung, 0, ',', '.') }}
                                         </span>
                                         <span class="text-[10px] text-slate-400 font-semibold">Total Nilai: Rp {{ number_format($trx->total_price ?? 0, 0, ',', '.') }}</span>
                                     </td>
