@@ -13,6 +13,9 @@ class CheckoutController extends Controller
 {
     public function index(Request $request)
     {
+        // Tangkap kode voucher dari keranjang
+        $kodeVoucher = $request->input('kode_voucher');
+
         if ($request->filled('direct_barang_id')) {
             $barangId = $request->direct_barang_id;
             session(['checkout_direct_id' => $barangId]); 
@@ -54,7 +57,8 @@ class CheckoutController extends Controller
             return $item->barang->vendor_id;
         });
 
-        return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs'));
+        // Pass kode voucher ke tampilan checkout
+        return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs', 'kodeVoucher'));
     }
 
     public function store(Request $request)
@@ -99,6 +103,7 @@ class CheckoutController extends Controller
         $invoiceIds = [];
         $totalBayarSemua = 0; 
         $nomorWaAman = $request->no_hp;
+        $kodeVoucher = $request->kode_voucher; // Tangkap dari form submit akhir
 
         foreach ($keranjangPerVendor as $vendorId => $items) {
             $opsi = $request->opsi_pengiriman[$vendorId] ?? 'ambil';
@@ -114,7 +119,13 @@ class CheckoutController extends Controller
                 $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
             }
 
-            $totalHargaVendor = $subtotalSewa + $ongkir;
+            // Hitung Potongan Voucher (10%) saat dimasukkan ke Database
+            $potonganVoucher = 0;
+            if ($kodeVoucher === 'RENTIFY') {
+                $potonganVoucher = $subtotalSewa * 0.10;
+            }
+
+            $totalHargaVendor = ($subtotalSewa - $potonganVoucher) + $ongkir;
             $totalBayarSemua += $totalHargaVendor;
 
             $orderId = DB::table('orders')->insertGetId([
@@ -150,7 +161,6 @@ class CheckoutController extends Controller
                     'updated_at' => $waktuSekarang
                 ]);
 
-                // FITUR BARU: Kurangi stok di gudang secara otomatis saat barang resmi disewa!
                 \App\Models\Barang::where('id', $item->barang_id)->decrement('stok_total', $item->jumlah);
             }
         }
@@ -186,7 +196,6 @@ class CheckoutController extends Controller
     public function qris($id) 
     { 
         $total = session('total_bayar_semua', 0);
-        
         if ($total == 0) {
             $orderIds = [];
             foreach (explode('_', $id) as $part) {
@@ -194,7 +203,6 @@ class CheckoutController extends Controller
             }
             $total = DB::table('orders')->whereIn('id', $orderIds)->sum('total_price');
         }
-
         return view('customer.checkout.qris', ['id' => $id, 'total' => $total]); 
     }
 

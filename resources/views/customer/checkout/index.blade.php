@@ -21,17 +21,17 @@
     .panel-lokasi.active { display: block; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Style Khusus Jaminan KTP/SIM */
+    /* Style Khusus Jaminan KTP/SIM dengan Efek Cahaya Biru Berkilau */
     .jaminan-box { display: flex; gap: 10px; margin-top: 5px; }
     .jaminan-item { flex: 1; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; background: white; }
     .jaminan-item:hover { border-color: #0284c7; background: #f0f9ff; }
     .radio-jaminan:checked + span { font-weight: 800; color: #0284c7; }
-    .jaminan-item:has(.radio-jaminan:checked) { border-color: #0284c7; background: #e0f2fe; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.15); }
-    /* Style saat Jaminan Didisable (Karena sudah dipilih toko lain) */
+    .jaminan-item:has(.radio-jaminan:checked) { border-color: #0ea5e9; background: #f0f9ff; box-shadow: 0 0 12px rgba(14, 165, 233, 0.25); }
     .jaminan-item.disabled-jaminan { opacity: 0.4; cursor: not-allowed; background: #f1f5f9; border-color: #e2e8f0; }
 
     .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 1000; padding-left: 20px;}
-    .btn-buat-pesanan { background: #0284c7; color: white; border: none; padding: 16px 30px; font-size: 15px; font-weight: 800; cursor: pointer; }
+    .btn-buat-pesanan { background: #0284c7; color: white; border: none; padding: 16px 30px; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+    .btn-buat-pesanan:hover { background: #0369a1; box-shadow: 0 0 15px rgba(2, 132, 199, 0.4); }
 </style>
 
 <div class="checkout-container">
@@ -45,6 +45,9 @@
         <input type="hidden" name="cust_lon" id="global_lon">
         <input type="hidden" name="alamat_customer" id="global_alamat">
         <input type="hidden" name="no_hp_hidden" id="global_hp">
+        
+        <!-- Input Tersembunyi untuk Meneruskan Voucher ke Backend -->
+        <input type="hidden" name="kode_voucher" id="input_kode_voucher" value="{{ request('kode_voucher', '') }}">
 
         @foreach($keranjangPerVendor as $vendorId => $items)
         @php 
@@ -54,24 +57,26 @@
             $latProduk = $barangPertama->latitude ?? '0';
             $lonProduk = $barangPertama->longitude ?? '0';
             $alamatProduk = $barangPertama->alamat ?? 'Alamat produk belum diatur oleh vendor.';
+            $namaTokoAsli = $vendor->vendor_name ?? $vendor->name ?? 'Vendor Rentify';
+            
+            // KUNCI SAKTI: Otomatis menarik durasi hari yang dipilih dari Keranjang!
+            $durasiDefault = $items->first()->durasi_sewa ?? 1;
         @endphp
         
         <!-- BLOK TOKO -->
         <div class="vendor-block" data-vendor="{{ $vendorId }}" data-lat="{{ $latProduk }}" data-lon="{{ $lonProduk }}">
             
-            <!-- FITUR 3: AVATAR PROFIL VENDOR DI HEADER TOKO -->
             <div class="section-title" style="color: #0f172a; margin-top: 20px; justify-content: flex-start; gap: 10px;">
                 <div style="width: 28px; height: 28px; border-radius: 50%; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; overflow: hidden; border: 2px solid #e0f2fe; flex-shrink: 0;">
                     @if(isset($vendor->avatar) && $vendor->avatar)
                         <img src="{{ asset('storage/' . $vendor->avatar) }}" class="w-full h-full object-cover">
                     @else
-                        {{ strtoupper(substr($vendor->vendor_name ?? 'V', 0, 1)) }}
+                        {{ strtoupper(substr($namaTokoAsli, 0, 1)) }}
                     @endif
                 </div>
-                <span>Toko: {{ $vendor->vendor_name ?? 'Vendor' }}</span>
+                <span>Toko: {{ $namaTokoAsli }}</span>
             </div>
             
-            <!-- 1. Pesanan Anda -->
             <div class="section-title">Pesanan Anda</div>
             @foreach($items as $item)
                 @php $hargaTampil = $item->barang->harga_sewa_harian * 1.05; @endphp
@@ -89,7 +94,8 @@
                             Rp {{ number_format($hargaTampil, 0, ',', '.') }} <span style="font-size: 11px; font-weight: normal; color:#64748b;">/hari</span>
                         </div>
                         @if($item->barang->deposit > 0)
-                            <div style="font-size: 11px; font-weight: 700; color: #b45309; background: #fef3c7; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-top: 6px;">
+                            <!-- MURNI BIRU: Warna kuning deposit diganti dengan Ice Blue yang rapi -->
+                            <div style="font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-top: 6px; border: 1px solid #bae6fd;">
                                 Deposit (Bayar di Tempat): Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
                             </div>
                         @endif
@@ -101,17 +107,16 @@
                 </div>
             @endforeach
 
-            <!-- 2. Lama Sewa -->
+            <!-- LAMA SEWA: OTOMATIS TERISI DARI KERANJANG -->
             <div class="section-title mt-4">Lama Sewa</div>
             <div class="clean-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
                 <span style="font-size: 14px; font-weight: 600; color: #475569;">Berapa hari Anda menyewa?</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="number" name="durasi_sewa[{{ $vendorId }}]" class="input-durasi" value="1" min="1" onchange="hitungSemuaTotal()" style="width: 50px; text-align: center; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; padding: 6px; outline: none; color:#0284c7;"> 
+                    <input type="number" name="durasi_sewa[{{ $vendorId }}]" class="input-durasi" value="{{ $durasiDefault }}" min="1" oninput="hitungSemuaTotal()" style="width: 50px; text-align: center; border: 1.5px solid #cbd5e1; border-radius: 8px; font-weight: bold; padding: 6px; outline: none; color:#0284c7;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'"> 
                     <span style="font-size: 13px; font-weight: 700; color: #64748b;">Hari</span>
                 </div>
             </div>
 
-            <!-- FITUR 4 & 5: OPSI JAMINAN KTP/SIM (EXCLUSIVE RULES) -->
             <div class="section-title mt-4">Jaminan Dokumen</div>
             <p style="font-size: 11px; color: #64748b; margin-top: -6px; margin-bottom: 8px;">*Pilih 1 dokumen fisik untuk Jaminan.</p>
             <div class="jaminan-box mb-4">
@@ -127,7 +132,6 @@
                 </label>
             </div>
 
-            <!-- 3. Opsi Pengiriman -->
             <div class="section-title mt-4">Opsi Pengiriman</div>
             <div class="radio-list-group">
                 <label class="radio-list-item" onclick="bukaPanel('ambil', '{{ $vendorId }}')">
@@ -157,7 +161,6 @@
                 <input type="hidden" name="ongkir_vendor[{{ $vendorId }}]" class="input-ongkir-vendor" value="0">
             </div>
             
-            <!-- FITUR 2: INFORMASI ABU-ABU JIKA TIDAK BISA DIANTAR -->
             @if(!$bisaDiantar)
             <div style="margin-top: 8px; font-size: 11.5px; color: #64748b; font-style: italic; line-height: 1.4; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #94a3b8;">
                 ℹ Mohon maaf, vendor ini belum menyediakan layanan pengantaran.
@@ -168,14 +171,13 @@
         </div>
         @endforeach
 
-        <!-- FITUR 1: FIELD NOMOR WHATSAPP CUSTOMER (WAJIB DIISI SEBELUM BUAT PESANAN) -->
         <div class="section-title">Informasi Kontak Anda</div>
         <div class="clean-card p-4" style="border-left: 4px solid #0284c7;">
-            <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">No WhatsApp <span style="color: #ef4444;">*</span></label>
+            <!-- MURNI BIRU: Tanda bintang diganti warna biru -->
+            <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">No WhatsApp <span style="color: #0284c7;">*</span></label>
             <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()->user()->no_hp ?? '' }}" placeholder="" required style="width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
         </div>
 
-        <!-- 4. Metode Pembayaran -->
         <div class="section-title mt-4">Metode Pembayaran</div>
         <div class="radio-list-group mb-6">
             <label class="radio-list-item">
@@ -188,12 +190,36 @@
             </label>
         </div>
 
-        <!-- 5. Rincian Pembayaran -->
+        <!-- FITUR VOUCHER RENTIFY (MURNI BIRU BERKILAU, KECIL & RAPI) -->
+        <div class="section-title">Voucher Diskon</div>
+        <div class="clean-card" id="card-voucher" style="padding: 0; overflow: hidden; transition: all 0.3s; margin-bottom: 20px;">
+            <div onclick="toggleVoucher()" style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white;">
+                <span style="font-size: 13.5px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-ticket"></i> Voucher Rentify
+                </span>
+                <span id="voucher-status-label" style="font-size: 12px; font-weight: 700; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                    Gunakan kode <span style="font-size: 10px;">▼</span>
+                </span>
+            </div>
+            <div id="voucher-panel" style="display: none; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik: RENTIFY" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                    <button type="button" onclick="terapkanVoucher()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s;">Pakai</button>
+                </div>
+            </div>
+        </div>
+
         <div class="section-title">Rincian Pembayaran</div>
         <div class="clean-card">
             <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #475569;">
                 <span>Subtotal Produk</span><span id="grand-sewa" style="font-weight: 700; color: #1e293b;">Rp 0</span>
             </div>
+            
+            <!-- BARIS DISKON (MURNI BIRU BERCAHAYA) -->
+            <div id="row-diskon" style="display: none; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #0284c7; font-weight: 800;">
+                <span>Diskon Rentify (10%)</span><span id="grand-diskon">- Rp 0</span>
+            </div>
+
             <div style="display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; color: #475569;">
                 <span>Subtotal Pengiriman</span><span id="grand-ongkir" style="font-weight: 700; color: #1e293b;">Rp 0</span>
             </div>
@@ -217,12 +243,53 @@
     const formatRp = (angka) => 'Rp ' + Math.round(angka).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     let lokasiCustomer = null;
 
-    // FITUR 5: LOGIKA JAMINAN EKSKLUSIF (TIDAK BOLEH SAMA ANTAR TOKO)
+    // LOGIKA VOUCHER MURNI BIRU BERCAHAYA
+    function toggleVoucher() {
+        const panel = document.getElementById('voucher-panel');
+        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+    }
+
+    function updateVoucherUI(isApplied) {
+        const card = document.getElementById('card-voucher');
+        const label = document.getElementById('voucher-status-label');
+        const rowDiskon = document.getElementById('row-diskon');
+        
+        if (isApplied) {
+            // Efek hidup bercahaya murni warna Biru Rentify!
+            card.style.borderColor = '#0ea5e9';
+            card.style.boxShadow = '0 0 15px rgba(14, 165, 233, 0.35)';
+            card.style.background = '#f0f9ff';
+            label.innerHTML = '<span style="background: #0284c7; color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);">✓ DISKON 10% AKTIF</span>';
+            document.getElementById('voucher-panel').style.display = 'none';
+            if(rowDiskon) rowDiskon.style.display = 'flex';
+        } else {
+            card.style.borderColor = '#f1f5f9';
+            card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+            card.style.background = 'white';
+            label.innerHTML = 'Gunakan kode <span style="font-size: 10px;">▼</span>';
+            if(rowDiskon) rowDiskon.style.display = 'none';
+        }
+    }
+
+    function terapkanVoucher() {
+        const field = document.getElementById('input_kode_voucher_field');
+        const kode = field.value.trim().toUpperCase();
+        if (kode === 'RENTIFY') {
+            document.getElementById('input_kode_voucher').value = 'RENTIFY';
+            updateVoucherUI(true);
+            hitungSemuaTotal();
+            alert('🎉 Selamat! Voucher RENTIFY berhasil dipasang.');
+        } else if (kode === '') {
+            alert('⚠️ Silakan ketik kode voucher terlebih dahulu!');
+        } else {
+            alert('❌ Kode voucher tidak valid! Coba ketik: RENTIFY');
+        }
+    }
+
     function updateJaminanExclusive() {
         const selectedMap = {}; 
         const allRadios = document.querySelectorAll('.radio-jaminan');
         
-        // 1. Catat dokumen apa yang sudah dipilih oleh vendor mana
         allRadios.forEach(radio => {
             const label = radio.closest('.jaminan-item');
             const icon = label.querySelector('.check-icon');
@@ -234,7 +301,6 @@
             }
         });
 
-        // 2. Kunci (Disable) dokumen yang sama pada toko lain
         allRadios.forEach(radio => {
             const vendorId = radio.getAttribute('data-vendor');
             const value = radio.value;
@@ -333,23 +399,29 @@
         });
 
         document.getElementById('grand-sewa').innerText = formatRp(totalSewaSemua);
+
+        // Potongan Diskon 10% jika Voucher RENTIFY aktif
+        let potonganVoucher = 0;
+        if (document.getElementById('input_kode_voucher').value === 'RENTIFY') {
+            potonganVoucher = totalSewaSemua * 0.10;
+            document.getElementById('grand-diskon').innerText = "- " + formatRp(potonganVoucher);
+        }
+
         document.getElementById('grand-ongkir').innerText = formatRp(totalOngkirSemua);
-        const grandTotal = totalSewaSemua + totalOngkirSemua;
+        const grandTotal = (totalSewaSemua - potonganVoucher) + totalOngkirSemua;
         document.getElementById('grand-total').innerText = formatRp(grandTotal);
         document.getElementById('bar-total').innerText = formatRp(grandTotal);
     }
 
     function validasiSubmit() {
-        // 1. Validasi Nomor WA Wajib
         const inputWa = document.getElementById('input_wa_wajib');
         if (!inputWa.value || inputWa.value.trim() === '') {
             alert("⚠️ Mohon isi Nomor WhatsApp Customer terlebih dahulu agar vendor dapat menghubungi Anda.");
             inputWa.focus();
-            inputWa.style.borderColor = '#ef4444';
+            inputWa.style.borderColor = '#0284c7';
             return;
         }
 
-        // 2. Validasi Jaminan per toko sudah dipilih
         let jaminanLengkap = true;
         document.querySelectorAll('.vendor-block').forEach(block => {
             const vId = block.getAttribute('data-vendor');
@@ -361,7 +433,6 @@
             return;
         }
 
-        // 3. Validasi GPS jika ada yang minta Diantar
         let adaDiantarTanpaGPS = false;
         document.querySelectorAll('.vendor-block').forEach(block => {
             if (block.querySelector('.radio-opsi:checked').value === 'diantar' && !lokasiCustomer) adaDiantarTanpaGPS = true;
@@ -376,6 +447,11 @@
     }
 
     window.onload = function() {
+        // Cek jika voucher dibawa langsung dari Keranjang
+        if (document.getElementById('input_kode_voucher').value === 'RENTIFY') {
+            updateVoucherUI(true);
+            document.getElementById('input_kode_voucher_field').value = 'RENTIFY';
+        }
         hitungSemuaTotal();
         updateJaminanExclusive();
     };
