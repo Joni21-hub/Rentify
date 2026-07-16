@@ -19,7 +19,7 @@
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
 
-    <!-- AREA SLIDER GAMBAR YANG SUDAH DIPERBAIKI TOTAL -->
+    <!-- AREA SLIDER GAMBAR YANG SUDAH SESUAI DATABASE CLOUDINARY -->
     <div class="swiper productSwiper w-full aspect-square bg-white border-b border-slate-100">
         <div class="swiper-wrapper">
             
@@ -37,21 +37,16 @@
                 @endif
             </div>
 
-            <!-- 2. Foto Galeri Tambahan (Jurus Sapu Jagat Deteksi Kolom) -->
+            <!-- 2. Foto Galeri Tambahan (Menggunakan kolom foto_path asli) -->
             @if(isset($barang->fotos) && $barang->fotos->count() > 0)
                 @foreach($barang->fotos as $foto)
                 @php
-                    // Mencegat dan membaca semua kemungkinan nama kolom di database MySQL!
-                    $rawPath = $foto->foto ?? $foto->gambar ?? $foto->path ?? $foto->file ?? $foto->url ?? $foto->foto_url ?? $foto->image ?? '';
+                    // PERBAIKAN MUTLAK: Mengambil langsung dari kolom foto_path Cloudinary!
+                    $rawPath = $foto->foto_path ?? $foto->foto ?? $foto->gambar ?? '';
                     
-                    // Memastikan format link aman di cloud Vercel maupun Cloudinary
-                    if (str_starts_with($rawPath, 'http://') || str_starts_with($rawPath, 'https://')) {
-                        $fotoUrl = $rawPath;
-                    } elseif (str_contains($rawPath, 'storage/') || str_contains($rawPath, 'images/')) {
-                        $fotoUrl = asset(str_replace('public/', '', $rawPath));
-                    } else {
-                        $fotoUrl = asset('storage/' . str_replace('public/', '', $rawPath));
-                    }
+                    $fotoUrl = str_starts_with($rawPath, 'http') 
+                        ? $rawPath 
+                        : asset(str_replace('public/', '', $rawPath));
                 @endphp
                 
                 @if(!empty($rawPath))
