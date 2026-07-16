@@ -65,10 +65,10 @@
                     @if(isset($vendor->avatar) && $vendor->avatar)
                         <img src="{{ asset('storage/' . $vendor->avatar) }}" class="w-full h-full object-cover">
                     @else
-                        {{ strtoupper(substr($vendor->name ?? 'V', 0, 1)) }}
+                        {{ strtoupper(substr($vendor->vendor_name ?? 'V', 0, 1)) }}
                     @endif
                 </div>
-                <span>Toko: {{ $vendor->name ?? 'Vendor' }}</span>
+                <span>Toko: {{ $vendor->vendor_name ?? 'Vendor' }}</span>
             </div>
             
             <!-- 1. Pesanan Anda -->

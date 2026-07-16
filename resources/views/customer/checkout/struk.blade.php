@@ -76,7 +76,7 @@
                     }
 
                     $daftarBarang = $items->pluck('barang.nama')->implode(', ');
-                    $pesanWa = "Halo Toko *{$vendor->name}*, saya sudah membuat pesanan di Rentify dengan ID Transaksi: *{$id}*.\n\n" .
+                    $pesanWa = "Halo Toko *{$vendor->vendor_name}*, saya sudah membuat pesanan di Rentify dengan ID Transaksi: *{$id}*.\n\n" .
                                " *Barang:* {$daftarBarang} ({$durasi} Hari)\n" .
                                " *Jaminan:* {$jaminanToko}\n" .
                                " *Pengiriman:* " . strtoupper($opsiToko) . "\n\n" .
