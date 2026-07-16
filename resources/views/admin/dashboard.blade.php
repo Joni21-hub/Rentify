@@ -276,9 +276,9 @@
                                     
                                    <td class="p-4">
                                         @php
-                                            // Jika fee di database 0, hitung otomatis 5% dari harga sewa bersih
-                                            $ongkir = parseFloat($trx->shipping_fee ?? 0);
-                                            $total = parseFloat($trx->total_price ?? 0);
+                                            // PERBAIKAN: Menggunakan (float) bawaan PHP, BUKAN parseFloat JavaScript!
+                                            $ongkir = (float) ($trx->shipping_fee ?? 0);
+                                            $total = (float) ($trx->total_price ?? 0);
                                             $sewaBersih = $total - $ongkir;
                                             $sewaAsli = $sewaBersih / 1.05;
                                             
