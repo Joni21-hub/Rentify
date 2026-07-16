@@ -12,7 +12,7 @@
 </head>
 <body>
     <div class="card">
-        <h1>Selamat Datang di Marketplace Rentify! 🛒✨</h1>
+        <h1>Selamat Datang di Marketplace Rentify!</h1>
         <p>Kamu berhasil mendaftar dan login sebagai <b>Customer (Penyewa)</b>.</p>
         <p>Di sini nanti kamu bisa melihat daftar barang yang disewakan oleh vendor.</p>
         <hr>

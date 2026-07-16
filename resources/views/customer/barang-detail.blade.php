@@ -89,10 +89,10 @@
         <h3 class="text-[13px] font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-store text-slate-400"></i> Toko & Lokasi Pengambilan</h3>
         <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 bg-sky-100 text-sky-500 rounded-full flex items-center justify-center font-black text-lg">
-                {{ substr($barang->vendor->name ?? 'V', 0, 1) }}
+                {{ substr($barang->vendor->vendor_name ?? 'V', 0, 1) }}
             </div>
             <div>
-                <div class="font-bold text-slate-700 text-[13px]">{{ $barang->vendor->name ?? 'Vendor Rentify' }}</div>
+                <div class="font-bold text-slate-700 text-[13px]">{{ $barang->vendor->vendor_name ?? 'Vendor Rentify' }}</div>
                 <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{{ $barang->vendor->alamat ?? 'Alamat tersedia setelah pemesanan' }}</div>
             </div>
         </div>
@@ -101,7 +101,7 @@
             // Logika merakit link Google Maps otomatis
             $lat = $barang->latitude ?? $barang->vendor->latitude ?? null;
             $long = $barang->longitude ?? $barang->vendor->longitude ?? null;
-            $alamat = $barang->alamat ?? $barang->vendor->alamat ?? $barang->vendor->name ?? 'Toko';
+            $alamat = $barang->alamat ?? $barang->vendor->alamat ?? $barang->vendor->vendor_name ?? 'Toko';
             
             // Jika ada titik kordinat, pakai kordinat. Jika tidak ada, paksakan cari alamat via teks di Maps
             $mapsUrl = ($lat && $long) ? "https://maps.google.com/?q={$lat},{$long}" : "https://maps.google.com/?q=" . urlencode($alamat);

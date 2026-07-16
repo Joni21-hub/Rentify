@@ -94,7 +94,7 @@
                 <div style="background: #f8fafc; padding: 18px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     
                     <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="display: flex; align-items: center; gap: 6px;">{{ $vendor->name ?? 'Vendor' }} <span style="font-size: 12px; font-weight: 600; color: #64748b;">({{ $durasi }} Hari)</span></span>
+                        <span style="display: flex; align-items: center; gap: 6px;">{{ $vendor->vendor_name ?? 'Vendor' }} <span style="font-size: 12px; font-weight: 600; color: #64748b;">({{ $durasi }} Hari)</span></span>
                         <span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 3px 8px; border-radius: 6px; font-weight: 800; border: 1px solid #bae6fd;">Jaminan: {{ $jaminanToko }}</span>
                     </div>
                     

@@ -112,7 +112,7 @@
                                 </div>
                                 <div class="flex items-center gap-1.5 mt-1.5 text-[10px] font-medium text-slate-500">
                                     <i class="fa-solid fa-shop text-slate-400"></i>
-                                    <span class="truncate">{{ $barang->vendor->name ?? 'Vendor' }}</span>
+                                    <span class="truncate">{{ $barang->vendor->vendor_name ?? 'Vendor' }}</span>
                                 </div>
                             </div>
                         </div>
