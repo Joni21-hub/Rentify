@@ -19,27 +19,49 @@
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
 
-   <!-- AREA SLIDER GAMBAR -->
+    <!-- AREA SLIDER GAMBAR YANG SUDAH DIPERBAIKI TOTAL -->
     <div class="swiper productSwiper w-full aspect-square bg-white border-b border-slate-100">
         <div class="swiper-wrapper">
-            <!-- 1. Tampilkan Foto Utama (Cover Photo) -->
+            
+            <!-- 1. Foto Utama (Cover Photo) -->
             <div class="swiper-slide flex items-center justify-center p-4">
                 @if($barang->cover_photo)
-                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
+                    @php
+                        $coverUrl = str_starts_with($barang->cover_photo, 'http') 
+                            ? $barang->cover_photo 
+                            : asset(str_replace('public/', '', $barang->cover_photo));
+                    @endphp
+                    <img src="{{ $coverUrl }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/400?text=Foto+Utama+Rusak'">
                 @else
                     <i class="fa-solid fa-image text-slate-200 text-6xl"></i>
                 @endif
             </div>
 
-            <!-- 2. PERBAIKAN: Menggunakan $barang->fotos (bukan galeri) agar semua foto tambahan muncul -->
+            <!-- 2. Foto Galeri Tambahan (Jurus Sapu Jagat Deteksi Kolom) -->
             @if(isset($barang->fotos) && $barang->fotos->count() > 0)
                 @foreach($barang->fotos as $foto)
+                @php
+                    // Mencegat dan membaca semua kemungkinan nama kolom di database MySQL!
+                    $rawPath = $foto->foto ?? $foto->gambar ?? $foto->path ?? $foto->file ?? $foto->url ?? $foto->foto_url ?? $foto->image ?? '';
+                    
+                    // Memastikan format link aman di cloud Vercel maupun Cloudinary
+                    if (str_starts_with($rawPath, 'http://') || str_starts_with($rawPath, 'https://')) {
+                        $fotoUrl = $rawPath;
+                    } elseif (str_contains($rawPath, 'storage/') || str_contains($rawPath, 'images/')) {
+                        $fotoUrl = asset(str_replace('public/', '', $rawPath));
+                    } else {
+                        $fotoUrl = asset('storage/' . str_replace('public/', '', $rawPath));
+                    }
+                @endphp
+                
+                @if(!empty($rawPath))
                 <div class="swiper-slide flex items-center justify-center p-4">
-                    {{-- Sesuaikan nama kolom gambar di tabel foto_barang kamu, biasanya 'foto' atau 'gambar' --}}
-                    <img src="{{ asset(str_replace('public/', '', $foto->foto ?? $foto->gambar)) }}" class="w-full h-full object-contain">
+                    <img src="{{ $fotoUrl }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/400?text=Foto+Galeri+Rusak'">
                 </div>
+                @endif
                 @endforeach
             @endif
+
         </div>
         <div class="swiper-pagination"></div>
     </div>
@@ -87,7 +109,7 @@
         <p class="text-[12px] text-slate-600 leading-relaxed whitespace-pre-line">{{ $barang->deskripsi }}</p>
     </div>
 
-    <!-- LOKASI MAPS & PROFIL VENDOR (Fitur Baru Permintaan Anda) -->
+    <!-- LOKASI MAPS & PROFIL VENDOR -->
     <div class="p-4 bg-white mb-4 border-b border-slate-100">
         <h3 class="text-[13px] font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-store text-slate-400"></i> Toko & Lokasi Pengambilan</h3>
         <div class="flex items-center gap-3 mb-3">
@@ -101,12 +123,10 @@
         </div>
 
         @php
-            // Logika merakit link Google Maps otomatis
             $lat = $barang->latitude ?? $barang->vendor->latitude ?? null;
             $long = $barang->longitude ?? $barang->vendor->longitude ?? null;
             $alamat = $barang->alamat ?? $barang->vendor->alamat ?? $barang->vendor->vendor_name ?? 'Toko';
             
-            // Jika ada titik kordinat, pakai kordinat. Jika tidak ada, paksakan cari alamat via teks di Maps
             $mapsUrl = ($lat && $long) ? "https://maps.google.com/?q={$lat},{$long}" : "https://maps.google.com/?q=" . urlencode($alamat);
         @endphp
         
@@ -115,11 +135,10 @@
         </a>
     </div>
 
-   <!-- BOTTOM BAR: TOMBOL BERFUNGSI -->
+    <!-- BOTTOM BAR: TOMBOL BERFUNGSI -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-3 py-2.5 flex items-center justify-center z-50">
         <div class="w-full max-w-md flex gap-2">
             
-            <!-- FORM 1: MASUKKAN KE KERANJANG -->
             <form action="{{ route('customer.keranjang.add') }}" method="POST" class="w-1/2">
                 @csrf
                 <input type="hidden" name="barang_id" value="{{ $barang->id }}">
@@ -129,15 +148,13 @@
                 </button>
             </form>
 
-           <!-- FORM SEWA SEKARANG (LANGSUNG KE CHECKOUT TANPA LEWAT KERANJANG) -->
             <form action="{{ route('customer.checkout') }}" method="GET" class="w-1/2">
-            <!-- Kunci Sakti: Gunakan nama 'direct_barang_id' agar tidak bocor ke keranjang -->
-            <input type="hidden" name="direct_barang_id" value="{{ $barang->id }}">
-            <input type="hidden" name="jumlah" value="1">
-            <button type="submit" class="w-full bg-sky-500 text-white font-bold text-[13px] py-2.5 rounded-md flex items-center justify-center hover:bg-sky-600 transition">
-                Sewa Sekarang
-            </button>
-        </form>
+                <input type="hidden" name="direct_barang_id" value="{{ $barang->id }}">
+                <input type="hidden" name="jumlah" value="1">
+                <button type="submit" class="w-full bg-sky-500 text-white font-bold text-[13px] py-2.5 rounded-md flex items-center justify-center hover:bg-sky-600 transition">
+                    Sewa Sekarang
+                </button>
+            </form>
         </div>
     </div>
 

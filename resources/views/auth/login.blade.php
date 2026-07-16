@@ -163,16 +163,16 @@
 
             <div class="mt-6 text-center space-y-2.5">
                 <p class="text-[11px] text-gray-300">
-                    <a href="/register" class="text-white hover:text-blue-300 transition underline underline-offset-2">Daftar di sini</a> (customer)
+                    <a href="/register" class="text-white hover:text-blue-300 transition underline underline-offset-2">Daftar di sini</a>
                 </p>
                 <p class="text-[11px]">
-                    <a href="/vendor/register" class="font-semibold text-[#facc15] hover:text-yellow-300 transition underline underline-offset-2 decoration-[#facc15]/50">menjadi bagian dari rentify</a>
+                    <a href="/vendor/register" class="font-semibold text-[#facc15] hover:text-yellow-300 transition underline underline-offset-2 decoration-[#facc15]/50">Daftar menjadi bagian dari rentify</a>
                 </p>
             </div>
             
             <div class="mt-6 flex justify-center">
                 <span class="px-4 py-1.5 rounded-full border border-white/20 text-[9px] uppercase tracking-widest text-gray-300 font-semibold bg-white/5">
-                    Super Control
+                    ---------
                 </span>
             </div>
         </div>
