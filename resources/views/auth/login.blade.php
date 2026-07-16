@@ -22,7 +22,7 @@
 
         /* 2. TOMBOL MASUK BERGRADASI & ANIMASI CAHAYA MENGALIR */
         .btn-gradient-animated {
-            background: linear-gradient(90deg, #005bc4, #00d2ff, #005bc4);
+            background: linear-gradient(90deg, #005bc4, #00d2ff, #2785f0);
             background-size: 200% auto;
             animation: gradientFlow 3s linear infinite;
             box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
@@ -153,10 +153,25 @@
                     </button>
                 </div>
 
+                {{-- MENCETAK PERINGATAN JIKA EMAIL / PASSWORD SALAH --}}
+                @if ($errors->any())
+                    <div class="mb-4 bg-rose-50 border border-rose-300 text-rose-700 px-4 py-3 rounded-lg text-xs font-bold flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2 text-rose-500 text-sm"></i>
+                        <span>{{ $errors->first() }}</span>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="mb-4 bg-rose-50 border border-rose-300 text-rose-700 px-4 py-3 rounded-lg text-xs font-bold flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2 text-rose-500 text-sm"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
+
                 <!-- TOMBOL MASUK BERBAHAYA (GRADASI BERGERAK GLOWING) -->
                 <div class="pt-3">
                     <button type="submit" class="btn-gradient-animated w-full text-white font-bold py-3.5 rounded-full text-sm tracking-widest uppercase">
-                        Masuk Sekarang
+                        login
                     </button>
                 </div>
             </form>

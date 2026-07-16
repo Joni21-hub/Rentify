@@ -21,7 +21,7 @@
     <!-- HEADER -->
     <header class="bg-white sticky top-0 z-50 shadow-sm px-3 py-2.5 flex gap-3 items-center">
         <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-1.5">
-            <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784128533/logo_lzsrcn.png" class="h-6 object-contain" alt="Logo">
+            <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-6 object-contain" alt="Logo">
             <span class="text-lg font-black text-sky-500 tracking-tighter">Rentify</span>
         </a>
         

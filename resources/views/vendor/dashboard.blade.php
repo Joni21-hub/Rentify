@@ -5,7 +5,7 @@
 @section('content')
 <header class="sticky top-0 z-40 glass-card px-10 py-5 flex justify-between items-center shadow-sm">
     <div>
-        <h1 class="text-2xl font-extrabold text-slate-800">Halo, {{ explode(' ', trim($user->name ?? Auth::user()->name))[0] }} 👋</h1>
+        <h1 class="text-2xl font-extrabold text-slate-800">Halo, {{ explode(' ', trim($user->name ?? Auth::user()->name))[0] }} </h1>
         <p class="text-sm text-slate-500 font-medium mt-1">Pantau ringkasan bisnis penyewaan Anda hari ini.</p>
     </div>
     <div class="flex items-center gap-4">
@@ -117,7 +117,7 @@
             <div class="mt-6 pt-6 border-t border-slate-100">
                 <div class="flex items-center justify-between text-sm">
                     <span class="text-slate-500 font-medium">Performa Toko</span>
-                    <span class="font-bold text-emerald-500">Sangat Baik 🌟</span>
+                    <span class="font-bold text-emerald-500">Sangat Baik </span>
                 </div>
             </div>
         </div>

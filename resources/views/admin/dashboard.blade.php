@@ -247,7 +247,35 @@
                 </div>
             </div>
 
-            <div id="tab-transaksi" class="tab-content hidden">
+           <div id="tab-transaksi" class="tab-content hidden">
+                
+                {{-- FITUR BARU: Menghitung & Menampilkan Total Seluruh Pendapatan Fee Rentify --}}
+                @php
+                    $totalPendapatanRentify = 0;
+                    foreach($allTransaksi ?? [] as $t) {
+                        $st = strtolower($t->status ?? '');
+                        // Pesanan batal tidak dihitung ke dalam total pendapatan!
+                        if (!in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
+                            $ong = (float) ($t->shipping_fee ?? 0);
+                            $tot = (float) ($t->total_price ?? 0);
+                            $sew = $tot - $ong;
+                            $asl = $sew / 1.05;
+                            $feeT = ($t->rentify_fee && $t->rentify_fee > 0) ? $t->rentify_fee : ($sew - $asl);
+                            $totalPendapatanRentify += $feeT;
+                        }
+                    }
+                @endphp
+                <div class="mb-6 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-extrabold uppercase tracking-widest opacity-80">Total Akumulasi Pendapatan Bersih</p>
+                        <h3 class="text-3xl font-black mt-1">Rp {{ number_format($totalPendapatanRentify, 0, ',', '.') }}</h3>
+                        <p class="text-[11px] opacity-90 mt-1"><i class="fas fa-info-circle mr-1"></i> Diperoleh dari komisi fee 5% setiap transaksi yang sah (tidak termasuk pesanan batal).</p>
+                    </div>
+                    <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm text-2xl font-black">
+                        
+                    </div>
+                </div>
+
                 <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-black text-slate-800">Database Transaksi Keseluruhan</h3>
@@ -276,17 +304,20 @@
                                     
                                    <td class="p-4">
                                         @php
-                                            // PERBAIKAN: Menggunakan (float) bawaan PHP, BUKAN parseFloat JavaScript!
-                                            $ongkir = (float) ($trx->shipping_fee ?? 0);
-                                            $total = (float) ($trx->total_price ?? 0);
-                                            $sewaBersih = $total - $ongkir;
-                                            $sewaAsli = $sewaBersih / 1.05;
+                                            $statusTrx = strtolower($trx->status ?? '');
                                             
-                                            $feeHitung = ($trx->rentify_fee && $trx->rentify_fee > 0) 
-                                                ? $trx->rentify_fee 
-                                                : ($sewaBersih - $sewaAsli);
+                                            // PERBAIKAN: Jika status DIBATALKAN / CANCELLED, paksakan fee jadi Rp 0!
+                                            if (in_array($statusTrx, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
+                                                $feeHitung = 0;
+                                            } else {
+                                                $ongkir = (float) ($trx->shipping_fee ?? 0);
+                                                $total = (float) ($trx->total_price ?? 0);
+                                                $sewaBersih = $total - $ongkir;
+                                                $sewaAsli = $sewaBersih / 1.05;
+                                                $feeHitung = ($trx->rentify_fee && $trx->rentify_fee > 0) ? $trx->rentify_fee : ($sewaBersih - $sewaAsli);
+                                            }
                                         @endphp
-                                        <span class="font-black text-emerald-600 text-sm block">
+                                        <span class="font-black {{ $feeHitung > 0 ? 'text-emerald-600' : 'text-slate-400' }} text-sm block">
                                             Rp {{ number_format($feeHitung, 0, ',', '.') }}
                                         </span>
                                         <span class="text-[10px] text-slate-400 font-semibold">Total Nilai: Rp {{ number_format($trx->total_price ?? 0, 0, ',', '.') }}</span>
@@ -297,7 +328,7 @@
                                     </td>
                                     <td class="p-4 text-center">
                                         <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
-                                            {{ strtolower($trx->status ?? '') == 'selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700' }}">
+                                            {{ strtolower($trx->status ?? '') == 'selesai' ? 'bg-emerald-100 text-emerald-700' : (in_array(strtolower($trx->status ?? ''), ['dibatalkan', 'batal', 'cancelled']) ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700') }}">
                                             {{ $trx->status ?? 'Pending' }}
                                         </span>
                                     </td>
@@ -310,59 +341,6 @@
                                 @empty
                                 <tr><td colspan="6" class="p-12 text-center text-slate-400">Database transaksi kosong.</td></tr>
                                 @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
-
-            <div id="tab-produk" class="tab-content hidden">
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-                    <div class="p-6 border-b border-slate-100">
-                        <h3 class="text-base font-black text-slate-800">Master Data: Inventaris Barang</h3>
-                    </div>
-                    <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
-                                    <th class="p-4 pl-6">Foto</th>
-                                    <th class="p-4">Nama Produk</th>
-                                    <th class="p-4">Milik Toko</th>
-                                    <th class="p-4">Sewa/Hari</th>
-                                    <th class="p-4">Gudang</th>
-                                    <th class="p-4 text-center">Katalog</th>
-                                    <th class="p-4 text-center">Aksi Danger</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                @foreach($allBarangs as $p)
-                                <tr class="hover:bg-slate-50/60 transition">
-                                    <td class="p-4 pl-6">
-                                        <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm flex items-center justify-center">
-                                            @if($p->cover_photo)
-                                                <img src="{{ asset(str_replace('public/', '', $p->cover_photo)) }}" class="w-full h-full object-contain">
-                                            @else
-                                                <i class="fas fa-box text-slate-300 text-lg"></i>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate">{{ $p->nama }}</td>
-                                    <td class="p-4 font-semibold text-[#0369a1]"><i class="fas fa-store text-slate-300 mr-1"></i> {{ $p->vendor->vendor_name ?? 'Umum' }}</td>
-                                    <td class="p-4 font-bold text-slate-700">Rp {{ number_format($p->harga_sewa_harian, 0, ',', '.') }}</td>
-                                    <td class="p-4 font-bold text-slate-600">{{ $p->stok_total }}</td>
-                                    <td class="p-4 text-center">
-                                        <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border {{ $p->status_barang == 'disetujui' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : ($p->status_barang == 'pending' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-rose-50 text-rose-600 border-rose-200') }}">
-                                            {{ $p->status_barang ?? 'pending' }}
-                                        </span>
-                                    </td>
-                                    <td class="p-4 text-center">
-                                        <form action="/admin/barang/{{ $p->id }}/delete" method="POST" onsubmit="return confirm('WARNING: Hapus produk ini permanen dari database?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm"><i class="far fa-trash-alt"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @endforeach
                             </tbody>
                         </table>
                     </div>

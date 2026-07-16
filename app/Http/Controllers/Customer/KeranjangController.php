@@ -56,25 +56,32 @@ class KeranjangController extends Controller
     }
 
     /**
-     * 3. FUNGSI UPDATE YANG SUDAH DIPERBAIKI (Menyimpan jumlah baru ke Database)
+     * 3. FUNGSI UPDATE YANG SUDAH DIPERBAIKI (Bisa simpan Jumlah & Durasi Hari)
      */
     public function update(Request $request, $id)
     {
-        // Cari data keranjang milik user yang sedang login
         $keranjang = Keranjang::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         
-        // Update jumlahnya dengan angka baru dari tombol [+] atau [-]
         if ($request->has('jumlah') && $request->jumlah > 0) {
             $keranjang->jumlah = (int) $request->jumlah;
-            $keranjang->save();
         }
 
-        // Jika dipanggil dari JavaScript (AJAX), beri balikan sukses
+        // Menyimpan pilihan durasi hari ke database Aiven
+        if ($request->has('durasi_sewa') && $request->durasi_sewa > 0) {
+            $keranjang->durasi_sewa = (int) $request->durasi_sewa;
+        }
+
+        $keranjang->save();
+
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'baru' => $keranjang->jumlah]);
+            return response()->json([
+                'success' => true, 
+                'baru_jumlah' => $keranjang->jumlah,
+                'baru_durasi' => $keranjang->durasi_sewa
+            ]);
         }
 
-        return back()->with('success', 'Jumlah barang berhasil diperbarui.');
+        return back()->with('success', 'Keranjang berhasil diperbarui.');
     }
 
     /**

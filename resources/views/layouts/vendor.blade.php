@@ -52,7 +52,7 @@
             <div class="h-24 flex items-center px-8 border-b border-white/10">
                 <a href="{{ url('/') }}" class="flex items-center gap-3">
                     <!-- MASUKKAN KODE INI -->
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784128533/logo_lzsrcn.png" alt="Logo Rentify" class="h-10 w-auto object-contain">
+                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo Rentify" class="h-10 w-auto object-contain">
                     <span class="text-2xl font-extrabold text-white tracking-tight">Rentify<span class="text-brand-sky">.</span></span>
                 </a>
             </div>
