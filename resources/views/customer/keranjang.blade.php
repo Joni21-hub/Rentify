@@ -3,7 +3,8 @@
 @section('content')
 <style>
     nav, header, footer { display: none !important; }
-    body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; padding-bottom: 90px; }
+    /* padding-bottom diperbesar jadi 160px agar daftar barang tidak tertutup blok bawah */
+    body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; padding-bottom: 160px; }
     .cart-container { max-width: 600px; margin: 0 auto; background: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -11,7 +12,7 @@
 
 <div class="cart-container relative">
 
-    <!-- TOP BAR (Tulisan Ubah sudah dihapus total, lebih bersih!) -->
+    <!-- TOP BAR -->
     <div class="bg-white sticky top-0 z-30 px-4 py-4 shadow-sm border-b border-slate-100 flex items-center">
         <div class="flex items-center gap-3">
             <a href="{{ route('customer.home') }}" class="text-slate-600 hover:text-sky-500 transition">
@@ -89,44 +90,52 @@
                 @endforeach
             </div>
 
-            <div class="bg-white border-t border-b border-slate-100 mt-auto mb-28 shadow-sm transition-all duration-300" id="voucher-container">
-                <div class="px-4 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" id="btn-toggle-voucher">
-                    <div class="flex items-center gap-2 text-sky-500 font-bold text-sm">
-                        <i class="fa-solid fa-ticket text-base"></i> Voucher Rentify
-                    </div>
-                    <div class="text-xs text-slate-400 font-medium flex items-center gap-2" id="voucher-status-text">
-                        Gunakan/masukkan kode <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="voucher-arrow"></i>
-                    </div>
-                </div>
-                
-                <div id="voucher-input-area" class="hidden px-4 pb-4 bg-white border-t border-slate-50 pt-4">
-                    <div class="flex gap-3">
-                        <input type="text" id="input-voucher" placeholder="KETIK KODE VOUCHER" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-4 py-3 text-sm font-bold uppercase text-sky-700 outline-none focus:border-sky-400 focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
-                        <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 shadow-[0_0_12px_rgba(14,165,233,0.4)] text-white font-bold text-sm px-6 py-3 rounded-lg transition">Pakai</button>
-                    </div>
-                </div>
-                <input type="hidden" name="kode_voucher" id="hidden-voucher-code" value="">
-            </div>
-
-            <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-40">
-                <div class="max-w-[600px] mx-auto flex items-center justify-between gap-3">
-                    <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" id="select-all" class="w-5 h-5 text-sky-500 rounded border-slate-300 focus:ring-sky-500 shadow-sm">
-                        <span class="text-sm font-bold text-slate-700">Semua</span>
-                    </label>
-
-                    <div class="flex items-center gap-4">
-                        <div class="text-right">
-                            <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Pembayaran</span>
-                            <span id="original-price" class="hidden text-xs text-slate-400 line-through font-bold block">Rp 0</span>
-                            <span id="total-price" class="text-lg font-black text-sky-500">Rp 0</span>
+            <!-- BLOK BAWAH TERKUNCI (VOUCHER + CHECKOUT GABUNG JADI SATU) -->
+            <div class="fixed bottom-0 left-0 w-full z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.06)]">
+                <div class="max-w-[600px] mx-auto bg-white border-t border-slate-200 flex flex-col rounded-t-2xl overflow-hidden">
+                    
+                    <!-- VOUCHER RENTIFY (DI ATAS TOTAL BAYAR, TERKUNCI DI BAWAH) -->
+                    <div id="voucher-container" class="w-full border-b border-slate-100 bg-white transition-all duration-300">
+                        <div class="px-5 py-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" id="btn-toggle-voucher">
+                            <div class="flex items-center gap-2 text-sky-500 font-bold text-sm">
+                                <i class="fa-solid fa-ticket text-base"></i> Voucher Rentify
+                            </div>
+                            <div class="text-xs text-slate-400 font-medium flex items-center gap-2" id="voucher-status-text">
+                                Gunakan/masukkan kode <i class="fa-solid fa-chevron-up text-[10px] transition-transform duration-200" id="voucher-arrow"></i>
+                            </div>
                         </div>
                         
-                        <button type="submit" id="btn-checkout" class="bg-gradient-to-r from-sky-400 to-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.5)] disabled:bg-none disabled:bg-slate-300 disabled:shadow-none text-white font-bold text-sm px-6 py-3 rounded-xl transition-all flex items-center gap-1 cursor-pointer" disabled>
-                            <span>Checkout</span>
-                            <span id="count-badge">(0)</span>
-                        </button>
+                        <!-- KOTAK KETIK VOUCHER (Muncul ke atas saat diklik) -->
+                        <div id="voucher-input-area" class="hidden px-5 pb-4 pt-1 bg-white">
+                            <div class="flex gap-3">
+                                <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus:border-sky-400 focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
+                                <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 shadow-[0_0_10px_rgba(14,165,233,0.3)] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition">Pakai</button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="kode_voucher" id="hidden-voucher-code" value="">
                     </div>
+
+                    <!-- AREA TOTAL & TOMBOL CHECKOUT -->
+                    <div class="px-5 py-3.5 flex items-center justify-between gap-3 bg-white">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="select-all" class="w-5 h-5 text-sky-500 rounded border-slate-300 focus:ring-sky-500 shadow-sm">
+                            <span class="text-sm font-bold text-slate-700">Semua</span>
+                        </label>
+
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Pembayaran</span>
+                                <span id="original-price" class="hidden text-xs text-slate-400 line-through font-bold block">Rp 0</span>
+                                <span id="total-price" class="text-lg font-black text-sky-500">Rp 0</span>
+                            </div>
+                            
+                            <button type="submit" id="btn-checkout" class="bg-gradient-to-r from-sky-400 to-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.4)] disabled:bg-none disabled:bg-slate-300 disabled:shadow-none text-white font-bold text-sm px-7 py-3 rounded-xl transition-all flex items-center gap-1 cursor-pointer" disabled>
+                                <span>Checkout</span>
+                                <span id="count-badge">(0)</span>
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -161,10 +170,12 @@
         
         let diskonPersen = 0;
 
+        // Buka tutup voucher dengan panah yang logis
         document.getElementById('btn-toggle-voucher').addEventListener('click', function() {
             const area = document.getElementById('voucher-input-area');
             const arrow = document.getElementById('voucher-arrow');
             area.classList.toggle('hidden');
+            // Panah menghadap atas saat tertutup (karena mengembang ke atas), menghadap bawah saat terbuka
             arrow.style.transform = area.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         });
 
@@ -221,7 +232,6 @@
                 diskonPersen = 10; 
                 hiddenVoucherCode.value = 'RENTIFY';
                 
-                // MURNI BIRU BERSINAR: Menampilkan diskon dengan persentase yang jelas
                 statusText.innerHTML = '<span class="bg-sky-500 text-white px-3 py-1 rounded-md shadow-[0_0_12px_rgba(14,165,233,0.6)] font-black text-[10px] tracking-wide">✓ DISKON 10%</span>';
                 document.getElementById('voucher-container').classList.add('border-sky-300', 'shadow-[0_0_15px_rgba(14,165,233,0.15)]');
                 
@@ -247,6 +257,9 @@
                 const qty = parseInt(card.querySelector('.item-qty').value) || 1;
                 calculateTotal();
                 updateDatabase(card.dataset.id, qty, parseInt(this.value));
+            });
+            input.addEventListener('keyup', function() {
+                if(this.value !== '') calculateTotal(); 
             });
         });
 
