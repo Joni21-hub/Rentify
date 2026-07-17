@@ -89,7 +89,7 @@
                 @endforeach
             </div>
 
-            <div class="bg-white border-t border-b border-slate-100 mt-4 mb-28 shadow-sm transition-all duration-300" id="voucher-container">
+            <div class="bg-white border-t border-b border-slate-100 mt-auto mb-28 shadow-sm transition-all duration-300" id="voucher-container">
                 <div class="px-4 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" id="btn-toggle-voucher">
                     <div class="flex items-center gap-2 text-sky-500 font-bold text-sm">
                         <i class="fa-solid fa-ticket text-base"></i> Voucher Rentify
