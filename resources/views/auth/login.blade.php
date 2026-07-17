@@ -6,6 +6,16 @@
     <title>Masuk ke Rentify — Eksplorasi Dimulai</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- ================================================================= -->
+    <!-- PWA RENTIFY META TAGS (DITAMBAHKAN AGAR JADI APLIKASI ASLI) -->
+    <!-- ================================================================= -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#040b16">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260498/ukuran_satu_g4ihwu.png">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -193,6 +203,16 @@
         </div>
     </div>
 
+    <!-- ================================================================= -->
+    <!-- TOMBOL INSTALL PWA & REGISTRASI SERVICE WORKER -->
+    <!-- ================================================================= -->
+    <div id="installPwaContainer" style="display: none;" class="fixed bottom-6 right-6 z-50">
+        <button id="installPwaBtn" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold py-3 px-6 rounded-2xl shadow-2xl border border-white/30 flex items-center gap-3 transition-all transform hover:scale-105 backdrop-blur-md">
+            <i class="fa-solid fa-download"></i>
+            <span>Install Aplikasi Rentify</span>
+        </button>
+    </div>
+
     <script>
         function togglePassword() {
             const passwordField = document.getElementById('passwordField');
@@ -207,6 +227,43 @@
                 eyeIcon.classList.add('fa-eye-slash');
             }
         }
+
+        // 1. Mendaftarkan Service Worker ke Browser
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Rentify PWA: Service Worker Berhasil Didaftarkan di halaman Login'))
+                    .catch(err => console.error('Rentify PWA: Gagal Daftar Service Worker', err));
+            });
+        }
+
+        // 2. Logika Menampilkan Tombol "Install Aplikasi"
+        let deferredPrompt;
+        const installContainer = document.getElementById('installPwaContainer');
+        const installBtn = document.getElementById('installPwaBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installContainer.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User menyetujui instalasi aplikasi');
+                }
+                deferredPrompt = null;
+                installContainer.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installContainer.style.display = 'none';
+            deferredPrompt = null;
+        });
     </script>
 </body>
 </html>
