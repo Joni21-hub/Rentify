@@ -47,7 +47,7 @@
         <div class="total-amount">Rp {{ number_format($total ?? 0, 0, ',', '.') }}</div>
         
         <div class="qris-wrapper">
-            <img src="{{ asset('images/qris.png') }}" alt="Scan QRIS" class="qris-img">
+            <img src="{{ asset('https://res.cloudinary.com/fnf8f1pm/image/upload/v1784278754/Qris_kqb63q.jpg') }}" alt="Scan QRIS" class="qris-img">
             
             <div class="supported-payments">BANK/EWALLET</div>
         </div>

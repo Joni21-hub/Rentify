@@ -1,51 +1,68 @@
-const CACHE_NAME = 'rentify-pwa-v2';
+const CACHE_NAME = 'rentify-pwa-v3-speed';
 
-// Kita hanya menyimpan file inti milik domain kita sendiri agar tidak terkena blokir CORS
+// Hanya cache halaman utama dan konfigurasi identitas
 const urlsToCache = [
     '/',
     '/manifest.json'
 ];
 
-// 1. Install Service Worker & Simpan Cache Inti
+// 1. Install & Langsung Aktifkan Tanpa Menunggu
 self.addEventListener('install', event => {
-    // Memaksa Service Worker langsung aktif saat itu juga tanpa menunggu
     self.skipWaiting(); 
-    
     event.waitUntil(
-        caches.open(CACHE_NAME)
-        .then(cache => {
-            console.log('Rentify PWA: Berhasil menyimpan cache inti');
+        caches.open(CACHE_NAME).then(cache => {
+            console.log('Rentify PWA: Memasang turbo cache...');
             return cache.addAll(urlsToCache);
         })
-        .catch(err => {
-            console.error('Rentify PWA: Ada masalah saat menyimpan cache:', err);
-        })
     );
 });
 
-// 2. Mengambil Data (Utamakan dari Internet, jika Offline baru ambil dari Cache)
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        fetch(event.request)
-        .catch(() => {
-            // Jika HP sedang offline / tidak ada sinyal, ambil tampilan dari cache
-            return caches.match(event.request);
-        })
-    );
-});
-
-// 3. Membersihkan Cache Versi Lama jika ada Update Aplikasi
+// 2. Bersihkan Cache Lama Saat Ada Update
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cache => {
                     if (cache !== CACHE_NAME) {
-                        console.log('Rentify PWA: Menghapus cache versi lama:', cache);
                         return caches.delete(cache);
                     }
                 })
             );
         }).then(() => self.clients.claim())
+    );
+});
+
+// 3. LOGIKA NGEBUT: Utamakan Memori HP untuk Gambar, CSS, dan Ikon
+self.addEventListener('fetch', event => {
+    // Abaikan request yang bukan HTTP/HTTPS
+    if (!event.request.url.startsWith('http')) return;
+
+    // A. Jika user klik link/pindah halaman: Ambil dari internet dulu agar data selalu baru, jika offline ambil dari cache
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // B. Jika memuat Gambar, Font, atau Script: LANGSUNG AMBIL DARI MEMORI HP (sangat cepat!)
+    event.respondWith(
+        caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+                // Tampilkan langsung dari cache HP tanpa delay loading
+                return cachedResponse;
+            }
+            // Jika belum ada di memori HP, baru download dari internet dan simpan ke cache
+            return fetch(event.request).then(networkResponse => {
+                // Simpan salinan ke cache untuk dibuka di kemudian hari
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseToCache);
+                    });
+                }
+                return networkResponse;
+            });
+        })
     );
 });

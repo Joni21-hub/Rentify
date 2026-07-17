@@ -42,7 +42,7 @@
             <!-- Ganti 6281234567890 dengan nomor WhatsApp Admin Rentify yang asli -->
             @php 
                 $pesanBantuan = "Halo admin, saya mengalami masalah di Rentify, mohon bantuannya.";
-                $linkWaAdmin = "https://wa.me/6281234567890?text=" . urlencode($pesanBantuan);
+                $linkWaAdmin = "https://wa.me/6283183494835?text=" . urlencode($pesanBantuan);
             @endphp
             <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center justify-between bg-white p-3.5 rounded-2xl shadow-sm border border-sky-200 hover:border-sky-400 hover:shadow-[0_0_12px_rgba(14,165,233,0.2)] transition group">
                 <div class="flex items-center gap-3">

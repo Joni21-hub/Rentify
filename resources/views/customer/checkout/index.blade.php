@@ -203,7 +203,7 @@
             </div>
             <div id="voucher-panel" style="display: none; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik: RENTIFY" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik kode voucher" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
                     <button type="button" onclick="terapkanVoucher()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s;">Pakai</button>
                 </div>
             </div>
@@ -278,11 +278,11 @@
             document.getElementById('input_kode_voucher').value = 'RENTIFY';
             updateVoucherUI(true);
             hitungSemuaTotal();
-            alert('🎉 Selamat! Voucher RENTIFY berhasil dipasang.');
+            alert(' Selamat! Voucher RENTIFY berhasil dipasang.');
         } else if (kode === '') {
-            alert('⚠️ Silakan ketik kode voucher terlebih dahulu!');
+            alert(' Silakan ketik kode voucher terlebih dahulu!');
         } else {
-            alert('❌ Kode voucher tidak valid! Coba ketik: RENTIFY');
+            alert(' Kode voucher tidak valid!');
         }
     }
 
