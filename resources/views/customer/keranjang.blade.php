@@ -4,23 +4,21 @@
 <style>
     nav, header, footer { display: none !important; }
     body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; padding-bottom: 90px; }
-    .cart-container { max-width: 600px; margin: 0 auto; background: #f8fafc; min-height: 100vh; }
-    /* Menghilangkan panah atas-bawah pada input number */
+    .cart-container { max-width: 600px; margin: 0 auto; background: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 </style>
 
 <div class="cart-container relative">
 
-    <!-- TOP BAR -->
-    <div class="bg-white sticky top-0 z-30 px-4 py-4 shadow-sm border-b border-slate-100 flex items-center justify-between">
+    <!-- TOP BAR (Tulisan Ubah sudah dihapus total, lebih bersih!) -->
+    <div class="bg-white sticky top-0 z-30 px-4 py-4 shadow-sm border-b border-slate-100 flex items-center">
         <div class="flex items-center gap-3">
             <a href="{{ route('customer.home') }}" class="text-slate-600 hover:text-sky-500 transition">
                 <i class="fa-solid fa-arrow-left text-xl"></i>
             </a>
             <h1 class="font-black text-slate-800 text-lg">Keranjang Saya ({{ $keranjangs->count() }})</h1>
         </div>
-        <a href="#" class="text-sky-500 font-bold text-sm">Ubah</a>
     </div>
 
     @if(session('error'))
@@ -31,7 +29,7 @@
 
     @if($keranjangs->isEmpty())
         <div class="bg-white m-4 p-10 rounded-2xl text-center border border-slate-100 shadow-sm">
-            <div class="w-20 h-20 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+            <div class="w-20 h-20 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-[0_0_15px_rgba(14,165,233,0.3)]">
                 <i class="fa-solid fa-cart-shopping"></i>
             </div>
             <h3 class="font-bold text-slate-800 text-lg mb-2">Keranjangmu Masih Kosong</h3>
@@ -41,9 +39,8 @@
             </a>
         </div>
     @else
-        <form action="{{ route('customer.checkout') }}" method="GET" id="cart-form">
+        <form action="{{ route('customer.checkout') }}" method="GET" id="cart-form" class="flex flex-col flex-1">
             
-            <!-- LIST BARANG -->
             <div class="bg-white border-t border-b border-slate-100 mt-2 shadow-sm">
                 @foreach($keranjangs as $item)
                     @php
@@ -69,11 +66,9 @@
 
                             <h4 class="font-bold text-slate-800 text-base truncate pr-6 mb-1">{{ $item->barang->nama }}</h4>
                             
-                            <!-- DURASI HARI: DILEBARKAN AGAR MUDAH DIKETIK -->
                             <div class="inline-flex items-center gap-1 bg-sky-50 text-sky-500 text-[11.5px] font-bold px-3 py-1 rounded mb-2 border border-sky-100 shadow-sm cursor-text">
                                 <span>Durasi: </span>
-                                <!-- W-10 agar luas, bisa diketik angkanya dengan lega -->
-                                <input type="number" value="{{ $durasiAktif }}" min="1" class="item-durasi w-10 bg-transparent border-none p-0 text-center text-sky-600 focus:ring-0 outline-none font-black">
+                                <input type="number" value="{{ $durasiAktif }}" min="1" class="item-durasi w-8 bg-transparent border-none p-0 text-center text-sky-600 focus:ring-0 outline-none font-black" onfocus="this.select()">
                                 <span>Hari</span>
                                 <i class="fa-solid fa-pen text-[9px] ml-1 opacity-50"></i>
                             </div>
@@ -94,27 +89,25 @@
                 @endforeach
             </div>
 
-            <!-- VOUCHER RENTIFY: POSISI DI BAWAH (SESUAI GAMBAR ASLI ANDA) -->
-            <div class="bg-white border-t border-b border-slate-100 mb-24 mt-4 shadow-sm transition-all duration-300" id="voucher-container">
+            <div class="bg-white border-t border-b border-slate-100 mt-4 mb-28 shadow-sm transition-all duration-300" id="voucher-container">
                 <div class="px-4 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" id="btn-toggle-voucher">
                     <div class="flex items-center gap-2 text-sky-500 font-bold text-sm">
                         <i class="fa-solid fa-ticket text-base"></i> Voucher Rentify
                     </div>
                     <div class="text-xs text-slate-400 font-medium flex items-center gap-2" id="voucher-status-text">
-                        Gunakan/masukkan kode <i class="fa-solid fa-chevron-right text-[10px] transition-transform duration-200" id="voucher-arrow"></i>
+                        Gunakan/masukkan kode <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="voucher-arrow"></i>
                     </div>
                 </div>
                 
-                <div id="voucher-input-area" class="hidden px-4 pb-4 bg-white border-t border-slate-50 pt-3">
-                    <div class="flex gap-2">
-                        <input type="text" id="input-voucher" placeholder="Ketik kode: RENTIFY" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold uppercase text-sky-700 outline-none focus:border-sky-500 focus:shadow-[0_0_8px_rgba(14,165,233,0.3)] transition">
-                        <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 shadow-[0_0_10px_rgba(14,165,233,0.4)] text-white font-bold text-xs px-5 py-2 rounded-lg transition">Pakai</button>
+                <div id="voucher-input-area" class="hidden px-4 pb-4 bg-white border-t border-slate-50 pt-4">
+                    <div class="flex gap-3">
+                        <input type="text" id="input-voucher" placeholder="KETIK KODE VOUCHER" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-4 py-3 text-sm font-bold uppercase text-sky-700 outline-none focus:border-sky-400 focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
+                        <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 shadow-[0_0_12px_rgba(14,165,233,0.4)] text-white font-bold text-sm px-6 py-3 rounded-lg transition">Pakai</button>
                     </div>
                 </div>
                 <input type="hidden" name="kode_voucher" id="hidden-voucher-code" value="">
             </div>
 
-            <!-- BOTTOM BAR CHECKOUT (GRADASI & GLOW BIRU) -->
             <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-40">
                 <div class="max-w-[600px] mx-auto flex items-center justify-between gap-3">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
@@ -129,8 +122,7 @@
                             <span id="total-price" class="text-lg font-black text-sky-500">Rp 0</span>
                         </div>
                         
-                        <!-- TOMBOL CHECKOUT: GRADASI BIRU & CAHAYA (GLOW) -->
-                        <button type="submit" id="btn-checkout" class="bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 shadow-[0_0_15px_rgba(14,165,233,0.5)] disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none text-white font-bold text-sm px-6 py-3 rounded-xl transition-all flex items-center gap-1 cursor-pointer" disabled>
+                        <button type="submit" id="btn-checkout" class="bg-gradient-to-r from-sky-400 to-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.5)] disabled:bg-none disabled:bg-slate-300 disabled:shadow-none text-white font-bold text-sm px-6 py-3 rounded-xl transition-all flex items-center gap-1 cursor-pointer" disabled>
                             <span>Checkout</span>
                             <span id="count-badge">(0)</span>
                         </button>
@@ -173,7 +165,7 @@
             const area = document.getElementById('voucher-input-area');
             const arrow = document.getElementById('voucher-arrow');
             area.classList.toggle('hidden');
-            arrow.style.transform = area.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
+            arrow.style.transform = area.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         });
 
         function calculateTotal() {
@@ -204,7 +196,14 @@
             totalPriceEl.textContent = 'Rp ' + totalSetelahDiskon.toLocaleString('id-ID');
             countBadgeEl.textContent = `(${checkedCount})`;
             
-            btnCheckout.disabled = (checkedCount === 0);
+            if (checkedCount > 0) {
+                btnCheckout.disabled = false;
+                btnCheckout.classList.remove('disabled:bg-slate-300', 'disabled:bg-none');
+            } else {
+                btnCheckout.disabled = true;
+                btnCheckout.classList.add('disabled:bg-slate-300', 'disabled:bg-none');
+            }
+            
             if(selectAllCheckbox) selectAllCheckbox.checked = (checkedCount === itemCheckboxes.length && checkedCount > 0);
         }
 
@@ -222,15 +221,14 @@
                 diskonPersen = 10; 
                 hiddenVoucherCode.value = 'RENTIFY';
                 
-                // MURNI BIRU BERSINAR (Tidak ada hijau sama sekali!)
-                statusText.innerHTML = '<span class="bg-sky-500 text-white px-2.5 py-1 rounded-md shadow-[0_0_10px_rgba(14,165,233,0.5)] font-black text-[10px] tracking-wide">AKTIF</span>';
+                // MURNI BIRU BERSINAR: Menampilkan diskon dengan persentase yang jelas
+                statusText.innerHTML = '<span class="bg-sky-500 text-white px-3 py-1 rounded-md shadow-[0_0_12px_rgba(14,165,233,0.6)] font-black text-[10px] tracking-wide">✓ DISKON 10%</span>';
                 document.getElementById('voucher-container').classList.add('border-sky-300', 'shadow-[0_0_15px_rgba(14,165,233,0.15)]');
                 
                 document.getElementById('voucher-input-area').classList.add('hidden');
                 document.getElementById('voucher-arrow').style.transform = 'rotate(0deg)';
-                alert('Voucher RENTIFY berhasil dipasang!');
             } else {
-                alert('Kode tidak valid!');
+                alert('Kode tidak valid! Coba ketik: RENTIFY');
             }
             calculateTotal();
         });
@@ -241,9 +239,7 @@
             calculateTotal();
         });
 
-        // LOGIKA KETIK HARI (Gampang Dihapus/Diketikan Ulang Tanpa Reset Instan)
         document.querySelectorAll('.item-durasi').forEach(input => {
-            // Update total & database hanya ketika selesai mengetik (blur/change) agar tidak mengganggu proses ketik
             input.addEventListener('change', function() {
                 if(this.value < 1 || this.value === '') this.value = 1;
                 const card = this.closest('.card-item');
@@ -251,10 +247,6 @@
                 const qty = parseInt(card.querySelector('.item-qty').value) || 1;
                 calculateTotal();
                 updateDatabase(card.dataset.id, qty, parseInt(this.value));
-            });
-            // Update kalkulasi layar secara live saat ngetik
-            input.addEventListener('keyup', function() {
-                if(this.value !== '') calculateTotal(); 
             });
         });
 
