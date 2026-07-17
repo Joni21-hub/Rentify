@@ -1,45 +1,51 @@
-const CACHE_NAME = 'rentify-pwa-v1';
+const CACHE_NAME = 'rentify-pwa-v2';
+
+// Kita hanya menyimpan file inti milik domain kita sendiri agar tidak terkena blokir CORS
 const urlsToCache = [
     '/',
-    '/manifest.json',
-    'https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260498/ukuran_satu_g4ihwu.png',
-    'https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260422/ukuran_lima_xub40q.png'
+    '/manifest.json'
 ];
 
-// 1. Install Service Worker & Simpan Cache
+// 1. Install Service Worker & Simpan Cache Inti
 self.addEventListener('install', event => {
+    // Memaksa Service Worker langsung aktif saat itu juga tanpa menunggu
+    self.skipWaiting(); 
+    
     event.waitUntil(
         caches.open(CACHE_NAME)
         .then(cache => {
-            console.log('Service Worker: Menyinpan cache');
+            console.log('Rentify PWA: Berhasil menyimpan cache inti');
             return cache.addAll(urlsToCache);
         })
-    );
-});
-
-// 2. Intercept Request dari Browser
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-        .then(response => {
-            // Jika ada di cache, gunakan itu. Jika tidak, ambil dari internet.
-            return response || fetch(event.request);
+        .catch(err => {
+            console.error('Rentify PWA: Ada masalah saat menyimpan cache:', err);
         })
     );
 });
 
-// 3. Membersihkan Cache Lama jika ada Update
+// 2. Mengambil Data (Utamakan dari Internet, jika Offline baru ambil dari Cache)
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        fetch(event.request)
+        .catch(() => {
+            // Jika HP sedang offline / tidak ada sinyal, ambil tampilan dari cache
+            return caches.match(event.request);
+        })
+    );
+});
+
+// 3. Membersihkan Cache Versi Lama jika ada Update Aplikasi
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cache => {
                     if (cache !== CACHE_NAME) {
-                        console.log('Service Worker: Menghapus cache lama');
+                        console.log('Rentify PWA: Menghapus cache versi lama:', cache);
                         return caches.delete(cache);
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
