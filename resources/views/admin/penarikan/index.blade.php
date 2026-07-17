@@ -36,15 +36,11 @@
                     <i class="fas fa-money-bill-transfer text-base"></i>
                     <span>Persetujuan Penarikan</span>
                 </a>
-                <a href="/admin/dashboard#kelola-transaksi" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
-                    <i class="fas fa-file-invoice-dollar text-slate-400"></i>
-                    <span>Daftar Semua Transaksi</span>
-                </a>
 
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Akses Cepat Master Data</div>
                 <a href="/admin/dashboard#kelola-produk" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
                     <i class="fas fa-arrow-left text-slate-400"></i>
-                    <span>Kembali ke Master Data</span>
+                    <span>Kembali</span>
                 </a>
             </nav>
         </div>

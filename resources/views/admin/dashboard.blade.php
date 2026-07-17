@@ -149,7 +149,8 @@
                                 @forelse($pendingBarangs as $barang)
                                 <tr class="hover:bg-slate-50/30 transition">
                                     <td class="p-4 pl-6 font-bold text-slate-700">{{ $barang->nama }}</td>
-                                    <td class="p-4 text-slate-500">{{ $barang->vendor->vendor_name ?? 'Umum' }}</td>
+                                    <!-- PERBAIKAN 1: Menambahkan ? (null safe) agar tidak crash jika vendor terhapus -->
+                                    <td class="p-4 text-slate-500">{{ $barang->vendor?->vendor_name ?? 'Umum' }}</td>
                                     <td class="p-4 text-center">
                                         <button onclick="openProductModal('{{ json_encode($barang) }}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition">
                                             <i class="fas fa-eye mr-1"></i> Review
@@ -249,12 +250,10 @@
 
            <div id="tab-transaksi" class="tab-content hidden">
                 
-                {{-- FITUR BARU: Menghitung & Menampilkan Total Seluruh Pendapatan Fee Rentify --}}
                 @php
                     $totalPendapatanRentify = 0;
                     foreach($allTransaksi ?? [] as $t) {
                         $st = strtolower($t->status ?? '');
-                        // Pesanan batal tidak dihitung ke dalam total pendapatan!
                         if (!in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                             $ong = (float) ($t->shipping_fee ?? 0);
                             $tot = (float) ($t->total_price ?? 0);
@@ -265,14 +264,14 @@
                         }
                     }
                 @endphp
-                <div class="mb-6 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
+               <div class="mb-6 bg-gradient-to-r from-blue-700 to-indigo-900 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-extrabold uppercase tracking-widest opacity-80">Total Akumulasi Pendapatan Bersih</p>
-                        <h3 class="text-3xl font-black mt-1">Rp {{ number_format($totalPendapatanRentify, 0, ',', '.') }}</h3>
-                        <p class="text-[11px] opacity-90 mt-1"><i class="fas fa-info-circle mr-1"></i> Diperoleh dari komisi fee 5% setiap transaksi yang sah (tidak termasuk pesanan batal).</p>
+                        <p class="text-xs font-extrabold uppercase tracking-widest text-blue-200">Total Akumulasi Pendapatan Bersih</p>
+                        <h3 class="text-3xl font-black mt-1 text-white">Rp {{ number_format($totalPendapatanRentify, 0, ',', '.') }}</h3>
+                        <p class="text-[11px] text-blue-100 mt-1"><i class="fas fa-info-circle mr-1"></i> Diperoleh dari komisi fee 5% setiap transaksi yang sah (tidak termasuk pesanan batal).</p>
                     </div>
-                    <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm text-2xl font-black">
-                        
+                    <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 text-2xl font-black shadow-inner">
+                        <i class="fas fa-wallet"></i>
                     </div>
                 </div>
 
@@ -305,8 +304,6 @@
                                    <td class="p-4">
                                         @php
                                             $statusTrx = strtolower($trx->status ?? '');
-                                            
-                                            // PERBAIKAN: Jika status DIBATALKAN / CANCELLED, paksakan fee jadi Rp 0!
                                             if (in_array($statusTrx, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                                                 $feeHitung = 0;
                                             } else {
@@ -347,6 +344,58 @@
                 </section>
             </div>
 
+            <div id="tab-produk" class="tab-content hidden">
+                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100">
+                        <h3 class="text-base font-black text-slate-800">Master Data: Inventaris Barang</h3>
+                    </div>
+                    <div class="p-0 overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
+                                    <th class="p-4 pl-6">Foto</th>
+                                    <th class="p-4">Nama Produk</th>
+                                    <th class="p-4">Milik Toko</th>
+                                    <th class="p-4">Sewa/Hari</th>
+                                    <th class="p-4">Gudang</th>
+                                    <th class="p-4 text-center">Katalog</th>
+                                    <th class="p-4 text-center">Aksi Danger</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <!-- PERBAIKAN 2: Menggunakan forelse agar ada pesan kosong, dan null safe ? pada relasi vendor -->
+                                @forelse($allBarangs as $p)
+                                <tr class="hover:bg-slate-50/60 transition">
+                                    <td class="p-4 pl-6">
+                                        <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
+                                            <img src="{{ $p->cover_photo ? Storage::url($p->cover_photo) : 'https://placehold.co/50' }}" class="w-full h-full object-cover">
+                                        </div>
+                                    </td>
+                                    <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate">{{ $p->nama }}</td>
+                                    <td class="p-4 font-semibold text-[#0369a1]"><i class="fas fa-store text-slate-300 mr-1"></i> {{ $p->vendor?->vendor_name ?? 'Umum' }}</td>
+                                    <td class="p-4 font-bold text-slate-700">Rp {{ number_format($p->harga_sewa_harian, 0, ',', '.') }}</td>
+                                    <td class="p-4 font-bold text-slate-600">{{ $p->stok_total }}</td>
+                                    <td class="p-4 text-center">
+                                        <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border {{ $p->status_barang == 'disetujui' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : ($p->status_barang == 'pending' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-rose-50 text-rose-600 border-rose-200') }}">
+                                            {{ $p->status_barang ?? 'pending' }}
+                                        </span>
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <form action="/admin/barang/{{ $p->id }}/delete" method="POST" onsubmit="return confirm('WARNING: Hapus produk ini permanen dari database?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm"><i class="far fa-trash-alt"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="7" class="p-12 text-center text-slate-400">Belum ada produk terdaftar di inventaris.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
             <div id="tab-vendor" class="tab-content hidden">
                 <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
                     <div class="p-6 border-b border-slate-100">
@@ -363,7 +412,7 @@
                                     <th class="p-4 text-center">Blokir</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                           <tbody class="divide-y divide-slate-100">
                                 @foreach($allVendors as $v)
                                 <tr class="hover:bg-slate-50/60 transition">
                                     <td class="p-4 pl-6 font-black text-slate-800">
@@ -375,15 +424,28 @@
                                         <p class="text-emerald-600 font-bold text-xs mt-1"><i class="fab fa-whatsapp"></i> {{ $v->whatsapp_vendor ?? '-' }}</p>
                                     </td>
                                     <td class="p-4 text-center">
-                                        <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider {{ $v->vendor_status == 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                            {{ $v->vendor_status }}
-                                        </span>
+                                        <!-- Perubahan Status Label -->
+                                        @if($v->vendor_status == 'approved')
+                                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">Aktif</span>
+                                        @elseif($v->vendor_status == 'suspended')
+                                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800"><i class="fas fa-lock mr-1"></i>Banned</span>
+                                        @else
+                                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800">{{ $v->vendor_status }}</span>
+                                        @endif
                                     </td>
                                     <td class="p-4 text-center">
-                                        <form action="/admin/user/{{ $v->id }}/delete" method="POST" onsubmit="return confirm('Hapus/Blokir vendor ini? Semua barang mereka akan hilang.')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 px-3 py-1.5 rounded-lg font-bold transition shadow-sm"><i class="fas fa-ban"></i></button>
-                                        </form>
+                                        <!-- Perubahan Tombol Aksi Banned Sementara -->
+                                        @if($v->vendor_status == 'approved')
+                                            <form action="/admin/vendors/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Banned sementara vendor ini?\n\nSemua produk mereka akan disembunyikan otomatis dari pelanggan.')">
+                                                @csrf @method('PATCH')
+                                                <button type="submit" class="bg-amber-50 hover:bg-amber-500 hover:text-white text-amber-600 px-3 py-1.5 rounded-lg font-bold transition shadow-sm" title="Banned Sementara"><i class="fas fa-user-clock"></i></button>
+                                            </form>
+                                        @elseif($v->vendor_status == 'suspended')
+                                            <form action="/admin/vendors/{{ $v->id }}/activate" method="POST" onsubmit="return confirm('Buka banned vendor ini?\n\nProduk mereka akan kembali tampil di halaman pelanggan.')">
+                                                @csrf @method('PATCH')
+                                                <button type="submit" class="bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 px-3 py-1.5 rounded-lg font-bold transition shadow-sm" title="Buka Banned"><i class="fas fa-unlock-keyhole"></i></button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach
@@ -474,7 +536,6 @@
         </div>
     </div>
 
-    {{-- MODAL STRUK DETAIL TRANSAKSI --}}
     <div id="transaksiModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-t-4 border-emerald-500 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -516,7 +577,7 @@
                         <span id="tx_total" class="text-blue-600"></span>
                     </div>
                     <div class="flex justify-between bg-emerald-50 p-2 rounded-lg text-emerald-800 font-black text-sm mt-2 border border-emerald-100">
-                        <span>Pendapatan Rentify (Fee):</span>
+                        <span>Rentify (Fee):</span>
                         <span id="tx_fee"></span>
                     </div>
                 </div>
@@ -586,7 +647,17 @@
             let total = parseFloat(data.total_price || 0);
             let sewaMarkup = total - ongkir;
             let sewaAsli = sewaMarkup / 1.05;
-            let fee = data.rentify_fee ? parseFloat(data.rentify_fee) : (sewaMarkup - sewaAsli);
+            
+            // PERBAIKAN 3: Tangani bug JavaScript saat membaca angka 0 dari database[cite: 19]
+            let rentifyFee = parseFloat(data.rentify_fee || 0);
+            let fee = rentifyFee > 0 ? rentifyFee : (sewaMarkup - sewaAsli);
+
+            // Jika status pesanan dibatalkan/ditolak, paksakan fee menjadi 0[cite: 19]
+            let status = (data.status || 'pending').toLowerCase();
+            if (['dibatalkan', 'batal', 'cancelled', 'ditolak'].includes(status)) {
+                fee = 0;
+            }
+
             document.getElementById('tx_fee').innerText = fmt(fee);
 
             let itemsHtml = '';

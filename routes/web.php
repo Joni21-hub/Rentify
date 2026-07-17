@@ -95,6 +95,10 @@ Route::prefix('admin')->name('admin.')
     Route::get('penarikan', [AdminPenarikanController::class, 'index'])->name('penarikan.index');
     Route::post('penarikan/{id}/approve', [AdminPenarikanController::class, 'approve'])->name('penarikan.approve');
     Route::post('penarikan/{id}/reject', [AdminPenarikanController::class, 'reject'])->name('penarikan.reject');
+
+    // Rute Banned Sementara Vendor
+    Route::patch('/vendors/{id}/suspend', [App\Http\Controllers\Admin\AdminDashboardController::class, 'suspendVendor']);
+    Route::patch('/vendors/{id}/activate', [App\Http\Controllers\Admin\AdminDashboardController::class, 'activateVendor']);
 });
 
 

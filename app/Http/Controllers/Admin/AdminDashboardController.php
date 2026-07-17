@@ -140,4 +140,30 @@ class AdminDashboardController extends Controller
         $user->delete();
         return redirect()->back()->with('success', 'Akun pengguna/vendor berhasil dihapus dari sistem.');
     }
+
+    // --- FITUR BARU: BANNED SEMENTARA VENDOR ---
+    
+    public function suspendVendor($id)
+    {
+        $vendor = User::findOrFail($id);
+        $vendor->vendor_status = 'suspended';
+        $vendor->save();
+
+        // Menyembunyikan semua produk milik vendor ini dari katalog Customer
+        Barang::where('vendor_id', $id)->update(['is_approved' => 0]);
+
+        return redirect()->back()->with('error', "Akses Vendor '{$vendor->vendor_name}' telah Ditangguhkan (Banned). Semua produknya otomatis disembunyikan.");
+    }
+
+    public function activateVendor($id)
+    {
+        $vendor = User::findOrFail($id);
+        $vendor->vendor_status = 'approved';
+        $vendor->save();
+
+        // Menampilkan kembali semua produk milik vendor ini ke pelanggan
+        Barang::where('vendor_id', $id)->update(['is_approved' => 1]);
+
+        return redirect()->back()->with('success', "Banned dibuka! Vendor '{$vendor->vendor_name}' dan produknya telah aktif kembali.");
+    }
 }
