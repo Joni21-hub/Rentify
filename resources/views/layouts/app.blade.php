@@ -21,6 +21,16 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ================================================================= -->
+    <!-- PWA RENTIFY META TAGS -->
+    <!-- ================================================================= -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#1E4DAA">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260498/ukuran_satu_g4ihwu.png">
+    
     @stack('head')
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -93,6 +103,65 @@
                 confirmButtonText: 'Perbaiki'
             });
         @endif
+    </script>
+
+    <!-- ================================================================= -->
+    <!-- TOMBOL INSTALL PWA & REGISTRASI SERVICE WORKER -->
+    <!-- ================================================================= -->
+    <div id="installPwaContainer" style="display: none;" class="fixed bottom-6 right-6 z-50">
+        <button id="installPwaBtn" class="bg-[#1E4DAA] hover:bg-[#0D1B3E] text-white font-bold py-3 px-6 rounded-2xl shadow-2xl border-2 border-white flex items-center gap-3 transition-all transform hover:scale-105">
+            <i class="fa-solid fa-download"></i>
+            <span>Install Aplikasi Rentify</span>
+        </button>
+    </div>
+
+    <script>
+        // 1. Mendaftarkan Service Worker ke Browser
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Rentify PWA: Service Worker Berhasil Didaftarkan'))
+                    .catch(err => console.error('Rentify PWA: Gagal Daftar Service Worker', err));
+            });
+        }
+
+        // 2. Logika Menampilkan Tombol "Install Aplikasi"
+        let deferredPrompt;
+        const installContainer = document.getElementById('installPwaContainer');
+        const installBtn = document.getElementById('installPwaBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Mencegah Chrome menampilkan prompt mini otomatis
+            e.preventDefault();
+            deferredPrompt = e;
+            // Tampilkan tombol install melayang di pojok kanan bawah
+            installContainer.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User menyetujui instalasi aplikasi');
+                }
+                deferredPrompt = null;
+                installContainer.style.display = 'none';
+            }
+        });
+
+        // Menyembunyikan tombol jika aplikasi sudah berhasil diinstal
+        window.addEventListener('appinstalled', () => {
+            installContainer.style.display = 'none';
+            deferredPrompt = null;
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Diinstal!',
+                text: 'Aplikasi Rentify sekarang ada di layar utama HP Anda.',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        });
     </script>
 
     @stack('scripts')
