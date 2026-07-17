@@ -149,7 +149,6 @@
                                 @forelse($pendingBarangs as $barang)
                                 <tr class="hover:bg-slate-50/30 transition">
                                     <td class="p-4 pl-6 font-bold text-slate-700">{{ $barang->nama }}</td>
-                                    <!-- PERBAIKAN 1: Menambahkan ? (null safe) agar tidak crash jika vendor terhapus -->
                                     <td class="p-4 text-slate-500">{{ $barang->vendor?->vendor_name ?? 'Umum' }}</td>
                                     <td class="p-4 text-center">
                                         <button onclick="openProductModal('{{ json_encode($barang) }}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition">
@@ -363,12 +362,18 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                <!-- PERBAIKAN 2: Menggunakan forelse agar ada pesan kosong, dan null safe ? pada relasi vendor -->
                                 @forelse($allBarangs as $p)
                                 <tr class="hover:bg-slate-50/60 transition">
                                     <td class="p-4 pl-6">
                                         <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
-                                            <img src="{{ $p->cover_photo ? Storage::url($p->cover_photo) : 'https://placehold.co/50' }}" class="w-full h-full object-cover">
+                                            <!-- PERBAIKAN CLOUDINARY DI TABEL INVENTARIS PRODUK -->
+                                            @php
+                                                $coverUrl = 'https://placehold.co/50?text=No+Img';
+                                                if($p->cover_photo){
+                                                    $coverUrl = str_starts_with($p->cover_photo, 'http') ? $p->cover_photo : Storage::url($p->cover_photo);
+                                                }
+                                            @endphp
+                                            <img src="{{ $coverUrl }}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/50?text=No+Img'">
                                         </div>
                                     </td>
                                     <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate">{{ $p->nama }}</td>
@@ -424,7 +429,6 @@
                                         <p class="text-emerald-600 font-bold text-xs mt-1"><i class="fab fa-whatsapp"></i> {{ $v->whatsapp_vendor ?? '-' }}</p>
                                     </td>
                                     <td class="p-4 text-center">
-                                        <!-- Perubahan Status Label -->
                                         @if($v->vendor_status == 'approved')
                                             <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">Aktif</span>
                                         @elseif($v->vendor_status == 'suspended')
@@ -434,7 +438,6 @@
                                         @endif
                                     </td>
                                     <td class="p-4 text-center">
-                                        <!-- Perubahan Tombol Aksi Banned Sementara -->
                                         @if($v->vendor_status == 'approved')
                                             <form action="/admin/vendors/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Banned sementara vendor ini?\n\nSemua produk mereka akan disembunyikan otomatis dari pelanggan.')">
                                                 @csrf @method('PATCH')
@@ -499,18 +502,28 @@
         </div>
     </main>
 
+    <!-- MODAL POPUP PENGAJUAN PRODUK DENGAN FOTO CLOUDINARY -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto border-t-4 border-[#0369a1]">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Detail Formulir Pengajuan Produk</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition">&times;</button>
             </div>
+            
             <div class="space-y-4 text-sm">
-                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">NAMA BARANG</p><p id="md_nama" class="font-black text-slate-800 text-base"></p></div>
-                    <div><p class="text-[10px] text-slate-400 font-bold uppercase">KONDISI FISIK</p><p id="md_kondisi" class="font-black text-amber-600 text-base"></p></div>
+                <!-- PERBAIKAN 2: Penambahan Elemen Foto ke dalam Modal -->
+                <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="w-24 h-24 rounded-lg overflow-hidden border border-slate-200 shadow-sm shrink-0 bg-white p-1">
+                        <img id="md_foto" src="" class="w-full h-full object-cover rounded" onerror="this.src='https://placehold.co/150?text=No+Img'">
+                    </div>
+                    <div class="flex-1 grid grid-cols-2 gap-4">
+                        <div><p class="text-[10px] text-slate-400 font-bold uppercase">NAMA BARANG</p><p id="md_nama" class="font-black text-slate-800 text-base"></p></div>
+                        <div><p class="text-[10px] text-slate-400 font-bold uppercase">KONDISI FISIK</p><p id="md_kondisi" class="font-black text-amber-600 text-base"></p></div>
+                    </div>
                 </div>
+
                 <div><p class="text-xs text-slate-500 font-bold mb-1 ml-1"><i class="fas fa-align-left mr-1"></i> DESKRIPSI PRODUK</p><p id="md_deskripsi" class="text-slate-600 bg-slate-50 p-4 rounded-xl text-xs leading-relaxed border border-slate-100"></p></div>
+                
                 <div class="grid grid-cols-3 gap-3 text-center">
                     <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl"><p class="text-[9px] text-blue-600 font-black tracking-widest uppercase">TARIF SEWA / HARI</p><p id="md_harga" class="font-black text-blue-900 text-lg"></p></div>
                     <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl"><p class="text-[9px] text-emerald-600 font-black tracking-widest uppercase">DEPOSIT JAMINAN</p><p id="md_deposit" class="font-black text-emerald-900 text-lg"></p></div>
@@ -609,6 +622,20 @@
 
         function openProductModal(dataString) {
             const data = JSON.parse(dataString);
+            
+            // Logika Deteksi Gambar Cloudinary / Storage Asli (Fix JS)
+            let photoUrl = 'https://placehold.co/150?text=No+Img';
+            if (data.cover_photo) {
+                if (data.cover_photo.startsWith('http')) {
+                    photoUrl = data.cover_photo; // Gambar dari Cloudinary
+                } else {
+                    // Gambar dari Storage Lokal
+                    photoUrl = data.cover_photo.replace('public/', '/storage/');
+                    if(!photoUrl.startsWith('/')) photoUrl = '/' + photoUrl;
+                }
+            }
+            document.getElementById('md_foto').src = photoUrl;
+
             document.getElementById('md_nama').innerText = data.nama || '-';
             document.getElementById('md_kondisi').innerText = data.kondisi || '-';
             document.getElementById('md_deskripsi').innerText = data.deskripsi || 'Tidak ada deskripsi.';
@@ -617,6 +644,7 @@
             document.getElementById('md_harga').innerText = fmt(data.harga_sewa_harian || 0);
             document.getElementById('md_deposit').innerText = fmt(data.deposit || 0);
             document.getElementById('md_denda').innerText = fmt(data.denda_per_hari || 0);
+            
             document.getElementById('productModal').classList.remove('hidden');
         }
         function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
@@ -648,11 +676,9 @@
             let sewaMarkup = total - ongkir;
             let sewaAsli = sewaMarkup / 1.05;
             
-            // PERBAIKAN 3: Tangani bug JavaScript saat membaca angka 0 dari database[cite: 19]
             let rentifyFee = parseFloat(data.rentify_fee || 0);
             let fee = rentifyFee > 0 ? rentifyFee : (sewaMarkup - sewaAsli);
 
-            // Jika status pesanan dibatalkan/ditolak, paksakan fee menjadi 0[cite: 19]
             let status = (data.status || 'pending').toLowerCase();
             if (['dibatalkan', 'batal', 'cancelled', 'ditolak'].includes(status)) {
                 fee = 0;
