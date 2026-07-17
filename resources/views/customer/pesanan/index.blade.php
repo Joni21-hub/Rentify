@@ -76,7 +76,7 @@
                 $waClean = preg_replace('/[^0-9]/', '', $waRaw);
                 if (substr($waClean, 0, 1) === '0') $waClean = '62' . substr($waClean, 1);
                 
-                $pesanWa = "Halo Toko *{$order->vendor_name}*, saya ingin menanyakan status pesanan saya dengan ID: *INV-{$order->id}*. Terima kasih.";
+                $pesanWa = "Halo Toko *{$order->vendor->vendor_name ?? 'Vendor' }*, saya ingin menanyakan status pesanan saya dengan ID: *INV-{$order->id}*. Terima kasih.";
                 $linkWa = "https://wa.me/{$waClean}?text=" . urlencode($pesanWa);
 
                 $waktuMulai = \Carbon\Carbon::parse($order->start_rent, 'Asia/Jakarta');
@@ -96,7 +96,7 @@
                 <!-- Body Kartu (Info Toko & Barang) -->
                 <div style="padding: 18px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f0f9ff; padding-bottom: 10px;">
-                        <span style="font-size: 14px; font-weight: 900; color: #0ea5e9;">{{ $order->vendor_name }}</span>
+                        <span style="font-size: 14px; font-weight: 900; color: #0ea5e9;">{{ $order->vendor->vendor_name ?? 'Vendor' }}</span>
                         <span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 3px 8px; border-radius: 6px; font-weight: 800; border: 1px solid #bae6fd;">Jaminan: {{ $order->jaminan ?? 'KTP' }}</span>
                     </div>
 

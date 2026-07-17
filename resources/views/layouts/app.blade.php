@@ -44,7 +44,6 @@
     <!-- GLOBAL SWEETALERT2 NOTIFICATION (TEMA RENTIFY MODERN) -->
     <!-- ================================================================= -->
     <script>
-        // Pengaturan default tombol agar senada dengan Tailwind Rentify
         const swalRentify = Swal.mixin({
             customClass: {
                 popup: 'rounded-3xl shadow-2xl border border-gray-100 p-6',
@@ -54,7 +53,6 @@
             buttonsStyling: false
         });
 
-        // 1. Menangkap Pesan Berhasil (Contoh: Masuk Keranjang, Pesanan Dibuat, Login Berhasil)
         @if(session('success'))
             swalRentify.fire({
                 icon: 'success',
@@ -66,7 +64,6 @@
             });
         @endif
 
-        // 2. Menangkap Pesan Eror (Contoh: Gagal Login, Kata Sandi Salah, Akses Ditolak)
         @if(session('error'))
             swalRentify.fire({
                 icon: 'error',
@@ -76,7 +73,6 @@
             });
         @endif
 
-        // 3. Menangkap Pesan Info/Peringatan (Contoh: Stok Barang Menipis, Sesi Habis)
         @if(session('info') || session('warning'))
             swalRentify.fire({
                 icon: '{{ session("info") ? "info" : "warning" }}',
@@ -86,7 +82,6 @@
             });
         @endif
 
-        // 4. Menangkap Eror Validasi Form (Contoh: Lupa Isi Email, Format Salah saat Daftar)
         @if($errors->any())
             swalRentify.fire({
                 icon: 'warning',
@@ -106,62 +101,16 @@
     </script>
 
     <!-- ================================================================= -->
-    <!-- TOMBOL INSTALL PWA & REGISTRASI SERVICE WORKER -->
+    <!-- REGISTRASI SERVICE WORKER (TANPA TOMBOL INSTALL) -->
     <!-- ================================================================= -->
-    <div id="installPwaContainer" style="display: none;" class="fixed bottom-6 right-6 z-50">
-        <button id="installPwaBtn" class="bg-[#1E4DAA] hover:bg-[#0D1B3E] text-white font-bold py-3 px-6 rounded-2xl shadow-2xl border-2 border-white flex items-center gap-3 transition-all transform hover:scale-105">
-            <i class="fa-solid fa-download"></i>
-            <span>Install Aplikasi Rentify</span>
-        </button>
-    </div>
-
     <script>
-        // 1. Mendaftarkan Service Worker ke Browser
+        // Tetap mendaftarkan PWA di background agar aplikasi berjalan cepat
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Rentify PWA: Service Worker Berhasil Didaftarkan'))
-                    .catch(err => console.error('Rentify PWA: Gagal Daftar Service Worker', err));
+                    .catch(err => console.error('Rentify PWA: Gagal', err));
             });
         }
-
-        // 2. Logika Menampilkan Tombol "Install Aplikasi"
-        let deferredPrompt;
-        const installContainer = document.getElementById('installPwaContainer');
-        const installBtn = document.getElementById('installPwaBtn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Mencegah Chrome menampilkan prompt mini otomatis
-            e.preventDefault();
-            deferredPrompt = e;
-            // Tampilkan tombol install melayang di pojok kanan bawah
-            installContainer.style.display = 'block';
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User menyetujui instalasi aplikasi');
-                }
-                deferredPrompt = null;
-                installContainer.style.display = 'none';
-            }
-        });
-
-        // Menyembunyikan tombol jika aplikasi sudah berhasil diinstal
-        window.addEventListener('appinstalled', () => {
-            installContainer.style.display = 'none';
-            deferredPrompt = null;
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil Diinstal!',
-                text: 'Aplikasi Rentify sekarang ada di layar utama HP Anda.',
-                timer: 3000,
-                showConfirmButton: false
-            });
-        });
     </script>
 
     @stack('scripts')

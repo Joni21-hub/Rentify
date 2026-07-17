@@ -57,7 +57,7 @@
         </a>
         <p class="helper-text">*Atau ketuk dan tahan lama pada gambar QRIS untuk menyimpan langsung</p>
         
-        <a href="{{ route('customer.struk', $id) }}" class="btn-selesai">Selesai Pembayaran</a>
+        <a href="{{ route('customer.struk', $id) }}" class="btn-selesai">Cek status pembayaran</a>
         
         <div class="warning-text">*Harap selesaikan pembayaran dalam waktu 15 menit agar pesanan tidak otomatis dibatalkan.</div>
     </div>
