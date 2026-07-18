@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'RENTIFY') — Rental Marketplace</title>
+    <title>@yield('title', 'RENTIFY') — Marketplace Rental</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {

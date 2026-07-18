@@ -49,10 +49,6 @@
                     <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">
                         <i class="fa-brands fa-whatsapp text-blue-200 text-sm"></i>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-xs">Integrasi WhatsApp</h4>
-                        <p class="text-[10px] text-blue-200">Notifikasi pesanan langsung ke HP Anda.</p>
-                    </div>
                 </div>
             </div>
         </div>
