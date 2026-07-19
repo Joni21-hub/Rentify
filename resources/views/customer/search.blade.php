@@ -10,14 +10,14 @@
 
 <div class="min-h-screen bg-slate-50 pb-10">
 
-    <!-- 1. HEADER PENCARIAN ALA SHOPEE (Menyatu di atas, Bersih & Adem) -->
+    <!-- 1. HEADER PENCARIAN ALA SHOPEE -->
     <div class="bg-white sticky top-0 z-50 px-4 py-3 shadow-sm flex gap-3 items-center">
         <!-- Tombol Kembali -->
         <a href="{{ route('customer.home') }}" class="text-slate-500 hover:text-sky-600 text-xl transition">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
         
-        <!-- Form Search Bar (Bentuk Kapsul Outline Biru) -->
+        <!-- Form Search Bar -->
         <form action="{{ route('customer.search') }}" method="GET" class="flex-1 flex items-center border-2 border-sky-500 rounded-full bg-white px-4 py-1.5 overflow-hidden transition focus-within:ring-2 focus-within:ring-sky-200">
             @if($kategoriId)
                 <input type="hidden" name="kategori" value="{{ $kategoriId }}">
@@ -31,7 +31,7 @@
         </form>
     </div>
 
-    <!-- 2. FILTER KATEGORI (Pill Buttons yang tipis dan bersih) -->
+    <!-- 2. FILTER KATEGORI -->
     <div class="bg-white px-4 py-3 mb-2 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
         <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             <a href="{{ route('customer.search', ['q' => $keyword]) }}" 
@@ -50,7 +50,6 @@
     <!-- 3. AREA KONTEN (Hasil Pencarian) -->
     <div class="px-3">
         
-        <!-- Judul Kecil Ala Marketplace -->
         @if(!empty($keyword) || !empty($kategoriId))
             <div class="text-xs font-bold text-slate-500 mb-3 ml-1 uppercase tracking-wide">
                 Hasil Pencarian Pilihan ({{ $barangs->total() }})
@@ -62,27 +61,27 @@
         @endif
 
         @if($barangs->isEmpty())
-            <!-- EMPTY STATE (Sangat Minimalis Ala Shopee) -->
+            <!-- EMPTY STATE -->
             <div class="flex flex-col items-center justify-center mt-16 text-center px-6">
                 <div class="w-20 h-20 bg-slate-100 text-slate-300 rounded-full flex items-center justify-center text-4xl mb-4">
                     <i class="fa-solid fa-box-open"></i>
                 </div>
                 <h3 class="font-bold text-slate-700 text-lg mb-1">Pencarian Tidak Ditemukan</h3>
-                <p class="text-sm text-slate-500 mb-6">Coba gunakan kata kunci lain atau kurangi filter pencarian Anda.</p>
+                <p class="text-sm text-slate-500 mb-6">Barang tidak ada atau lokasinya berada di luar radius 50 KM dari titik Anda.</p>
                 <a href="{{ route('customer.search') }}" class="border border-sky-500 text-sky-600 font-bold text-sm px-6 py-2 rounded-full hover:bg-sky-50 transition">
                     Hapus Pencarian
                 </a>
             </div>
         @else
-            <!-- GRID PRODUK (2 Kolom Presisi Tinggi) -->
+            <!-- GRID PRODUK -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                 @foreach($barangs as $barang)
                     @php 
-                        $hargaTampil = $barang->harga_sewa_harian * 1.05; 
+                        $hargaTampil = $barang->harga_sewa_customer ?? $barang->harga_sewa_harian; 
                     @endphp
-                    <a href="{{ route('customer.barang.show', $barang->slug) }}" class="bg-white rounded-lg border border-slate-100 overflow-hidden hover:shadow-md hover:border-sky-200 transition duration-200 flex flex-col group relative">
+                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="bg-white rounded-lg border border-slate-100 overflow-hidden hover:shadow-md hover:border-sky-200 transition duration-200 flex flex-col group relative">
                         
-                        <!-- Area Foto: Ratio 1:1, Latar Putih Bersih, Gambar tidak kepotong (object-contain) -->
+                        <!-- Area Foto -->
                         <div class="relative w-full aspect-square bg-white flex items-center justify-center p-2 border-b border-slate-50">
                             @if($barang->cover_photo)
                                 <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition duration-300">
@@ -90,16 +89,22 @@
                                 <i class="fa-solid fa-image text-slate-200 text-3xl"></i>
                             @endif
                             
-                            <!-- Badge Stok Kecil di Pojok Kanan Atas Foto -->
+                            <!-- Badge Stok -->
                             <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm border border-emerald-100 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
                                 Stok: {{ $barang->stok_total }}
                             </div>
+
+                            <!-- FITUR BARU: Label Jarak KM di Pojok Kiri Bawah Foto -->
+                            @if(isset($barang->jarak))
+                            <div class="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-sky-600 shadow-sm border border-sky-100">
+                                <i class="fa-solid fa-location-dot mr-1"></i>{{ number_format($barang->jarak, 1, ',', '') }} KM
+                            </div>
+                            @endif
                         </div>
 
                         <!-- Area Detail Barang -->
                         <div class="p-2.5 flex flex-col flex-1 justify-between">
                             <div>
-                                <!-- Nama Barang (Maksimal 2 Baris) -->
                                 <h3 class="text-[13px] font-medium text-slate-700 leading-snug line-clamp-2 mb-1.5">
                                     {{ $barang->nama }}
                                 </h3>
@@ -120,7 +125,7 @@
                 @endforeach
             </div>
 
-            <!-- Pagination (Navigasi Halaman) -->
+            <!-- Pagination -->
             <div class="mt-8 mb-6">
                 {{ $barangs->links() }}
             </div>

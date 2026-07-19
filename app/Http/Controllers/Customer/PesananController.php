@@ -48,7 +48,7 @@ class PesananController extends Controller
         $feeRentify = $totalSewaMarkup - $sewaAsliVendor;
         $pendapatanVendor = $sewaAsliVendor + $ongkir;
 
-        // FITUR BARU: Kembalikan stok barang ke gudang karena masa sewa sudah selesai dan barang dipulangkan!
+        // PENGEMBALIAN STOK OTOMATIS: Barang kembali tersedia untuk customer lain!
         $orderItems = DB::table('order_items')->where('order_id', $id)->get();
         foreach ($orderItems as $item) {
             \App\Models\Barang::where('id', $item->product_id)->increment('stok_total', $item->quantity);
@@ -62,6 +62,6 @@ class PesananController extends Controller
             'updated_at' => Carbon::now('Asia/Jakarta')
         ]);
 
-        return redirect()->back()->with('success', '🎉 Pesanan berhasil diselesaikan! Terima kasih telah menyewa di Rentify.');
+        return redirect()->back()->with('success', '🎉 Pesanan berhasil diselesaikan! Stok barang telah dikembalikan ke etalase.');
     }
 }

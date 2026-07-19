@@ -38,8 +38,21 @@
                 <i class="fa-solid fa-chevron-right text-slate-300"></i>
             </a>
 
-            <!-- FITUR BARU: BANTUAN CALL CENTER (KECIL & BERSINAR BIRU) -->
-            <!-- Ganti 6281234567890 dengan nomor WhatsApp Admin Rentify yang asli -->
+            <!-- FITUR BARU: GANTI LOKASI CUSTOMER (BISA CARI BARANG SAAT LIBURAN) -->
+            <a href="{{ url('/customer/lokasi') }}" class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:border-sky-300 transition group">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-gradient-to-r from-sky-400 to-sky-500 text-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.3)]">
+                        <i class="fa-solid fa-location-dot text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="block font-extrabold text-slate-700">Ganti Titik Lokasi</span>
+                        <span class="block text-xs text-slate-400 mt-0.5">Atur GPS untuk cari barang terdekat</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-sky-500 transition"></i>
+            </a>
+
+            <!-- BANTUAN CALL CENTER (KECIL & BERSINAR BIRU) -->
             @php 
                 $pesanBantuan = "Halo admin, saya mengalami masalah di Rentify, mohon bantuannya.";
                 $linkWaAdmin = "https://wa.me/6283183494835?text=" . urlencode($pesanBantuan);
@@ -57,7 +70,7 @@
                 <i class="fa-brands fa-whatsapp text-sky-500 text-lg"></i>
             </a>
 
-            <!-- TOMBOL KELUAR AKUN (SUDAH DIPERKECIL & LEBIH RAPI) -->
+            <!-- TOMBOL KELUAR AKUN -->
             <form action="/logout" method="POST" class="w-full mt-6 flex justify-center">
                 @csrf
                 <button type="submit" class="flex items-center justify-center bg-white px-5 py-2.5 rounded-full shadow-sm border border-rose-100 hover:border-rose-300 hover:bg-rose-50 transition gap-2 group">
