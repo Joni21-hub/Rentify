@@ -195,6 +195,6 @@ Route::prefix('customer')->name('customer.')
     Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'index'])->name('pesanan');
     Route::post('/pesanan/{id}/selesai', [\App\Http\Controllers\Customer\PesananController::class, 'selesaikan'])->name('pesanan.selesai');
 
-    Route::get('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('customer.lokasi');
-    Route::post('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('customer.lokasi.store');
+    Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
+    Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
 });
