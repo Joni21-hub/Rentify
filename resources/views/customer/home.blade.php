@@ -56,46 +56,92 @@
             @endif
         </section>
 
-        <!-- GRID PRODUK -->
-        <section class="px-3">
-            <div class="flex items-center justify-between mb-2.5 px-1">
-                <h3 class="font-black text-sky-600 text-[14px] uppercase tracking-wide">Rekomendasi Untukmu</h3>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-2.5">
-                @forelse($daftarBarang as $barang)
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden relative flex flex-col hover:shadow-md transition">
-                        
-                        <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
-                            @if($barang->cover_photo)
-                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
-                            @endif
-                        </a>
-                        
-                        @php
-                            $isFavorit = Auth::check() ? \App\Models\Wishlist::where('user_id', Auth::id())->where('barang_id', $barang->id)->exists() : false;
-                        @endphp
-                        <form action="{{ route('customer.wishlist.toggle', $barang->id) }}" method="POST" class="absolute top-2 right-2 z-10">
-                            @csrf
-                            <button type="submit" class="w-7 h-7 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} shadow-sm border border-slate-100">
-                                <i class="fa-solid fa-heart text-[11px]"></i>
-                            </button>
-                        </form>
-
-                        <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="p-2.5 flex flex-col flex-1 justify-between border-t border-slate-50">
-                            <h4 class="text-[12.5px] font-medium text-slate-700 leading-snug line-clamp-2 mb-1.5">{{ $barang->nama }}</h4>
-                            <div class="text-sky-600 font-black text-[14.5px]">
-                                Rp{{ number_format($barang->harga_sewa_customer, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/hari</span>
-                            </div>
+        <!-- KONDISI JIKA USER BELUM ATUR LOKASI -->
+        @if(isset($butuhLokasi) && $butuhLokasi)
+            <section class="px-3 mt-6">
+                <div class="bg-gradient-to-br from-sky-400 to-[#0369a1] rounded-2xl p-6 text-center shadow-[0_4px_20px_rgba(14,165,233,0.3)] border border-sky-300 relative overflow-hidden">
+                    <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+                    <div class="absolute -bottom-8 -left-8 w-32 h-32 bg-sky-200/20 rounded-full blur-2xl"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4 backdrop-blur-sm border border-white/30 shadow-inner">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <h3 class="text-white font-black text-lg mb-2">Tentukan Lokasimu Dulu Yuk!</h3>
+                        <p class="text-sky-100 text-[13px] font-medium leading-relaxed mb-6">
+                            Biar kami bisa mencarikan barang sewaan terdekat (maksimal 50 KM) dari tempatmu.
+                        </p>
+                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 bg-white text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 rounded-full shadow-lg transition-transform hover:scale-105">
+                            <i class="fa-solid fa-map-pin"></i> Atur Titik Lokasi
                         </a>
                     </div>
-                @empty
-                    <div class="col-span-2 bg-white rounded-xl p-6 text-center text-[12px] text-slate-400 border border-slate-100">Belum ada barang.</div>
-                @endforelse
-            </div>
-        </section>
+                </div>
+            </section>
+
+        <!-- KONDISI JIKA SUDAH ADA LOKASI TAPI BARANG KOSONG DI RADIUS 50KM -->
+        @elseif($daftarBarang->isEmpty())
+            <section class="px-3 mt-6">
+                <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-sky-100">
+                    <div class="w-20 h-20 bg-sky-50 text-sky-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+                        <i class="fa-solid fa-face-frown-open"></i>
+                    </div>
+                    <h3 class="text-slate-700 font-black text-lg mb-2">Yah, Belum Ada Barang Nih...</h3>
+                    <p class="text-slate-500 text-[13px] leading-relaxed mb-6">
+                        Maaf banget, sepertinya belum ada toko yang menyewakan barang di radius 50 KM dari lokasimu saat ini.
+                    </p>
+                    <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 bg-sky-100 text-sky-600 hover:bg-sky-200 font-bold text-[13px] px-5 py-2.5 rounded-xl transition">
+                        <i class="fa-solid fa-location-crosshairs"></i> Ganti Titik Lokasi
+                    </a>
+                </div>
+            </section>
+
+        <!-- KONDISI NORMAL (TAMPILKAN BARANG) -->
+        @else
+            <section class="px-3">
+                <div class="flex items-center justify-between mb-2.5 px-1">
+                    <h3 class="font-black text-sky-600 text-[14px] uppercase tracking-wide">Di Sekitar Anda</h3>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2.5">
+                    @foreach($daftarBarang as $barang)
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden relative flex flex-col hover:shadow-md transition">
+                            
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
+                                @if($barang->cover_photo)
+                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
+                                @endif
+                                
+                                <!-- Label Jarak -->
+                                @if(isset($barang->jarak))
+                                <div class="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-sky-600 shadow-sm border border-sky-100">
+                                    <i class="fa-solid fa-location-dot mr-1"></i>{{ number_format($barang->jarak, 1, ',', '') }} KM
+                                </div>
+                                @endif
+                            </a>
+                            
+                            @php
+                                $isFavorit = Auth::check() ? \App\Models\Wishlist::where('user_id', Auth::id())->where('barang_id', $barang->id)->exists() : false;
+                            @endphp
+                            <form action="{{ route('customer.wishlist.toggle', $barang->id) }}" method="POST" class="absolute top-2 right-2 z-10">
+                                @csrf
+                                <button type="submit" class="w-7 h-7 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} shadow-sm border border-slate-100">
+                                    <i class="fa-solid fa-heart text-[11px]"></i>
+                                </button>
+                            </form>
+
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="p-2.5 flex flex-col flex-1 justify-between border-t border-slate-50">
+                                <h4 class="text-[12.5px] font-medium text-slate-700 leading-snug line-clamp-2 mb-1.5">{{ $barang->nama }}</h4>
+                                <div class="text-sky-600 font-black text-[14.5px]">
+                                    Rp{{ number_format($barang->harga_sewa_customer, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/hari</span>
+                                </div>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </main>
 
     <!-- BOTTOM NAV -->
