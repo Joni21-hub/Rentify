@@ -39,6 +39,12 @@
         <span onclick="history.back()" style="cursor: pointer; font-size: 20px;">←</span> Checkout Rentify
     </div>
 
+    @if(session('error'))
+        <div style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 10px; margin-bottom: 15px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ session('error') }}
+        </div>
+    @endif
+
     <form action="{{ route('customer.checkout.store') }}" method="POST" id="form-checkout">
         @csrf
         <input type="hidden" name="cust_lat" id="global_lat">
@@ -56,10 +62,7 @@
             $bisaDiantar = $items->every(fn($i) => $i->barang->is_delivery_supported == 1);
             $latProduk = $barangPertama->latitude ?? '0';
             $lonProduk = $barangPertama->longitude ?? '0';
-            $alamatProduk = $barangPertama->alamat ?? 'Alamat produk belum diatur oleh vendor.';
             $namaTokoAsli = $vendor->vendor_name ?? $vendor->name ?? 'Vendor Rentify';
-            
-            // KUNCI SAKTI: Otomatis menarik durasi hari yang dipilih dari Keranjang!
             $durasiDefault = $items->first()->durasi_sewa ?? 1;
         @endphp
         
@@ -94,7 +97,6 @@
                             Rp {{ number_format($hargaTampil, 0, ',', '.') }} <span style="font-size: 11px; font-weight: normal; color:#64748b;">/hari</span>
                         </div>
                         @if($item->barang->deposit > 0)
-                            <!-- MURNI BIRU: Warna kuning deposit diganti dengan Ice Blue yang rapi -->
                             <div style="font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-top: 6px; border: 1px solid #bae6fd;">
                                 Deposit (Bayar di Tempat): Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
                             </div>
@@ -107,7 +109,7 @@
                 </div>
             @endforeach
 
-            <!-- LAMA SEWA: OTOMATIS TERISI DARI KERANJANG -->
+            <!-- LAMA SEWA -->
             <div class="section-title mt-4">Lama Sewa</div>
             <div class="clean-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
                 <span style="font-size: 14px; font-weight: 600; color: #475569;">Berapa hari Anda menyewa?</span>
@@ -138,12 +140,14 @@
                     <span class="radio-label">Ambil di Tempat</span>
                     <div class="radio-price"><span>Rp 0</span> <input type="radio" name="opsi_pengiriman[{{ $vendorId }}]" value="ambil" class="radio-opsi" onchange="hitungSemuaTotal()" checked style="width:16px; height:16px;"></div>
                 </label>
+                
+                <!-- BENTENG 1: ANTI-BYPASS! ALAMAT & MAPS DISEMBUNYIKAN SEBELUM CHECKOUT -->
                 <div id="panel_ambil_{{ $vendorId }}" class="panel-lokasi active">
                     <div style="font-weight: 800; color: #0369a1; margin-bottom: 5px;">📍 Lokasi Toko Pengambilan:</div>
-                    <div style="color: #334155;">{{ $alamatProduk }}</div>
-                    @if($latProduk != '0')
-                    <a href="https://maps.google.com/?q={{ $latProduk }},{{ $lonProduk }}" target="_blank" style="display: inline-block; margin-top: 8px; color: #0284c7; font-weight: bold; text-decoration: underline;">🗺️ Lihat di Google Maps</a>
-                    @endif
+                    <div style="color: #334155; font-weight: 700;">{{ $namaTokoAsli }}</div>
+                    <div style="margin-top: 8px; font-size: 11.5px; color: #0284c7; background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #bae6fd; font-weight: 600; line-height: 1.4; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <i class="fa-solid fa-lock mr-1"></i> Alamat lengkap & Titik Maps Google disembunyikan demi keamanan. Akan otomatis terbuka di <strong>Riwayat Transaksi</strong> setelah Anda membuat pesanan.
+                    </div>
                 </div>
 
                 @if($bisaDiantar)
@@ -173,9 +177,8 @@
 
         <div class="section-title">Informasi Kontak Anda</div>
         <div class="clean-card p-4" style="border-left: 4px solid #0284c7;">
-            <!-- MURNI BIRU: Tanda bintang diganti warna biru -->
             <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">No WhatsApp <span style="color: #0284c7;">*</span></label>
-            <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()->user()->no_hp ?? '' }}" placeholder="" required style="width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+            <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()->user()->no_hp ?? '' }}" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
         </div>
 
         <div class="section-title mt-4">Metode Pembayaran</div>
@@ -190,7 +193,7 @@
             </label>
         </div>
 
-        <!-- FITUR VOUCHER RENTIFY (MURNI BIRU BERKILAU, KECIL & RAPI) -->
+        <!-- FITUR VOUCHER RENTIFY -->
         <div class="section-title">Voucher Diskon</div>
         <div class="clean-card" id="card-voucher" style="padding: 0; overflow: hidden; transition: all 0.3s; margin-bottom: 20px;">
             <div onclick="toggleVoucher()" style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white;">
@@ -215,7 +218,6 @@
                 <span>Subtotal Produk</span><span id="grand-sewa" style="font-weight: 700; color: #1e293b;">Rp 0</span>
             </div>
             
-            <!-- BARIS DISKON (MURNI BIRU BERCAHAYA) -->
             <div id="row-diskon" style="display: none; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #0284c7; font-weight: 800;">
                 <span>Diskon Rentify (10%)</span><span id="grand-diskon">- Rp 0</span>
             </div>
@@ -243,7 +245,6 @@
     const formatRp = (angka) => 'Rp ' + Math.round(angka).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     let lokasiCustomer = null;
 
-    // LOGIKA VOUCHER MURNI BIRU BERCAHAYA
     function toggleVoucher() {
         const panel = document.getElementById('voucher-panel');
         panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
@@ -255,7 +256,6 @@
         const rowDiskon = document.getElementById('row-diskon');
         
         if (isApplied) {
-            // Efek hidup bercahaya murni warna Biru Rentify!
             card.style.borderColor = '#0ea5e9';
             card.style.boxShadow = '0 0 15px rgba(14, 165, 233, 0.35)';
             card.style.background = '#f0f9ff';
@@ -278,11 +278,11 @@
             document.getElementById('input_kode_voucher').value = 'RENTIFY';
             updateVoucherUI(true);
             hitungSemuaTotal();
-            alert(' Selamat! Voucher RENTIFY berhasil dipasang.');
+            alert('🎉 Selamat! Voucher RENTIFY berhasil dipasang.');
         } else if (kode === '') {
-            alert(' Silakan ketik kode voucher terlebih dahulu!');
+            alert('⚠️ Silakan ketik kode voucher terlebih dahulu!');
         } else {
-            alert(' Kode voucher tidak valid!');
+            alert('❌ Kode voucher tidak valid!');
         }
     }
 
@@ -400,7 +400,6 @@
 
         document.getElementById('grand-sewa').innerText = formatRp(totalSewaSemua);
 
-        // Potongan Diskon 10% jika Voucher RENTIFY aktif
         let potonganVoucher = 0;
         if (document.getElementById('input_kode_voucher').value === 'RENTIFY') {
             potonganVoucher = totalSewaSemua * 0.10;
@@ -447,7 +446,6 @@
     }
 
     window.onload = function() {
-        // Cek jika voucher dibawa langsung dari Keranjang
         if (document.getElementById('input_kode_voucher').value === 'RENTIFY') {
             updateVoucherUI(true);
             document.getElementById('input_kode_voucher_field').value = 'RENTIFY';

@@ -13,7 +13,6 @@ class CheckoutController extends Controller
 {
     public function index(Request $request)
     {
-        // Tangkap kode voucher dari keranjang
         $kodeVoucher = $request->input('kode_voucher');
 
         if ($request->filled('direct_barang_id')) {
@@ -57,7 +56,6 @@ class CheckoutController extends Controller
             return $item->barang->vendor_id;
         });
 
-        // Pass kode voucher ke tampilan checkout
         return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs', 'kodeVoucher'));
     }
 
@@ -100,16 +98,52 @@ class CheckoutController extends Controller
         }
 
         $keranjangPerVendor = $keranjangs->groupBy(fn($item) => $item->barang->vendor_id);
+
+        // BENTENG 2 (SATPAM STOK): Cek ketersediaan stok sebelum membuat order!
+        foreach ($keranjangPerVendor as $vendorId => $items) {
+            foreach ($items as $item) {
+                $barangCek = Barang::find($item->barang_id);
+                if (!$barangCek || $barangCek->stok_total < $item->jumlah) {
+                    return redirect()->back()->with('error', "⚠️ Maaf, stok untuk barang '{$item->barang->nama}' baru saja habis disewa pengguna lain!");
+                }
+            }
+        }
+
         $invoiceIds = [];
         $totalBayarSemua = 0; 
         $nomorWaAman = $request->no_hp;
-        $kodeVoucher = $request->kode_voucher; // Tangkap dari form submit akhir
+        $kodeVoucher = $request->kode_voucher; 
 
         foreach ($keranjangPerVendor as $vendorId => $items) {
             $opsi = $request->opsi_pengiriman[$vendorId] ?? 'ambil';
             $ongkir = (int) ($request->ongkir_vendor[$vendorId] ?? 0);
             $durasi = (int) ($request->durasi_sewa[$vendorId] ?? 1);
             $jaminanTerpilih = $request->jaminan[$vendorId] ?? 'KTP'; 
+
+            // BENTENG 3 (ANTI-HACK ONGKIR): Server hitung ulang jika diantar agar aman dari Inspect Element!
+            if ($opsi === 'diantar') {
+                $latToko = (float) ($items->first()->barang->latitude ?? $items->first()->barang->vendor->latitude ?? 0);
+                $lonToko = (float) ($items->first()->barang->longitude ?? $items->first()->barang->vendor->longitude ?? 0);
+                $latCust = (float) $request->cust_lat;
+                $lonCust = (float) $request->cust_lon;
+
+                if ($latToko && $lonToko && $latCust && $lonCust) {
+                    $earthRadius = 6371;
+                    $dLat = deg2rad($latToko - $latCust);
+                    $dLon = deg2rad($lonToko - $lonCust);
+                    $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($latCust)) * cos(deg2rad($latToko)) * sin($dLon/2) * sin($dLon/2);
+                    $c = 2 * asin(sqrt($a));
+                    $jarakKm = ceil($earthRadius * $c);
+                    
+                    // Kunci tarif server minimal Rp 4.000 atau hasil kali jarak asli
+                    $ongkir = max(4000, $jarakKm * 4000);
+                } else {
+                    // Fallback jika koordinat tidak sempurna
+                    if ($ongkir < 10000) $ongkir = 10000;
+                }
+            } else {
+                $ongkir = 0; // Ambil di tempat wajib Rp 0
+            }
             
             $waktuKembali = $waktuSekarang->copy()->addDays($durasi);
             $subtotalSewa = 0;
@@ -119,7 +153,6 @@ class CheckoutController extends Controller
                 $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
             }
 
-            // Hitung Potongan Voucher (10%) saat dimasukkan ke Database
             $potonganVoucher = 0;
             if ($kodeVoucher === 'RENTIFY') {
                 $potonganVoucher = $subtotalSewa * 0.10;
