@@ -15,7 +15,7 @@ class BarangDetailController extends Controller
      */
     public function show($slug)
     {
-        // Langkah 1: Cari barangnya terlebih dahulu
+        // Cari barangnya
         $barang = Barang::with(['fotos', 'vendor', 'kategori'])
                         ->where(function ($query) use ($slug) {
                             $query->where('slug', $slug)
@@ -23,18 +23,18 @@ class BarangDetailController extends Controller
                         })
                         ->first();
 
-        // Langkah 2: Jika barang memang sudah dihapus permanen
+        // Jika barang tidak ada di database
         if (!$barang) {
             return redirect()->route('customer.home')->with('error', '⚠️ Barang yang Anda cari tidak ditemukan di sistem.');
         }
 
-        // Langkah 3: FILTER TOKO BANNED (Peringatan Jelas, Bukan Error 404)
-        $statusToko = strtolower($barang->vendor->status ?? '');
-        if ($statusToko === 'banned') {
+        // FILTER TOKO BANNED: Cek apakah vendor_status adalah 'suspended'
+        $statusToko = strtolower($barang->vendor->vendor_status ?? '');
+        if ($statusToko === 'suspended') {
             return redirect()->route('customer.home')->with('error', '⚠️ Mohon maaf, barang "' . $barang->nama . '" tidak dapat diakses karena toko pemiliknya sedang ditangguhkan/diblokir sementara oleh Admin.');
         }
 
-        // Langkah 4: Menghitung jarak akurat ke titik GPS customer (Haversine Formula)
+        // Menghitung jarak (Haversine Formula)
         if (Auth::check() && Auth::user()->latitude && Auth::user()->longitude) {
             $lat1 = (float) Auth::user()->latitude;
             $lon1 = (float) Auth::user()->longitude;
@@ -43,7 +43,7 @@ class BarangDetailController extends Controller
             $lon2 = (float) ($barang->longitude ?? $barang->vendor->longitude ?? 0);
 
             if ($lat2 && $lon2 && ($lat2 != 0 || $lon2 != 0)) {
-                $earthRadius = 6371; // Radius Bumi dalam KM
+                $earthRadius = 6371; 
                 $dLat = deg2rad($lat2 - $lat1);
                 $dLon = deg2rad($lon2 - $lon1);
 
@@ -53,7 +53,6 @@ class BarangDetailController extends Controller
             }
         }
 
-        // Mengembalikan ke tampilan halaman detail jika semuanya aman
         return view('customer.barang-detail', compact('barang'));
     }
 }

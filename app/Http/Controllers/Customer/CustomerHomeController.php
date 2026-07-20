@@ -20,10 +20,11 @@ class CustomerHomeController extends Controller
             $user = Auth::user();
             
             if ($user->latitude && $user->longitude) {
-                // FILTER BANNED (BERANDA): Hanya ambil barang yang tokonya TIDAK di-banned
+                // FILTER BANNED: Hanya ambil barang yang tokonya TIDAK di-suspend
                 $semuaBarang = Barang::where('status_barang', 'disetujui')
                     ->whereHas('vendor', function ($query) {
-                        $query->whereNotIn('status', ['banned', 'Banned', 'BANNED']);
+                        $query->where('vendor_status', '!=', 'suspended')
+                              ->orWhereNull('vendor_status'); // Jaga-jaga jika ada vendor tanpa status eksplisit
                     })
                     ->get();
 
