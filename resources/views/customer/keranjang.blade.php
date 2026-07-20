@@ -3,7 +3,6 @@
 @section('content')
 <style>
     nav, header, footer { display: none !important; }
-    /* padding-bottom diperbesar jadi 160px agar daftar barang tidak tertutup blok bawah */
     body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; padding-bottom: 160px; }
     .cart-container { max-width: 600px; margin: 0 auto; background: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
     input[type=number]::-webkit-inner-spin-button, 
@@ -42,6 +41,10 @@
     @else
         <form action="{{ route('customer.checkout') }}" method="GET" id="cart-form" class="flex flex-col flex-1">
             
+            <!-- HIDDEN INPUT UNTUK JADWAL (Akan diisi oleh Modal Kalender) -->
+            <input type="hidden" name="start_date" id="form-start-date">
+            <input type="hidden" name="start_time" id="form-start-time">
+
             <div class="bg-white border-t border-b border-slate-100 mt-2 shadow-sm">
                 @foreach($keranjangs as $item)
                     @php
@@ -90,11 +93,10 @@
                 @endforeach
             </div>
 
-            <!-- BLOK BAWAH TERKUNCI (VOUCHER + CHECKOUT GABUNG JADI SATU) -->
+            <!-- BLOK BAWAH TERKUNCI -->
             <div class="fixed bottom-0 left-0 w-full z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.06)]">
                 <div class="max-w-[600px] mx-auto bg-white border-t border-slate-200 flex flex-col rounded-t-2xl overflow-hidden">
                     
-                    <!-- VOUCHER RENTIFY (DI ATAS TOTAL BAYAR, TERKUNCI DI BAWAH) -->
                     <div id="voucher-container" class="w-full border-b border-slate-100 bg-white transition-all duration-300">
                         <div class="px-5 py-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" id="btn-toggle-voucher">
                             <div class="flex items-center gap-2 text-sky-500 font-bold text-sm">
@@ -105,7 +107,6 @@
                             </div>
                         </div>
                         
-                        <!-- KOTAK KETIK VOUCHER (Muncul ke atas saat diklik) -->
                         <div id="voucher-input-area" class="hidden px-5 pb-4 pt-1 bg-white">
                             <div class="flex gap-3">
                                 <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus:border-sky-400 focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
@@ -115,7 +116,6 @@
                         <input type="hidden" name="kode_voucher" id="hidden-voucher-code" value="">
                     </div>
 
-                    <!-- AREA TOTAL & TOMBOL CHECKOUT -->
                     <div class="px-5 py-3.5 flex items-center justify-between gap-3 bg-white">
                         <label class="flex items-center gap-2 cursor-pointer select-none">
                             <input type="checkbox" id="select-all" class="w-5 h-5 text-sky-500 rounded border-slate-300 focus:ring-sky-500 shadow-sm">
@@ -129,7 +129,8 @@
                                 <span id="total-price" class="text-lg font-black text-sky-500">Rp 0</span>
                             </div>
                             
-                            <button type="submit" id="btn-checkout" class="bg-gradient-to-r from-sky-400 to-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.4)] disabled:bg-none disabled:bg-slate-300 disabled:shadow-none text-white font-bold text-sm px-7 py-3 rounded-xl transition-all flex items-center gap-1 cursor-pointer" disabled>
+                            <!-- TOMBOL INI SEKARANG MEMICU MODAL, BUKAN LANGSUNG SUBMIT -->
+                            <button type="button" id="btn-checkout" class="bg-gradient-to-r from-sky-400 to-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.4)] disabled:bg-none disabled:bg-slate-300 disabled:shadow-none text-white font-bold text-sm px-7 py-3 rounded-xl transition-all flex items-center gap-1 cursor-pointer" disabled>
                                 <span>Checkout</span>
                                 <span id="count-badge">(0)</span>
                             </button>
@@ -141,6 +142,45 @@
 
         </form>
     @endif
+</div>
+
+<!-- MODAL KALENDER MELAYANG (BATCH 3) -->
+<div id="booking-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-100 transition-transform">
+        <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative">
+            <h3 class="text-white font-black text-[17px] flex items-center gap-2">
+                <i class="fa-regular fa-calendar-check text-xl"></i> Atur Jadwal Sewa
+            </h3>
+            <p class="text-sky-100 text-xs font-medium mt-1">Pilih waktu agar tidak bentrok dengan penyewa lain.</p>
+        </div>
+        <div class="p-6">
+            <label class="block text-[13px] font-bold text-slate-700 mb-2">Tanggal Mulai <span class="text-rose-500">*</span></label>
+            <input type="date" id="modal-date" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-sky-700 focus:border-sky-500 focus:ring-sky-200 outline-none mb-5 transition">
+
+            <label class="block text-[13px] font-bold text-slate-700 mb-2">Jam Pengambilan/Pengantaran <span class="text-rose-500">*</span></label>
+            <select id="modal-time" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-sky-700 focus:border-sky-500 focus:ring-sky-200 outline-none mb-7 transition">
+                <option value="">-- Pilih Jam (WIB) --</option>
+                <option value="08:00">08:00 WIB (Pagi)</option>
+                <option value="09:00">09:00 WIB</option>
+                <option value="10:00">10:00 WIB</option>
+                <option value="11:00">11:00 WIB</option>
+                <option value="12:00">12:00 WIB (Siang)</option>
+                <option value="13:00">13:00 WIB</option>
+                <option value="14:00">14:00 WIB</option>
+                <option value="15:00">15:00 WIB (Sore)</option>
+                <option value="16:00">16:00 WIB</option>
+                <option value="17:00">17:00 WIB</option>
+                <option value="18:00">18:00 WIB (Malam)</option>
+                <option value="19:00">19:00 WIB</option>
+                <option value="20:00">20:00 WIB</option>
+            </select>
+
+            <div class="flex gap-3">
+                <button type="button" id="btn-close-modal" class="flex-1 bg-slate-100 text-slate-500 font-bold py-3 rounded-xl hover:bg-slate-200 transition">Batal</button>
+                <button type="button" id="btn-confirm-modal" class="flex-1 bg-sky-500 text-white font-bold py-3 rounded-xl hover:bg-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.4)] transition">Lanjut Bayar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <form id="update-form" method="POST" style="display: none;">
@@ -161,7 +201,13 @@
         const totalPriceEl = document.getElementById('total-price');
         const originalPriceEl = document.getElementById('original-price');
         const countBadgeEl = document.getElementById('count-badge');
+        
+        // Elemen Modal Kalender
         const btnCheckout = document.getElementById('btn-checkout');
+        const bookingModal = document.getElementById('booking-modal');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const btnConfirmModal = document.getElementById('btn-confirm-modal');
+        const formCart = document.getElementById('cart-form');
         
         const inputVoucher = document.getElementById('input-voucher');
         const btnApplyVoucher = document.getElementById('btn-apply-voucher');
@@ -170,12 +216,39 @@
         
         let diskonPersen = 0;
 
-        // Buka tutup voucher dengan panah yang logis
+        // Cegah pilihan tanggal kemarin di kalender
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('modal-date').setAttribute('min', today);
+
+        // 1. Munculkan Modal saat Checkout diklik
+        btnCheckout.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            bookingModal.classList.remove('hidden');
+        });
+
+        // 2. Tutup Modal
+        btnCloseModal.addEventListener('click', function() {
+            bookingModal.classList.add('hidden');
+        });
+
+        // 3. Konfirmasi Modal & Submit Asli
+        btnConfirmModal.addEventListener('click', function() {
+            const date = document.getElementById('modal-date').value;
+            const time = document.getElementById('modal-time').value;
+
+            if(!date) { alert('⚠️ Silakan pilih Tanggal Mulai!'); return; }
+            if(!time) { alert('⚠️ Silakan pilih Jam Pengambilan!'); return; }
+
+            // Pindahkan data ke form utama lalu gas submit!
+            document.getElementById('form-start-date').value = date;
+            document.getElementById('form-start-time').value = time;
+            formCart.submit();
+        });
+
         document.getElementById('btn-toggle-voucher').addEventListener('click', function() {
             const area = document.getElementById('voucher-input-area');
             const arrow = document.getElementById('voucher-arrow');
             area.classList.toggle('hidden');
-            // Panah menghadap atas saat tertutup (karena mengembang ke atas), menghadap bawah saat terbuka
             arrow.style.transform = area.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         });
 

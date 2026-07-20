@@ -48,11 +48,10 @@ class PesananController extends Controller
         $feeRentify = $totalSewaMarkup - $sewaAsliVendor;
         $pendapatanVendor = $sewaAsliVendor + $ongkir;
 
-        // PENGEMBALIAN STOK OTOMATIS: Barang kembali tersedia untuk customer lain!
-        $orderItems = DB::table('order_items')->where('order_id', $id)->get();
-        foreach ($orderItems as $item) {
-            \App\Models\Barang::where('id', $item->product_id)->increment('stok_total', $item->quantity);
-        }
+        // REVOLUSI STOK: Kita TIDAK lagi melakukan increment() pada stok_total!
+        // Karena kolom stok_total adalah Stok Master Fisik yang tetap, saat status order diubah menjadi 'Selesai',
+        // sistem query Anti-Bentrok otomatis melepaskan kunci jadwalnya (karena status 'Selesai' diabaikan di query overlap).
+        // Barang otomatis kembali tersedia di tanggal tersebut tanpa membuat angka stok master membengkak!
 
         DB::table('orders')->where('id', $id)->update([
             'status' => 'Selesai',
@@ -62,6 +61,6 @@ class PesananController extends Controller
             'updated_at' => Carbon::now('Asia/Jakarta')
         ]);
 
-        return redirect()->back()->with('success', '🎉 Pesanan berhasil diselesaikan! Stok barang telah dikembalikan ke etalase.');
+        return redirect()->back()->with('success', '🎉 Pesanan berhasil diselesaikan! Terima kasih telah menyewa di Rentify.');
     }
 }

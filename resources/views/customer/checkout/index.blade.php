@@ -21,7 +21,6 @@
     .panel-lokasi.active { display: block; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Style Khusus Jaminan KTP/SIM dengan Efek Cahaya Biru Berkilau */
     .jaminan-box { display: flex; gap: 10px; margin-top: 5px; }
     .jaminan-item { flex: 1; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; background: white; }
     .jaminan-item:hover { border-color: #0284c7; background: #f0f9ff; }
@@ -52,8 +51,11 @@
         <input type="hidden" name="alamat_customer" id="global_alamat">
         <input type="hidden" name="no_hp_hidden" id="global_hp">
         
-        <!-- Input Tersembunyi untuk Meneruskan Voucher ke Backend -->
         <input type="hidden" name="kode_voucher" id="input_kode_voucher" value="{{ request('kode_voucher', '') }}">
+        
+        <!-- DATA JADWAL DIBAWA DARI KERANJANG -->
+        <input type="hidden" name="start_date" value="{{ request('start_date', date('Y-m-d')) }}">
+        <input type="hidden" name="start_time" value="{{ request('start_time', '09:00') }}">
 
         @foreach($keranjangPerVendor as $vendorId => $items)
         @php 
@@ -66,7 +68,6 @@
             $durasiDefault = $items->first()->durasi_sewa ?? 1;
         @endphp
         
-        <!-- BLOK TOKO -->
         <div class="vendor-block" data-vendor="{{ $vendorId }}" data-lat="{{ $latProduk }}" data-lon="{{ $lonProduk }}">
             
             <div class="section-title" style="color: #0f172a; margin-top: 20px; justify-content: flex-start; gap: 10px;">
@@ -98,7 +99,7 @@
                         </div>
                         @if($item->barang->deposit > 0)
                             <div style="font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-top: 6px; border: 1px solid #bae6fd;">
-                                Deposit (Bayar di Tempat): Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
+                                Deposit: Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
                             </div>
                         @endif
                         <input type="hidden" class="harga-sewa-item" value="{{ $hargaTampil * $item->jumlah }}">
@@ -109,15 +110,29 @@
                 </div>
             @endforeach
 
-            <!-- LAMA SEWA -->
-            <div class="section-title mt-4">Lama Sewa</div>
-            <div class="clean-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-                <span style="font-size: 14px; font-weight: 600; color: #475569;">Berapa hari Anda menyewa?</span>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="number" name="durasi_sewa[{{ $vendorId }}]" class="input-durasi" value="{{ $durasiDefault }}" min="1" oninput="hitungSemuaTotal()" style="width: 50px; text-align: center; border: 1.5px solid #cbd5e1; border-radius: 8px; font-weight: bold; padding: 6px; outline: none; color:#0284c7;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'"> 
-                    <span style="font-size: 13px; font-weight: 700; color: #64748b;">Hari</span>
+            <!-- BLOK JADWAL SEWA BARU (PENGGANTI LAMA SEWA) -->
+            <div class="section-title mt-4"><i class="fa-regular fa-calendar-check mr-1"></i> Jadwal Sewa (WIB)</div>
+            <div class="clean-card" style="padding: 14px 16px; background: #f0f9ff; border-color: #bae6fd; box-shadow: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 13px; font-weight: 700; color: #475569;">Tanggal Mulai</span>
+                    <span style="font-size: 13px; font-weight: 800; color: #0284c7;">
+                        {{ request('start_date') ? date('d M Y', strtotime(request('start_date'))) : date('d M Y') }}
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: 700; color: #475569;">Jam Ambil/Antar</span>
+                    <span style="font-size: 13px; font-weight: 800; color: #0284c7;">
+                        {{ request('start_time', '09:00') }} WIB
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                    <span style="font-size: 13px; font-weight: 700; color: #475569;">Durasi Pemakaian</span>
+                    <span style="font-size: 14px; font-weight: 900; color: #0ea5e9;">{{ $durasiDefault }} Hari</span>
                 </div>
             </div>
+
+            <!-- INPUT DURASI TERSEMBUNYI (Agar sistem JS diskon/total tetap jalan) -->
+            <input type="hidden" name="durasi_sewa[{{ $vendorId }}]" class="input-durasi" value="{{ $durasiDefault }}">
 
             <div class="section-title mt-4">Jaminan Dokumen</div>
             <p style="font-size: 11px; color: #64748b; margin-top: -6px; margin-bottom: 8px;">*Pilih 1 dokumen fisik untuk Jaminan.</p>
@@ -141,7 +156,6 @@
                     <div class="radio-price"><span>Rp 0</span> <input type="radio" name="opsi_pengiriman[{{ $vendorId }}]" value="ambil" class="radio-opsi" onchange="hitungSemuaTotal()" checked style="width:16px; height:16px;"></div>
                 </label>
                 
-                <!-- BENTENG 1: ANTI-BYPASS! ALAMAT & MAPS DISEMBUNYIKAN SEBELUM CHECKOUT -->
                 <div id="panel_ambil_{{ $vendorId }}" class="panel-lokasi active">
                     <div style="font-weight: 800; color: #0369a1; margin-bottom: 5px;">📍 Lokasi Toko Pengambilan:</div>
                     <div style="color: #334155; font-weight: 700;">{{ $namaTokoAsli }}</div>
@@ -193,7 +207,6 @@
             </label>
         </div>
 
-        <!-- FITUR VOUCHER RENTIFY -->
         <div class="section-title">Voucher Diskon</div>
         <div class="clean-card" id="card-voucher" style="padding: 0; overflow: hidden; transition: all 0.3s; margin-bottom: 20px;">
             <div onclick="toggleVoucher()" style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white;">

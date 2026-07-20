@@ -27,6 +27,8 @@ class CheckoutController extends Controller
             $mockItem->user_id = auth()->id();
             $mockItem->barang_id = $barang->id;
             $mockItem->jumlah = $request->input('jumlah', 1);
+            // KUNCI SAKTI: Menangkap durasi hari dari Modal Sewa Sekarang!
+            $mockItem->durasi_sewa = $request->input('durasi_sewa', 1); 
             $mockItem->setRelation('barang', $barang);
             
             $keranjangs = collect([$mockItem]);
@@ -67,10 +69,18 @@ class CheckoutController extends Controller
             'durasi_sewa' => 'required|array', 
             'opsi_pengiriman' => 'required|array', 
             'ongkir_vendor' => 'required|array',
-            'jaminan' => 'required|array', 
+            'jaminan' => 'required|array',
+            'start_date' => 'nullable|date',
+            'start_time' => 'nullable|string',
         ]);
 
         $waktuSekarang = Carbon::now('Asia/Jakarta'); 
+        
+        // 1. TANGKAP JADWAL DARI MODAL KALENDER (Atau fallback ke waktu sekarang)
+        $tanggalMulai = $request->input('start_date', $waktuSekarang->format('Y-m-d'));
+        $jamMulai = $request->input('start_time', '09:00');
+        $waktuMulai = Carbon::parse($tanggalMulai . ' ' . $jamMulai, 'Asia/Jakarta');
+
         $isDirectCheckout = false;
         
         if (session()->has('checkout_direct_id')) {
@@ -99,12 +109,34 @@ class CheckoutController extends Controller
 
         $keranjangPerVendor = $keranjangs->groupBy(fn($item) => $item->barang->vendor_id);
 
-        // BENTENG 2 (SATPAM STOK): Cek ketersediaan stok sebelum membuat order!
+        // 2. BENTENG SATPAM STOK ANTI-BENTROK (Dynamic Overlap Checker!)
         foreach ($keranjangPerVendor as $vendorId => $items) {
+            $durasiCek = (int) ($request->durasi_sewa[$vendorId] ?? 1);
+            $waktuKembaliCek = $waktuMulai->copy()->addDays($durasiCek);
+
             foreach ($items as $item) {
                 $barangCek = Barang::find($item->barang_id);
-                if (!$barangCek || $barangCek->stok_total < $item->jumlah) {
-                    return redirect()->back()->with('error', "⚠️ Maaf, stok untuk barang '{$item->barang->nama}' baru saja habis disewa pengguna lain!");
+                if (!$barangCek) {
+                    return redirect()->back()->with('error', "⚠️ Produk tidak ditemukan di database.");
+                }
+
+                // Hitung berapa kuantitas barang ini yang SEDANG disewa / diboking pada rentang waktu [waktuMulai, waktuKembaliCek]
+                $bookedQty = DB::table('order_items')
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->where('order_items.product_id', $item->barang_id)
+                    ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak'])
+                    ->where(function($query) use ($waktuMulai, $waktuKembaliCek) {
+                        // Rumus Overlap: Jadwal pesanan lain dimulai SEBELUM sewa kita selesai, DAN selesai SESUDAH sewa kita dimulai
+                        $query->where('orders.start_rent', '<', $waktuKembaliCek)
+                              ->where('orders.end_rent', '>', $waktuMulai);
+                    })
+                    ->sum('order_items.quantity');
+
+                $stokTersedia = $barangCek->stok_total - $bookedQty;
+
+                if ($stokTersedia < $item->jumlah) {
+                    $tglStr = $waktuMulai->format('d M Y (H:i)');
+                    return redirect()->back()->with('error', "⚠️ Maaf, stok untuk barang '{$item->barang->nama}' pada jadwal {$tglStr} sudah habis diboking pengguna lain! (Tersedia: {$stokTersedia} unit). Silakan pilih tanggal atau jam lain.");
                 }
             }
         }
@@ -120,7 +152,7 @@ class CheckoutController extends Controller
             $durasi = (int) ($request->durasi_sewa[$vendorId] ?? 1);
             $jaminanTerpilih = $request->jaminan[$vendorId] ?? 'KTP'; 
 
-            // BENTENG 3 (ANTI-HACK ONGKIR): Server hitung ulang jika diantar agar aman dari Inspect Element!
+            // ANTI-HACK ONGKIR: Server hitung ulang jika diantar agar aman dari Inspect Element!
             if ($opsi === 'diantar') {
                 $latToko = (float) ($items->first()->barang->latitude ?? $items->first()->barang->vendor->latitude ?? 0);
                 $lonToko = (float) ($items->first()->barang->longitude ?? $items->first()->barang->vendor->longitude ?? 0);
@@ -135,17 +167,16 @@ class CheckoutController extends Controller
                     $c = 2 * asin(sqrt($a));
                     $jarakKm = ceil($earthRadius * $c);
                     
-                    // Kunci tarif server minimal Rp 4.000 atau hasil kali jarak asli
                     $ongkir = max(4000, $jarakKm * 4000);
                 } else {
-                    // Fallback jika koordinat tidak sempurna
                     if ($ongkir < 10000) $ongkir = 10000;
                 }
             } else {
-                $ongkir = 0; // Ambil di tempat wajib Rp 0
+                $ongkir = 0; 
             }
             
-            $waktuKembali = $waktuSekarang->copy()->addDays($durasi);
+            // 3. HITUNG WAKTU KEMBALI AKURAT BERDASARKAN JADWAL MULAI
+            $waktuKembali = $waktuMulai->copy()->addDays($durasi);
             $subtotalSewa = 0;
 
             foreach ($items as $item) {
@@ -170,8 +201,8 @@ class CheckoutController extends Controller
                 'pin_location' => $opsi === 'diantar' ? ($request->cust_lat . ',' . $request->cust_lon) : null,
                 'shipping_method' => $opsi,
                 'shipping_fee' => $ongkir,
-                'start_rent' => $waktuSekarang,
-                'end_rent' => $waktuKembali,
+                'start_rent' => $waktuMulai,      // <-- MENYIMPAN JADWAL MULAI AKURAT!
+                'end_rent' => $waktuKembali,      // <-- MENYIMPAN JADWAL SELESAI AKURAT!
                 'duration_days' => $durasi,
                 'jaminan' => $jaminanTerpilih, 
                 'payment_method' => $request->metode_pembayaran,
@@ -194,7 +225,8 @@ class CheckoutController extends Controller
                     'updated_at' => $waktuSekarang
                 ]);
 
-                \App\Models\Barang::where('id', $item->barang_id)->decrement('stok_total', $item->jumlah);
+                // REVOLUSI STOK: Kita TIDAK lagi melakukan decrement() agar Stok Master Fisik tetap utuh!
+                // Ketersediaan stok masa depan dan hari ini dijaga 100% oleh Satpam Stok Anti-Bentrok di atas.
             }
         }
 
