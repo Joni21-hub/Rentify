@@ -140,10 +140,10 @@
             @endif
         </div>
 
-        <!-- PENGGANTI TOMBOL MAPS -->
+        <!-- PENGGANTI TOMBOL MAPS (MENGGUNAKAN FAKTA DATABASE BARANG->ALAMAT) -->
         <div class="w-full bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[12px] py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 text-center shadow-sm">
             <i class="fa-solid fa-map-location-dot text-sky-500 text-sm"></i> 
-            <span>Area Toko: {{ $barang->vendor->kecamatan ?? $barang->vendor->kota ?? 'Kecamatan / Kabupaten Area Toko' }}</span>
+            <span class="line-clamp-1 truncate">Area Toko: {{ $barang->alamat ?? 'Alamat belum diatur' }}</span>
             @if(isset($barang->jarak))
                 <span class="text-slate-400 font-normal">• ±{{ number_format($barang->jarak, 1, ',', '') }} KM</span>
             @endif

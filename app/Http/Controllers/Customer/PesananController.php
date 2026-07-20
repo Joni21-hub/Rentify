@@ -13,7 +13,8 @@ class PesananController extends Controller
     {
         $orders = DB::table('orders')
             ->leftJoin('users as vendors', 'orders.vendor_id', '=', 'vendors.id')
-            ->select('orders.*', 'vendors.name as vendor_name', 'vendors.whatsapp_vendor')
+            // PERBAIKAN: Memanggil nama toko (vendor_name), bukan nama pemilik (name)
+            ->select('orders.*', 'vendors.vendor_name', 'vendors.name as owner_name', 'vendors.whatsapp_vendor')
             ->where('orders.user_id', auth()->id())
             ->orderBy('orders.created_at', 'desc')
             ->get();
@@ -47,11 +48,6 @@ class PesananController extends Controller
         $sewaAsliVendor = $totalSewaMarkup / 1.05;
         $feeRentify = $totalSewaMarkup - $sewaAsliVendor;
         $pendapatanVendor = $sewaAsliVendor + $ongkir;
-
-        // REVOLUSI STOK: Kita TIDAK lagi melakukan increment() pada stok_total!
-        // Karena kolom stok_total adalah Stok Master Fisik yang tetap, saat status order diubah menjadi 'Selesai',
-        // sistem query Anti-Bentrok otomatis melepaskan kunci jadwalnya (karena status 'Selesai' diabaikan di query overlap).
-        // Barang otomatis kembali tersedia di tanggal tersebut tanpa membuat angka stok master membengkak!
 
         DB::table('orders')->where('id', $id)->update([
             'status' => 'Selesai',

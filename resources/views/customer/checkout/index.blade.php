@@ -159,6 +159,10 @@
                 <div id="panel_ambil_{{ $vendorId }}" class="panel-lokasi active">
                     <div style="font-weight: 800; color: #0369a1; margin-bottom: 5px;">📍 Lokasi Toko Pengambilan:</div>
                     <div style="color: #334155; font-weight: 700;">{{ $namaTokoAsli }}</div>
+                    
+                    <!-- AREA TOKO DITARIK LANGSUNG DARI FAKTA DATABASE BARANG->ALAMAT -->
+                    <div style="color: #64748b; font-size: 12px; font-weight: 600; margin-top: 2px;"><i class="fa-solid fa-map-pin text-[10px] mr-1"></i> {{ $barangPertama->alamat ?? 'Alamat belum diatur' }}</div>
+                    
                     <div style="margin-top: 8px; font-size: 11.5px; color: #0284c7; background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #bae6fd; font-weight: 600; line-height: 1.4; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                         <i class="fa-solid fa-lock mr-1"></i> Alamat lengkap & Titik Maps Google disembunyikan demi keamanan. Akan otomatis terbuka di <strong>Riwayat Transaksi</strong> setelah Anda membuat pesanan.
                     </div>
