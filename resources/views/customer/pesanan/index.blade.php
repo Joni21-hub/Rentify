@@ -66,7 +66,7 @@
                 $waClean = preg_replace('/[^0-9]/', '', $waRaw);
                 if (substr($waClean, 0, 1) === '0') $waClean = '62' . substr($waClean, 1);
                 
-                $namaTokoAsli = $order->vendor->vendor_name ?? $order->vendor_name ?? 'Vendor';
+                $namaTokoAsli = $order->vendor_name ?? $order->owner_name ?? 'Vendor';
                 
                 $pesanWa = "Halo Toko *" . $namaTokoAsli . "*, saya ingin menanyakan status pesanan saya dengan ID: *INV-" . $order->id . "*. Terima kasih.";
                 $linkWa = "https://wa.me/" . $waClean . "?text=" . urlencode($pesanWa);
@@ -122,7 +122,6 @@
                         </div>
                     @endforeach
 
-                    <!-- BLOK JADWAL PEMAKAIAN (RIWAYAT TRANSAKSI) -->
                     <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px 14px; border-radius: 12px; margin-top: 10px; margin-bottom: 12px;">
                         <div style="font-size: 11px; font-weight: 800; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                             <i class="fa-regular fa-calendar-check"></i> Jadwal Pemakaian Barang (WIB)
@@ -138,12 +137,18 @@
                         <a href="{{ $linkWa }}" target="_blank" class="action-link wa-link" style="margin-top: 0; width: 100%; justify-content: center;"><i class="fa-brands fa-whatsapp text-sm"></i> Chat WhatsApp Toko</a>
                     </div>
 
+                    <!-- BAGIAN YANG DIREVISI: Mengubah "Total Bayar Web" menjadi "Total Tagihan (COD/QRIS)" -->
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0f2fe; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <span style="font-size: 11px; color: #64748b; font-weight: 700; display: block;">Pengiriman: {{ strtoupper($order->shipping_method) }} (Rp {{ number_format($order->shipping_fee, 0, ',', '.') }})</span>
-                            <span style="font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 2px; display: block;">Total Bayar Web</span>
+                            <span style="font-size: 13px; font-weight: 900; color: #0f172a; margin-top: 2px; display: block;">Total Tagihan <span style="color: #0284c7;">({{ $order->payment_method }})</span></span>
                         </div>
-                        <span style="font-size: 20px; font-weight: 900; color: #0ea5e9;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                        <div style="text-align: right;">
+                            <span style="font-size: 20px; font-weight: 900; color: #0ea5e9;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                            @if($order->payment_method === 'COD')
+                                <span style="display: block; font-size: 10px; color: #ef4444; font-weight: 700; margin-top: 2px;">*Bayar pas ketemu</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
