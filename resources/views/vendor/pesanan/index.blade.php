@@ -27,7 +27,7 @@
                 <thead class="bg-slate-50/50 border-b border-slate-100">
                     <tr>
                         <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Tgl Transaksi</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Customer</th>
+                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Customer & Jadwal</th>
                         <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Metode Bayar</th>
                         <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Total Tagihan</th>
                         <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest text-center">Status</th>
@@ -39,11 +39,15 @@
                         <tr class="hover:bg-blue-50/30 transition-colors group">
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <p class="font-bold text-slate-700">#ORD-{{ $pesanan->id }}</p>
-                                <p class="text-xs text-slate-500 mt-1 font-medium"><i class="fa-regular fa-calendar mr-1 text-brand-sky"></i> {{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</p>
+                                <p class="text-xs text-slate-500 mt-1 font-medium"><i class="fa-regular fa-clock mr-1 text-brand-sky"></i> {{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</p>
                             </td>
                             <td class="px-6 py-5">
                                 <p class="font-bold text-slate-800">{{ $pesanan->customer_name }}</p>
-                                <p class="text-xs text-emerald-600 font-bold mt-1"><i class="fa-brands fa-whatsapp mr-1 text-lg align-middle"></i> {{ $pesanan->customer_whatsapp ?? '-' }}</p>
+                                
+                                <!-- BENTENG JADWAL (VENDOR INDEX): Menampilkan Jadwal Kapan Barang Harus Diserahkan -->
+                                <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-brand-main text-[10px] font-bold">
+                                    <i class="fa-regular fa-calendar-check"></i> Mulai: {{ \Carbon\Carbon::parse($pesanan->start_rent)->format('d M Y') }}
+                                </div>
                             </td>
                             <td class="px-6 py-5 align-middle">
                                 @if(strtoupper($pesanan->payment_method) == 'QRIS')

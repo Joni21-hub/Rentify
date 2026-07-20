@@ -39,6 +39,23 @@
                         <p class="text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest mb-1">WhatsApp Customer</p>
                         <p class="font-black text-emerald-700 text-lg flex items-center gap-2"><i class="fa-brands fa-whatsapp"></i> {{ $pesanan->customer_whatsapp }}</p>
                     </div>
+                    
+                    <!-- BENTENG JADWAL (VENDOR): Menampilkan Jadwal Boking Masa Depan dengan sangat jelas! -->
+                    <div class="md:col-span-2 bg-blue-50/50 p-5 rounded-2xl border border-blue-100 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-brand-main/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                        <p class="text-[11px] font-extrabold text-brand-main uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-regular fa-calendar-check text-base"></i> Jadwal Bokingan Customer</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-500 uppercase">Waktu Pengambilan / Antar</p>
+                                <p class="font-black text-brand-deep text-lg">{{ \Carbon\Carbon::parse($pesanan->start_rent)->format('d M Y - H:i') }} WIB</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-500 uppercase">Maksimal Dikembalikan</p>
+                                <p class="font-black text-brand-sky text-lg">{{ \Carbon\Carbon::parse($pesanan->end_rent)->format('d M Y - H:i') }} WIB</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sistem Pengiriman</p>
                         <p class="font-black text-slate-800 capitalize"><i class="fa-solid fa-truck-fast text-brand-sky mr-2"></i>{{ $pesanan->shipping_method }}</p>
@@ -124,7 +141,7 @@
                 <div class="mt-6 p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-3">
                     <i class="fa-solid fa-circle-info text-brand-main mt-0.5"></i>
                     <p class="text-[10px] text-slate-600 font-medium leading-relaxed">
-                        Jika status diubah menjadi <b class="text-brand-main">"Selesai"</b>, sistem otomatis akan menghitung *fee* platform dan memperbarui Dompet Saldo Anda!
+                        Jika status diubah menjadi <b class="text-brand-main">"Selesai"</b>, sistem otomatis akan menghitung *fee* platform, memperbarui Dompet Saldo Anda, dan melepaskan jadwal bokingan barang ini!
                     </p>
                 </div>
             </div>
