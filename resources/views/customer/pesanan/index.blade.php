@@ -146,7 +146,7 @@
                         <div style="text-align: right;">
                             <span style="font-size: 20px; font-weight: 900; color: #0ea5e9;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
                             @if($order->payment_method === 'COD')
-                                <span style="display: block; font-size: 10px; color: #ef4444; font-weight: 700; margin-top: 2px;">*Pembayaran saat pengambilan barang</span>
+                                <span style="display: block; font-size: 10px; color: #ef4444; font-weight: 700; margin-top: 2px;"></span>
                             @endif
                         </div>
                     </div>

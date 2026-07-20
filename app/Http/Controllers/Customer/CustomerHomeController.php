@@ -13,19 +13,20 @@ class CustomerHomeController extends Controller
     public function index()
     {
         $banners = Banner::all();
-        $daftarBarang = collect(); // Default kosong
+        $daftarBarang = collect(); 
         $butuhLokasi = false;
 
-        // Cek apakah user sudah login
         if (Auth::check()) {
             $user = Auth::user();
             
-            // Cek apakah user sudah punya latitude dan longitude
             if ($user->latitude && $user->longitude) {
-                // Ambil semua barang yang disetujui
-                $semuaBarang = Barang::where('status_barang', 'disetujui')->get();
+                // FILTER BANNED (BERANDA): Hanya ambil barang yang tokonya TIDAK di-banned
+                $semuaBarang = Barang::where('status_barang', 'disetujui')
+                    ->whereHas('vendor', function ($query) {
+                        $query->whereNotIn('status', ['banned', 'Banned', 'BANNED']);
+                    })
+                    ->get();
 
-                // Filter barang berdasarkan radius 50 KM (Haversine Formula)
                 $lat1 = (float) $user->latitude;
                 $lon1 = (float) $user->longitude;
 
@@ -33,13 +34,11 @@ class CustomerHomeController extends Controller
                     $lat2 = (float) $barang->latitude;
                     $lon2 = (float) $barang->longitude;
 
-                    // Lewati barang yang tidak punya koordinat
                     if (!$lat2 || !$lon2 || ($lat2 == 0 && $lon2 == 0)) {
                         continue;
                     }
 
-                    // Rumus Haversine
-                    $earthRadius = 6371; // Radius Bumi dalam KM
+                    $earthRadius = 6371; 
                     $dLat = deg2rad($lat2 - $lat1);
                     $dLon = deg2rad($lon2 - $lon1);
                     
@@ -47,18 +46,15 @@ class CustomerHomeController extends Controller
                     $c = 2 * asin(sqrt($a));
                     $jarak = $earthRadius * $c;
 
-                    // Jika jarak <= 50 KM, masukkan ke daftar yang akan ditampilkan
                     if ($jarak <= 50) {
-                        $barang->jarak = $jarak; // Menyimpan info jarak sementara (opsional)
+                        $barang->jarak = $jarak; 
                         $daftarBarang->push($barang);
                     }
                 }
             } else {
-                // User sudah login, tapi belum atur lokasi
                 $butuhLokasi = true;
             }
         } else {
-            // User belum login, minta login/atur lokasi
             $butuhLokasi = true;
         }
 

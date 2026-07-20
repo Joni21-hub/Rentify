@@ -15,13 +15,26 @@ class BarangDetailController extends Controller
      */
     public function show($slug)
     {
-        // Mengambil data barang beserta relasi foto galeri, vendor, dan kategori
+        // Langkah 1: Cari barangnya terlebih dahulu
         $barang = Barang::with(['fotos', 'vendor', 'kategori'])
-                        ->where('slug', $slug)
-                        ->orWhere('id', $slug)
-                        ->firstOrFail();
+                        ->where(function ($query) use ($slug) {
+                            $query->where('slug', $slug)
+                                  ->orWhere('id', $slug);
+                        })
+                        ->first();
 
-        // FITUR BARU: Menghitung jarak akurat ke titik GPS customer (Haversine Formula)
+        // Langkah 2: Jika barang memang sudah dihapus permanen
+        if (!$barang) {
+            return redirect()->route('customer.home')->with('error', '⚠️ Barang yang Anda cari tidak ditemukan di sistem.');
+        }
+
+        // Langkah 3: FILTER TOKO BANNED (Peringatan Jelas, Bukan Error 404)
+        $statusToko = strtolower($barang->vendor->status ?? '');
+        if ($statusToko === 'banned') {
+            return redirect()->route('customer.home')->with('error', '⚠️ Mohon maaf, barang "' . $barang->nama . '" tidak dapat diakses karena toko pemiliknya sedang ditangguhkan/diblokir sementara oleh Admin.');
+        }
+
+        // Langkah 4: Menghitung jarak akurat ke titik GPS customer (Haversine Formula)
         if (Auth::check() && Auth::user()->latitude && Auth::user()->longitude) {
             $lat1 = (float) Auth::user()->latitude;
             $lon1 = (float) Auth::user()->longitude;
@@ -40,7 +53,7 @@ class BarangDetailController extends Controller
             }
         }
 
-        // Mengembalikan ke tampilan halaman detail
+        // Mengembalikan ke tampilan halaman detail jika semuanya aman
         return view('customer.barang-detail', compact('barang'));
     }
 }
