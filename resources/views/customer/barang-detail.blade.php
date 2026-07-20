@@ -16,12 +16,10 @@
 
 <div class="detail-container shadow-sm relative">
 
-    <!-- Tombol Back -->
     <a href="{{ url()->previous() }}" class="absolute top-4 left-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition">
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
 
-    <!-- AREA SLIDER GAMBAR -->
     <div class="swiper productSwiper w-full aspect-square bg-white border-b border-slate-100">
         <div class="swiper-wrapper">
             
@@ -59,14 +57,12 @@
         <div class="swiper-pagination"></div>
     </div>
 
-    <!-- Area Info Utama -->
     <div class="p-4 border-b border-slate-100 bg-white">
         <div class="flex items-center justify-between mb-2">
             <span class="text-[10px] font-black text-sky-600 bg-sky-50 px-2 py-0.5 rounded uppercase border border-sky-100">
                 🏷️ {{ $barang->kategori->nama ?? 'Umum' }}
             </span>
             
-            <!-- ANTI MINUS: Stok dijamin berhenti di angka 0 -->
             @php $stokNyata = max(0, $barang->stok_total); @endphp
             <span class="text-[11px] text-slate-500 font-medium">Sisa Stok: <strong class="{{ $stokNyata == 0 ? 'text-rose-500' : 'text-slate-800' }}">{{ $stokNyata }}</strong> unit</span>
         </div>
@@ -77,7 +73,6 @@
             Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[12px] font-normal text-slate-400">/hari</span>
         </div>
 
-        <!-- PERINGATAN KETIKA STOK HABIS -->
         @if($stokNyata <= 0)
             <div class="mt-3 bg-rose-50 border border-rose-200 text-rose-600 px-3 py-2 rounded-lg text-[11.5px] font-bold flex items-center gap-2">
                 <i class="fa-solid fa-circle-exclamation text-rose-500 text-sm"></i>
@@ -86,7 +81,6 @@
         @endif
     </div>
 
-    <!-- Spesifikasi -->
     <div class="p-4 border-b border-slate-100 bg-white">
         <h3 class="text-[13px] font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-list text-slate-400"></i> Rincian Barang</h3>
         <div class="grid grid-cols-2 gap-y-3 text-[12px]">
@@ -107,13 +101,11 @@
         </div>
     </div>
 
-    <!-- Deskripsi Produk -->
     <div class="p-4 bg-white border-b border-slate-100">
         <h3 class="text-[13px] font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-align-left text-slate-400"></i> Deskripsi Produk</h3>
         <p class="text-[12px] text-slate-600 leading-relaxed whitespace-pre-line">{{ $barang->deskripsi }}</p>
     </div>
 
-    <!-- LOKASI MAPS & PROFIL VENDOR (ANTI BYPASS TINGKAT DEWA!) -->
     <div class="p-4 bg-white mb-4 border-b border-slate-100">
         <h3 class="text-[13px] font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-store text-slate-400"></i> Informasi Toko</h3>
         <div class="flex items-center justify-between mb-3">
@@ -124,14 +116,12 @@
                 <div>
                     <div class="font-bold text-slate-700 text-[13px]">{{ $barang->vendor->vendor_name ?? 'Vendor Rentify' }}</div>
                     
-                    <!-- ALAMAT DISEMBUNYIKAN SEBELUM CHECKOUT -->
                     <div class="text-[10px] text-sky-600 font-semibold mt-0.5 flex items-center gap-1 bg-sky-50 w-fit px-2 py-0.5 rounded border border-sky-100">
                         <i class="fa-solid fa-lock text-[9px]"></i> Maps terbuka setelah sewa
                     </div>
                 </div>
             </div>
 
-            <!-- BADGE JARAK SAJA -->
             @if(isset($barang->jarak))
             <div class="bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded-lg text-right flex-shrink-0 shadow-sm">
                 <span class="block text-[8px] text-slate-400 uppercase font-black tracking-wider">Jarak Ke Titikmu</span>
@@ -140,10 +130,14 @@
             @endif
         </div>
 
-        <!-- PENGGANTI TOMBOL MAPS (MENGGUNAKAN FAKTA DATABASE BARANG->ALAMAT) -->
         <div class="w-full bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[12px] py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 text-center shadow-sm">
             <i class="fa-solid fa-map-location-dot text-sky-500 text-sm"></i> 
-            <span class="line-clamp-1 truncate">Area Toko: {{ $barang->alamat ?? 'Alamat belum diatur' }}</span>
+            @php
+                $alamatFullDetail = $barang->alamat ?? 'Area belum diatur';
+                $pecahAlamatDetail = explode(',', $alamatFullDetail);
+                $areaSajaDetail = count($pecahAlamatDetail) > 1 ? trim(implode(',', array_slice($pecahAlamatDetail, 1))) : $alamatFullDetail;
+            @endphp
+            <span class="line-clamp-1 truncate">Area Toko: {{ $areaSajaDetail }}</span>
             @if(isset($barang->jarak))
                 <span class="text-slate-400 font-normal">• ±{{ number_format($barang->jarak, 1, ',', '') }} KM</span>
             @endif
@@ -151,7 +145,6 @@
         <p class="text-[10px] text-slate-400 text-center mt-1.5 font-medium">*Titik Maps akurat & alamat lengkap akan diberikan di struk pesanan.</p>
     </div>
 
-    <!-- BOTTOM BAR: KONTROL STOK -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-3 py-2.5 flex items-center justify-center z-50">
         <div class="w-full max-w-md flex gap-2">
             
@@ -165,7 +158,6 @@
                     </button>
                 </form>
 
-                <!-- FORM SEWA SEKARANG (DENGAN HIDDEN INPUT JADWAL & DURASI) -->
                 <form action="{{ route('customer.checkout') }}" method="GET" id="form-sewa-sekarang" class="w-1/2">
                     <input type="hidden" name="direct_barang_id" value="{{ $barang->id }}">
                     <input type="hidden" name="jumlah" value="1">
@@ -178,7 +170,6 @@
                     </button>
                 </form>
             @else
-                <!-- JIKA STOK HABIS -->
                 <button disabled type="button" class="w-full bg-slate-200 text-slate-500 font-bold text-[13px] py-3 rounded-md flex items-center justify-center gap-2 cursor-not-allowed">
                     <i class="fa-solid fa-ban text-rose-500"></i> Stok Habis / Sedang Disewa
                 </button>
@@ -189,7 +180,6 @@
 
 </div>
 
-<!-- MODAL KALENDER MELAYANG KHUSUS SEWA SEKARANG -->
 <div id="booking-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-100 transition-transform">
         <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative">
@@ -242,7 +232,6 @@
             spaceBetween: 10,
         });
 
-        // KONTROL MODAL KALENDER SEWA SEKARANG
         const btnSewaSekarang = document.getElementById('btn-sewa-sekarang');
         const bookingModal = document.getElementById('booking-modal');
         const btnCloseModal = document.getElementById('btn-close-modal');
@@ -250,22 +239,18 @@
         const formSewaSekarang = document.getElementById('form-sewa-sekarang');
 
         if(btnSewaSekarang) {
-            // Cegah tanggal kemarin
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('modal-date').setAttribute('min', today);
 
-            // Buka Modal
             btnSewaSekarang.addEventListener('click', function(e) {
                 e.preventDefault();
                 bookingModal.classList.remove('hidden');
             });
 
-            // Tutup Modal
             btnCloseModal.addEventListener('click', function() {
                 bookingModal.classList.add('hidden');
             });
 
-            // Konfirmasi Lanjut ke Checkout
             btnConfirmModal.addEventListener('click', function() {
                 const date = document.getElementById('modal-date').value;
                 const time = document.getElementById('modal-time').value;
@@ -275,7 +260,6 @@
                 if(!time) { alert('⚠️ Silakan pilih Jam Pengambilan!'); return; }
                 if(!durasi || durasi < 1) { alert('⚠️ Durasi minimal 1 hari!'); return; }
 
-                // Pindahkan data ke form hidden lalu submit!
                 document.getElementById('direct-start-date').value = date;
                 document.getElementById('direct-start-time').value = time;
                 document.getElementById('direct-durasi').value = durasi;

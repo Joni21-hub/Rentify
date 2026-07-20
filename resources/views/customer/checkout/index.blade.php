@@ -53,7 +53,6 @@
         
         <input type="hidden" name="kode_voucher" id="input_kode_voucher" value="{{ request('kode_voucher', '') }}">
         
-        <!-- DATA JADWAL DIBAWA DARI KERANJANG -->
         <input type="hidden" name="start_date" value="{{ request('start_date', date('Y-m-d')) }}">
         <input type="hidden" name="start_time" value="{{ request('start_time', '09:00') }}">
 
@@ -110,7 +109,6 @@
                 </div>
             @endforeach
 
-            <!-- BLOK JADWAL SEWA BARU (PENGGANTI LAMA SEWA) -->
             <div class="section-title mt-4"><i class="fa-regular fa-calendar-check mr-1"></i> Jadwal Sewa (WIB)</div>
             <div class="clean-card" style="padding: 14px 16px; background: #f0f9ff; border-color: #bae6fd; box-shadow: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -131,7 +129,6 @@
                 </div>
             </div>
 
-            <!-- INPUT DURASI TERSEMBUNYI (Agar sistem JS diskon/total tetap jalan) -->
             <input type="hidden" name="durasi_sewa[{{ $vendorId }}]" class="input-durasi" value="{{ $durasiDefault }}">
 
             <div class="section-title mt-4">Jaminan Dokumen</div>
@@ -160,8 +157,14 @@
                     <div style="font-weight: 800; color: #0369a1; margin-bottom: 5px;">📍 Lokasi Toko Pengambilan:</div>
                     <div style="color: #334155; font-weight: 700;">{{ $namaTokoAsli }}</div>
                     
-                    <!-- AREA TOKO DITARIK LANGSUNG DARI FAKTA DATABASE BARANG->ALAMAT -->
-                    <div style="color: #64748b; font-size: 12px; font-weight: 600; margin-top: 2px;"><i class="fa-solid fa-map-pin text-[10px] mr-1"></i> {{ $barangPertama->alamat ?? 'Alamat belum diatur' }}</div>
+                    @php
+                        $alamatFull = $barangPertama->alamat ?? 'Area belum diatur';
+                        $pecahAlamat = explode(',', $alamatFull);
+                        $areaSaja = count($pecahAlamat) > 1 ? trim(implode(',', array_slice($pecahAlamat, 1))) : $alamatFull;
+                    @endphp
+                    <div style="color: #64748b; font-size: 12px; font-weight: 600; margin-top: 2px;">
+                        <i class="fa-solid fa-map-pin text-[10px] mr-1"></i> Area: {{ $areaSaja }}
+                    </div>
                     
                     <div style="margin-top: 8px; font-size: 11.5px; color: #0284c7; background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #bae6fd; font-weight: 600; line-height: 1.4; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                         <i class="fa-solid fa-lock mr-1"></i> Alamat lengkap & Titik Maps Google disembunyikan demi keamanan. Akan otomatis terbuka di <strong>Riwayat Transaksi</strong> setelah Anda membuat pesanan.

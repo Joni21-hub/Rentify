@@ -141,12 +141,12 @@
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0f2fe; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <span style="font-size: 11px; color: #64748b; font-weight: 700; display: block;">Pengiriman: {{ strtoupper($order->shipping_method) }} (Rp {{ number_format($order->shipping_fee, 0, ',', '.') }})</span>
-                            <span style="font-size: 13px; font-weight: 900; color: #0f172a; margin-top: 2px; display: block;">Total Tagihan <span style="color: #0284c7;">({{ $order->payment_method }})</span></span>
+                            <span style="font-size: 13px; font-weight: 900; color: #0f172a; margin-top: 2px; display: block;">Total <span style="color: #0284c7;">({{ $order->payment_method }})</span></span>
                         </div>
                         <div style="text-align: right;">
                             <span style="font-size: 20px; font-weight: 900; color: #0ea5e9;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
                             @if($order->payment_method === 'COD')
-                                <span style="display: block; font-size: 10px; color: #ef4444; font-weight: 700; margin-top: 2px;">*Bayar pas ketemu</span>
+                                <span style="display: block; font-size: 10px; color: #ef4444; font-weight: 700; margin-top: 2px;">*Pembayaran saat pengambilan barang</span>
                             @endif
                         </div>
                     </div>
