@@ -16,17 +16,22 @@ class MarketplaceController extends Controller
         $keyword = $request->input('q');
         $kategoriId = $request->input('kategori');
 
-        // 1. Ambil data dasar yang sudah di-ACC & stok > 0
+        // 1. FILTER KETAT: Hanya ambil barang disetujui, stok > 0, dan vendor TIDAK suspended
         $query = Barang::with(['vendor', 'kategori'])
-            ->where('is_approved', 1) 
-            ->where('stok_total', '>', 0);
+            ->where('status_barang', 'disetujui') 
+            ->where('stok_total', '>', 0)
+            ->whereHas('vendor', function ($q) {
+                $q->where('vendor_status', '!=', 'suspended')
+                  ->orWhereNull('vendor_status');
+            });
 
         if (!empty($keyword)) {
             $query->where(function($q) use ($keyword) {
                 $q->where('nama', 'like', '%' . $keyword . '%')
                   ->orWhere('deskripsi', 'like', '%' . $keyword . '%')
                   ->orWhereHas('vendor', function($v) use ($keyword) {
-                      $v->where('name', 'like', '%' . $keyword . '%');
+                      $v->where('name', 'like', '%' . $keyword . '%')
+                        ->orWhere('vendor_name', 'like', '%' . $keyword . '%');
                   });
             });
         }
