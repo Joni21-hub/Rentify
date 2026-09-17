@@ -117,18 +117,21 @@
                 </div>
             </div>
 
-            <!-- KOTAK CENTANG S&K CUSTOMER -->
+            <!-- KOTAK CENTANG S&K TERKUNCI -->
             <div class="flex items-start pt-1 pb-1">
-                <div class="flex items-center h-5">
-                    <input id="terms_customer" name="terms" type="checkbox" required
-                        class="w-4 h-4 border border-sky-300 rounded bg-sky-50 focus:ring-3 focus:ring-sky-300 checked:bg-sky-600 text-sky-600 transition cursor-pointer shadow-inner">
+                <div class="flex items-center h-5 relative group">
+                    <input id="terms_customer" name="terms" type="checkbox" required disabled
+                        class="w-4 h-4 border border-slate-300 rounded focus:ring-3 focus:ring-sky-300 checked:bg-sky-600 text-sky-600 transition opacity-50 cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-[11px]">
-                    <label for="terms_customer" class="font-medium text-sky-900/80 cursor-pointer leading-tight block">
+                    <label class="font-medium text-sky-900/80 leading-tight block">
                         Saya telah membaca dan menyetujui seluruh 
-                        <a href="/syarat-ketentuan" target="_blank" class="font-bold text-sky-600 hover:text-sky-800 hover:underline transition">Syarat & Ketentuan</a> 
-                        serta Kebijakan Privasi Rentify.
+                        <button type="button" onclick="openModal()" class="font-bold text-sky-600 hover:text-sky-800 underline transition cursor-pointer">Syarat & Ketentuan</button> 
+                        Rentify.
                     </label>
+                    <p id="scrollAlert" class="text-[9px] text-rose-500 font-bold mt-0.5 animate-pulse">
+                        <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk membuka centang
+                    </p>
                 </div>
             </div>
 
@@ -145,10 +148,65 @@
                 <a href="{{ route('login') }}" class="text-sky-600 font-bold hover:text-cyan-600 hover:underline transition ml-1">Masuk di sini</a>
             </p>
         </div>
-
     </div>
 
+    <!-- MODAL POPUP SYARAT & KETENTUAN (UNTUK CUSTOMER) -->
+    <div id="termsModal" class="fixed inset-0 bg-slate-900/70 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-2xl w-full flex flex-col shadow-2xl max-h-[85vh] overflow-hidden border-t-4 border-sky-500">
+            <!-- Header Modal -->
+            <div class="bg-sky-600 px-6 py-4 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="font-black text-white text-lg tracking-wider">Syarat & Ketentuan Rentify</h3>
+                    <p class="text-[10px] text-sky-100">Silakan gulir hingga akhir untuk menyetujui.</p>
+                </div>
+                <button onclick="closeModal()" class="text-sky-100 hover:text-white transition text-2xl">&times;</button>
+            </div>
+            
+            <!-- Konten Bisa Di-scroll -->
+            <div id="termsContent" onscroll="checkScroll(this)" class="p-6 overflow-y-auto space-y-5 text-xs text-slate-600 leading-relaxed">
+                <p>Selamat datang di Rentify. Dengan mendaftar dan menggunakan platform ini, Anda menyatakan tunduk dan terikat pada syarat dan ketentuan berikut sesuai dengan hukum yang berlaku di Republik Indonesia, termasuk namun tidak terbatas pada KUHPerdata dan UU ITE.</p>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-1">1. Status dan Peran Platform</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Rentify Hanya Perantara:</strong> Rentify adalah platform Penyelenggara Sistem Elektronik yang berfungsi secara eksklusif untuk mempertemukan pemilik barang (Vendor) dengan penyewa (Customer).</li>
+                        <li><strong>Bukan Pemilik Barang:</strong> Rentify tidak memiliki, menguasai, menyimpan, atau mendistribusikan barang-barang yang disewakan. Seluruh barang adalah milik Vendor yang terdaftar.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-1">2. Pelepasan Tanggung Jawab Hukum (Disclaimer)</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Kerusakan dan Kehilangan:</strong> Rentify terlepas dari segala bentuk tanggung jawab hukum, baik perdata maupun pidana, atas kerusakan, kehilangan, cacat fisik, atau malfungsi pada barang sewaan yang terjadi selama masa penyewaan, pengiriman, maupun pengembalian.</li>
+                        <li><strong>Kualitas dan Keamanan Barang:</strong> Segala jaminan mengenai kualitas, kelayakan pakai, dan keamanan barang adalah tanggung jawab mutlak pihak Vendor. Rentify tidak memberikan garansi atas kondisi barang.</li>
+                        <li><strong>Tindak Pidana:</strong> Apabila terjadi tindak pidana seperti penggelapan barang oleh penyewa, penipuan, atau penyalahgunaan identitas, hal tersebut merupakan sengketa langsung antara Vendor dan Customer. Rentify dibebaskan dari tuntutan ganti rugi materiil dan imateriil.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-1">3. Kesepakatan Sewa-Menyewa</h3>
+                    <p>Hubungan hukum sewa-menyewa murni terjadi antara Vendor dan Customer. Transaksi yang disetujui di dalam Rentify berlaku sebagai undang-undang bagi mereka yang membuatnya (Psl 1338 KUHPerdata). Kebijakan mengenai Uang Jaminan (Deposit), Denda Keterlambatan, dan Ganti Rugi Kerusakan tunduk pada aturan yang ditetapkan oleh masing-masing Vendor.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-1">4. Penyelesaian Sengketa</h3>
+                    <p>Apabila terjadi sengketa akibat wanprestasi, kedua belah pihak sepakat untuk menyelesaikannya secara musyawarah mufakat atau menempuh jalur hukum secara mandiri. Berdasarkan UU ITE, Rentify bersedia bekerja sama dengan pihak berwajib dengan memberikan data riwayat transaksi digital jika diminta melalui prosedur hukum yang sah.</p>
+                </div>
+                
+                <div class="h-10"></div> <!-- Ruang ekstra agar scroll sampai benar-benar bawah -->
+            </div>
+            
+            <!-- Footer Modal -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+                <span id="scrollProgress" class="text-[10px] font-bold text-rose-500 animate-pulse"><i class="fa-solid fa-arrow-down mr-1"></i> Gulir ke bawah untuk setuju</span>
+                <button onclick="closeModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-5 rounded-lg transition text-xs">Kembali</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skrip Aksi Interaktif -->
     <script>
+        // Fitur Intip Password
         function togglePass(inputId, eyeId) {
             const input = document.getElementById(inputId);
             const eye = document.getElementById(eyeId);
@@ -160,6 +218,37 @@
                 input.type = 'password';
                 eye.classList.remove('fa-eye');
                 eye.classList.add('fa-eye-slash');
+            }
+        }
+
+        // Fitur Modal & Wajib Scroll
+        function openModal() {
+            document.getElementById('termsModal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('termsModal').classList.add('hidden');
+        }
+
+        // Pendeteksi Scroll Mentok Bawah
+        function checkScroll(element) {
+            // Toleransi jarak ~15px agar tetap terdeteksi meski layar di-zoom
+            if (element.scrollHeight - element.scrollTop <= element.clientHeight + 15) {
+                // Buka Kunci Checkbox
+                const checkbox = document.getElementById('terms_customer');
+                checkbox.disabled = false;
+                checkbox.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                // Ubah Teks Peringatan menjadi Sukses
+                const alertText = document.getElementById('scrollAlert');
+                alertText.innerHTML = '<i class="fa-solid fa-check-circle mr-0.5"></i> Syarat dibaca, silakan centang.';
+                alertText.classList.replace('text-rose-500', 'text-emerald-500');
+                alertText.classList.remove('animate-pulse');
+
+                // Ubah status di Modal
+                const progressText = document.getElementById('scrollProgress');
+                progressText.innerHTML = '<i class="fa-solid fa-check text-emerald-500 mr-1"></i> Telah disetujui';
+                progressText.classList.remove('text-rose-500', 'animate-pulse');
+                progressText.classList.add('text-slate-500');
             }
         }
     </script>
