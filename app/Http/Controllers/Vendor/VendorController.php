@@ -18,13 +18,16 @@ class VendorController extends Controller
     // Memproses Pendaftaran Vendor
     public function register(Request $request)
     {
-        // 1. Validasi input disesuaikan dengan form di UI Anda
+        // PERBAIKAN: Menambahkan validasi wajib centang S&K (terms) dan pesan error khusus
         $request->validate([
             'name'            => 'required|string|max:255',
             'vendor_name'     => 'required|string|max:255',
             'email'           => 'required|string|email|max:255|unique:users',
             'whatsapp_vendor' => 'required|string|max:20',
-            'password'        => 'required|string|min:8|confirmed', // Pakai confirmed karena ada Konfirmasi Sandi
+            'password'        => 'required|string|min:8|confirmed',
+            'terms'           => 'accepted', // <- INI KUNCI VALIDASINYA
+        ], [
+            'terms.accepted'  => 'Pendaftaran gagal. Anda wajib menyatakan data asli dan menyetujui Syarat & Ketentuan Rentify.',
         ]);
 
         // 2. Simpan user baru ke database beserta data tokonya

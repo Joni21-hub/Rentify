@@ -9,7 +9,7 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-    // 1. Menampilkan halaman login (Disamakan dengan web.php yang memanggil 'loginForm')
+    // 1. Menampilkan halaman login
     public function loginForm()
     {
         return view('auth.login'); 
@@ -28,7 +28,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             
-            // Panggil fungsi redirect tanpa oper data (karena dideteksi otomatis di dalam fungsi)
+            // Panggil fungsi redirect tanpa oper data
             return $this->redirectByRole();
         }
 
@@ -38,7 +38,7 @@ class AuthController extends Controller
         ]);
     }
 
-    // 3. Logika Redirect Berdasarkan Role (Sudah PUBLIC & Otomatis membaca user)
+    // 3. Logika Redirect Berdasarkan Role
     public function redirectByRole()
     {
         $user = Auth::user();
@@ -48,13 +48,13 @@ class AuthController extends Controller
             return redirect('/login');
         }
 
-        // Pengalihan berdasarkan role yang SESUAI dengan routes/web.php kamu
+        // Pengalihan berdasarkan role
         if ($user->role == 'admin') {
             return redirect()->intended('/admin/dashboard');
         } elseif ($user->role == 'vendor') {
             return redirect()->intended('/vendor/dashboard');
         } elseif ($user->role == 'customer') {
-            return redirect()->intended('/customer'); // Mengarah ke MarketplaceController
+            return redirect()->intended('/customer'); 
         }
         
         return redirect('/login');
@@ -70,8 +70,6 @@ class AuthController extends Controller
         return redirect('/');
     }
 
-    // Tambahkan ini di dalam class AuthController
-
     // 1. Menampilkan Halaman Form Register
     public function registerForm()
     {
@@ -81,11 +79,14 @@ class AuthController extends Controller
     // 2. Memproses Data Register
     public function register(Request $request)
     {
-        // Validasi data inputan
+        // PERBAIKAN: Menambahkan validasi wajib centang S&K dan pesan error khusus
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'], // Wajib konfirmasi password
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'terms' => ['accepted'], // <- INI KUNCI VALIDASINYA
+        ], [
+            'terms.accepted' => 'Pendaftaran gagal. Anda wajib mencentang dan menyetujui Syarat & Ketentuan Rentify.',
         ]);
 
         // Membuat user baru dengan role 'customer' secara otomatis
@@ -93,7 +94,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'customer', // Set otomatis sebagai customer/penyewa
+            'role' => 'customer', 
         ]);
 
         // Langsung otomatis login setelah sukses daftar
