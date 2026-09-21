@@ -31,8 +31,16 @@ use App\Http\Controllers\Customer\{
     WishlistController, PenyewaanTrackingController, UlasanController, 
 };
 
-// ─── AUTHENTICATION ROUTES ─────────────────────────────────────
-Route::get('/', [AuthController::class, 'redirectByRole']);
+// ─── 1. KATALOG PUBLIK (BISA DIAKSES SIAPA SAJA TANPA LOGIN) ───
+Route::name('customer.')->group(function () {
+    Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
+    Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
+    Route::get('/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
+});
+
+
+// ─── 2. AUTHENTICATION ROUTES ─────────────────────────────────────
+Route::get('/redirect-role', [AuthController::class, 'redirectByRole']); // Fallback redirect
 Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
@@ -50,7 +58,7 @@ Route::get('/logout', function () {
 });
 
 
-// ─── ADMIN ROUTES ──────────────────────────────────────────────
+// ─── 3. ADMIN ROUTES (TERKUNCI) ──────────────────────────────────────────────
 Route::get('/admin/vendors-validation', [AdminVendorController::class, 'validasiVendor'])->name('admin.vendors.validation');
 Route::post('/admin/vendors/{id}/approve-validation', [AdminVendorController::class, 'approveVendor'])->name('admin.vendors.approve-validation');
 Route::post('/admin/vendors/{id}/reject-validation', [AdminVendorController::class, 'rejectVendor'])->name('admin.vendors.reject');
@@ -97,12 +105,12 @@ Route::prefix('admin')->name('admin.')
     Route::post('penarikan/{id}/reject', [AdminPenarikanController::class, 'reject'])->name('penarikan.reject');
 
     // Rute Banned Sementara Vendor
-    Route::patch('/vendors/{id}/suspend', [App\Http\Controllers\Admin\AdminDashboardController::class, 'suspendVendor']);
-    Route::patch('/vendors/{id}/activate', [App\Http\Controllers\Admin\AdminDashboardController::class, 'activateVendor']);
+    Route::patch('/vendors/{id}/suspend', [AdminDashboardController::class, 'suspendVendor']);
+    Route::patch('/vendors/{id}/activate', [AdminDashboardController::class, 'activateVendor']);
 });
 
 
-// ─── VENDOR ROUTES ──────────────────────────────────────────────
+// ─── 4. VENDOR ROUTES (TERKUNCI) ──────────────────────────────────────────────
 Route::get('/vendor/register', [VendorController::class, 'showRegisterForm'])->name('vendor.register');
 Route::post('/vendor/register', [VendorController::class, 'register']);
 Route::view('/vendor/registration-success', 'auth.vendor-success')->name('vendor.register.success');
@@ -134,19 +142,14 @@ Route::prefix('vendor')->name('vendor.')
 });
 
 
-// ─── CUSTOMER ROUTES ────────────────────────────────────────────
-Route::get('/customer/home', function () {
-    return view('customer.home');
-});
+// ─── 5. TRANSAKSI CUSTOMER ROUTES (TERKUNCI LOGIN) ───────────────────────
+// (Rute fallback untuk menghindari error saat redirect role)
+Route::get('/customer', [CustomerDashboardController::class, 'index'])->middleware(['auth', 'role:customer']);
 
 Route::prefix('customer')->name('customer.')
     ->middleware(['auth', 'role:customer'])
     ->group(function () {
 
-    // Catalog & Basic Search
-    Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
-    Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
-    Route::get('/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
     
     // Core Cart System
@@ -171,8 +174,7 @@ Route::prefix('customer')->name('customer.')
     Route::get('/qris/{id}', [CheckoutController::class, 'qris'])->name('qris');
     Route::get('/struk/{id}', [CheckoutController::class, 'struk'])->name('struk');
 
-    // Orders, Tracking, & Invoices (PERBAIKAN: Rute /pesanan lama dimatikan agar tidak bentrok)
-    // Route::get('/pesanan', [PenyewaanTrackingController::class, 'index'])->name('pesanan.old');
+    // Orders, Tracking, & Invoices
     Route::get('/pesanan/track/{kode}', [PenyewaanTrackingController::class, 'show'])->name('pesanan.show');
     Route::get('/pesanan/{id}/pdf', [PdfController::class, 'download'])->name('pesanan.pdf');
     Route::get('/order/{id}', [CustomerHomeController::class, 'orderDetail'])->name('order.detail');
@@ -191,7 +193,7 @@ Route::prefix('customer')->name('customer.')
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
     Route::post('/notifikasi/baca-semua', [NotifikasiController::class, 'readAll']);
 
-    // ─── RUTE RIWAYAT TRANSAKSI CUSTOMER TERBARU (DIJAMIN TIDAK BENTROK) ───
+    // Rute Riwayat Transaksi Customer Terbaru
     Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'index'])->name('pesanan');
     Route::post('/pesanan/{id}/selesai', [\App\Http\Controllers\Customer\PesananController::class, 'selesaikan'])->name('pesanan.selesai');
 
