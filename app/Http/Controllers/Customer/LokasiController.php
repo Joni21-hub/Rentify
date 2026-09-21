@@ -10,9 +10,7 @@ class LokasiController extends Controller
 {
     public function index()
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
-        }
+        // PERBAIKAN 1: Hapus blokade login agar pengunjung (Guest) bisa melihat halaman maps
         return view('customer.lokasi');
     }
 
@@ -24,12 +22,22 @@ class LokasiController extends Controller
             'alamat_lengkap' => 'required'
         ]);
 
-        $user = Auth::user();
-        $user->latitude = $request->latitude;
-        $user->longitude = $request->longitude;
-        $user->alamat_lengkap = $request->alamat_lengkap;
-        $user->save();
+        // PERBAIKAN 2: Simpan koordinat ke Session memori browser (Berlaku untuk Tamu & Member)
+        session([
+            'user_latitude' => $request->latitude,
+            'user_longitude' => $request->longitude,
+            'user_alamat' => $request->alamat_lengkap
+        ]);
 
-        return redirect()->route('customer.home')->with('success', 'Lokasi Anda berhasil disimpan! Sekarang Anda bisa melihat barang di sekitar Anda.');
+        // PERBAIKAN 3: Jika pengguna sudah login, simpan juga secara permanen ke Database profil
+        if (Auth::check()) {
+            $user = Auth::user();
+            $user->latitude = $request->latitude;
+            $user->longitude = $request->longitude;
+            $user->alamat_lengkap = $request->alamat_lengkap;
+            $user->save();
+        }
+
+        return redirect()->route('customer.home')->with('success', 'Titik lokasi berhasil diatur! Menampilkan barang di sekitar Anda.');
     }
 }

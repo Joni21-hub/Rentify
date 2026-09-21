@@ -36,6 +36,10 @@ Route::name('customer.')->group(function () {
     Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
     Route::get('/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
+    
+    // Rute Lokasi yang sudah dibebaskan dari gembok Login
+    Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
+    Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
 });
 
 
@@ -196,7 +200,4 @@ Route::prefix('customer')->name('customer.')
     // Rute Riwayat Transaksi Customer Terbaru
     Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'index'])->name('pesanan');
     Route::post('/pesanan/{id}/selesai', [\App\Http\Controllers\Customer\PesananController::class, 'selesaikan'])->name('pesanan.selesai');
-
-    Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
-    Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
 });
