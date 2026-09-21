@@ -16,46 +16,55 @@ class CustomerHomeController extends Controller
         $daftarBarang = collect(); 
         $butuhLokasi = false;
 
+        // 1. Cek Lokasi: Ambil dari Session (Tamu) atau Database (Member)
+        $lat1 = session('user_latitude');
+        $lon1 = session('user_longitude');
+
         if (Auth::check()) {
             $user = Auth::user();
-            
+            // Jika member punya lokasi di profil, utamakan lokasi profilnya
             if ($user->latitude && $user->longitude) {
-                // FILTER BANNED: Hanya ambil barang yang tokonya TIDAK di-suspend
-                $semuaBarang = Barang::where('status_barang', 'disetujui')
-                    ->whereHas('vendor', function ($query) {
-                        $query->where('vendor_status', '!=', 'suspended')
-                              ->orWhereNull('vendor_status'); // Jaga-jaga jika ada vendor tanpa status eksplisit
-                    })
-                    ->get();
+                $lat1 = $user->latitude;
+                $lon1 = $user->longitude;
+            }
+        }
 
-                $lat1 = (float) $user->latitude;
-                $lon1 = (float) $user->longitude;
+        // 2. Jika koordinat DITEMUKAN (baik dari tamu maupun member), proses pencarian barang
+        if ($lat1 && $lon1) {
+            $semuaBarang = Barang::where('status_barang', 'disetujui')
+                ->whereHas('vendor', function ($query) {
+                    $query->where('vendor_status', '!=', 'suspended')
+                          ->orWhereNull('vendor_status'); 
+                })
+                ->get();
 
-                foreach ($semuaBarang as $barang) {
-                    $lat2 = (float) $barang->latitude;
-                    $lon2 = (float) $barang->longitude;
+            $lat1 = (float) $lat1;
+            $lon1 = (float) $lon1;
 
-                    if (!$lat2 || !$lon2 || ($lat2 == 0 && $lon2 == 0)) {
-                        continue;
-                    }
+            foreach ($semuaBarang as $barang) {
+                $lat2 = (float) $barang->latitude;
+                $lon2 = (float) $barang->longitude;
 
-                    $earthRadius = 6371; 
-                    $dLat = deg2rad($lat2 - $lat1);
-                    $dLon = deg2rad($lon2 - $lon1);
-                    
-                    $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
-                    $c = 2 * asin(sqrt($a));
-                    $jarak = $earthRadius * $c;
-
-                    if ($jarak <= 50) {
-                        $barang->jarak = $jarak; 
-                        $daftarBarang->push($barang);
-                    }
+                if (!$lat2 || !$lon2 || ($lat2 == 0 && $lon2 == 0)) {
+                    continue; // Lewati barang yang tokonya tidak pasang pin lokasi
                 }
-            } else {
-                $butuhLokasi = true;
+
+                $earthRadius = 6371; // Radius Bumi dalam KM
+                $dLat = deg2rad($lat2 - $lat1);
+                $dLon = deg2rad($lon2 - $lon1);
+                
+                $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+                $c = 2 * asin(sqrt($a));
+                $jarak = $earthRadius * $c;
+
+                // Tampilkan barang yang berjarak maksimal 50 KM
+                if ($jarak <= 50) {
+                    $barang->jarak = $jarak; 
+                    $daftarBarang->push($barang);
+                }
             }
         } else {
+            // 3. Jika sama sekali tidak ada data koordinat, munculkan Banner "Tentukan Lokasimu"
             $butuhLokasi = true;
         }
 
