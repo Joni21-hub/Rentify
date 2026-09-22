@@ -35,9 +35,12 @@ use App\Http\Controllers\Customer\{
 Route::name('customer.')->group(function () {
     Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
-    Route::get('/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
     
-    // Rute Lokasi yang sudah dibebaskan dari gembok Login
+    // PERBAIKAN: Kembalikan ke BarangDetailController dan menggunakan {slug}
+    // Tambahkan prefix /customer di URL agar sama persis dengan rute asli Anda
+    Route::get('/customer/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
+    
+    // Rute Lokasi
     Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
 });
