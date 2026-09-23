@@ -44,7 +44,11 @@ Route::name('customer.')->group(function () {
 
 
 // ─── 2. AUTHENTICATION ROUTES ─────────────────────────────────────
-Route::get('/redirect-role', [AuthController::class, 'redirectByRole']); 
+Route::get('/redirect-role', [AuthController::class, 'redirectByRole']); // Fallback redirect
+
+// PERBAIKAN: Menangkap lemparan default Laravel saat user yang sudah login mengakses /login
+Route::get('/home', [AuthController::class, 'redirectByRole']); 
+
 Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
