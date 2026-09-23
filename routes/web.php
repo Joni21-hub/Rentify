@@ -36,18 +36,15 @@ Route::name('customer.')->group(function () {
     Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
     
-    // PERBAIKAN: Kembalikan ke BarangDetailController dan menggunakan {slug}
-    // Tambahkan prefix /customer di URL agar sama persis dengan rute asli Anda
     Route::get('/customer/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
     
-    // Rute Lokasi
     Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
 });
 
 
 // ─── 2. AUTHENTICATION ROUTES ─────────────────────────────────────
-Route::get('/redirect-role', [AuthController::class, 'redirectByRole']); // Fallback redirect
+Route::get('/redirect-role', [AuthController::class, 'redirectByRole']); 
 Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
@@ -56,7 +53,6 @@ Route::get('/forgot-password', [AuthController::class, 'forgotForm']);
 Route::post('/forgot-password', [AuthController::class, 'sendReset']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Logout fallback (GET)
 Route::get('/logout', function () {
     Auth::logout();
     request()->session()->invalidate();
@@ -114,6 +110,10 @@ Route::prefix('admin')->name('admin.')
     // Rute Banned Sementara Vendor
     Route::patch('/vendors/{id}/suspend', [AdminDashboardController::class, 'suspendVendor']);
     Route::patch('/vendors/{id}/activate', [AdminDashboardController::class, 'activateVendor']);
+    
+    // PERBAIKAN: Rute Kill-Switch Voucher Vendor
+    Route::patch('/vouchers/{id}/suspend', [AdminDashboardController::class, 'suspendVoucher']);
+    Route::patch('/vouchers/{id}/activate', [AdminDashboardController::class, 'activateVoucher']);
 });
 
 
@@ -146,11 +146,15 @@ Route::prefix('vendor')->name('vendor.')
 
     Route::get('pengaturan', [\App\Http\Controllers\Vendor\VendorPengaturanController::class, 'index'])->name('pengaturan.index');
     Route::post('pengaturan', [\App\Http\Controllers\Vendor\VendorPengaturanController::class, 'update'])->name('pengaturan.update');
+
+    // --- VOUCHER TOKO
+    Route::get('voucher', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'index'])->name('voucher.index');
+    Route::post('voucher', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'store'])->name('voucher.store');
+    Route::delete('voucher/{id}', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'destroy'])->name('voucher.destroy');
 });
 
 
 // ─── 5. TRANSAKSI CUSTOMER ROUTES (TERKUNCI LOGIN) ───────────────────────
-// (Rute fallback untuk menghindari error saat redirect role)
 Route::get('/customer', [CustomerDashboardController::class, 'index'])->middleware(['auth', 'role:customer']);
 
 Route::prefix('customer')->name('customer.')
@@ -176,6 +180,9 @@ Route::prefix('customer')->name('customer.')
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/pembayaran/{id}/upload', [PembayaranController::class, 'uploadForm'])->name('pembayaran.upload');
     Route::post('/pembayaran/{id}/upload', [PembayaranController::class, 'upload'])->name('pembayaran.upload.post');
+    
+    // AJAX Voucher Toko
+    Route::post('/checkout/cek-voucher', [CheckoutController::class, 'cekVoucher'])->name('checkout.cek_voucher');
 
     // QRIS & Struk
     Route::get('/qris/{id}', [CheckoutController::class, 'qris'])->name('qris');

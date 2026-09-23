@@ -156,7 +156,7 @@
                     <form action="{{ route('customer.pesanan.selesai', $order->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang sudah diterima dengan baik dan ingin menyelesaikan pesanan ini?');">
                         @csrf
                         <button type="submit" class="btn-selesai" title="Klik jika masa sewa selesai dan barang sudah dikembalikan">
-                            <i class="fa-solid fa-check-double"></i> Selesaikan Pesanan & Lepas Dana
+                            <i class="fa-solid fa-check-double"></i> Selesaikan Pesanan
                         </button>
                     </form>
                 @else

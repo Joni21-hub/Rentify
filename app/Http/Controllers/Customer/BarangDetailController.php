@@ -13,25 +13,22 @@ class BarangDetailController extends Controller
      * Menampilkan halaman detail produk Rentify.
      * Dibuat fleksibel agar bisa membaca parameter {slug} ataupun {id} tanpa eror.
      */
-    public function show($slug)
+public function show($slug)
     {
-        // Cari barangnya
         $barang = Barang::with(['fotos', 'vendor', 'kategori'])
                         ->where(function ($query) use ($slug) {
                             $query->where('slug', $slug)
                                   ->orWhere('id', $slug);
                         })
-                        ->first();
+                        ->first(); // Jangan gunakan firstOrFail()
 
-        // Jika barang tidak ada di database
         if (!$barang) {
-            return redirect()->route('customer.home')->with('error', '⚠️ Barang yang Anda cari tidak ditemukan di sistem.');
+            return redirect()->route('customer.home')->with('error', '⚠️ Barang yang Anda cari tidak ditemukan.');
         }
 
-        // FILTER TOKO BANNED: Cek apakah vendor_status adalah 'suspended'
         $statusToko = strtolower($barang->vendor->vendor_status ?? '');
         if ($statusToko === 'suspended') {
-            return redirect()->route('customer.home')->with('error', '⚠️ Mohon maaf, barang "' . $barang->nama . '" tidak dapat diakses karena toko pemiliknya sedang ditangguhkan/diblokir sementara oleh Admin.');
+            return redirect()->route('customer.home')->with('error', '⚠️ Mohon maaf, barang tidak dapat diakses karena toko sedang ditangguhkan.');
         }
 
         // Menghitung jarak (Haversine Formula)

@@ -76,6 +76,10 @@
                     <i class="fa-solid fa-wallet w-5 text-center text-lg"></i> <span>Saldo & Penarikan</span>
                 </a>
 
+                <a href="{{ route('vendor.voucher.index') }}" class="flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium transition-all duration-300 {{ request()->routeIs('vendor.voucher.*') ? 'gradient-bg text-white shadow-lg shadow-brand-main/20' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
+                <i class="fa-solid fa-ticket w-5 text-center text-lg"></i> <span>Voucher Toko</span>
+                </a>
+
                 <div class="my-6 border-t border-white/5"></div>
                 <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Toko</p>
 

@@ -8,9 +8,55 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Barang;
 use App\Models\Keranjang;
+use App\Models\Voucher; // PERUBAHAN: Menambahkan model Voucher
 
 class CheckoutController extends Controller
 {
+    // PERUBAHAN: Menambahkan fungsi AJAX Cek Voucher
+    public function cekVoucher(Request $request)
+    {
+        $kode = strtoupper($request->kode_voucher);
+        $vendorIds = $request->vendor_ids; 
+
+        $voucher = Voucher::where('kode_voucher', $kode)
+            ->where('is_active', 1)
+            ->whereDate('tanggal_mulai', '<=', now())
+            ->whereDate('tanggal_selesai', '>=', now())
+            ->first();
+
+        if (!$voucher) {
+            return response()->json(['success' => false, 'message' => 'Voucher tidak valid atau sudah kadaluarsa.']);
+        }
+        
+        if ($voucher->kuota_terpakai >= $voucher->kuota_total) {
+            return response()->json(['success' => false, 'message' => 'Kuota voucher telah habis.']);
+        }
+        
+        if (!isset($vendorIds[$voucher->vendor_id])) {
+            return response()->json(['success' => false, 'message' => 'Voucher ini tidak berlaku untuk toko di keranjang Anda.']);
+        }
+        
+        $subtotalToko = (float) $vendorIds[$voucher->vendor_id];
+        
+        if ($subtotalToko < $voucher->minimal_belanja) {
+            return response()->json(['success' => false, 'message' => 'Minimal belanja Rp ' . number_format($voucher->minimal_belanja, 0, ',', '.') . ' tidak terpenuhi untuk toko ini.']);
+        }
+
+        $nilaiDiskon = $voucher->tipe_diskon === 'nominal' ? $voucher->nilai_diskon : ($subtotalToko * $voucher->nilai_diskon) / 100;
+        
+        if ($voucher->tipe_diskon === 'persen' && !is_null($voucher->maksimal_diskon) && $nilaiDiskon > $voucher->maksimal_diskon) {
+            $nilaiDiskon = $voucher->maksimal_diskon;
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Voucher berhasil diterapkan!', 
+            'potongan' => $nilaiDiskon, 
+            'vendor_id' => $voucher->vendor_id,
+            'voucher_id' => $voucher->id
+        ]);
+    }
+    
     public function index(Request $request)
     {
         $kodeVoucher = $request->input('kode_voucher');
@@ -27,7 +73,6 @@ class CheckoutController extends Controller
             $mockItem->user_id = auth()->id();
             $mockItem->barang_id = $barang->id;
             $mockItem->jumlah = $request->input('jumlah', 1);
-            // KUNCI SAKTI: Menangkap durasi hari dari Modal Sewa Sekarang!
             $mockItem->durasi_sewa = $request->input('durasi_sewa', 1); 
             $mockItem->setRelation('barang', $barang);
             
@@ -76,7 +121,6 @@ class CheckoutController extends Controller
 
         $waktuSekarang = Carbon::now('Asia/Jakarta'); 
         
-        // 1. TANGKAP JADWAL DARI MODAL KALENDER (Atau fallback ke waktu sekarang)
         $tanggalMulai = $request->input('start_date', $waktuSekarang->format('Y-m-d'));
         $jamMulai = $request->input('start_time', '09:00');
         $waktuMulai = Carbon::parse($tanggalMulai . ' ' . $jamMulai, 'Asia/Jakarta');
@@ -109,7 +153,6 @@ class CheckoutController extends Controller
 
         $keranjangPerVendor = $keranjangs->groupBy(fn($item) => $item->barang->vendor_id);
 
-        // 2. BENTENG SATPAM STOK ANTI-BENTROK (Dynamic Overlap Checker!)
         foreach ($keranjangPerVendor as $vendorId => $items) {
             $durasiCek = (int) ($request->durasi_sewa[$vendorId] ?? 1);
             $waktuKembaliCek = $waktuMulai->copy()->addDays($durasiCek);
@@ -120,13 +163,11 @@ class CheckoutController extends Controller
                     return redirect()->back()->with('error', "⚠️ Produk tidak ditemukan di database.");
                 }
 
-                // Hitung berapa kuantitas barang ini yang SEDANG disewa / diboking pada rentang waktu [waktuMulai, waktuKembaliCek]
                 $bookedQty = DB::table('order_items')
                     ->join('orders', 'order_items.order_id', '=', 'orders.id')
                     ->where('order_items.product_id', $item->barang_id)
                     ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak'])
                     ->where(function($query) use ($waktuMulai, $waktuKembaliCek) {
-                        // Rumus Overlap: Jadwal pesanan lain dimulai SEBELUM sewa kita selesai, DAN selesai SESUDAH sewa kita dimulai
                         $query->where('orders.start_rent', '<', $waktuKembaliCek)
                               ->where('orders.end_rent', '>', $waktuMulai);
                     })
@@ -144,7 +185,13 @@ class CheckoutController extends Controller
         $invoiceIds = [];
         $totalBayarSemua = 0; 
         $nomorWaAman = $request->no_hp;
-        $kodeVoucher = $request->kode_voucher; 
+        
+        // PERUBAHAN: Menangkap array data voucher jika ada
+        $voucherDataStr = $request->input('voucher_data_json');
+        $voucherData = [];
+        if ($voucherDataStr) {
+            $voucherData = json_decode($voucherDataStr, true);
+        }
 
         foreach ($keranjangPerVendor as $vendorId => $items) {
             $opsi = $request->opsi_pengiriman[$vendorId] ?? 'ambil';
@@ -152,7 +199,6 @@ class CheckoutController extends Controller
             $durasi = (int) ($request->durasi_sewa[$vendorId] ?? 1);
             $jaminanTerpilih = $request->jaminan[$vendorId] ?? 'KTP'; 
 
-            // ANTI-HACK ONGKIR: Server hitung ulang jika diantar agar aman dari Inspect Element!
             if ($opsi === 'diantar') {
                 $latToko = (float) ($items->first()->barang->latitude ?? $items->first()->barang->vendor->latitude ?? 0);
                 $lonToko = (float) ($items->first()->barang->longitude ?? $items->first()->barang->vendor->longitude ?? 0);
@@ -175,7 +221,6 @@ class CheckoutController extends Controller
                 $ongkir = 0; 
             }
             
-            // 3. HITUNG WAKTU KEMBALI AKURAT BERDASARKAN JADWAL MULAI
             $waktuKembali = $waktuMulai->copy()->addDays($durasi);
             $subtotalSewa = 0;
 
@@ -184,12 +229,17 @@ class CheckoutController extends Controller
                 $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
             }
 
+            // PERUBAHAN: Memotong harga dan mencatat ID voucher dari AJAX data (jika vendor id cocok)
             $potonganVoucher = 0;
-            if ($kodeVoucher === 'RENTIFY') {
-                $potonganVoucher = $subtotalSewa * 0.10;
+            $voucherIdDipakai = null;
+            
+            if (isset($voucherData['vendor_id']) && $voucherData['vendor_id'] == $vendorId) {
+                $potonganVoucher = $voucherData['potongan'];
+                $voucherIdDipakai = $voucherData['voucher_id'];
             }
 
-            $totalHargaVendor = ($subtotalSewa - $potonganVoucher) + $ongkir;
+            // Pastikan diskon tidak membuat total harga minus
+            $totalHargaVendor = max(0, ($subtotalSewa - $potonganVoucher)) + $ongkir;
             $totalBayarSemua += $totalHargaVendor;
 
             $orderId = DB::table('orders')->insertGetId([
@@ -201,16 +251,26 @@ class CheckoutController extends Controller
                 'pin_location' => $opsi === 'diantar' ? ($request->cust_lat . ',' . $request->cust_lon) : null,
                 'shipping_method' => $opsi,
                 'shipping_fee' => $ongkir,
-                'start_rent' => $waktuMulai,      // <-- MENYIMPAN JADWAL MULAI AKURAT!
-                'end_rent' => $waktuKembali,      // <-- MENYIMPAN JADWAL SELESAI AKURAT!
+                'start_rent' => $waktuMulai,      
+                'end_rent' => $waktuKembali,      
                 'duration_days' => $durasi,
                 'jaminan' => $jaminanTerpilih, 
                 'payment_method' => $request->metode_pembayaran,
                 'total_price' => $totalHargaVendor,
+                
+                // PERUBAHAN: Mencatat data voucher ke database
+                'voucher_id' => $voucherIdDipakai,
+                'potongan_voucher' => $potonganVoucher,
+
                 'status' => 'Menunggu Konfirmasi',
                 'created_at' => $waktuSekarang,
                 'updated_at' => $waktuSekarang
             ]);
+
+            // PERUBAHAN: Menjalankan increment() pada kuota voucher jika voucher dipakai
+            if ($voucherIdDipakai) {
+                Voucher::where('id', $voucherIdDipakai)->increment('kuota_terpakai');
+            }
 
             $invoiceIds[] = 'INV-' . $orderId;
 
@@ -224,9 +284,6 @@ class CheckoutController extends Controller
                     'created_at' => $waktuSekarang,
                     'updated_at' => $waktuSekarang
                 ]);
-
-                // REVOLUSI STOK: Kita TIDAK lagi melakukan decrement() agar Stok Master Fisik tetap utuh!
-                // Ketersediaan stok masa depan dan hari ini dijaga 100% oleh Satpam Stok Anti-Bentrok di atas.
             }
         }
 

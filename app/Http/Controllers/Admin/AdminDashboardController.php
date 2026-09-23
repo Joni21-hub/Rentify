@@ -34,6 +34,19 @@ class AdminDashboardController extends Controller
                 ->get();
         }
 
+        // --- FITUR BARU: AMBIL DATA VOUCHER UNTUK PEMANTAUAN ADMIN ---
+        // Menggunakan DB facade agar kebal dari error meskipun Model Voucher belum di-import
+        $allVouchers = DB::table('vouchers')
+            ->leftJoin('users', 'vouchers.vendor_id', '=', 'users.id')
+            ->select('vouchers.*', 'users.vendor_name as vendor_name_rel')
+            ->orderBy('vouchers.id', 'desc')
+            ->get();
+            
+        // Memanipulasi objek agar terbaca oleh Blade UI ($v->vendor->vendor_name)
+        foreach ($allVouchers as $v) {
+            $v->vendor = (object)['vendor_name' => $v->vendor_name_rel];
+        }
+
         $stats = [
             'total_pending' => $pendingBarangs->count(),
             'total_disetujui' => Barang::where('status_barang', 'disetujui')->count(),
@@ -45,7 +58,7 @@ class AdminDashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'banners', 'pendingBarangs', 'pendingVendors', 
-            'allBarangs', 'allVendors', 'allCustomers', 'stats', 'allTransaksi'
+            'allBarangs', 'allVendors', 'allCustomers', 'stats', 'allTransaksi', 'allVouchers'
         ));
     }
 
@@ -60,16 +73,13 @@ class AdminDashboardController extends Controller
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            // JALUR PINTAS PAMUNGKAS: Memanggil mesin asli Cloudinary langsung (Tanpa Facade Laravel)
             $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
             $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
             
-            // Upload langsung menggunakan API asli Cloudinary
             $uploadResult = $cloudinary->uploadApi()->upload($request->file('gambar')->getRealPath(), [
                 'folder' => 'rentify/banners'
             ]);
             
-            // Mengambil link URL aman langsung dari balikan data
             $banner->gambar_url = $uploadResult['secure_url'];
         }
         $banner->save();
@@ -140,8 +150,6 @@ class AdminDashboardController extends Controller
         $user->delete();
         return redirect()->back()->with('success', 'Akun pengguna/vendor berhasil dihapus dari sistem.');
     }
-
-    // --- FITUR BARU: BANNED SEMENTARA VENDOR ---
     
     public function suspendVendor($id)
     {
@@ -149,7 +157,6 @@ class AdminDashboardController extends Controller
         $vendor->vendor_status = 'suspended';
         $vendor->save();
 
-        // Menyembunyikan semua produk milik vendor ini dari katalog Customer
         Barang::where('vendor_id', $id)->update(['is_approved' => 0]);
 
         return redirect()->back()->with('error', "Akses Vendor '{$vendor->vendor_name}' telah Ditangguhkan (Banned). Semua produknya otomatis disembunyikan.");
@@ -161,9 +168,22 @@ class AdminDashboardController extends Controller
         $vendor->vendor_status = 'approved';
         $vendor->save();
 
-        // Menampilkan kembali semua produk milik vendor ini ke pelanggan
         Barang::where('vendor_id', $id)->update(['is_approved' => 1]);
 
         return redirect()->back()->with('success', "Banned dibuka! Vendor '{$vendor->vendor_name}' dan produknya telah aktif kembali.");
+    }
+
+    // --- FITUR BARU: MODERASI VOUCHER VENDOR (KILL-SWITCH) ---
+    
+    public function suspendVoucher($id)
+    {
+        DB::table('vouchers')->where('id', $id)->update(['is_active' => 0]);
+        return redirect()->back()->with('error', "Voucher telah DIMATIKAN PAKSA! Customer tidak akan bisa lagi mengklaim voucher ini.");
+    }
+
+    public function activateVoucher($id)
+    {
+        DB::table('vouchers')->where('id', $id)->update(['is_active' => 1]);
+        return redirect()->back()->with('success', "Voucher diaktifkan kembali! Customer kini bisa menggunakannya lagi.");
     }
 }

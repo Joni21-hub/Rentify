@@ -42,6 +42,10 @@
                     <i class="fas fa-file-invoice-dollar text-slate-400 w-5"></i>
                     <span>Data Transaksi</span>
                 </button>
+                <button onclick="switchTab('tab-voucher', 'Pemantauan Keamanan Promo & Voucher')" class="w-full flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200 focus:outline-none menu-btn" id="btn-tab-voucher">
+                    <i class="fas fa-ticket-alt text-slate-400 w-5"></i>
+                    <span>Monitor Voucher</span>
+                </button>
 
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Manajemen Master Data</div>
                 <button onclick="switchTab('tab-produk', 'Master Data: Seluruh Produk')" class="w-full flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200 focus:outline-none menu-btn" id="btn-tab-produk">
@@ -247,6 +251,71 @@
                 </div>
             </div>
 
+            <div id="tab-voucher" class="tab-content hidden">
+                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50/10">
+                        <h3 class="text-base font-black text-slate-800"><i class="fas fa-ticket-alt text-rose-500 mr-2"></i>Pemantauan Voucher & Kill-Switch</h3>
+                        <p class="text-[10px] text-slate-500 font-bold bg-white px-3 py-1 rounded-full border border-slate-200">Matikan paksa voucher yang melanggar aturan</p>
+                    </div>
+                    <div class="p-0 overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
+                                    <th class="p-4 pl-6">Kode & Pemilik Toko</th>
+                                    <th class="p-4 text-center">Tipe Diskon</th>
+                                    <th class="p-4 text-center">Kuota Pakai</th>
+                                    <th class="p-4 text-center">Masa Berlaku</th>
+                                    <th class="p-4 text-center">Status</th>
+                                    <th class="p-4 text-center">Aksi (Kill Switch)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @forelse($allVouchers ?? [] as $v)
+                                <tr class="hover:bg-slate-50/60 transition">
+                                    <td class="p-4 pl-6">
+                                        <span class="font-black text-rose-600 text-sm tracking-widest">{{ $v->kode_voucher }}</span>
+                                        <p class="text-[10px] font-bold text-slate-500 mt-1"><i class="fas fa-store mr-1 text-[#0369a1]"></i> {{ $v->vendor?->vendor_name ?? 'Vendor Tidak Diketahui' }}</p>
+                                    </td>
+                                    <td class="p-4 text-center font-bold text-slate-700">
+                                        {{ $v->tipe_diskon == 'persen' ? $v->nilai_diskon.'%' : 'Rp '.number_format($v->nilai_diskon, 0, ',', '.') }}
+                                        <p class="text-[9px] text-slate-400 mt-0.5">Min. Order: Rp {{ number_format($v->minimal_belanja, 0, ',', '.') }}</p>
+                                    </td>
+                                    <td class="p-4 text-center font-bold text-slate-600">
+                                        {{ $v->kuota_terpakai }} / {{ $v->kuota_total }}
+                                    </td>
+                                    <td class="p-4 text-center font-medium text-slate-500 text-[10px]">
+                                        {{ \Carbon\Carbon::parse($v->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($v->tanggal_selesai)->format('d M Y') }}
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        @if($v->is_active)
+                                            <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-200">Aktif</span>
+                                        @else
+                                            <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-rose-50 text-rose-600 border border-rose-200">Dimatikan</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        @if($v->is_active)
+                                            <form action="/admin/vouchers/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Peringatan: Matikan paksa voucher ini agar tidak bisa diklaim oleh Customer?')">
+                                                @csrf @method('PATCH')
+                                                <button type="submit" class="bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm" title="Matikan Paksa (Kill-Switch)"><i class="fas fa-power-off mr-1"></i> Banned</button>
+                                            </form>
+                                        @else
+                                            <form action="/admin/vouchers/{{ $v->id }}/activate" method="POST" onsubmit="return confirm('Aktifkan kembali voucher ini?')">
+                                                @csrf @method('PATCH')
+                                                <button type="submit" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm" title="Aktifkan Kembali"><i class="fas fa-unlock mr-1"></i> Buka</button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="6" class="p-12 text-center text-slate-400">Belum ada data voucher yang diterbitkan oleh vendor.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
            <div id="tab-transaksi" class="tab-content hidden">
                 
                 @php
@@ -256,7 +325,8 @@
                         if (!in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                             $ong = (float) ($t->shipping_fee ?? 0);
                             $tot = (float) ($t->total_price ?? 0);
-                            $sew = $tot - $ong;
+                            $pot = (float) ($t->potongan_voucher ?? 0);
+                            $sew = ($tot + $pot) - $ong;
                             $asl = $sew / 1.05;
                             $feeT = ($t->rentify_fee && $t->rentify_fee > 0) ? $t->rentify_fee : ($sew - $asl);
                             $totalPendapatanRentify += $feeT;
@@ -308,7 +378,12 @@
                                             } else {
                                                 $ongkir = (float) ($trx->shipping_fee ?? 0);
                                                 $total = (float) ($trx->total_price ?? 0);
-                                                $sewaBersih = $total - $ongkir;
+                                                
+                                                // PERBAIKAN LOGIKA FEE 5%:
+                                                // Jika ada potongan_voucher, kita harus MENAMBAHKAN discount itu dulu ke total
+                                                // untuk menemukan "Harga Sewa Dasar" sebelum dipotong 5%
+                                                $diskonVoucher = (float) ($trx->potongan_voucher ?? 0);
+                                                $sewaBersih = $total - $ongkir + $diskonVoucher; 
                                                 $sewaAsli = $sewaBersih / 1.05;
                                                 $feeHitung = ($trx->rentify_fee && $trx->rentify_fee > 0) ? $trx->rentify_fee : ($sewaBersih - $sewaAsli);
                                             }
@@ -316,7 +391,7 @@
                                         <span class="font-black {{ $feeHitung > 0 ? 'text-emerald-600' : 'text-slate-400' }} text-sm block">
                                             Rp {{ number_format($feeHitung, 0, ',', '.') }}
                                         </span>
-                                        <span class="text-[10px] text-slate-400 font-semibold">Total Nilai: Rp {{ number_format($trx->total_price ?? 0, 0, ',', '.') }}</span>
+                                        <span class="text-[10px] text-slate-400 font-semibold">Total Tagihan: Rp {{ number_format($trx->total_price ?? 0, 0, ',', '.') }}</span>
                                     </td>
 
                                     <td class="p-4 text-slate-500">
@@ -366,7 +441,6 @@
                                 <tr class="hover:bg-slate-50/60 transition">
                                     <td class="p-4 pl-6">
                                         <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
-                                            <!-- PERBAIKAN CLOUDINARY DI TABEL INVENTARIS PRODUK -->
                                             @php
                                                 $coverUrl = 'https://placehold.co/50?text=No+Img';
                                                 if($p->cover_photo){
@@ -502,7 +576,6 @@
         </div>
     </main>
 
-    <!-- MODAL POPUP PENGAJUAN PRODUK DENGAN FOTO CLOUDINARY -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto border-t-4 border-[#0369a1]">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -511,7 +584,6 @@
             </div>
             
             <div class="space-y-4 text-sm">
-                <!-- PERBAIKAN 2: Penambahan Elemen Foto ke dalam Modal -->
                 <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <div class="w-24 h-24 rounded-lg overflow-hidden border border-slate-200 shadow-sm shrink-0 bg-white p-1">
                         <img id="md_foto" src="" class="w-full h-full object-cover rounded" onerror="this.src='https://placehold.co/150?text=No+Img'">
@@ -585,12 +657,19 @@
                         <span>Total Ongkos Kirim:</span>
                         <span id="tx_ongkir" class="font-bold text-slate-700"></span>
                     </div>
+                    
+                    <!-- PERBAIKAN NAMA VARIABEL: Menggunakan potongan_voucher agar sesuai dengan database -->
+                    <div class="flex justify-between text-rose-500 font-bold bg-rose-50 p-2 rounded-lg my-1">
+                        <span>Diskon Toko / Promo:</span>
+                        <span id="tx_diskon">- Rp 0</span>
+                    </div>
+
                     <div class="flex justify-between text-slate-800 text-sm font-black pt-2 border-t border-dashed">
-                        <span>Total Nilai Transaksi:</span>
+                        <span>Total Akhir Dibayar:</span>
                         <span id="tx_total" class="text-blue-600"></span>
                     </div>
                     <div class="flex justify-between bg-emerald-50 p-2 rounded-lg text-emerald-800 font-black text-sm mt-2 border border-emerald-100">
-                        <span>Rentify (Fee):</span>
+                        <span>Hak Rentify (Fee 5% dari Harga Dasar):</span>
                         <span id="tx_fee"></span>
                     </div>
                 </div>
@@ -623,13 +702,11 @@
         function openProductModal(dataString) {
             const data = JSON.parse(dataString);
             
-            // Logika Deteksi Gambar Cloudinary / Storage Asli (Fix JS)
             let photoUrl = 'https://placehold.co/150?text=No+Img';
             if (data.cover_photo) {
                 if (data.cover_photo.startsWith('http')) {
-                    photoUrl = data.cover_photo; // Gambar dari Cloudinary
+                    photoUrl = data.cover_photo; 
                 } else {
-                    // Gambar dari Storage Lokal
                     photoUrl = data.cover_photo.replace('public/', '/storage/');
                     if(!photoUrl.startsWith('/')) photoUrl = '/' + photoUrl;
                 }
@@ -668,22 +745,26 @@
             document.getElementById('tx_method').innerText = data.payment_method || 'COD';
             document.getElementById('tx_status').innerText = data.status || 'Pending';
             document.getElementById('tx_duration').innerText = (data.duration_days || 1) + ' Hari';
-            document.getElementById('tx_ongkir').innerText = fmt(data.shipping_fee);
-            document.getElementById('tx_total').innerText = fmt(data.total_price);
             
             let ongkir = parseFloat(data.shipping_fee || 0);
             let total = parseFloat(data.total_price || 0);
-            let sewaMarkup = total - ongkir;
-            let sewaAsli = sewaMarkup / 1.05;
+            // PERBAIKAN NAMA VARIABEL JS: Memastikan menggunakan data.potongan_voucher 
+            let diskon = parseFloat(data.potongan_voucher || 0);
+            
+            let sewaBesertaFee = total - ongkir + diskon;
+            let sewaAsli = sewaBesertaFee / 1.05;
             
             let rentifyFee = parseFloat(data.rentify_fee || 0);
-            let fee = rentifyFee > 0 ? rentifyFee : (sewaMarkup - sewaAsli);
+            let fee = rentifyFee > 0 ? rentifyFee : (sewaBesertaFee - sewaAsli);
 
             let status = (data.status || 'pending').toLowerCase();
             if (['dibatalkan', 'batal', 'cancelled', 'ditolak'].includes(status)) {
                 fee = 0;
             }
 
+            document.getElementById('tx_ongkir').innerText = fmt(ongkir);
+            document.getElementById('tx_diskon').innerText = '- ' + fmt(diskon);
+            document.getElementById('tx_total').innerText = fmt(total);
             document.getElementById('tx_fee').innerText = fmt(fee);
 
             let itemsHtml = '';
