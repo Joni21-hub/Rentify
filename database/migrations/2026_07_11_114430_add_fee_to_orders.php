@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
         Schema::table('orders', function (Blueprint $table) {
-            $table->decimal('vendor_earning', 15, 2)->default(0)->after('total_price');
+            $table->decimal('vendor_earning', 15, 2)->default(0)->after('total_biaya');
             $table->decimal('rentify_fee', 15, 2)->default(0)->after('vendor_earning');
             $table->dateTime('completed_at')->nullable()->after('rentify_fee');
         });

@@ -10,22 +10,32 @@ return new class extends Migration {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            
-            // TAMBAHKAN BARIS INI:
             $table->unsignedBigInteger('vendor_id')->nullable(); 
+            
+            // Kolom disesuaikan dengan Model Penyewaan
+            $table->string('kode_booking')->unique();
+            $table->unsignedBigInteger('cabang_id')->nullable();
             
             $table->string('customer_name');
             $table->string('customer_whatsapp');
-            $table->text('shipping_address');
+            $table->text('alamat_pengiriman')->nullable();
             $table->string('pin_location')->nullable();
-            $table->string('shipping_method'); // 'ambil' atau 'antar'
-            $table->integer('shipping_fee');
-            $table->dateTime('start_rent');
-            $table->dateTime('end_rent');
-            $table->integer('duration_days');
-            $table->string('payment_method'); // 'COD' atau 'QRIS'
-            $table->integer('total_price');
+            
+            $table->string('metode_pengambilan'); // 'ambil' atau 'antar'
+            $table->integer('shipping_fee')->default(0);
+            
+            $table->dateTime('tanggal_mulai');
+            $table->dateTime('tanggal_selesai');
+            $table->dateTime('tanggal_kembali_aktual')->nullable();
+            $table->integer('duration_days')->default(1);
+            
+            $table->string('payment_method'); // 'COD' atau 'QRIS' atau 'Transfer'
+            $table->decimal('total_biaya', 15, 2);
+            $table->decimal('total_deposit', 15, 2)->default(0);
+            $table->decimal('total_denda', 15, 2)->default(0);
+            
             $table->string('status')->default('Menunggu Konfirmasi'); // Menunggu Konfirmasi, Berjalan, Selesai, Dibatalkan
+            
             $table->timestamps();
         });
     }

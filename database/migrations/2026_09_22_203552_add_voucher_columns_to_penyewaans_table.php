@@ -12,7 +12,7 @@ return new class extends Migration
             // Menyimpan ID voucher yang dipakai (bisa kosong jika tidak pakai)
             $table->foreignId('voucher_id')->nullable()->after('payment_method')->constrained('vouchers')->onDelete('set null');
             // Menyimpan nominal diskon yang didapat
-            $table->decimal('potongan_voucher', 15, 2)->default(0)->after('total_price');
+            $table->decimal('potongan_voucher', 15, 2)->default(0)->after('total_biaya');
         });
     }
 
