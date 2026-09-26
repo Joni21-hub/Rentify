@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan Akun - Rentify</title>
+    <title>Ubah Profil - Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -17,19 +17,13 @@
         
         <!-- HEADER -->
         <div class="bg-white px-5 pt-6 pb-4 sticky top-0 z-50 shadow-sm flex items-center gap-4">
-            <a href="{{ route('customer.dashboard') }}" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+            <a href="{{ route('customer.settings') }}" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
-            <h1 class="text-lg font-extrabold text-slate-800">Pengaturan Akun</h1>
+            <h1 class="text-lg font-extrabold text-slate-800">Profil Saya</h1>
         </div>
 
         <div class="px-5 py-6">
-            @if(session('success'))
-                <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-check-circle"></i> {{ session('success') }}
-                </div>
-            @endif
-
             @if($errors->any())
                 <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold">
                     <ul class="list-disc pl-5">
@@ -40,7 +34,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('customer.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form action="{{ route('customer.settings.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 
                 <!-- FOTO PROFIL -->
@@ -69,42 +63,14 @@
 
                 <!-- EMAIL -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Alamat Email</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Alamat Email (Gmail)</label>
                     <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
-                </div>
-
-                <!-- WA (Disabled) -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1 flex justify-between">
-                        <span>Nomor WhatsApp</span>
-                        <span class="text-[9px] text-emerald-500"><i class="fa-solid fa-shield-check"></i> Terverifikasi</span>
-                    </label>
-                    <input type="text" value="{{ $user->whatsapp }}" disabled class="w-full px-4 py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-bold text-sm cursor-not-allowed">
-                    <p class="text-[10px] text-slate-400 mt-1 ml-1">Hubungi admin untuk mengubah nomor WhatsApp.</p>
-                </div>
-
-                <hr class="border-slate-100 my-6">
-
-                <!-- GANTI SANDI -->
-                <div>
-                    <h3 class="font-extrabold text-slate-800 mb-3 text-sm"><i class="fa-solid fa-lock text-slate-400 mr-1"></i> Keamanan Akun</h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Kata Sandi Baru (Opsional)</label>
-                            <input type="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Konfirmasi Sandi Baru</label>
-                            <input type="password" name="password_confirmation" placeholder="Ulangi sandi baru" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
-                        </div>
-                    </div>
                 </div>
 
                 <!-- SIMPAN -->
                 <div class="pt-4">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5">
-                        Simpan Perubahan
+                        Simpan Profil
                     </button>
                 </div>
             </form>

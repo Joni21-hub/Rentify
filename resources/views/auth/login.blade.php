@@ -106,6 +106,10 @@
                         <i id="eyeIcon" class="fa-regular fa-eye-slash text-sm"></i>
                     </button>
                 </div>
+                
+                <div class="flex justify-end -mt-2 mb-2">
+                    <a href="{{ url('/forgot-password') }}" class="text-xs font-bold text-white hover:text-blue-100 transition drop-shadow-md">Lupa kata sandi?</a>
+                </div>
 
                 @if ($errors->any())
                     <div class="bg-rose-500/90 backdrop-blur-md border border-rose-400 text-white px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg">

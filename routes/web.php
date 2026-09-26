@@ -178,7 +178,16 @@ Route::prefix('customer')->name('customer.')
     
     // Rute Pengaturan Akun Customer
     Route::get('/settings', [CustomerDashboardController::class, 'settings'])->name('settings');
-    Route::post('/settings', [CustomerDashboardController::class, 'updateSettings'])->name('settings.update');
+    
+    Route::get('/settings/profile', [CustomerDashboardController::class, 'settingsProfile'])->name('settings.profile');
+    Route::post('/settings/profile', [CustomerDashboardController::class, 'updateProfile'])->name('settings.profile.update');
+    
+    Route::get('/settings/password', [CustomerDashboardController::class, 'settingsPassword'])->name('settings.password');
+    Route::post('/settings/password', [CustomerDashboardController::class, 'updatePassword'])->name('settings.password.update');
+    
+    Route::get('/settings/whatsapp', [CustomerDashboardController::class, 'settingsWhatsapp'])->name('settings.whatsapp');
+    Route::post('/settings/whatsapp', [CustomerDashboardController::class, 'updateWhatsapp'])->name('settings.whatsapp.update');
+    Route::post('/settings/whatsapp/verify', [CustomerDashboardController::class, 'verifyWhatsapp'])->name('settings.whatsapp.verify');
     
     // Core Cart System
     Route::get('/cart', [CustomerHomeController::class, 'viewCart'])->name('cart.view');

@@ -41,26 +41,27 @@ class CustomerDashboardController extends Controller
     public function settings()
     {
         $user = Auth::user();
-        return view('customer.settings', compact('user'));
+        return view('customer.settings.index', compact('user'));
     }
 
-    public function updateSettings(Request $request)
+    // --- PROFIL ---
+    public function settingsProfile()
+    {
+        $user = Auth::user();
+        return view('customer.settings.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
     {
         $user = User::find(Auth::id());
-
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
-
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
 
         if ($request->hasFile('foto_profil')) {
             if ($user->foto_profil && Storage::disk('public')->exists($user->foto_profil)) {
@@ -70,7 +71,75 @@ class CustomerDashboardController extends Controller
         }
 
         $user->save();
+        return redirect()->route('customer.settings')->with('success', 'Profil berhasil diperbarui!');
+    }
 
-        return redirect()->route('customer.dashboard')->with('success', 'Profil Anda berhasil diperbarui!');
+    // --- KATA SANDI ---
+    public function settingsPassword()
+    {
+        return view('customer.settings.password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = User::find(Auth::id());
+        $request->validate([
+            'password_lama' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!Hash::check($request->password_lama, $user->password)) {
+            return back()->with('error', 'Kata sandi lama tidak sesuai.');
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('customer.settings')->with('success', 'Kata sandi berhasil diubah!');
+    }
+
+    // --- WHATSAPP (UBAH NOMOR DENGAN OTP) ---
+    public function settingsWhatsapp()
+    {
+        $user = Auth::user();
+        return view('customer.settings.whatsapp', compact('user'));
+    }
+
+    public function updateWhatsapp(Request $request)
+    {
+        $user = User::find(Auth::id());
+        $request->validate([
+            'whatsapp_baru' => 'required|string|max:20|unique:users,whatsapp',
+        ]);
+
+        // Buat OTP
+        $otp = rand(100000, 999999);
+        session([
+            'otp_wa_baru' => $request->whatsapp_baru,
+            'otp_code_change' => $otp,
+        ]);
+
+        // Kirim OTP via Fonnte
+        $pesan = "*RENTIFY*\n\nKode OTP untuk mengubah Nomor WhatsApp Anda adalah: *$otp*.\n\nJangan berikan kode ini kepada siapapun.";
+        \App\Services\WhatsAppService::send($request->whatsapp_baru, $pesan);
+
+        return redirect()->route('customer.settings.whatsapp')->with('otp_sent', true)->with('success', 'OTP telah dikirim ke nomor baru Anda.');
+    }
+
+    public function verifyWhatsapp(Request $request)
+    {
+        $request->validate(['otp' => 'required|numeric']);
+
+        if ($request->otp != session('otp_code_change')) {
+            return back()->with('otp_sent', true)->with('error', 'Kode OTP tidak valid.');
+        }
+
+        $user = User::find(Auth::id());
+        $user->whatsapp = session('otp_wa_baru');
+        $user->save();
+
+        session()->forget(['otp_wa_baru', 'otp_code_change']);
+
+        return redirect()->route('customer.settings')->with('success', 'Nomor WhatsApp berhasil diubah!');
     }
 }
