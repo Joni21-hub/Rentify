@@ -100,6 +100,9 @@ class AuthController extends Controller
         // Langsung otomatis login setelah sukses daftar
         Auth::login($user);
 
+        // PICU PENGIRIMAN EMAIL VERIFIKASI
+        event(new \Illuminate\Auth\Events\Registered($user));
+
         // Alihkan ke dashboard customer sesuai role
         return $this->redirectByRole();
     }

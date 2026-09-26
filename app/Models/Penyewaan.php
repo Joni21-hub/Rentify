@@ -9,10 +9,10 @@ class Penyewaan extends Model
     protected $table = 'orders';
 
     protected $fillable = [
-        'customer_id', 'kode_booking', 'metode_pengambilan',
-        'alamat_pengiriman', 'cabang_id', 'total_biaya',
-        'total_deposit', 'total_denda', 'status',
-        'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
+        'user_id', 'vendor_id', 'customer_id', 'kode_booking', 
+        'payment_method', 'metode_pengambilan', 'alamat_pengiriman', 
+        'cabang_id', 'total_biaya', 'total_deposit', 'total_denda', 
+        'status', 'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
     ];
 
     protected $casts = [

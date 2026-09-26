@@ -158,11 +158,11 @@ Route::prefix('vendor')->name('vendor.')
 });
 
 
-// ─── 5. TRANSAKSI CUSTOMER ROUTES (TERKUNCI LOGIN) ───────────────────────
-Route::get('/customer', [CustomerDashboardController::class, 'index'])->middleware(['auth', 'role:customer']);
+// ─── 5. TRANSAKSI CUSTOMER ROUTES (TERKUNCI LOGIN & VERIFIED) ───────────────────────
+Route::get('/customer', [CustomerDashboardController::class, 'index'])->middleware(['auth', 'verified', 'role:customer']);
 
 Route::prefix('customer')->name('customer.')
-    ->middleware(['auth', 'role:customer'])
+    ->middleware(['auth', 'verified', 'role:customer'])
     ->group(function () {
 
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
@@ -220,3 +220,22 @@ Route::prefix('customer')->name('customer.')
 
 // ─── MIDTRANS WEBHOOK ──────────────────────────────────────────────────────────
 Route::post('/midtrans/callback', [\App\Http\Controllers\Payment\PembayaranController::class, 'callback']);
+
+
+// ─── EMAIL VERIFICATION ROUTES ──────────────────────────────────────────────────
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect('/redirect-role');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('success', 'Tautan verifikasi telah dikirim ulang!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
