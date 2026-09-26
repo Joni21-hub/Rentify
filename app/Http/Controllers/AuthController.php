@@ -112,8 +112,12 @@ class AuthController extends Controller
     }
 
     // ─── SOCIALITE: GOOGLE LOGIN ──────────────────────────────────────────
-    public function redirectToGoogle()
+    public function redirectToGoogle(Request $request)
     {
+        // Menyimpan status persetujuan S&K jika mereka mendaftar via tombol Google di halaman Register
+        if ($request->has('agreed')) {
+            session(['google_agreed_terms' => true]);
+        }
         return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
     }
 
@@ -138,24 +142,32 @@ class AuthController extends Controller
                 Auth::login($user);
                 return $this->redirectByRole();
             } else {
-                // Jika belum pernah daftar sama sekali, buatkan akun customer otomatis
-                $newUser = User::create([
-                    'name' => $googleUser->name,
-                    'email' => $googleUser->email,
-                    'google_id' => $googleUser->id,
-                    'role' => 'customer',
-                    'password' => Hash::make(uniqid()), // Beri password acak yang tidak mungkin ditebak
-                ]);
-                
-                // Karena pakai Google, langsung verifikasi emailnya
-                $newUser->markEmailAsVerified();
+                // JIKA BELUM TERDAFTAR (CELAH HUKUM DITUTUP)
+                // Kita pastikan mereka datang dari halaman Register yang mana S&K sudah disetujui (disimpan di session)
+                if (session('google_agreed_terms') === true) {
+                    // Hapus session setelah digunakan
+                    session()->forget('google_agreed_terms');
 
-                Auth::login($newUser);
-                return $this->redirectByRole();
+                    // Buat akun baru otomatis
+                    $newUser = User::create([
+                        'name' => $googleUser->name,
+                        'email' => $googleUser->email,
+                        'google_id' => $googleUser->id,
+                        'role' => 'customer',
+                        'password' => Hash::make(uniqid()), // Beri password acak yang tidak mungkin ditebak
+                    ]);
+                    
+                    $newUser->markEmailAsVerified();
+                    Auth::login($newUser);
+                    return $this->redirectByRole();
+                } else {
+                    // JIKA MEREKA MENCOBA DAFTAR DARI HALAMAN LOGIN (Membypass S&K)
+                    return redirect('/register')->withErrors(['terms' => 'Demi keamanan dan kepatuhan hukum, akun Google Anda belum dapat didaftarkan. Silakan daftar dan centang Syarat & Ketentuan di bawah ini terlebih dahulu.']);
+                }
             }
             
         } catch (\Exception $e) {
-            return redirect('/login')->withErrors(['email' => 'Gagal login menggunakan Google. Silakan coba lagi.']);
+            return redirect('/login')->withErrors(['login' => 'Gagal terhubung dengan Google. Silakan coba lagi.']);
         }
     }
 }

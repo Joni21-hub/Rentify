@@ -183,6 +183,7 @@
             
             <div id="termsContent" onscroll="checkScroll(this)" class="p-6 overflow-y-auto space-y-4 text-[11px] text-white/80 leading-relaxed custom-scrollbar">
                 <p>Selamat datang di Rentify. Dengan mendaftar dan menggunakan platform ini (baik secara manual maupun melalui Google), Anda menyatakan tunduk dan terikat pada syarat dan ketentuan berikut sesuai dengan hukum yang berlaku di Republik Indonesia.</p>
+                
                 <div>
                     <h3 class="text-[12px] font-extrabold text-white mb-1">1. Status dan Peran Platform</h3>
                     <ul class="list-disc pl-4 space-y-1">
@@ -190,6 +191,25 @@
                         <li>Rentify tidak memiliki atau menyimpan barang yang disewakan.</li>
                     </ul>
                 </div>
+
+                <div>
+                    <h3 class="text-[12px] font-extrabold text-white mb-1">2. Tanggung Jawab Pengguna</h3>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Customer wajib memberikan informasi identitas asli saat menyewa barang.</li>
+                        <li>Vendor bertanggung jawab penuh atas kualitas dan deskripsi barang yang disewakan.</li>
+                        <li>Pengguna dilarang menyewakan atau menyewa barang-barang ilegal dan berbahaya.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-[12px] font-extrabold text-white mb-1">3. Pelepasan Tanggung Jawab Hukum</h3>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Rentify tidak bertanggung jawab atas kerusakan, kehilangan, atau penggelapan barang sewaan.</li>
+                        <li>Segala bentuk sengketa antara Vendor dan Customer adalah tanggung jawab kedua belah pihak dan Rentify hanya menyediakan data jika diminta oleh pihak berwajib.</li>
+                        <li>Kami berhak memblokir akun secara sepihak jika terdeteksi aktivitas penipuan.</li>
+                    </ul>
+                </div>
+                
                 <div class="h-10"></div>
             </div>
             
@@ -258,8 +278,8 @@
         function handleGoogleLogin() {
             const checkbox = document.getElementById('terms_customer');
             if (checkbox.checked) {
-                // Jika sudah dicentang, arahkan ke Google Auth
-                window.location.href = "{{ route('google.login') }}";
+                // Jika sudah dicentang, arahkan ke Google Auth dengan parameter agreed=1
+                window.location.href = "{{ route('google.login') }}?agreed=1";
             } else {
                 // Jika belum, tampilkan peringatan
                 const modal = document.getElementById('googleAlertModal');
