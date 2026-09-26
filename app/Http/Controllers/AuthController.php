@@ -79,20 +79,23 @@ class AuthController extends Controller
     // 2. Memproses Data Register
     public function register(Request $request)
     {
-        // PERBAIKAN: Menambahkan validasi wajib centang S&K dan pesan error khusus
+        // PERBAIKAN: Menambahkan validasi wajib centang S&K dan nomor WA
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'whatsapp' => ['required', 'string', 'max:20', 'unique:users,whatsapp'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'terms' => ['accepted'], // <- INI KUNCI VALIDASINYA
+            'terms' => ['accepted'],
         ], [
             'terms.accepted' => 'Pendaftaran gagal. Anda wajib mencentang dan menyetujui Syarat & Ketentuan Rentify.',
+            'whatsapp.unique' => 'Nomor WhatsApp ini sudah terdaftar.',
         ]);
 
         // Membuat user baru dengan role 'customer' secara otomatis
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'whatsapp' => $request->whatsapp,
             'password' => Hash::make($request->password),
             'role' => 'customer', 
         ]);
@@ -105,5 +108,53 @@ class AuthController extends Controller
 
         // Alihkan ke dashboard customer sesuai role
         return $this->redirectByRole();
+    }
+
+    // ─── SOCIALITE: GOOGLE LOGIN ──────────────────────────────────────────
+    public function redirectToGoogle()
+    {
+        return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->user();
+            
+            // Cek apakah user sudah terdaftar menggunakan google_id ATAU email yang sama
+            $user = User::where('google_id', $googleUser->id)->orWhere('email', $googleUser->email)->first();
+
+            if ($user) {
+                // Jika user ada tapi google_id-nya masih kosong (mungkin dulu daftar manual), kita update
+                if (!$user->google_id) {
+                    $user->update(['google_id' => $googleUser->id]);
+                }
+                // Jika belum diverifikasi, otomatis verifikasi karena Google sudah valid
+                if (!$user->email_verified_at) {
+                    $user->update(['email_verified_at' => now()]);
+                }
+                
+                Auth::login($user);
+                return $this->redirectByRole();
+            } else {
+                // Jika belum pernah daftar sama sekali, buatkan akun customer otomatis
+                $newUser = User::create([
+                    'name' => $googleUser->name,
+                    'email' => $googleUser->email,
+                    'google_id' => $googleUser->id,
+                    'role' => 'customer',
+                    'password' => Hash::make(uniqid()), // Beri password acak yang tidak mungkin ditebak
+                ]);
+                
+                // Karena pakai Google, langsung verifikasi emailnya
+                $newUser->markEmailAsVerified();
+
+                Auth::login($newUser);
+                return $this->redirectByRole();
+            }
+            
+        } catch (\Exception $e) {
+            return redirect('/login')->withErrors(['email' => 'Gagal login menggunakan Google. Silakan coba lagi.']);
+        }
     }
 }

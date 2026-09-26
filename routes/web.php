@@ -57,6 +57,10 @@ Route::get('/forgot-password', [AuthController::class, 'forgotForm']);
 Route::post('/forgot-password', [AuthController::class, 'sendReset']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// ─── GOOGLE SOCIALITE ROUTES ──────────────────────────────────────────────────
+Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+
 Route::get('/logout', function () {
     Auth::logout();
     request()->session()->invalidate();
