@@ -162,11 +162,11 @@ Route::prefix('vendor')->name('vendor.')
 });
 
 
-// ─── 5. TRANSAKSI CUSTOMER ROUTES (TERKUNCI LOGIN & VERIFIED) ───────────────────────
-Route::get('/customer', [CustomerDashboardController::class, 'index'])->middleware(['auth', 'verified', 'role:customer']);
+// ─── 5. TRANSAKSI CUSTOMER ROUTES (TERKUNCI LOGIN) ───────────────────────
+Route::get('/customer', [CustomerDashboardController::class, 'index'])->middleware(['auth', 'role:customer']);
 
 Route::prefix('customer')->name('customer.')
-    ->middleware(['auth', 'verified', 'role:customer'])
+    ->middleware(['auth', 'role:customer'])
     ->group(function () {
 
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
