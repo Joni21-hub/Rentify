@@ -18,14 +18,16 @@ class AuthController extends Controller
     // 2. Proses Login
     public function login(Request $request)
     {
-        // Validasi input
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        // Validasi input: field 'login' bisa berupa email atau WA
+        $request->validate([
+            'login' => ['required'], // Kita ganti name inputnya dari 'email' menjadi 'login'
             'password' => ['required'],
         ]);
 
-        // Coba login
-        if (Auth::attempt($credentials)) {
+        $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'whatsapp';
+
+        // Coba login berdasarkan tipe (email atau whatsapp)
+        if (Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
             $request->session()->regenerate();
             
             // Panggil fungsi redirect tanpa oper data
@@ -34,7 +36,7 @@ class AuthController extends Controller
 
         // Jika login gagal
         return back()->withErrors([
-            'email' => 'Email atau password yang Anda masukkan salah.',
+            'login' => 'Email/WhatsApp atau kata sandi yang Anda masukkan salah.',
         ]);
     }
 
