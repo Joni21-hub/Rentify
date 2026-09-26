@@ -14,13 +14,14 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
+        /* Latar Belakang Biru Bersih (Tanpa Ungu) */
         @keyframes gradientFlow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
         .bg-flowing {
-            background: linear-gradient(-45deg, #0284c7, #38bdf8, #818cf8, #60a5fa, #0ea5e9);
+            background: linear-gradient(-45deg, #0284c7, #38bdf8, #0ea5e9, #0369a1);
             background-size: 300% 300%;
             animation: gradientFlow 15s ease infinite;
         }
@@ -49,24 +50,29 @@
         }
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
 
-        .blob {
+        /* Bintang Berkedip (Sparkles) untuk membuat desain lebih hidup */
+        .sparkle {
             position: absolute;
-            filter: blur(80px);
-            z-index: 0;
-            opacity: 0.8;
-            animation: float 10s ease-in-out infinite alternate;
+            width: 4px; height: 4px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 4s infinite ease-in-out;
         }
-        @keyframes float {
-            0% { transform: translateY(0px) scale(1); }
-            100% { transform: translateY(-40px) scale(1.1); }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 0.8; transform: scale(1.5); box-shadow: 0 0 12px rgba(255,255,255,1); }
         }
     </style>
 </head>
 <body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
 
-    <div class="blob w-[30rem] h-[30rem] bg-indigo-500 rounded-full top-[-5%] left-[-5%]" style="animation-delay: 0s;"></div>
-    <div class="blob w-[25rem] h-[25rem] bg-cyan-300 rounded-full bottom-[-5%] right-[-5%]" style="animation-delay: -3s;"></div>
-    <div class="blob w-[20rem] h-[20rem] bg-blue-400 rounded-full top-[30%] right-[20%]" style="animation-delay: -6s;"></div>
+    <!-- Efek Bintang Berkedip -->
+    <div class="sparkle top-[15%] left-[10%]" style="animation-delay: 0s;"></div>
+    <div class="sparkle top-[25%] right-[20%]" style="animation-delay: 1.5s;"></div>
+    <div class="sparkle bottom-[20%] left-[25%]" style="animation-delay: 0.7s;"></div>
+    <div class="sparkle bottom-[35%] right-[10%]" style="animation-delay: 2s;"></div>
+    <div class="sparkle top-[50%] left-[5%]" style="animation-delay: 2.5s;"></div>
 
     <div class="w-full max-w-[380px] relative z-10 my-[2vh] lg:my-0">
         
@@ -89,10 +95,11 @@
                 </div>
             @endif
 
-            <form action="{{ route('register') }}" method="POST" class="space-y-3.5">
+            <form action="{{ route('register') }}" method="POST" id="registerForm" class="space-y-3.5">
                 @csrf 
 
-                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-xs shadow-sm mb-2">
+                <!-- Tombol Google di-intercept oleh JS untuk memastikan S&K dicentang -->
+                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-xs shadow-sm mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -100,7 +107,7 @@
                         <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
                     </svg>
                     Daftar dengan Google
-                </a>
+                </button>
 
                 <div class="flex items-center gap-3 my-2">
                     <div class="h-px bg-white/40 flex-1"></div>
@@ -130,6 +137,7 @@
                     <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
+                <!-- Bagian Syarat & Ketentuan -->
                 <div class="flex items-start pt-1 pb-1">
                     <div class="flex items-center h-4 relative group mt-0.5">
                         <input id="terms_customer" name="terms" type="checkbox" required disabled
@@ -141,7 +149,7 @@
                             <button type="button" onclick="openModal()" class="font-extrabold text-blue-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan</button>.
                         </label>
                         <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
-                            <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk membuka centang
+                            <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk menyetujui
                         </p>
                     </div>
                 </div>
@@ -174,7 +182,7 @@
             </div>
             
             <div id="termsContent" onscroll="checkScroll(this)" class="p-6 overflow-y-auto space-y-4 text-[11px] text-white/80 leading-relaxed custom-scrollbar">
-                <p>Selamat datang di Rentify. Dengan mendaftar dan menggunakan platform ini, Anda menyatakan tunduk dan terikat pada syarat dan ketentuan berikut sesuai dengan hukum yang berlaku di Republik Indonesia.</p>
+                <p>Selamat datang di Rentify. Dengan mendaftar dan menggunakan platform ini (baik secara manual maupun melalui Google), Anda menyatakan tunduk dan terikat pada syarat dan ketentuan berikut sesuai dengan hukum yang berlaku di Republik Indonesia.</p>
                 <div>
                     <h3 class="text-[12px] font-extrabold text-white mb-1">1. Status dan Peran Platform</h3>
                     <ul class="list-disc pl-4 space-y-1">
@@ -189,6 +197,22 @@
                 <span id="scrollProgress" class="text-[10px] font-extrabold text-rose-300 animate-pulse"><i class="fa-solid fa-arrow-down mr-1"></i> Gulir ke bawah</span>
                 <button onclick="closeModal()" class="bg-white hover:bg-gray-100 text-blue-600 font-extrabold py-1.5 px-4 rounded-xl transition text-[10px] shadow-lg">Tutup</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN GOOGLE -->
+    <div id="googleAlertModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-md">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-95 opacity-0" id="googleAlertBox">
+            <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-shield-halved text-rose-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-800 mb-2">Tindakan Diperlukan</h3>
+            <p class="text-xs text-slate-600 mb-6 leading-relaxed">
+                Untuk alasan keamanan dan hukum, Anda <b>wajib membaca dan menyetujui Syarat & Ketentuan</b> kami di bawah formulir ini sebelum dapat melanjutkan pendaftaran menggunakan Google.
+            </p>
+            <button onclick="closeGoogleAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">
+                Mengerti
+            </button>
         </div>
     </div>
 
@@ -228,6 +252,34 @@
                 progressText.classList.remove('text-rose-300', 'animate-pulse');
                 progressText.classList.add('text-white/80');
             }
+        }
+
+        // FUNGSI CEGAH LOGIN GOOGLE JIKA BELUM CENTANG S&K
+        function handleGoogleLogin() {
+            const checkbox = document.getElementById('terms_customer');
+            if (checkbox.checked) {
+                // Jika sudah dicentang, arahkan ke Google Auth
+                window.location.href = "{{ route('google.login') }}";
+            } else {
+                // Jika belum, tampilkan peringatan
+                const modal = document.getElementById('googleAlertModal');
+                const box = document.getElementById('googleAlertBox');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    box.classList.remove('scale-95', 'opacity-0');
+                    box.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+        }
+
+        function closeGoogleAlert() {
+            const modal = document.getElementById('googleAlertModal');
+            const box = document.getElementById('googleAlertBox');
+            box.classList.remove('scale-100', 'opacity-100');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
         }
     </script>
 </body>

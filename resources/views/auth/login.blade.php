@@ -14,19 +14,18 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* BACKGROUND MENGALIR (VIBRANT BLUE) YANG DIINGINKAN USER */
+        /* Latar Belakang Biru Bersih (Tanpa Ungu) */
         @keyframes gradientFlow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
         .bg-flowing {
-            background: linear-gradient(-45deg, #0284c7, #38bdf8, #818cf8, #60a5fa, #0ea5e9);
+            background: linear-gradient(-45deg, #0284c7, #38bdf8, #0ea5e9, #0369a1);
             background-size: 300% 300%;
             animation: gradientFlow 15s ease infinite;
         }
 
-        /* EFEK KACA YANG SANGAT REALISTIS (TRUE GLASSMORPHISM) */
         .glass-panel {
             background: rgba(255, 255, 255, 0.15); /* Transparan */
             backdrop-filter: blur(25px); /* Blur kuat */
@@ -38,7 +37,6 @@
             border-radius: 2rem;
         }
 
-        /* INPUT KACA */
         .input-glass {
             background: rgba(255, 255, 255, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.5);
@@ -52,32 +50,35 @@
         }
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
 
-        .blob {
+        /* Bintang Berkedip (Sparkles) */
+        .sparkle {
             position: absolute;
-            filter: blur(80px);
-            z-index: 0;
-            opacity: 0.8;
-            animation: float 10s ease-in-out infinite alternate;
+            width: 4px; height: 4px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 4s infinite ease-in-out;
         }
-        @keyframes float {
-            0% { transform: translateY(0px) scale(1); }
-            100% { transform: translateY(-40px) scale(1.1); }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 0.8; transform: scale(1.5); box-shadow: 0 0 12px rgba(255,255,255,1); }
         }
     </style>
 </head>
 <body class="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-flowing text-slate-800">
 
-    <div class="blob w-[30rem] h-[30rem] bg-indigo-500 rounded-full top-[-10%] left-[-10%]" style="animation-delay: 0s;"></div>
-    <div class="blob w-[25rem] h-[25rem] bg-cyan-300 rounded-full bottom-[-10%] right-[-5%]" style="animation-delay: -3s;"></div>
-    <div class="blob w-[20rem] h-[20rem] bg-blue-400 rounded-full top-[40%] right-[30%]" style="animation-delay: -6s;"></div>
+    <!-- Efek Bintang Berkedip -->
+    <div class="sparkle top-[10%] left-[20%]" style="animation-delay: 0.5s;"></div>
+    <div class="sparkle top-[30%] right-[15%]" style="animation-delay: 2s;"></div>
+    <div class="sparkle bottom-[15%] left-[30%]" style="animation-delay: 1s;"></div>
+    <div class="sparkle bottom-[40%] right-[25%]" style="animation-delay: 3s;"></div>
+    <div class="sparkle top-[60%] left-[10%]" style="animation-delay: 1.5s;"></div>
 
     <div class="w-full max-w-[380px] relative z-10">
         
-        <!-- PANEL KACA FORM -->
         <div class="glass-panel p-8 sm:p-10 relative">
             
             <div class="text-center mb-8">
-                <!-- TEKS RENTIFY YANG HIDUP DAN BERSINAR -->
                 <h1 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-2" style="text-shadow: 0 0 20px rgba(255,255,255,0.4);">
                     RENTIFY
                 </h1>
@@ -131,6 +132,7 @@
                     <div class="h-px bg-white/40 flex-1"></div>
                 </div>
 
+                <!-- Di Login, Asumsinya mereka sudah pernah mendaftar dan menyetujui S&K -->
                 <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-sm shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
