@@ -7,225 +7,212 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- ================================================================= -->
-    <!-- PWA RENTIFY META TAGS (DITAMBAHKAN AGAR JADI APLIKASI ASLI) -->
-    <!-- ================================================================= -->
+    <!-- PWA RENTIFY META TAGS -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#040b16">
+    <meta name="theme-color" content="#f0f9ff">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260498/ukuran_satu_g4ihwu.png">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .font-logo { font-family: 'Outfit', sans-serif; }
 
-        /* 1. KACA SANGAT TRANSPARAN & BENING */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.01); /* Sangat bening */
-            backdrop-filter: blur(5px); /* Blur diturunkan drastis agar tembus pandang */
-            -webkit-backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.05);
-            border-radius: 2rem;
-        }
-
-        /* 2. TOMBOL MASUK BERGRADASI & ANIMASI CAHAYA MENGALIR */
-        .btn-gradient-animated {
-            background: linear-gradient(90deg, #005bc4, #00d2ff, #2785f0);
-            background-size: 200% auto;
-            animation: gradientFlow 3s linear infinite;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-        .btn-gradient-animated:hover {
-            box-shadow: 0 0 35px rgba(0, 210, 255, 0.8);
-            transform: scale(1.02);
-        }
+        /* ANIMASI BACKGROUND MENGALIR (SOFT BLUE) */
         @keyframes gradientFlow {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .bg-flowing {
+            background: linear-gradient(-45deg, #e0f2fe, #bae6fd, #f0f9ff, #dbeafe);
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
         }
 
-        /* 3. BINTANG BERKEDIP NYATA (Titik Cahaya Halus) */
-        @keyframes twinkleSky {
-            0%, 100% { opacity: 0.1; transform: scale(0.5); box-shadow: 0 0 2px 0px rgba(255,255,255,0.1); }
-            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 8px 2px rgba(255,255,255,0.8); }
+        /* EFEK BOLA CAHAYA MELAYANG (BLOBS) */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
         }
-        .star-point {
+        .blob {
             position: absolute;
-            width: 2px; height: 2px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            animation: twinkleSky var(--duration) ease-in-out infinite alternate;
-            animation-delay: var(--delay);
-            pointer-events: none;
-            z-index: 1;
+            filter: blur(60px);
+            z-index: 0;
+            opacity: 0.6;
+            animation: float 10s ease-in-out infinite alternate;
         }
 
-        /* 4. AURORA BERGERAK HALUS */
-        @keyframes auroraSway {
-            0% { transform: translateX(-10%) scale(1); opacity: 0.3; filter: hue-rotate(0deg); }
-            100% { transform: translateX(10%) scale(1.1); opacity: 0.6; filter: hue-rotate(15deg); }
-        }
-        .aurora-sky {
-            position: absolute; top: -10%; left: -10%; width: 120%; height: 50%;
-            background: radial-gradient(ellipse at top, rgba(0, 255, 200, 0.25), transparent 60%);
-            mix-blend-mode: screen;
-            animation: auroraSway 12s ease-in-out infinite alternate;
-            pointer-events: none; z-index: 1;
+        /* KACA TRANSPARAN ELEGAN (LIGHT GLASSMORPHISM) */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 20px 40px rgba(14, 165, 233, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            border-radius: 1.5rem;
         }
 
-        /* 5. GAMBAR LATAR BERNAPAS (CINEMATIC) */
-        @keyframes cinematicBreath {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.04) translate(-5px, -3px); }
+        /* INPUT KACA (CLEAN) */
+        .input-clean {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            color: #334155;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .animate-bg-breath {
-            animation: cinematicBreath 20s ease-in-out infinite alternate;
+        .input-clean:focus {
+            background: #ffffff;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+        }
+        .input-clean::placeholder {
+            color: #94a3b8;
         }
 
-        /* Input Kaca */
-        .input-glass {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        /* TOMBOL UTAMA (MODERN GRADIENT) */
+        .btn-modern {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
             transition: all 0.3s;
         }
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: #00d2ff;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+        .btn-modern:hover {
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-modern:active {
+            transform: translateY(1px);
         }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-center justify-center lg:justify-end lg:pr-32 p-4 relative overflow-hidden bg-[#040b16] text-white">
+<body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
 
-    <!-- GAMBAR LATAR ASLI -->
-    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 animate-bg-breath" 
-         style="background-image: url('https://res.cloudinary.com/fnf8f1pm/image/upload/v1784175125/background_lqct46.jpg');">
-    </div>
+    <!-- EFEK BOLA CAHAYA DIBELAKANG (BLOBS) -->
+    <div class="blob w-72 h-72 bg-cyan-300 rounded-full top-[10%] left-[15%]" style="animation-delay: 0s;"></div>
+    <div class="blob w-96 h-96 bg-blue-200 rounded-full bottom-[10%] right-[10%]" style="animation-delay: -5s;"></div>
+    <div class="blob w-64 h-64 bg-sky-200 rounded-full top-[40%] right-[30%]" style="animation-delay: -2s;"></div>
 
-    <!-- AURORA BERGERAK -->
-    <div class="aurora-sky"></div>
-
-    <!-- BINTANG BERKEDIP (Hanya di area langit atas) -->
-    <div class="star-point top-[8%] left-[15%]" style="--duration: 3s; --delay: 0s;"></div>
-    <div class="star-point top-[15%] left-[30%]" style="--duration: 4s; --delay: 1s;"></div>
-    <div class="star-point top-[6%] left-[60%]" style="--duration: 2.5s; --delay: 0.5s;"></div>
-    <div class="star-point top-[20%] left-[50%]" style="--duration: 3.5s; --delay: 2s; background-color: #a7f3d0;"></div>
-    <div class="star-point top-[12%] left-[80%]" style="--duration: 4s; --delay: 1.2s;"></div>
-    <div class="star-point top-[25%] left-[85%]" style="--duration: 3s; --delay: 0.2s;"></div>
-
-    <!-- CONTAINER FORM (mb-[15vh] mengangkat form ke atas di HP agar logo kursi terlihat) -->
-    <div class="relative w-full max-w-[340px] z-20 mb-[15vh] lg:mb-0">
+    <div class="w-full max-w-md relative z-10">
         
-        <!-- CINCIN CAHAYA MELINGKARI PANEL KACA -->
-        <!-- Kanan Atas -->
-        <div class="absolute -top-4 -right-4 w-20 h-20 border-[1px] border-white/40 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.4)] pointer-events-none z-0"></div>
-        <!-- Kiri Bawah -->
-        <div class="absolute -bottom-6 -left-6 w-24 h-24 border-[1px] border-white/30 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)] pointer-events-none z-0"></div>
-
         <!-- PANEL KACA FORM -->
-        <div class="glass-panel p-8 relative z-10">
+        <div class="glass-panel p-8 sm:p-10 relative">
             
-            <div class="text-center mb-6">
-                <!-- Tulisan RENTIFY Murni Tanpa Bintang -->
-                <h1 class="text-3xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/40 drop-shadow-[0_0_12px_rgba(255,255,255,0.4)] mb-3">
-                    RENTIFY
-                </h1>
-                <h2 class="text-xl font-bold tracking-tight mb-1 text-white/95">Eksplorasi Dimulai</h2>
-                <p class="text-[11px] text-gray-300 font-medium">Masuk untuk Petualangan Anda.</p>
+            <div class="text-center mb-8">
+                <!-- LOGO RENTIFY (ELEGAN & MODERN) -->
+                <div class="inline-flex items-center justify-center mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 mr-3">
+                        <i class="fa-solid fa-gem text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-logo font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600">
+                        Rentify
+                    </h1>
+                </div>
+                <h2 class="text-sm font-semibold text-slate-600 tracking-wide uppercase">Selamat Datang Kembali</h2>
+                <p class="text-xs text-slate-500 mt-1">Masuk untuk melanjutkan eksplorasi Anda.</p>
             </div>
 
-            <!-- Form -->
             <form action="/login" method="POST" class="space-y-4">
                 @csrf
 
-                <!-- Input Email -->
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 text-sm">
-                        <i class="far fa-envelope"></i>
-                    </span>
-                    <input type="email" name="email" required placeholder="Email" 
-                        class="input-glass w-full pl-10 pr-4 py-3 rounded-full text-sm text-white placeholder-gray-400/80 focus:outline-none">
+                <div class="space-y-1.5">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">Alamat Email</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                            <i class="fa-regular fa-envelope"></i>
+                        </span>
+                        <input type="email" name="email" required placeholder="contoh@email.com" 
+                            class="input-clean w-full pl-11 pr-4 py-3 rounded-xl text-sm focus:outline-none font-medium">
+                    </div>
                 </div>
 
-                <!-- Input Password -->
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 text-sm">
-                        <i class="fas fa-lock"></i>
-                    </span>
-                    <input type="password" id="passwordField" name="password" required placeholder="Password" 
-                        class="input-glass w-full pl-10 pr-10 py-3 rounded-full text-sm text-white placeholder-gray-400/80 focus:outline-none">
-                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-white transition">
-                        <i id="eyeIcon" class="far fa-eye-slash text-xs"></i>
-                    </button>
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center pl-1 pr-1">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kata Sandi</label>
+                        <a href="/forgot-password" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 transition">Lupa sandi?</a>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="passwordField" name="password" required placeholder="Masukkan kata sandi" 
+                            class="input-clean w-full pl-11 pr-11 py-3 rounded-xl text-sm focus:outline-none font-medium">
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-sky-500 transition">
+                            <i id="eyeIcon" class="fa-regular fa-eye-slash text-sm"></i>
+                        </button>
+                    </div>
                 </div>
 
-                {{-- MENCETAK PERINGATAN JIKA EMAIL / PASSWORD SALAH --}}
                 @if ($errors->any())
-                    <div class="mb-4 bg-rose-50 border border-rose-300 text-rose-700 px-4 py-3 rounded-lg text-xs font-bold flex items-center">
-                        <i class="fas fa-exclamation-triangle mr-2 text-rose-500 text-sm"></i>
+                    <div class="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-xs font-medium flex items-start gap-2 shadow-sm">
+                        <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="mb-4 bg-rose-50 border border-rose-300 text-rose-700 px-4 py-3 rounded-lg text-xs font-bold flex items-center">
-                        <i class="fas fa-exclamation-circle mr-2 text-rose-500 text-sm"></i>
+                    <div class="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-xs font-medium flex items-start gap-2 shadow-sm">
+                        <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
                         <span>{{ session('error') }}</span>
                     </div>
                 @endif
 
-                <!-- TOMBOL MASUK BERBAHAYA (GRADASI BERGERAK GLOWING) -->
-                <div class="pt-3">
-                    <button type="submit" class="btn-gradient-animated w-full text-white font-bold py-3.5 rounded-full text-sm tracking-widest uppercase mb-4">
-                        login
+                <div class="pt-2">
+                    <button type="submit" class="btn-modern w-full text-white font-bold py-3.5 rounded-xl text-sm tracking-wide flex justify-center items-center gap-2">
+                        <span>Masuk ke Akun</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
                     </button>
                 </div>
                 
-                <div class="flex items-center gap-3 my-4">
-                    <div class="h-px bg-white/20 flex-1"></div>
-                    <span class="text-[9px] font-bold text-white/50 tracking-widest">ATAU</span>
-                    <div class="h-px bg-white/20 flex-1"></div>
+                <div class="flex items-center gap-3 my-5">
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                    <span class="text-[10px] font-bold text-slate-400 tracking-wider">ATAU</span>
+                    <div class="h-px bg-slate-200 flex-1"></div>
                 </div>
 
-                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all font-bold text-white text-xs backdrop-blur-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4">
+                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition-all font-bold text-slate-600 text-sm shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
                         <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
                         <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
                     </svg>
-                    Lanjutkan dengan Google
+                    Masuk dengan Google
                 </a>
             </form>
 
-            <div class="mt-6 text-center space-y-2.5">
-                <p class="text-[11px] text-gray-300">
-                    <a href="/register" class="text-white hover:text-blue-300 transition underline underline-offset-2">Daftar di sini</a>
-                </p>
-                <p class="text-[11px]">
-                    <a href="/vendor/register" class="font-semibold text-[#facc15] hover:text-yellow-300 transition underline underline-offset-2 decoration-[#facc15]/50">Daftar menjadi bagian dari rentify</a>
-                </p>
+            <div class="mt-8 space-y-3">
+                <div class="text-center">
+                    <p class="text-[11px] text-slate-500 font-medium">Belum punya akun? 
+                        <a href="/register" class="text-sky-600 font-bold hover:text-sky-700 hover:underline transition ml-1">Daftar sekarang</a>
+                    </p>
+                </div>
+                
+                <!-- LINK VENDOR YANG ELEGAN -->
+                <div class="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex items-center justify-between group hover:bg-sky-50/50 transition cursor-pointer" onclick="window.location.href='/vendor/register'">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fa-solid fa-store text-[10px]"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-700">Punya barang tak terpakai?</p>
+                            <p class="text-[9px] text-slate-500">Mulai hasilkan uang sebagai Vendor.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-[10px] group-hover:text-indigo-500 transition translate-x-0 group-hover:translate-x-1"></i>
+                </div>
             </div>
             
-            <div class="mt-6 flex justify-center">
-                <span class="px-4 py-1.5 rounded-full border border-white/20 text-[9px] uppercase tracking-widest text-gray-300 font-semibold bg-white/5">
-                    ---------
-                </span>
-            </div>
         </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- TOMBOL INSTALL PWA & REGISTRASI SERVICE WORKER -->
-    <!-- ================================================================= -->
+    <!-- TOMBOL INSTALL PWA -->
     <div id="installPwaContainer" style="display: none;" class="fixed bottom-6 right-6 z-50">
-        <button id="installPwaBtn" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold py-3 px-6 rounded-2xl shadow-2xl border border-white/30 flex items-center gap-3 transition-all transform hover:scale-105 backdrop-blur-md">
-            <i class="fa-solid fa-download"></i>
-            <span>Install Aplikasi Rentify</span>
+        <button id="installPwaBtn" class="bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-5 rounded-full shadow-xl border border-slate-200 flex items-center gap-2.5 transition-all transform hover:-translate-y-1 text-xs">
+            <div class="w-6 h-6 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center">
+                <i class="fa-solid fa-download text-[10px]"></i>
+            </div>
+            <span>Install Aplikasi</span>
         </button>
     </div>
 
@@ -244,16 +231,12 @@
             }
         }
 
-        // 1. Mendaftarkan Service Worker ke Browser
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Rentify PWA: Service Worker Berhasil Didaftarkan di halaman Login'))
-                    .catch(err => console.error('Rentify PWA: Gagal Daftar Service Worker', err));
+                navigator.serviceWorker.register('/sw.js').catch(err => console.error('PWA Error', err));
             });
         }
 
-        // 2. Logika Menampilkan Tombol "Install Aplikasi"
         let deferredPrompt;
         const installContainer = document.getElementById('installPwaContainer');
         const installBtn = document.getElementById('installPwaBtn');
@@ -267,10 +250,7 @@
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User menyetujui instalasi aplikasi');
-                }
+                await deferredPrompt.userChoice;
                 deferredPrompt = null;
                 installContainer.style.display = 'none';
             }
