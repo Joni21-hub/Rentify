@@ -138,7 +138,7 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-extrabold mb-1">Jangkauan Luas</h4>
-                                <p class="text-[10px] text-white/80 leading-relaxed">Temukan ribuan pelanggan baru yang siap menyewa barang Anda setiap harinya.</p>
+                                <p class="text-[10px] text-white/80 leading-relaxed">Temukan pelanggan baru yang siap menyewa barang Anda setiap harinya.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-4">
