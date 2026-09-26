@@ -170,58 +170,81 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP SYARAT & KETENTUAN -->
-    <div id="termsModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-md">
-        <div class="bg-white/10 backdrop-blur-3xl border border-white/30 rounded-3xl max-w-2xl w-full flex flex-col shadow-2xl max-h-[85vh] overflow-hidden">
-            <div class="bg-white/10 px-6 py-4 flex justify-between items-center shrink-0 border-b border-white/10">
+    <!-- MODAL POPUP SYARAT & KETENTUAN (TERANG) -->
+    <div id="termsModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-2xl w-full flex flex-col shadow-2xl max-h-[85vh] overflow-hidden">
+            <!-- Header Modal -->
+            <div class="bg-slate-50 px-6 py-4 flex justify-between items-center shrink-0 border-b border-slate-200">
                 <div>
-                    <h3 class="font-extrabold text-white text-sm tracking-wide">Syarat & Ketentuan</h3>
-                    <p class="text-[10px] text-white/70">Silakan gulir hingga akhir untuk menyetujui.</p>
+                    <h3 class="font-bold text-slate-800 text-sm tracking-wide">Syarat & Ketentuan</h3>
+                    <p class="text-[10px] text-slate-500">Silakan gulir hingga akhir untuk menyetujui.</p>
                 </div>
-                <button onclick="closeModal()" class="text-white/50 hover:text-white transition text-xl">&times;</button>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
             </div>
             
-            <div id="termsContent" onscroll="checkScroll(this)" class="p-6 overflow-y-auto space-y-4 text-[11px] text-white/80 leading-relaxed custom-scrollbar">
+            <!-- Konten Bisa Di-scroll -->
+            <div id="termsContent" onscroll="checkScroll(this)" class="p-6 overflow-y-auto space-y-4 text-[11px] text-slate-600 leading-relaxed custom-scrollbar">
                 <p>Selamat datang di Rentify. Dengan mendaftar dan menggunakan platform ini (baik secara manual maupun melalui Google), Anda menyatakan tunduk dan terikat pada syarat dan ketentuan berikut sesuai dengan hukum yang berlaku di Republik Indonesia.</p>
-                
+
                 <div>
-                    <h3 class="text-[12px] font-extrabold text-white mb-1">1. Status dan Peran Platform</h3>
+                    <h3 class="text-[12px] font-bold text-slate-800 mb-1">1. Ketentuan Umum & Definisi</h3>
                     <ul class="list-disc pl-4 space-y-1">
-                        <li>Rentify adalah perantara (Penyelenggara Sistem Elektronik) yang mempertemukan pemilik barang (Vendor) dengan penyewa (Customer).</li>
-                        <li>Rentify tidak memiliki atau menyimpan barang yang disewakan.</li>
+                        <li><strong>Rentify</strong> adalah platform perantara yang mempertemukan pihak yang ingin menyewakan barang (Vendor) dengan pihak yang ingin menyewa (Customer).</li>
+                        <li>Rentify tidak memiliki, menguasai, atau menyimpan satupun barang yang disewakan di dalam platform ini.</li>
+                        <li>Pengguna wajib berusia minimal 17 tahun dan/atau memiliki identitas resmi (KTP/SIM/Paspor) yang sah menurut hukum Republik Indonesia.</li>
                     </ul>
                 </div>
 
                 <div>
-                    <h3 class="text-[12px] font-extrabold text-white mb-1">2. Tanggung Jawab Pengguna</h3>
+                    <h3 class="text-[12px] font-bold text-slate-800 mb-1">2. Tanggung Jawab & Kewajiban Customer</h3>
                     <ul class="list-disc pl-4 space-y-1">
-                        <li>Customer wajib memberikan informasi identitas asli saat menyewa barang.</li>
-                        <li>Vendor bertanggung jawab penuh atas kualitas dan deskripsi barang yang disewakan.</li>
-                        <li>Pengguna dilarang menyewakan atau menyewa barang-barang ilegal dan berbahaya.</li>
+                        <li>Customer wajib memberikan informasi identitas asli dan alamat yang valid saat melakukan transaksi penyewaan barang.</li>
+                        <li>Customer dilarang keras menggadaikan, menjual, merusak dengan sengaja, atau menghilangkan barang sewaan.</li>
+                        <li>Keterlambatan pengembalian barang akan dikenakan denda sesuai dengan kebijakan masing-masing Vendor yang tertera di halaman produk.</li>
+                        <li>Kerusakan barang di luar batas wajar pemakaian (wear and tear) wajib diganti rugi oleh Customer sesuai nilai barang atau kesepakatan dengan Vendor.</li>
                     </ul>
                 </div>
 
                 <div>
-                    <h3 class="text-[12px] font-extrabold text-white mb-1">3. Pelepasan Tanggung Jawab Hukum</h3>
+                    <h3 class="text-[12px] font-bold text-slate-800 mb-1">3. Tanggung Jawab & Hak Vendor</h3>
                     <ul class="list-disc pl-4 space-y-1">
-                        <li>Rentify tidak bertanggung jawab atas kerusakan, kehilangan, atau penggelapan barang sewaan.</li>
-                        <li>Segala bentuk sengketa antara Vendor dan Customer adalah tanggung jawab kedua belah pihak dan Rentify hanya menyediakan data jika diminta oleh pihak berwajib.</li>
-                        <li>Kami berhak memblokir akun secara sepihak jika terdeteksi aktivitas penipuan.</li>
+                        <li>Vendor bertanggung jawab penuh atas keakuratan deskripsi, kondisi asli, dan kualitas barang yang disewakan.</li>
+                        <li>Vendor berhak menolak pesanan jika Customer dinilai mencurigakan atau tidak memenuhi syarat verifikasi identitas.</li>
+                        <li>Rentify akan memotong biaya layanan (Platform Fee) sebesar persentase yang disepakati dari setiap transaksi yang berhasil.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-[12px] font-bold text-slate-800 mb-1">4. Batasan & Pelepasan Tanggung Jawab Rentify</h3>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Rentify <strong>terlepas dari segala tuntutan hukum</strong> atas kerusakan, kehilangan, kecurian, atau penggelapan barang sewaan yang dilakukan oleh Customer.</li>
+                        <li>Segala bentuk sengketa, wanprestasi, atau tindak pidana (penipuan) adalah tanggung jawab penuh antara Vendor dan Customer.</li>
+                        <li>Rentify hanya bertindak sebagai fasilitator penyedia data riwayat transaksi jika sewaktu-waktu dibutuhkan oleh Pihak Berwajib (Kepolisian).</li>
+                        <li>Rentify berhak membekukan atau menghapus akun pengguna secara sepihak jika terdeteksi aktivitas mencurigakan, penipuan, atau pelanggaran S&K tanpa pemberitahuan sebelumnya.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-[12px] font-bold text-slate-800 mb-1">5. Barang yang Dilarang</h3>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Dilarang menyewakan barang-barang ilegal, berbahaya, senjata api, senjata tajam tanpa izin, obat-obatan terlarang, atau barang hasil tindak kejahatan.</li>
+                        <li>Pelanggaran terhadap aturan ini akan langsung dilaporkan kepada pihak Kepolisian.</li>
                     </ul>
                 </div>
                 
                 <div class="h-10"></div>
             </div>
             
-            <div class="p-4 border-t border-white/10 bg-white/10 flex justify-between items-center shrink-0">
-                <span id="scrollProgress" class="text-[10px] font-extrabold text-rose-300 animate-pulse"><i class="fa-solid fa-arrow-down mr-1"></i> Gulir ke bawah</span>
-                <button onclick="closeModal()" class="bg-white hover:bg-gray-100 text-blue-600 font-extrabold py-1.5 px-4 rounded-xl transition text-[10px] shadow-lg">Tutup</button>
+            <!-- Footer Modal -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
+                <span id="scrollProgress" class="text-[10px] font-bold text-rose-500 animate-pulse"><i class="fa-solid fa-arrow-down mr-1"></i> Gulir ke bawah</span>
+                <button onclick="closeModal()" class="bg-sky-100 hover:bg-sky-200 text-sky-700 font-bold py-1.5 px-4 rounded-lg transition text-[10px]">Tutup</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PERINGATAN GOOGLE -->
-    <div id="googleAlertModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-md">
+    <!-- MODAL PERINGATAN GOOGLE (TERANG) -->
+    <div id="googleAlertModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-95 opacity-0" id="googleAlertBox">
             <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-shield-halved text-rose-500 text-2xl"></i>
