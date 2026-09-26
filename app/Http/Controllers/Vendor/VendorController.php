@@ -18,20 +18,20 @@ class VendorController extends Controller
     // Memproses Pendaftaran Vendor
     public function register(Request $request)
     {
-        // PERBAIKAN: Menambahkan validasi wajib centang S&K (terms) dan pesan error khusus
         $request->validate([
             'name'            => 'required|string|max:255',
             'vendor_name'     => 'required|string|max:255',
             'email'           => 'required|string|email|max:255|unique:users',
-            'whatsapp_vendor' => 'required|string|max:20',
+            'whatsapp_vendor' => 'required|string|max:20|unique:users,whatsapp_vendor',
             'password'        => 'required|string|min:8|confirmed',
-            'terms'           => 'accepted', // <- INI KUNCI VALIDASINYA
+            'terms'           => 'accepted', 
         ], [
             'terms.accepted'  => 'Pendaftaran gagal. Anda wajib menyatakan data asli dan menyetujui Syarat & Ketentuan Rentify.',
+            'whatsapp_vendor.unique' => 'Nomor WhatsApp Toko sudah terdaftar.',
         ]);
 
         // 2. Simpan user baru ke database beserta data tokonya
-        User::create([
+        $user = User::create([
             'name'            => $request->name,
             'vendor_name'     => $request->vendor_name,
             'email'           => $request->email,
@@ -43,8 +43,23 @@ class VendorController extends Controller
             'vendor_status'   => 'pending', 
         ]);
 
-        // 3. Arahkan ke halaman sukses
-        return redirect()->route('vendor.register.success')->with('success', 'Pendaftaran berhasil! Menunggu persetujuan admin.');
+        // 3. Memicu email verifikasi bawaan Laravel (verifikasi Gmail)
+        event(new \Illuminate\Auth\Events\Registered($user));
+
+        // 4. ALUR OTP WA BARU (Tidak langsung masuk ke sukses)
+        $otp = rand(100000, 999999);
+        session([
+            'otp_user_id' => $user->id,
+            'otp_code' => $otp,
+            'otp_phone' => $user->whatsapp_vendor
+        ]);
+
+        // Kirim OTP via Fonnte
+        $pesan = "*RENTIFY VENDOR*\n\nSelamat datang, {$user->vendor_name}!\nKode OTP pendaftaran toko Anda adalah: *$otp*.\n\nJangan berikan kode ini kepada siapapun.";
+        \App\Services\WhatsAppService::send($user->whatsapp_vendor, $pesan);
+
+        // Arahkan ke halaman verifikasi OTP
+        return redirect()->route('otp.verify');
     }
     
     // Menampilkan Dashboard Vendor

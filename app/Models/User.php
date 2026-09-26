@@ -23,6 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'google_id',
         'whatsapp',
+        'whatsapp_verified_at',
         'password',
         'role',
         'vendor_name',
@@ -53,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'whatsapp_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

@@ -125,13 +125,18 @@ Route::prefix('admin')->name('admin.')
 });
 
 
+// ─── ROUTE OTP ──────────────────────────────────────────────────────────────────
+Route::get('/otp/verify', [\App\Http\Controllers\OtpController::class, 'showVerifyForm'])->name('otp.verify');
+Route::post('/otp/verify', [\App\Http\Controllers\OtpController::class, 'verify']);
+Route::post('/otp/resend', [\App\Http\Controllers\OtpController::class, 'resend'])->name('otp.resend');
+
 // ─── 4. VENDOR ROUTES (TERKUNCI) ──────────────────────────────────────────────
 Route::get('/vendor/register', [VendorController::class, 'showRegisterForm'])->name('vendor.register');
 Route::post('/vendor/register', [VendorController::class, 'register']);
 Route::view('/vendor/registration-success', 'auth.vendor-success')->name('vendor.register.success');
 
 Route::prefix('vendor')->name('vendor.')
-    ->middleware(['auth', 'role:vendor'])
+    ->middleware(['auth', 'role:vendor', 'verified'])
     ->group(function () {
 
     Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');

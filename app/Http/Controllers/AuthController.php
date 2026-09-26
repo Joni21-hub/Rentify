@@ -18,19 +18,41 @@ class AuthController extends Controller
     // 2. Proses Login
     public function login(Request $request)
     {
-        // Validasi input: field 'login' bisa berupa email atau WA
+        // Validasi input
         $request->validate([
-            'login' => ['required'], // Kita ganti name inputnya dari 'email' menjadi 'login'
+            'login' => ['required'],
             'password' => ['required'],
         ]);
 
         $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'whatsapp';
 
-        // Coba login berdasarkan tipe (email atau whatsapp)
+        // Coba login
         if (Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
+            $user = Auth::user();
+
+            // Cek apakah WA sudah diverifikasi
+            if (is_null($user->whatsapp_verified_at)) {
+                // Logout sementara karena belum terverifikasi
+                Auth::logout();
+                
+                // Generate OTP baru
+                $otp = rand(100000, 999999);
+                $nomorWa = $user->role == 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
+                
+                session([
+                    'otp_user_id' => $user->id,
+                    'otp_code' => $otp,
+                    'otp_phone' => $nomorWa
+                ]);
+
+                // Kirim via WA
+                $pesan = "*RENTIFY*\n\nLogin Terdeteksi. Kode OTP Anda adalah: *$otp*.\n\nJangan berikan kode ini kepada siapapun.";
+                \App\Services\WhatsAppService::send($nomorWa, $pesan);
+
+                return redirect()->route('otp.verify')->with('error', 'Anda harus memverifikasi nomor WhatsApp terlebih dahulu.');
+            }
+
             $request->session()->regenerate();
-            
-            // Panggil fungsi redirect tanpa oper data
             return $this->redirectByRole();
         }
 
@@ -45,12 +67,10 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        // Jika ada orang iseng akses '/' tapi belum login, tendang ke halaman login
         if (!$user) {
             return redirect('/login');
         }
 
-        // Pengalihan berdasarkan role
         if ($user->role == 'admin') {
             return redirect()->intended('/admin/dashboard');
         } elseif ($user->role == 'vendor') {
@@ -81,7 +101,6 @@ class AuthController extends Controller
     // 2. Memproses Data Register
     public function register(Request $request)
     {
-        // Validasi input (TIDAK ADA EMAIL LAGI)
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'whatsapp' => ['required', 'string', 'max:20', 'unique:users,whatsapp'],
@@ -92,23 +111,30 @@ class AuthController extends Controller
             'whatsapp.unique' => 'Nomor WhatsApp ini sudah terdaftar. Silakan gunakan nomor lain atau masuk ke akun Anda.',
         ]);
 
-        // Karena tabel users butuh email (unik), kita buatkan email dummy otomatis dari nomor WA
         $dummyEmail = preg_replace('/[^0-9]/', '', $request->whatsapp) . '@rentify.local';
 
-        // Membuat user baru dengan role 'customer' secara otomatis
         $user = User::create([
             'name' => $request->name,
-            'email' => $dummyEmail, // Email dummy
+            'email' => $dummyEmail, 
             'whatsapp' => $request->whatsapp,
             'password' => Hash::make($request->password),
             'role' => 'customer', 
         ]);
 
-        // Langsung otomatis login setelah sukses daftar
-        Auth::login($user);
+        // ALUR OTP BARU (Tidak langsung Auth::login)
+        $otp = rand(100000, 999999);
+        session([
+            'otp_user_id' => $user->id,
+            'otp_code' => $otp,
+            'otp_phone' => $user->whatsapp
+        ]);
 
-        // Alihkan ke dashboard customer sesuai role
-        return $this->redirectByRole();
+        // Kirim OTP via Fonnte
+        $pesan = "*RENTIFY*\n\nSelamat datang, {$user->name}!\nKode OTP pendaftaran Anda adalah: *$otp*.\n\nJangan berikan kode ini kepada siapapun.";
+        \App\Services\WhatsAppService::send($user->whatsapp, $pesan);
+
+        // Arahkan ke halaman verifikasi OTP
+        return redirect()->route('otp.verify');
     }
 
     // ─── SOCIALITE: GOOGLE LOGIN ──────────────────────────────────────────
