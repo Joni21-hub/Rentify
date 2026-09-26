@@ -8,82 +8,79 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#0369a1">
+    <meta name="theme-color" content="#38bdf8">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        @keyframes oceanBreath {
+        @keyframes gradientFlow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        .bg-ocean {
-            background: linear-gradient(-45deg, #0f172a, #0369a1, #0c4a6e, #0284c7);
-            background-size: 200% 200%;
-            animation: oceanBreath 12s ease-in-out infinite;
+        .bg-flowing {
+            background: linear-gradient(-45deg, #0284c7, #38bdf8, #818cf8, #60a5fa, #0ea5e9);
+            background-size: 300% 300%;
+            animation: gradientFlow 15s ease infinite;
         }
 
         .glass-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.4);
-            border-left: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.7);
+            border-left: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
             border-radius: 2rem;
         }
 
         .input-glass {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #0f172a;
             transition: all 0.3s ease;
         }
         .input-glass:focus {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.7);
             border-color: #ffffff;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
-        .input-glass::placeholder { color: rgba(255, 255, 255, 0.6); font-weight: 500; }
+        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
 
-        .sparkle {
+        .blob {
             position: absolute;
-            width: 3px; height: 3px;
-            background-color: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 5s infinite ease-in-out;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.8;
+            animation: float 10s ease-in-out infinite alternate;
         }
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 0.6; transform: scale(1.5); box-shadow: 0 0 10px rgba(255,255,255,0.8); }
+        @keyframes float {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-40px) scale(1.1); }
         }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-ocean text-white">
+<body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
 
-    <div class="sparkle top-[20%] left-[10%]" style="animation-delay: 0s;"></div>
-    <div class="sparkle top-[5%] left-[50%]" style="animation-delay: 2s;"></div>
-    <div class="sparkle bottom-[20%] left-[20%]" style="animation-delay: 1s;"></div>
-    <div class="sparkle top-[30%] right-[10%]" style="animation-delay: 3s;"></div>
-    <div class="sparkle bottom-[10%] right-[15%]" style="animation-delay: 4s;"></div>
+    <div class="blob w-[30rem] h-[30rem] bg-indigo-500 rounded-full top-[-5%] left-[-5%]" style="animation-delay: 0s;"></div>
+    <div class="blob w-[25rem] h-[25rem] bg-cyan-300 rounded-full bottom-[-5%] right-[-5%]" style="animation-delay: -3s;"></div>
+    <div class="blob w-[20rem] h-[20rem] bg-blue-400 rounded-full top-[30%] right-[20%]" style="animation-delay: -6s;"></div>
 
     <div class="w-full max-w-[380px] relative z-10 my-[2vh] lg:my-0">
         
         <div class="glass-panel p-6 sm:p-8 relative">
             
             <div class="text-center mb-6">
-                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest text-white drop-shadow-md mb-1.5" style="text-shadow: 0 0 20px rgba(255,255,255,0.3);">
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-1.5" style="text-shadow: 0 0 20px rgba(255,255,255,0.4);">
                     RENTIFY
                 </h1>
-                <p class="text-[11px] text-white/70 font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
+                <p class="text-[11px] text-white/90 font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
 
             @if ($errors->any())
-                <div class="mb-4 bg-rose-500/80 backdrop-blur border border-rose-400 text-white px-4 py-3 rounded-xl text-[10px] font-bold shadow-lg">
+                <div class="mb-4 bg-rose-500/90 backdrop-blur-md border border-rose-400 text-white px-4 py-3 rounded-xl text-[10px] font-bold shadow-lg">
                     <ul class="list-disc pl-4 space-y-1">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -95,7 +92,7 @@
             <form action="{{ route('register') }}" method="POST" class="space-y-3.5">
                 @csrf 
 
-                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3 bg-white/10 hover:bg-white/20 border border-white/30 rounded-2xl transition-all font-extrabold text-white text-xs shadow-sm mb-2 backdrop-blur-md">
+                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-xs shadow-sm mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -106,64 +103,59 @@
                 </a>
 
                 <div class="flex items-center gap-3 my-2">
-                    <div class="h-px bg-white/20 flex-1"></div>
-                    <span class="text-[9px] font-bold text-white/50 tracking-widest">ATAU MANUAL</span>
-                    <div class="h-px bg-white/20 flex-1"></div>
+                    <div class="h-px bg-white/40 flex-1"></div>
+                    <span class="text-[9px] font-bold text-white tracking-widest">ATAU MANUAL</span>
+                    <div class="h-px bg-white/40 flex-1"></div>
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-white/50 group-focus-within:text-white transition"><i class="fa-solid fa-user text-xs"></i></span>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition"><i class="fa-solid fa-user text-xs"></i></span>
                     <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-white/50 group-focus-within:text-white transition"><i class="fa-solid fa-envelope text-xs"></i></span>
-                    <input type="email" name="email" value="{{ old('email') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Alamat Email (Login Utama)">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
+                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp">
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-white/50 group-focus-within:text-white transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp (Login Alternatif & Bot)">
-                </div>
-
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-white/50 group-focus-within:text-white transition"><i class="fa-solid fa-lock text-xs"></i></span>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition"><i class="fa-solid fa-lock text-xs"></i></span>
                     <input type="password" id="passInput" name="password" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
-                    <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-white/50 hover:text-white transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
+                    <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-white/50 group-focus-within:text-white transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
                     <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
-                    <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-white/50 hover:text-white transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
+                    <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="flex items-start pt-1 pb-1">
                     <div class="flex items-center h-4 relative group mt-0.5">
                         <input id="terms_customer" name="terms" type="checkbox" required disabled
-                            class="w-3.5 h-3.5 border border-white/40 rounded focus:ring-2 focus:ring-sky-300 bg-white/20 checked:bg-sky-500 transition opacity-50 cursor-not-allowed">
+                            class="w-3.5 h-3.5 border border-white/50 rounded focus:ring-2 focus:ring-blue-300 bg-white/30 checked:bg-blue-600 transition opacity-50 cursor-not-allowed">
                     </div>
                     <div class="ml-2 text-[10px]">
-                        <label class="font-bold text-white/80 leading-tight block">
+                        <label class="font-bold text-white/90 leading-tight block drop-shadow-sm">
                             Menyetujui 
-                            <button type="button" onclick="openModal()" class="font-extrabold text-sky-300 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan</button>.
+                            <button type="button" onclick="openModal()" class="font-extrabold text-blue-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan</button>.
                         </label>
-                        <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse">
+                        <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
                             <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk membuka centang
                         </p>
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-white/10 hover:bg-white/20 border border-white/40 text-white font-extrabold py-3.5 rounded-2xl text-xs tracking-widest uppercase shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2 backdrop-blur-md">
+                    <button type="submit" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-extrabold py-3.5 rounded-2xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <span>BUAT AKUN</span>
                     </button>
                 </div>
             </form>
 
             <div class="mt-5 text-center">
-                <p class="text-[11px] text-white/70 font-medium">Sudah punya akun? 
-                    <a href="{{ route('login') }}" class="text-white font-extrabold hover:text-sky-200 hover:underline transition ml-1">Masuk di sini</a>
+                <p class="text-[11px] text-white/90 font-medium">Sudah punya akun? 
+                    <a href="{{ route('login') }}" class="text-white font-extrabold hover:text-blue-100 hover:underline transition ml-1">Masuk di sini</a>
                 </p>
             </div>
             

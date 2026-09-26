@@ -81,22 +81,24 @@ class AuthController extends Controller
     // 2. Memproses Data Register
     public function register(Request $request)
     {
-        // PERBAIKAN: Menambahkan validasi wajib centang S&K dan nomor WA
+        // Validasi input (TIDAK ADA EMAIL LAGI)
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'whatsapp' => ['required', 'string', 'max:20', 'unique:users,whatsapp'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'terms' => ['accepted'],
         ], [
             'terms.accepted' => 'Pendaftaran gagal. Anda wajib mencentang dan menyetujui Syarat & Ketentuan Rentify.',
-            'whatsapp.unique' => 'Nomor WhatsApp ini sudah terdaftar.',
+            'whatsapp.unique' => 'Nomor WhatsApp ini sudah terdaftar. Silakan gunakan nomor lain atau masuk ke akun Anda.',
         ]);
+
+        // Karena tabel users butuh email (unik), kita buatkan email dummy otomatis dari nomor WA
+        $dummyEmail = preg_replace('/[^0-9]/', '', $request->whatsapp) . '@rentify.local';
 
         // Membuat user baru dengan role 'customer' secara otomatis
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => $dummyEmail, // Email dummy
             'whatsapp' => $request->whatsapp,
             'password' => Hash::make($request->password),
             'role' => 'customer', 
@@ -104,9 +106,6 @@ class AuthController extends Controller
 
         // Langsung otomatis login setelah sukses daftar
         Auth::login($user);
-
-        // PICU PENGIRIMAN EMAIL VERIFIKASI
-        event(new \Illuminate\Auth\Events\Registered($user));
 
         // Alihkan ke dashboard customer sesuai role
         return $this->redirectByRole();
