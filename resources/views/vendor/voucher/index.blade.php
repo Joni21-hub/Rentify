@@ -38,7 +38,7 @@
                     
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Kode Voucher</label>
-                        <input type="text" name="kode_voucher" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none uppercase" placeholder="Contoh: PROMOJONI">
+                        <input type="text" name="kode_voucher" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none uppercase" placeholder="D1sk0n10">
                         <p class="text-[10px] text-slate-400 mt-1">Tanpa spasi, maksimal 10 karakter disarankan.</p>
                     </div>
 
