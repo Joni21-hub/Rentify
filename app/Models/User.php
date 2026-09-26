@@ -26,6 +26,10 @@ class User extends Authenticatable
         'vendor_name',
         'whatsapp_vendor',
         'vendor_status',
+        'latitude',
+        'longitude',
+        'alamat_lengkap',
+        'foto_profil',
     ];
 
     /**

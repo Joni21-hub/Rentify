@@ -179,11 +179,12 @@ Route::prefix('customer')->name('customer.')
     Route::patch('/keranjang/{id}', [KeranjangController::class, 'update'])->name('keranjang.update');
     Route::delete('/keranjang/{id}', [KeranjangController::class, 'remove'])->name('keranjang.remove');
 
-    // Checkout & Payment
+    // Midtrans Checkout & Payment
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-    Route::get('/pembayaran/{id}/upload', [PembayaranController::class, 'uploadForm'])->name('pembayaran.upload');
-    Route::post('/pembayaran/{id}/upload', [PembayaranController::class, 'upload'])->name('pembayaran.upload.post');
+    
+    // Rute untuk mendapatkan token Midtrans dan memproses pop-up
+    Route::get('/pembayaran/{id}/pay', [PembayaranController::class, 'pay'])->name('pembayaran.pay');
     
     // AJAX Voucher Toko
     Route::post('/checkout/cek-voucher', [CheckoutController::class, 'cekVoucher'])->name('checkout.cek_voucher');
@@ -215,3 +216,7 @@ Route::prefix('customer')->name('customer.')
     Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'index'])->name('pesanan');
     Route::post('/pesanan/{id}/selesai', [\App\Http\Controllers\Customer\PesananController::class, 'selesaikan'])->name('pesanan.selesai');
 });
+
+
+// ─── MIDTRANS WEBHOOK ──────────────────────────────────────────────────────────
+Route::post('/midtrans/callback', [\App\Http\Controllers\Payment\PembayaranController::class, 'callback']);
