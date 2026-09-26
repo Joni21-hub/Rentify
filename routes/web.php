@@ -176,6 +176,10 @@ Route::prefix('customer')->name('customer.')
 
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
     
+    // Rute Pengaturan Akun Customer
+    Route::get('/settings', [CustomerDashboardController::class, 'settings'])->name('settings');
+    Route::post('/settings', [CustomerDashboardController::class, 'updateSettings'])->name('settings.update');
+    
     // Core Cart System
     Route::get('/cart', [CustomerHomeController::class, 'viewCart'])->name('cart.view');
     Route::post('/cart/add', [CustomerHomeController::class, 'addToCart'])->name('cart.add-old');

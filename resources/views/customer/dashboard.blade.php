@@ -77,12 +77,21 @@
     <div class="max-w-md mx-auto min-h-screen relative z-10">
         
         <!-- HEADER GLASSMORPHISM -->
-        <div class="px-5 pt-12 pb-8 text-center text-white">
-            <h1 class="text-xl font-extrabold mb-8 tracking-wide drop-shadow-md">Profil Saya</h1>
+        <div class="px-5 pt-10 pb-8 text-center text-white relative">
+            <!-- PENGATURAN ICON -->
+            <a href="{{ route('customer.settings') }}" class="absolute top-8 right-6 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 text-white hover:bg-white/30 transition shadow-lg z-20">
+                <i class="fa-solid fa-gear text-lg"></i>
+            </a>
+
+            <h1 class="text-xl font-extrabold mb-6 tracking-wide drop-shadow-md">Profil Saya</h1>
             
             <div class="relative inline-block mb-4">
-                <div class="w-28 h-28 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white text-5xl font-black shadow-2xl border-4 border-white/50 relative z-10">
-                    {{ substr(Auth::user()->name ?? 'C', 0, 1) }}
+                <div class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full overflow-hidden flex items-center justify-center text-white text-4xl font-black shadow-2xl border-4 border-white/50 relative z-10">
+                    @if(Auth::user()->foto_profil)
+                        <img src="{{ Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
+                    @else
+                        {{ substr(Auth::user()->name ?? 'C', 0, 1) }}
+                    @endif
                 </div>
                 <!-- Aura Glow -->
                 <div class="absolute inset-0 bg-white/30 blur-2xl rounded-full scale-125"></div>
@@ -102,36 +111,71 @@
 
         <div class="px-5 space-y-4">
             
-            <!-- MENU RIWAYAT TRANSAKSI -->
-            <a href="{{ route('customer.pesanan') }}" class="flex items-center justify-between glass-menu p-4 rounded-2xl group">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-inner">
-                        <i class="fa-solid fa-clock-rotate-left text-lg group-hover:rotate-180 transition-transform duration-500"></i>
-                    </div>
-                    <div>
-                        <span class="block font-extrabold text-slate-800">Riwayat Transaksi</span>
-                        <span class="block text-xs font-medium text-slate-500 mt-0.5">Pantau pesanan & sewaanmu</span>
-                    </div>
+            <!-- PESANAN SAYA (SHOPEE STYLE) -->
+            <div class="glass-panel p-4 rounded-2xl relative overflow-hidden">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/20">
+                    <h3 class="font-extrabold text-slate-800 text-sm">Pesanan Saya</h3>
+                    <a href="{{ route('customer.pesanan') }}" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">
+                        Lihat Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                    </a>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover:text-blue-600 shadow-sm transition">
-                    <i class="fa-solid fa-chevron-right text-sm"></i>
+                
+                <div class="grid grid-cols-4 gap-2 text-center relative z-10">
+                    <!-- Menunggu -->
+                    <a href="{{ route('customer.pesanan') }}?tab=menunggu" class="flex flex-col items-center group relative">
+                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
+                            <i class="fa-solid fa-wallet text-lg"></i>
+                            @if(isset($countMenunggu) && $countMenunggu > 0)
+                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countMenunggu }}</span>
+                            @endif
+                        </div>
+                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Belum<br>Bayar</span>
+                    </a>
+                    
+                    <!-- Diproses -->
+                    <a href="{{ route('customer.pesanan') }}?tab=diproses" class="flex flex-col items-center group relative">
+                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
+                            <i class="fa-solid fa-box-open text-lg"></i>
+                            @if(isset($countDiproses) && $countDiproses > 0)
+                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDiproses }}</span>
+                            @endif
+                        </div>
+                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Diproses<br>Vendor</span>
+                    </a>
+                    
+                    <!-- Dikirim/Disewa -->
+                    <a href="{{ route('customer.pesanan') }}?tab=dikirim" class="flex flex-col items-center group relative">
+                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
+                            <i class="fa-solid fa-truck-fast text-lg"></i>
+                            @if(isset($countDikirim) && $countDikirim > 0)
+                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDikirim }}</span>
+                            @endif
+                        </div>
+                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Sedang<br>Disewa</span>
+                    </a>
+                    
+                    <!-- Selesai -->
+                    <a href="{{ route('customer.pesanan') }}?tab=selesai" class="flex flex-col items-center group">
+                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-emerald-500 group-hover:bg-white shadow-sm transition mb-1.5 relative">
+                            <i class="fa-solid fa-star text-lg"></i>
+                        </div>
+                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Beri<br>Ulasan</span>
+                    </a>
                 </div>
-            </a>
+            </div>
 
             <!-- GANTI TITIK LOKASI -->
             <a href="{{ url('/customer/lokasi') }}" class="flex items-center justify-between glass-menu p-4 rounded-2xl group">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-full flex items-center justify-center shadow-lg">
-                        <i class="fa-solid fa-location-dot text-lg group-hover:bounce transition-transform"></i>
+                    <div class="w-10 h-10 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i class="fa-solid fa-location-dot group-hover:bounce transition-transform"></i>
                     </div>
                     <div>
-                        <span class="block font-extrabold text-slate-800">Ganti Titik Lokasi</span>
-                        <span class="block text-xs font-medium text-slate-500 mt-0.5">Atur GPS untuk cari barang terdekat</span>
+                        <span class="block font-extrabold text-slate-800 text-sm">Ganti Titik Lokasi</span>
+                        <span class="block text-[10px] font-medium text-slate-500 mt-0.5">Atur GPS untuk cari barang terdekat</span>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover:text-blue-600 shadow-sm transition">
-                    <i class="fa-solid fa-chevron-right text-sm"></i>
-                </div>
+                <i class="fa-solid fa-chevron-right text-slate-400 text-sm group-hover:text-blue-600 transition"></i>
             </a>
 
             <!-- PUSAT BANTUAN -->
@@ -141,23 +185,21 @@
             @endphp
             <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center justify-between glass-menu p-4 rounded-2xl group border-sky-300">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-sky-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/40">
-                        <i class="fa-brands fa-whatsapp text-2xl group-hover:scale-110 transition-transform"></i>
+                    <div class="w-10 h-10 bg-sky-500 text-white rounded-xl flex items-center justify-center shadow-md shadow-sky-500/40">
+                        <i class="fa-brands fa-whatsapp text-xl group-hover:scale-110 transition-transform"></i>
                     </div>
                     <div>
-                        <span class="block font-extrabold text-sky-700">Pusat Bantuan</span>
-                        <span class="block text-xs font-bold text-sky-600/70 mt-0.5">Hubungi Admin Rentify (24/7)</span>
+                        <span class="block font-extrabold text-sky-700 text-sm">Pusat Bantuan</span>
+                        <span class="block text-[10px] font-bold text-sky-600/70 mt-0.5">Hubungi Admin Rentify (24/7)</span>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-500 group-hover:bg-sky-500 group-hover:text-white shadow-sm transition">
-                    <i class="fa-solid fa-arrow-right text-sm"></i>
-                </div>
+                <i class="fa-solid fa-arrow-right text-sky-400 text-sm group-hover:text-sky-600 transition"></i>
             </a>
 
             <!-- TOMBOL KELUAR AKUN -->
             <form action="/logout" method="POST" class="w-full pt-4 pb-8 flex justify-center">
                 @csrf
-                <button type="submit" class="flex items-center justify-center bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/50 hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-all gap-2 group shadow-lg text-white">
+                <button type="submit" class="flex items-center justify-center bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/50 hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-all gap-2 group shadow-lg text-white w-full max-w-[200px]">
                     <i class="fa-solid fa-power-off text-sm"></i>
                     <span class="font-extrabold text-xs tracking-wide">KELUAR AKUN</span>
                 </button>

@@ -3,7 +3,12 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Models\User;
+use App\Models\Penyewaan;
 
 class CustomerDashboardController extends Controller
 {
@@ -12,6 +17,51 @@ class CustomerDashboardController extends Controller
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-        return view('customer.dashboard');
+
+        $user = Auth::user();
+
+        // Hitung jumlah pesanan berdasarkan status untuk badge notifikasi
+        $countMenunggu = Penyewaan::where('user_id', $user->id)->where('status_pembayaran', 'pending')->count();
+        $countDiproses = Penyewaan::where('user_id', $user->id)->where('status', 'disetujui')->where('status_pembayaran', 'paid')->count();
+        $countDikirim  = Penyewaan::where('user_id', $user->id)->where('status', 'dikirim')->count();
+        $countSelesai  = Penyewaan::where('user_id', $user->id)->where('status', 'selesai')->count();
+
+        return view('customer.dashboard', compact('countMenunggu', 'countDiproses', 'countDikirim', 'countSelesai'));
+    }
+
+    public function settings()
+    {
+        $user = Auth::user();
+        return view('customer.settings', compact('user'));
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $user = User::find(Auth::id());
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto_profil')) {
+            if ($user->foto_profil && Storage::disk('public')->exists($user->foto_profil)) {
+                Storage::disk('public')->delete($user->foto_profil);
+            }
+            $user->foto_profil = $request->file('foto_profil')->store('profil_users', 'public');
+        }
+
+        $user->save();
+
+        return redirect()->route('customer.dashboard')->with('success', 'Profil Anda berhasil diperbarui!');
     }
 }
