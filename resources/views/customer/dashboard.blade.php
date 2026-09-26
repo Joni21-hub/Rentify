@@ -120,42 +120,31 @@
                     </a>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-2 text-center relative z-10">
+                <div class="grid grid-cols-3 gap-2 text-center relative z-10">
                     <!-- Menunggu -->
-                    <a href="{{ route('customer.pesanan') }}?tab=menunggu" class="flex flex-col items-center group relative">
+                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
                         <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
-                            <i class="fa-solid fa-wallet text-lg"></i>
+                            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                             @if(isset($countMenunggu) && $countMenunggu > 0)
                                 <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countMenunggu }}</span>
                             @endif
                         </div>
-                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Belum<br>Bayar</span>
+                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Menunggu<br>Konfirmasi</span>
                     </a>
                     
-                    <!-- Diproses -->
-                    <a href="{{ route('customer.pesanan') }}?tab=diproses" class="flex flex-col items-center group relative">
+                    <!-- Berjalan -->
+                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
                         <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
-                            <i class="fa-solid fa-box-open text-lg"></i>
+                            <i class="fa-solid fa-truck-fast text-lg"></i>
                             @if(isset($countDiproses) && $countDiproses > 0)
                                 <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDiproses }}</span>
                             @endif
                         </div>
-                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Diproses<br>Vendor</span>
-                    </a>
-                    
-                    <!-- Dikirim/Disewa -->
-                    <a href="{{ route('customer.pesanan') }}?tab=dikirim" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
-                            <i class="fa-solid fa-truck-fast text-lg"></i>
-                            @if(isset($countDikirim) && $countDikirim > 0)
-                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDikirim }}</span>
-                            @endif
-                        </div>
-                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Sedang<br>Disewa</span>
+                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Sedang<br>Berjalan</span>
                     </a>
                     
                     <!-- Selesai -->
-                    <a href="{{ route('customer.pesanan') }}?tab=selesai" class="flex flex-col items-center group">
+                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
                         <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-emerald-500 group-hover:bg-white shadow-sm transition mb-1.5 relative">
                             <i class="fa-solid fa-star text-lg"></i>
                         </div>
