@@ -21,10 +21,19 @@ class CustomerDashboardController extends Controller
         $user = Auth::user();
 
         // Hitung jumlah pesanan berdasarkan status untuk badge notifikasi
-        $countMenunggu = Penyewaan::where('user_id', $user->id)->where('status_pembayaran', 'pending')->count();
-        $countDiproses = Penyewaan::where('user_id', $user->id)->where('status', 'disetujui')->where('status_pembayaran', 'paid')->count();
-        $countDikirim  = Penyewaan::where('user_id', $user->id)->where('status', 'dikirim')->count();
-        $countSelesai  = Penyewaan::where('user_id', $user->id)->where('status', 'selesai')->count();
+        $countMenunggu = Penyewaan::where('user_id', $user->id)
+            ->whereIn('status', ['Menunggu Konfirmasi', 'Menunggu Pembayaran'])
+            ->count();
+            
+        $countDiproses = Penyewaan::where('user_id', $user->id)
+            ->where('status', 'Berjalan')
+            ->count();
+            
+        $countDikirim  = 0; // Rentify menggunakan 'Berjalan' untuk status aktif
+        
+        $countSelesai  = Penyewaan::where('user_id', $user->id)
+            ->where('status', 'Selesai')
+            ->count();
 
         return view('customer.dashboard', compact('countMenunggu', 'countDiproses', 'countDikirim', 'countSelesai'));
     }
