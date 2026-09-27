@@ -117,7 +117,7 @@
                         {{ substr(Auth::user()->name ?? 'C', 0, 1) }}
                     @endif
                 </div>
-                <div class="absolute inset-0 bg-white/30 blur-2xl rounded-full scale-125"></div>
+                
             </div>
             <h2 class="text-2xl font-black drop-shadow-md">{{ Auth::user()->name ?? 'Customer' }}</h2>
             <div class="inline-flex items-center gap-2 mt-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/30 text-xs font-semibold">
@@ -201,20 +201,16 @@
             </form>
         </div>
         <!-- BOTTOM NAV MOBILE -->
-        <nav class="fixed bottom-0 left-0 w-full bottom-nav-glass shadow-[0_-10px_30px_rgba(0,0,0,0.1)] rounded-t-3xl z-50 pb-safe">
-            <div class="max-w-md mx-auto flex justify-between items-center px-10 py-4">
-                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-blue-600 transition">
-                    <i class="fa-solid fa-house text-xl mb-1.5"></i>
-                    <span class="text-[10px] font-bold">Beranda</span>
+        <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.03)] border-t border-slate-100 z-50">
+            <div class="max-w-md mx-auto flex justify-around items-center pt-2.5 pb-2.5">
+                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
+                    <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Beranda</span>
                 </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-blue-600 transition">
-                    <i class="fa-solid fa-heart text-xl mb-1.5"></i>
-                    <span class="text-[10px] font-bold">Favorit</span>
+                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
+                    <i class="fa-solid fa-heart text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Favorit</span>
                 </a>
-                <a href="#" class="flex flex-col items-center text-blue-600 relative">
-                    <div class="absolute -top-3 w-10 h-1 bg-blue-600 rounded-full"></div>
-                    <i class="fa-solid fa-user text-xl mb-1.5"></i>
-                    <span class="text-[10px] font-extrabold">Akun</span>
+                <a href="#" class="flex flex-col items-center text-sky-600">
+                    <i class="fa-solid fa-user text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Akun</span>
                 </a>
             </div>
         </nav>
