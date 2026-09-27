@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Saya - Rentify</title>
+    <title>Profil - Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -134,7 +134,7 @@
             <!-- PESANAN SAYA -->
             <div class="glass-panel p-4 rounded-2xl relative overflow-hidden">
                 <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/20">
-                    <h3 class="font-extrabold text-slate-800 text-sm">Pesanan Saya</h3>
+                    <h3 class="font-extrabold text-slate-800 text-sm">Pesanan</h3>
                     <a href="{{ route('customer.pesanan') }}" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">Lihat Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center relative z-10">
