@@ -88,7 +88,7 @@
             <div class="relative inline-block mb-4">
                 <div class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full overflow-hidden flex items-center justify-center text-white text-4xl font-black shadow-2xl border-4 border-white/50 relative z-10">
                     @if(Auth::user()->foto_profil)
-                        <img src="{{ Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
+                        <img src="{{ str_starts_with(Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
                     @else
                         {{ substr(Auth::user()->name ?? 'C', 0, 1) }}
                     @endif
