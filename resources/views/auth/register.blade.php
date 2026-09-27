@@ -277,7 +277,16 @@
                 eye.classList.replace('fa-eye', 'fa-eye-slash');
             }
         }
-        function openModal() { document.getElementById('termsModal').classList.remove('hidden'); }
+        function openModal() { 
+            document.getElementById('termsModal').classList.remove('hidden'); 
+            // Cek langsung jika layar sangat panjang sehingga tidak ada scrollbar
+            setTimeout(() => {
+                const content = document.getElementById('termsContent');
+                if (content && content.scrollHeight <= content.clientHeight + 15) {
+                    checkScroll(content);
+                }
+            }, 100);
+        }
         function closeModal() { document.getElementById('termsModal').classList.add('hidden'); }
         function checkScroll(element) {
             if (element.scrollHeight - element.scrollTop <= element.clientHeight + 15) {
