@@ -241,10 +241,10 @@
                 <!-- Menu Navigasi Sidebar -->
                 <div class="glass-panel overflow-hidden">
                     <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-3 px-5 py-3.5 bg-white/40 border-l-4 border-sky-500 text-sky-700 font-bold text-sm">
-                        <i class="fa-solid fa-user w-5 text-center"></i> Profil Saya
+                        <i class="fa-solid fa-user w-5 text-center"></i> Profil
                     </a>
                     <a href="{{ route('customer.pesanan') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
-                        <i class="fa-solid fa-box-open w-5 text-center"></i> Pesanan Saya
+                        <i class="fa-solid fa-box-open w-5 text-center"></i> Pesanan
                     </a>
                     <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
                         <i class="fa-solid fa-heart w-5 text-center"></i> Favorit
@@ -269,7 +269,7 @@
                 <!-- Ringkasan Pesanan -->
                 <div class="glass-panel p-6">
                     <div class="flex justify-between items-center mb-5">
-                        <h3 class="font-extrabold text-slate-800 text-base">Pesanan Saya</h3>
+                        <h3 class="font-extrabold text-slate-800 text-base">Pesanan</h3>
                         <a href="{{ route('customer.pesanan') }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
@@ -311,7 +311,7 @@
                                 <span class="block text-[11px] text-slate-400">Atur titik GPS Anda</span>
                             </div>
                         </a>
-                        @php $linkWaAdmin = "https://wa.me/6283183494835?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp
+                        @php $linkWaAdmin = "https://wa.me/6281262364197?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp
                         <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50 transition">
                             <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                                 <i class="fa-brands fa-whatsapp text-xl"></i>
