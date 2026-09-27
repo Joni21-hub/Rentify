@@ -53,8 +53,14 @@ Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
-Route::get('/forgot-password', [AuthController::class, 'forgotForm']);
-Route::post('/forgot-password', [AuthController::class, 'sendReset']);
+// ─── LUPA & RESET KATA SANDI ─────────────────────────────────────────────────
+use App\Http\Controllers\ForgotPasswordController;
+Route::get('/forgot-password',       [ForgotPasswordController::class, 'showForm'])->name('password.request');
+Route::post('/forgot-password',      [ForgotPasswordController::class, 'sendOtp'])->name('password.send.otp');
+Route::get('/forgot-password/otp',   [ForgotPasswordController::class, 'showOtpForm'])->name('password.reset.otp.form');
+Route::post('/forgot-password/otp',  [ForgotPasswordController::class, 'verifyOtp'])->name('password.reset.otp.verify');
+Route::get('/forgot-password/baru',  [ForgotPasswordController::class, 'showNewPasswordForm'])->name('password.reset.new.form');
+Route::post('/forgot-password/baru', [ForgotPasswordController::class, 'saveNewPassword'])->name('password.reset.new.save');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ─── GOOGLE SOCIALITE ROUTES ──────────────────────────────────────────────────

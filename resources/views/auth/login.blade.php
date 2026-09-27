@@ -108,7 +108,7 @@
                 </div>
                 
                 <div class="flex justify-end -mt-2 mb-2">
-                    <a href="{{ url('/forgot-password') }}" class="text-xs font-bold text-white hover:text-blue-100 transition drop-shadow-md">Lupa kata sandi?</a>
+                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-white hover:text-blue-100 transition drop-shadow-md">Lupa kata sandi?</a>
                 </div>
 
                 @if ($errors->any())
