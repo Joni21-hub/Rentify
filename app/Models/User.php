@@ -25,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'whatsapp',
         'whatsapp_verified_at',
         'password',
+        'password_changed_at',
         'role',
         'vendor_name',
         'whatsapp_vendor',
@@ -53,9 +54,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
+            'email_verified_at'    => 'datetime',
             'whatsapp_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password_changed_at'  => 'datetime',
+            'password'             => 'hashed',
         ];
     }
 }

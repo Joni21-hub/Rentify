@@ -83,32 +83,42 @@ class CustomerDashboardController extends Controller
     public function updatePassword(Request $request)
     {
         $user = User::find(Auth::id());
-        
+
+        // Tentukan apakah user Google yang PERTAMA KALI set password
+        $isGoogleFirstTime = $user->google_id && is_null($user->password_changed_at);
+
         $rules = [
             'password' => 'required|string|min:8|confirmed',
         ];
 
-        // Jika user daftar pakai manual, Wajib isi password_lama
-        // Jika user daftar pakai Google, password_lama boleh kosong (karena mereka tidak tahu password acaknya)
-        if (!$user->google_id) {
-            $rules['password_lama'] = 'required|string';
-        } else {
+        if ($isGoogleFirstTime) {
+            // User Google belum pernah set password → password_lama TIDAK wajib
             $rules['password_lama'] = 'nullable|string';
+        } else {
+            // User manual ATAU user Google yang sudah pernah set password → password_lama WAJIB
+            $rules['password_lama'] = 'required|string';
         }
 
         $request->validate($rules);
 
-        // Cek kecocokan password lama HANYA jika mereka mengisinya (atau jika mereka user manual)
-        if (!$user->google_id || $request->filled('password_lama')) {
+        // Cek kecocokan password lama jika wajib diisi
+        if (!$isGoogleFirstTime) {
             if (!Hash::check($request->password_lama, $user->password)) {
                 return back()->with('error', 'Kata sandi lama tidak sesuai.');
             }
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password          = Hash::make($request->password);
+        $user->password_changed_at = now();
         $user->save();
 
-        return redirect()->route('customer.settings')->with('success', 'Kata sandi berhasil diubah!');
+        // Kirim notifikasi WhatsApp sebagai peringatan keamanan
+        if ($user->whatsapp) {
+            $pesan = "*RENTIFY* 🔐\n\nKata sandi akun Anda baru saja *diubah* pada " . now()->format('d M Y H:i') . ".\n\nJika ini BUKAN tindakan Anda, segera hubungi kami di wa.me/6283183494835.";
+            \App\Services\WhatsAppService::send($user->whatsapp, $pesan);
+        }
+
+        return redirect()->route('customer.settings')->with('success', 'Kata sandi berhasil diubah! Notifikasi keamanan telah dikirim ke WhatsApp Anda.');
     }
 
     // --- WHATSAPP (UBAH NOMOR DENGAN OTP) ---
