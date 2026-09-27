@@ -6,6 +6,7 @@
     <meta name="description" content="Rentify (rentify21.my.id) adalah platform marketplace penyewaan alat, kendaraan, dan barang dengan mudah, cepat, dan aman.">
     <meta name="keywords" content="Rentify, rentify21, sewa alat, platform penyewaan, marketplace sewa barang">
     <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url()->current() }}" />
     <meta name="google-site-verification" content="4y_McbDs1dvq3scZmY9q_XMoaPfzxNrcNR94o3N0nEc" />
     <title>@yield('title', 'RENTIFY') — Marketplace Rental</title>
     <script src="https://cdn.tailwindcss.com"></script>
