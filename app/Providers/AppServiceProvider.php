@@ -20,7 +20,6 @@ class AppServiceProvider extends ServiceProvider //[cite: 3]
         // 1. TAMBAHAN BARU: Memaksa form menggunakan jalur aman HTTPS saat online agar tidak diblokir browser
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
-            URL::forceRootUrl('https://rentify21.my.id');
         }
 
         // 2. KODE ASLIMU: Menampilkan angka jumlah keranjang di seluruh halaman website[cite: 3]
