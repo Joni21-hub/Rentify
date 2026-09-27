@@ -63,21 +63,14 @@
 </head>
 
 <!-- =================== MOBILE VERSION (body bg-flowing) =================== -->
-<body class="bg-flowing min-h-screen text-slate-800 pb-24 md:pb-0 md:bg-slate-100 md:bg-none">
-    <!-- Override gradient pada desktop -->
-    <style>
-        @media (min-width: 768px) {
-            body {
-                background: #f1f5f9;
-                animation: none;
-            }
-        }
-    </style>
+<body class="bg-flowing min-h-screen text-slate-800 pb-24 md:pb-0">
 
-    <!-- Efek Bintang (MOBILE ONLY) -->
-    <div class="sparkle md:hidden" style="top:10%;left:10%;animation-delay:0s;"></div>
-    <div class="sparkle md:hidden" style="top:25%;right:15%;animation-delay:1.5s;"></div>
-    <div class="sparkle md:hidden" style="top:50%;left:20%;animation-delay:0.7s;"></div>
+    <!-- Efek Bintang -->
+    <div class="sparkle" style="top:10%;left:10%;animation-delay:0s;"></div>
+    <div class="sparkle" style="top:25%;right:15%;animation-delay:1.5s;"></div>
+    <div class="sparkle" style="top:50%;left:20%;animation-delay:0.7s;"></div>
+    <div class="sparkle hidden md:block" style="top:75%;right:30%;animation-delay:2s;"></div>
+    <div class="sparkle hidden md:block" style="top:40%;right:40%;animation-delay:1s;"></div>
 
     <!-- ===== DESKTOP TOP NAVBAR (HIDDEN ON MOBILE) ===== -->
     <header class="hidden md:flex bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
@@ -233,7 +226,7 @@
             <!-- SIDEBAR KIRI (PROFIL) -->
             <aside class="w-72 flex-shrink-0">
                 <!-- Kartu Profil -->
-                <div class="bg-gradient-to-br from-sky-500 to-blue-700 rounded-2xl p-6 text-white text-center shadow-lg mb-4">
+                <div class="bg-white/20 backdrop-blur-xl border border-white/40 rounded-2xl p-6 text-white text-center shadow-lg mb-4">
                     <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 border-4 border-white/50 shadow-xl">
                         @if(Auth::user()->foto_profil)
                             <img src="{{ str_starts_with(Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
@@ -250,20 +243,20 @@
                     @endif
                 </div>
                 <!-- Menu Navigasi Sidebar -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-3 px-5 py-3.5 bg-sky-50 border-l-4 border-sky-500 text-sky-700 font-bold text-sm">
+                <div class="glass-panel overflow-hidden">
+                    <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-3 px-5 py-3.5 bg-white/40 border-l-4 border-sky-500 text-sky-700 font-bold text-sm">
                         <i class="fa-solid fa-user w-5 text-center"></i> Profil Saya
                     </a>
-                    <a href="{{ route('customer.pesanan') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.pesanan') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
                         <i class="fa-solid fa-box-open w-5 text-center"></i> Pesanan Saya
                     </a>
-                    <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
                         <i class="fa-solid fa-heart w-5 text-center"></i> Favorit
                     </a>
-                    <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
                         <i class="fa-solid fa-location-dot w-5 text-center"></i> Titik Lokasi
                     </a>
-                    <a href="{{ route('customer.settings') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.settings') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
                         <i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan Akun
                     </a>
                     <form action="/logout" method="POST">
@@ -278,7 +271,7 @@
             <!-- KONTEN KANAN -->
             <div class="flex-1 space-y-5">
                 <!-- Ringkasan Pesanan -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="glass-panel p-6">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-extrabold text-slate-800 text-base">Pesanan Saya</h3>
                         <a href="{{ route('customer.pesanan') }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
@@ -310,7 +303,7 @@
                 </div>
 
                 <!-- Menu Cepat -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="glass-panel p-6">
                     <h3 class="font-extrabold text-slate-800 text-base mb-4">Aksi Cepat</h3>
                     <div class="grid grid-cols-2 gap-3">
                         <a href="{{ url('/customer/lokasi') }}" class="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50 transition">
