@@ -1,6 +1,6 @@
-const CACHE_NAME = 'rentify-pwa-v3-speed';
+const CACHE_NAME = 'rentify-pwa-v4-auto-update';
 
-// Hanya cache halaman utama dan konfigurasi identitas
+// File statis utama yang di-cache saat install
 const urlsToCache = [
     '/',
     '/manifest.json'
@@ -11,19 +11,20 @@ self.addEventListener('install', event => {
     self.skipWaiting(); 
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
-            console.log('Rentify PWA: Memasang turbo cache...');
+            console.log('Rentify PWA: Memasang smart cache...');
             return cache.addAll(urlsToCache);
         })
     );
 });
 
-// 2. Bersihkan Cache Lama Saat Ada Update
+// 2. Bersihkan Cache Lama Saat Versi Naik (v3 ke v4)
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cache => {
                     if (cache !== CACHE_NAME) {
+                        console.log('Rentify PWA: Menghapus cache usang ' + cache);
                         return caches.delete(cache);
                     }
                 })
@@ -32,37 +33,53 @@ self.addEventListener('activate', event => {
     );
 });
 
-// 3. LOGIKA NGEBUT: Utamakan Memori HP untuk Gambar, CSS, dan Ikon
+// 3. LOGIKA CACHING CERDAS UNTUK UPDATE OTOMATIS
 self.addEventListener('fetch', event => {
-    // Abaikan request yang bukan HTTP/HTTPS
+    // Abaikan request ke domain lain atau request non-HTTP
     if (!event.request.url.startsWith('http')) return;
 
-    // A. Jika user klik link/pindah halaman: Ambil dari internet dulu agar data selalu baru, jika offline ambil dari cache
+    // A. NETWORK-ONLY: Dilarang keras meng-cache API dan POST (Form Submit, AJAX)
+    if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+        return; // Biarkan browser yang tangani langsung ke server
+    }
+
+    // B. NETWORK-FIRST: Untuk Halaman HTML (Navigasi)
+    // Selalu coba ambil halaman terbaru dari Vercel. Jika offline/gagal, baru ambil dari cache.
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(event.request).catch(() => caches.match(event.request))
+            fetch(event.request)
+                .then(networkResponse => {
+                    // Simpan halaman HTML terbaru ke cache secara diam-diam
+                    return caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
+                })
+                .catch(() => {
+                    // Jika offline, ambil dari memori HP
+                    return caches.match(event.request);
+                })
         );
         return;
     }
 
-    // B. Jika memuat Gambar, Font, atau Script: LANGSUNG AMBIL DARI MEMORI HP (sangat cepat!)
+    // C. STALE-WHILE-REVALIDATE: Untuk Aset (CSS, JS, Gambar)
+    // Langsung tampilkan dari cache agar kilat, TAPI diam-diam download versi baru dari Vercel untuk update memori HP.
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
-            if (cachedResponse) {
-                // Tampilkan langsung dari cache HP tanpa delay loading
-                return cachedResponse;
-            }
-            // Jika belum ada di memori HP, baru download dari internet dan simpan ke cache
-            return fetch(event.request).then(networkResponse => {
-                // Simpan salinan ke cache untuk dibuka di kemudian hari
+            const fetchPromise = fetch(event.request).then(networkResponse => {
                 if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-                    const responseToCache = networkResponse.clone();
+                    // Update memori HP dengan versi terbaru dari internet
                     caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, responseToCache);
+                        cache.put(event.request, networkResponse.clone());
                     });
                 }
                 return networkResponse;
-            });
+            }).catch(err => console.log('Rentify PWA: Gagal fetch aset ' + event.request.url));
+
+            // Jika ada di cache, langsung tampilkan (ngebut!), sementara fetchPromise berjalan di background.
+            // Jika belum ada di cache, tunggu download selesai.
+            return cachedResponse || fetchPromise;
         })
     );
 });
