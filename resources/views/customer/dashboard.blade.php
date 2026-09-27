@@ -201,19 +201,19 @@
             </form>
         </div>
         <!-- BOTTOM NAV MOBILE -->
-        <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.03)] border-t border-slate-100 z-50">
-            <div class="max-w-md mx-auto flex justify-around items-center pt-2.5 pb-2.5">
-                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
+        <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none">
+            <nav class="bg-white/70 backdrop-blur-xl shadow-lg border border-white/50 rounded-full pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
+                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-500 hover:text-sky-500 transition-colors">
                     <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Beranda</span>
                 </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
+                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-500 hover:text-sky-500 transition-colors">
                     <i class="fa-solid fa-heart text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Favorit</span>
                 </a>
                 <a href="#" class="flex flex-col items-center text-sky-600">
                     <i class="fa-solid fa-user text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Akun</span>
                 </a>
-            </div>
-        </nav>
+            </nav>
+        </div>
     </div>
 
     <!-- ===== DESKTOP: Sidebar + Content Layout ===== -->
