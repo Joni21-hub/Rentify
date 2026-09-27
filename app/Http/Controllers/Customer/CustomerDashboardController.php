@@ -83,13 +83,26 @@ class CustomerDashboardController extends Controller
     public function updatePassword(Request $request)
     {
         $user = User::find(Auth::id());
-        $request->validate([
-            'password_lama' => 'required|string',
+        
+        $rules = [
             'password' => 'required|string|min:8|confirmed',
-        ]);
+        ];
 
-        if (!Hash::check($request->password_lama, $user->password)) {
-            return back()->with('error', 'Kata sandi lama tidak sesuai.');
+        // Jika user daftar pakai manual, Wajib isi password_lama
+        // Jika user daftar pakai Google, password_lama boleh kosong (karena mereka tidak tahu password acaknya)
+        if (!$user->google_id) {
+            $rules['password_lama'] = 'required|string';
+        } else {
+            $rules['password_lama'] = 'nullable|string';
+        }
+
+        $request->validate($rules);
+
+        // Cek kecocokan password lama HANYA jika mereka mengisinya (atau jika mereka user manual)
+        if (!$user->google_id || $request->filled('password_lama')) {
+            if (!Hash::check($request->password_lama, $user->password)) {
+                return back()->with('error', 'Kata sandi lama tidak sesuai.');
+            }
         }
 
         $user->password = Hash::make($request->password);

@@ -44,8 +44,13 @@
                 @csrf
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Kata Sandi Saat Ini</label>
-                    <input type="password" name="password_lama" required placeholder="Masukkan sandi Anda saat ini" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1 flex justify-between">
+                        <span>Kata Sandi Saat Ini</span>
+                        @if(Auth::user()->google_id)
+                            <span class="text-[9px] text-blue-500"><i class="fa-brands fa-google"></i> Boleh dikosongkan</span>
+                        @endif
+                    </label>
+                    <input type="password" name="password_lama" {{ Auth::user()->google_id ? '' : 'required' }} placeholder="{{ Auth::user()->google_id ? 'Kosongkan jika Anda login via Google' : 'Masukkan sandi Anda saat ini' }}" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
                 </div>
 
                 <div>
