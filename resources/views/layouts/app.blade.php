@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Rentify (rentify21.my.id) adalah platform marketplace penyewaan alat, kendaraan, dan barang dengan mudah, cepat, dan aman.">
+    <meta name="keywords" content="Rentify, rentify21, sewa alat, platform penyewaan, marketplace sewa barang">
+    <meta name="robots" content="index, follow">
     <title>@yield('title', 'RENTIFY') — Marketplace Rental</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
