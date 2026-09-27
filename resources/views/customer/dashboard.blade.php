@@ -108,7 +108,7 @@
             <a href="{{ route('customer.settings') }}" class="absolute top-8 right-6 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 text-white hover:bg-white/30 transition shadow-lg z-20">
                 <i class="fa-solid fa-gear text-lg"></i>
             </a>
-            <h1 class="text-xl font-extrabold mb-6 tracking-wide drop-shadow-md">Profil Saya</h1>
+            
             <div class="relative inline-block mb-4">
                 <div class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full overflow-hidden flex items-center justify-center text-white text-4xl font-black shadow-2xl border-4 border-white/50 relative z-10">
                     @if(Auth::user()->foto_profil)
