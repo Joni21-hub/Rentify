@@ -29,7 +29,7 @@
             <div class="mt-6 bg-white rounded-2xl shadow-lg px-5 py-4 flex items-center gap-4">
                 {{-- Foto profil / Inisial --}}
                 @if($user->foto_profil)
-                    <img src="{{ Storage::url($user->foto_profil) }}" alt="Foto Profil"
+                    <img src="{{ $user->foto_profil }}" alt="Foto Profil"
                          class="w-16 h-16 rounded-full object-cover ring-2 ring-sky-200 flex-shrink-0">
                 @else
                     <div class="w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center flex-shrink-0 ring-2 ring-sky-200">
@@ -107,6 +107,20 @@
                         <div>
                             <span class="block text-sm font-bold text-slate-800">Ubah Nomor WhatsApp</span>
                             <span class="block text-[10px] text-slate-400 font-medium">Verifikasi via OTP</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
+                </a>
+
+                {{-- Alamat Email --}}
+                <a href="{{ route('customer.settings.email') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 transition group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <div>
+                            <span class="block text-sm font-bold text-slate-800">Alamat Email</span>
+                            <span class="block text-[10px] text-slate-400">{{ $user->email }}</span>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>

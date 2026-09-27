@@ -188,6 +188,10 @@ Route::prefix('customer')->name('customer.')
     Route::get('/settings/whatsapp', [CustomerDashboardController::class, 'settingsWhatsapp'])->name('settings.whatsapp');
     Route::post('/settings/whatsapp', [CustomerDashboardController::class, 'updateWhatsapp'])->name('settings.whatsapp.update');
     Route::post('/settings/whatsapp/verify', [CustomerDashboardController::class, 'verifyWhatsapp'])->name('settings.whatsapp.verify');
+
+    Route::get('/settings/email', [CustomerDashboardController::class, 'settingsEmail'])->name('settings.email');
+    Route::post('/settings/email/request', [CustomerDashboardController::class, 'requestEmailChange'])->name('settings.email.request');
+    Route::post('/settings/email/verify', [CustomerDashboardController::class, 'verifyEmailChange'])->name('settings.email.verify');
     
     // Core Cart System
     Route::get('/cart', [CustomerHomeController::class, 'viewCart'])->name('cart.view');

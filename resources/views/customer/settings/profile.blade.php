@@ -14,7 +14,7 @@
 <body class="bg-slate-50 min-h-screen text-slate-800 pb-24">
 
     <div class="max-w-md mx-auto min-h-screen bg-white relative shadow-md">
-        
+
         <!-- HEADER -->
         <div class="bg-white px-5 pt-6 pb-4 sticky top-0 z-50 shadow-sm flex items-center gap-4">
             <a href="{{ route('customer.settings') }}" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
@@ -24,6 +24,13 @@
         </div>
 
         <div class="px-5 py-6">
+
+            @if(session('error'))
+                <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ session('error') }}
+                </div>
+            @endif
+
             @if($errors->any())
                 <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold">
                     <ul class="list-disc pl-5">
@@ -36,13 +43,13 @@
 
             <form action="{{ route('customer.settings.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
-                
+
                 <!-- FOTO PROFIL -->
                 <div class="flex flex-col items-center">
                     <div class="relative group cursor-pointer mb-2">
                         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-100 shadow-sm bg-slate-200 flex items-center justify-center text-slate-400 text-3xl font-black relative">
                             @if($user->foto_profil)
-                                <img src="{{ Storage::url($user->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
+                                <img src="{{ $user->foto_profil }}" alt="Foto" class="w-full h-full object-cover">
                             @else
                                 {{ substr($user->name ?? 'C', 0, 1) }}
                             @endif
@@ -58,13 +65,16 @@
                 <!-- NAMA -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nama Lengkap</label>
-                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
+                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
                 </div>
 
-                <!-- EMAIL -->
+                <!-- KONFIRMASI KATA SANDI -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Alamat Email (Gmail)</label>
-                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Konfirmasi Kata Sandi</label>
+                    <input type="password" name="password_konfirmasi" required placeholder="Masukkan kata sandi Anda untuk menyimpan"
+                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
+                    <p class="text-[11px] text-slate-400 mt-1 ml-1">Diperlukan untuk memverifikasi perubahan profil.</p>
                 </div>
 
                 <!-- SIMPAN -->

@@ -57,6 +57,10 @@
 
                 <form action="{{ route('customer.settings.whatsapp.update') }}" method="POST" class="space-y-6">
                     @csrf
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Konfirmasi Kata Sandi</label>
+                        <input type="password" name="password_konfirmasi" required placeholder="Masukkan kata sandi Anda" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-500 font-bold text-sm">
+                    </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nomor WhatsApp Baru</label>
                         <input type="text" name="whatsapp_baru" required placeholder="Contoh: 081234567890" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 font-bold text-sm transition">
