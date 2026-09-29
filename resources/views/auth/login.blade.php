@@ -14,9 +14,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* Latar Belakang Gradasi Biru Statis (Soft) */
+        /* Latar Belakang Gambar Lembut */
         .bg-flowing {
-            background: linear-gradient(135deg, #fff9ef 0%, #bad6eb 100%);
+            background-image: url('{{ asset("images/rentify_soft_background.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .glass-panel {
