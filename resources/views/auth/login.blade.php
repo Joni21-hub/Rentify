@@ -14,12 +14,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* Latar Belakang Gambar Lembut */
+        /* Latar Belakang Gambar Lembut dengan Gradasi Biru di Atas */
         .bg-flowing {
-            background-image: url('{{ asset("images/rentify_soft_background.jpg") }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background-image: linear-gradient(to bottom, #bad6eb 0%, rgba(255, 255, 255, 0) 50%), url('{{ asset("images/rentify_soft_background.jpg") }}');
+            background-size: cover, cover;
+            background-position: center, center;
+            background-repeat: no-repeat, no-repeat;
         }
 
         .glass-panel {
@@ -47,17 +47,17 @@
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-flowing text-slate-800">
+<body class="min-h-screen w-full flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4 relative overflow-hidden bg-flowing text-slate-800">
 
     <div class="w-full max-w-[380px] relative z-10">
         
         <div class="glass-panel p-8 sm:p-10 relative">
             
             <div class="text-center mb-8">
-                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-2" style="text-shadow: 0 0 20px rgba(255,255,255,0.4);">
+                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-slate-800 mb-2">
                     RENTIFY
                 </h1>
-                <p class="text-[12px] text-white/90 font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
+                <p class="text-[12px] text-slate-600 font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
 
             <form action="/login" method="POST" class="space-y-4">
@@ -83,36 +83,36 @@
                 </div>
                 
                 <div class="flex justify-end -mt-2 mb-2">
-                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-white hover:text-blue-100 transition drop-shadow-md">Lupa kata sandi?</a>
+                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-blue-700 hover:text-blue-900 transition">Lupa kata sandi?</a>
                 </div>
 
                 @if ($errors->any())
-                    <div class="bg-rose-500/90 backdrop-blur-md border border-rose-400 text-white px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg">
+                    <div class="bg-rose-100 border border-rose-300 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
                         <i class="fa-solid fa-circle-exclamation text-sm"></i>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
                 @if (session('error'))
-                    <div class="bg-rose-500/90 backdrop-blur-md border border-rose-400 text-white px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg">
+                    <div class="bg-rose-100 border border-rose-300 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
                         <i class="fa-solid fa-circle-exclamation text-sm"></i>
                         <span>{{ session('error') }}</span>
                     </div>
                 @endif
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <span>MASUK</span>
                     </button>
                 </div>
                 
                 <div class="flex items-center gap-3 my-5">
-                    <div class="h-px bg-white/40 flex-1"></div>
-                    <span class="text-[10px] font-bold text-white tracking-widest">ATAU</span>
-                    <div class="h-px bg-white/40 flex-1"></div>
+                    <div class="h-px bg-slate-300 flex-1"></div>
+                    <span class="text-[10px] font-bold text-slate-500 tracking-widest">ATAU</span>
+                    <div class="h-px bg-slate-300 flex-1"></div>
                 </div>
 
                 <!-- Di Login, Asumsinya mereka sudah pernah mendaftar dan menyetujui S&K -->
-                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-sm shadow-sm">
+                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-slate-700 text-sm shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -124,12 +124,12 @@
             </form>
 
             <div class="mt-8 space-y-4 text-center">
-                <p class="text-[11px] text-white/90 font-medium">Belum punya akun? 
-                    <a href="/register" class="text-white font-extrabold hover:text-blue-100 hover:underline transition ml-1">Daftar sekarang</a>
+                <p class="text-[11px] text-slate-600 font-medium">Belum punya akun? 
+                    <a href="/register" class="text-blue-700 font-extrabold hover:text-blue-900 hover:underline transition ml-1">Daftar sekarang</a>
                 </p>
-                <div class="h-px w-1/2 mx-auto bg-white/20"></div>
+                <div class="h-px w-1/2 mx-auto bg-slate-300"></div>
                 <p class="text-[11px]">
-                    <a href="/vendor/register" class="text-amber-300 font-extrabold hover:text-amber-200 hover:underline underline-offset-4 transition">
+                    <a href="/vendor/register" class="text-amber-600 font-extrabold hover:text-amber-700 hover:underline underline-offset-4 transition">
                         Daftar menjadi bagian dari rentify
                     </a>
                 </p>
