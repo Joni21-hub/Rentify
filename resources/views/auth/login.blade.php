@@ -14,12 +14,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* Latar Belakang Gambar Lembut dengan Gradasi Biru di Atas */
+        /* Latar Belakang Gradasi Melingkar */
         .bg-flowing {
-            background-image: linear-gradient(to bottom, #bad6eb 0%, rgba(255, 255, 255, 0) 50%), url('{{ asset("images/rentify_soft_background.jpg") }}');
-            background-size: cover, cover;
-            background-position: center, center;
-            background-repeat: no-repeat, no-repeat;
+            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
         }
 
         .glass-panel {
