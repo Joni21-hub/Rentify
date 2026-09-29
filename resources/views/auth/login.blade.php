@@ -20,13 +20,9 @@
         }
 
         .glass-panel {
-            background: rgba(255, 255, 255, 0.15); /* Transparan */
-            backdrop-filter: blur(25px); /* Blur kuat */
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
             border-radius: 2rem;
         }
 
