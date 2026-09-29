@@ -14,16 +14,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* Latar Belakang Biru Bersih (Tanpa Ungu) */
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+        /* Latar Belakang Gradasi Biru Statis */
         .bg-flowing {
-            background: linear-gradient(-45deg, #bad6eb, #fff9ef, #bad6eb, #fff9ef);
-            background-size: 300% 300%;
-            animation: gradientFlow 15s ease infinite;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9, #bad6eb);
         }
 
         .glass-panel {
