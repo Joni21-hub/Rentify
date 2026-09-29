@@ -21,7 +21,7 @@
             100% { background-position: 0% 50%; }
         }
         .bg-flowing {
-            background: linear-gradient(-45deg, #0284c7, #38bdf8, #0ea5e9, #0369a1);
+            background: linear-gradient(-45deg, #bad6eb, #fff9ef, #bad6eb, #fff9ef);
             background-size: 300% 300%;
             animation: gradientFlow 15s ease infinite;
         }
