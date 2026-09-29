@@ -14,9 +14,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* Latar Belakang Gradasi Biru Statis */
+        /* Latar Belakang Gradasi Biru Statis (Soft) */
         .bg-flowing {
-            background: linear-gradient(135deg, #0284c7, #0ea5e9, #bad6eb);
+            background: linear-gradient(135deg, #fff9ef 0%, #bad6eb 100%);
         }
 
         .glass-panel {
