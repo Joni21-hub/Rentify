@@ -42,30 +42,9 @@
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
-
-        /* Bintang Berkedip (Sparkles) */
-        .sparkle {
-            position: absolute;
-            width: 4px; height: 4px;
-            background-color: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 4s infinite ease-in-out;
-        }
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 0.8; transform: scale(1.5); box-shadow: 0 0 12px rgba(255,255,255,1); }
-        }
     </style>
 </head>
 <body class="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-flowing text-slate-800">
-
-    <!-- Efek Bintang Berkedip -->
-    <div class="sparkle top-[10%] left-[20%]" style="animation-delay: 0.5s;"></div>
-    <div class="sparkle top-[30%] right-[15%]" style="animation-delay: 2s;"></div>
-    <div class="sparkle bottom-[15%] left-[30%]" style="animation-delay: 1s;"></div>
-    <div class="sparkle bottom-[40%] right-[25%]" style="animation-delay: 3s;"></div>
-    <div class="sparkle top-[60%] left-[10%]" style="animation-delay: 1.5s;"></div>
 
     <div class="w-full max-w-[380px] relative z-10">
         
