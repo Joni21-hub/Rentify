@@ -26,7 +26,7 @@
     </nav>
 
     <div class="max-w-6xl mx-auto px-4 py-10">
-        <h2 class="text-2xl font-bold text-navy mb-6"><i class="fas fa-shopping-basket text-brandBlue mr-2"></i> Konfirmasi Penyewaan</h2>
+        <h2 class="text-2xl font-bold text-slate-800 mb-6"><i class="fas fa-shopping-basket text-brandBlue mr-2"></i> Konfirmasi Penyewaan</h2>
 
         @if(count($cart) > 0)
         <form action="/customer/cart/checkout" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -35,7 +35,7 @@
             <div class="lg:col-span-2 space-y-6">
                 
                 <div class="rentify-card p-6 -ice space-y-4">
-                    <h3 class="font-bold text-navy text-lg border-b pb-2"><i class="fas fa-user-edit text-brandBlue mr-2"></i> Data Lengkap Pemesan</h3>
+                    <h3 class="font-bold text-slate-800 text-lg border-b pb-2"><i class="fas fa-user-edit text-brandBlue mr-2"></i> Data Lengkap Pemesan</h3>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nama Lengkap</label>
                         <input type="text" name="customer_name" required class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue" placeholder="Contoh: Muhammad Rafli">
@@ -55,7 +55,7 @@
                 </div>
 
                 <div class="rentify-card p-6 -ice space-y-4">
-                    <h3 class="font-bold text-navy text-lg border-b pb-2"><i class="fas fa-clock text-brandBlue mr-2"></i> Atur Durasi Waktu Rental (Sistem Flat 24 Jam)</h3>
+                    <h3 class="font-bold text-slate-800 text-lg border-b pb-2"><i class="fas fa-clock text-brandBlue mr-2"></i> Atur Durasi Waktu Rental (Sistem Flat 24 Jam)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tanggal & Jam Mulai</label>
@@ -70,7 +70,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div class="rentify-card p-6 -ice">
-                        <h4 class="font-bold text-navy mb-3"><i class="fas fa-truck text-brandBlue mr-1"></i> Opsi Pengiriman</h4>
+                        <h4 class="font-bold text-slate-800 mb-3"><i class="fas fa-truck text-brandBlue mr-1"></i> Opsi Pengiriman</h4>
                         <label class="flex items-center space-x-3 p-3 border rounded-xl mb-2 cursor-pointer hover:bg-slate-50">
                             <input type="radio" name="shipping_method" value="ambil" checked onchange="updateOngkir(0)" class="text-brandBlue">
                             <span class="text-sm">Ambil Sendiri (Gratis Rp 0)</span>
@@ -82,7 +82,7 @@
                     </div>
 
                     <div class="rentify-card p-6 -ice">
-                        <h4 class="font-bold text-navy mb-3"><i class="fas fa-wallet text-brandBlue mr-1"></i> Metode Pembayaran</h4>
+                        <h4 class="font-bold text-slate-800 mb-3"><i class="fas fa-wallet text-brandBlue mr-1"></i> Metode Pembayaran</h4>
                         <label class="flex items-center space-x-3 p-3 border rounded-xl mb-2 cursor-pointer">
                             <input type="radio" name="payment_method" value="COD" checked onclick="toggleQris(false)" class="text-brandBlue">
                             <span class="text-sm">COD (Bayar di Tempat)</span>
@@ -102,13 +102,13 @@
 
             <div class="space-y-6">
                 <div class="rentify-card p-6 -ice space-y-4 sticky top-24">
-                    <h3 class="font-bold text-navy text-lg border-b pb-2">Keranjang Item</h3>
+                    <h3 class="font-bold text-slate-800 text-lg border-b pb-2">Keranjang Item</h3>
                     
                     <div class="max-h-48 overflow-y-auto space-y-3 pr-1">
                         @foreach($cart as $id => $item)
                         <div class="flex justify-between items-center text-sm border-b pb-2">
                             <div>
-                                <p class="font-semibold text-navy">{{ $item['name'] }}</p>
+                                <p class="font-semibold text-slate-800">{{ $item['name'] }}</p>
                                 <p class="text-xs text-slate-400">{{ $item['quantity'] }}x @ Rp {{ number_format($item['price'], 0, ',', '.') }}</p>
                             </div>
                             <span class="font-bold text-slate-700">Rp {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</span>
@@ -125,7 +125,7 @@
                             <span>Ongkos Kirim</span>
                             <span id="ongkir-display">Rp 0</span>
                         </div>
-                        <div class="border-t pt-3 flex justify-between font-black text-lg text-navy">
+                        <div class="border-t pt-3 flex justify-between font-black text-lg text-slate-800">
                             <span>Total Tagihan</span>
                             <span id="grand-total" class="text-accent">Rp {{ number_format($total, 0, ',', '.') }}</span>
                         </div>

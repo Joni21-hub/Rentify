@@ -5,7 +5,7 @@
 @section('content')
 <div class="p-4 md:p-8">
     <div class="mb-6">
-        <a href="{{ route('vendor.pesanan.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rentify-card -slate-200 text-slate-600 font-bold hover:text-brand-main hover:-brand-main transition-all text-sm">
+        <a href="{{ route('vendor.pesanan.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rentify-card -slate-200 text-slate-600 font-bold hover:text-sky-600 hover:-brand-main transition-all text-sm">
             <i class="fa-solid fa-arrow-left"></i> Kembali ke Riwayat Pesanan
         </a>
     </div>
@@ -23,7 +23,7 @@
             
             <div class="rentify-card p-6 md:p-8 -slate-100 rentify-card">
                 <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-brand-main flex items-center justify-center text-lg"><i class="fa-solid fa-user-tag"></i></div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-sky-600 flex items-center justify-center text-lg"><i class="fa-solid fa-user-tag"></i></div>
                     <div>
                         <h2 class="text-xl font-extrabold text-slate-800">Informasi Customer</h2>
                         <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Order ID: #{{ $pesanan->id }}</p>
@@ -43,22 +43,22 @@
                     <!-- BENTENG JADWAL (VENDOR): Menampilkan Jadwal Boking Masa Depan dengan sangat jelas! -->
                     <div class="md:col-span-2 bg-blue-50/50 p-5 rounded-2xl border border-blue-100 relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-24 h-24 bg-brand-main/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                        <p class="text-[11px] font-extrabold text-brand-main uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-regular fa-calendar-check text-base"></i> Jadwal Bokingan Customer</p>
+                        <p class="text-[11px] font-extrabold text-sky-600 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-regular fa-calendar-check text-base"></i> Jadwal Bokingan Customer</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p class="text-[10px] font-bold text-slate-500 uppercase">Waktu Pengambilan / Antar</p>
-                                <p class="font-black text-brand-deep text-lg">{{ \Carbon\Carbon::parse($pesanan->start_rent)->format('d M Y - H:i') }} WIB</p>
+                                <p class="font-black text-sky-700 text-lg">{{ \Carbon\Carbon::parse($pesanan->start_rent)->format('d M Y - H:i') }} WIB</p>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold text-slate-500 uppercase">Maksimal Dikembalikan</p>
-                                <p class="font-black text-brand-sky text-lg">{{ \Carbon\Carbon::parse($pesanan->end_rent)->format('d M Y - H:i') }} WIB</p>
+                                <p class="font-black text-sky-500 text-lg">{{ \Carbon\Carbon::parse($pesanan->end_rent)->format('d M Y - H:i') }} WIB</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sistem Pengiriman</p>
-                        <p class="font-black text-slate-800 capitalize"><i class="fa-solid fa-truck-fast text-brand-sky mr-2"></i>{{ $pesanan->shipping_method }}</p>
+                        <p class="font-black text-slate-800 capitalize"><i class="fa-solid fa-truck-fast text-sky-500 mr-2"></i>{{ $pesanan->shipping_method }}</p>
                     </div>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Metode Pembayaran</p>
@@ -86,11 +86,11 @@
                                 <img src="{{ $cover }}" class="w-16 h-16 rounded-xl object-cover shadow-sm">
                                 <div class="flex-1">
                                     <p class="font-black text-slate-800 text-base">{{ $detail->barang->nama }}</p>
-                                    <p class="text-xs font-bold text-slate-500 mt-1">Durasi Sewa: <span class="text-brand-main">{{ $pesanan->duration_days }} Hari</span></p>
+                                    <p class="text-xs font-bold text-slate-500 mt-1">Durasi Sewa: <span class="text-sky-600">{{ $pesanan->duration_days }} Hari</span></p>
                                 </div>
                                 <div class="text-right">
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Subtotal</p>
-                                    <p class="font-black text-brand-deep text-lg">Rp {{ number_format(($detail->price ?? 0) * $pesanan->duration_days, 0, ',', '.') }}</p>
+                                    <p class="font-black text-sky-700 text-lg">Rp {{ number_format(($detail->price ?? 0) * $pesanan->duration_days, 0, ',', '.') }}</p>
                                 </div>
                             </div>
                             @endif
@@ -100,7 +100,7 @@
                 
                 <div class="p-6 md:p-8 bg-gradient-to-br from-slate-800 to-navydark text-white text-right">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Pendapatan Pesanan Ini</p>
-                    <p class="text-4xl font-black text-brand-sky">Rp {{ number_format($pesanan->total_price, 0, ',', '.') }}</p>
+                    <p class="text-4xl font-black text-sky-500">Rp {{ number_format($pesanan->total_price, 0, ',', '.') }}</p>
                 </div>
             </div>
         </div>
@@ -109,7 +109,7 @@
             <div class="rentify-card p-6 md:p-8 -slate-100 rentify-card sticky top-28">
                 
                 <div class="text-center mb-8">
-                    <div class="w-16 h-16 rounded-full bg-blue-50 text-brand-main flex items-center justify-center text-2xl mx-auto mb-4">
+                    <div class="w-16 h-16 rounded-full bg-blue-50 text-sky-600 flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-arrows-rotate"></i>
                     </div>
                     <h2 class="text-xl font-extrabold text-slate-800">Status Penyewaan</h2>
@@ -139,9 +139,9 @@
                 </form>
 
                 <div class="mt-6 p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-3">
-                    <i class="fa-solid fa-circle-info text-brand-main mt-0.5"></i>
+                    <i class="fa-solid fa-circle-info text-sky-600 mt-0.5"></i>
                     <p class="text-[10px] text-slate-600 font-medium leading-relaxed">
-                        Jika status diubah menjadi <b class="text-brand-main">"Selesai"</b>, sistem otomatis akan menghitung *fee* platform, memperbarui Dompet Saldo Anda, dan melepaskan jadwal bokingan barang ini!
+                        Jika status diubah menjadi <b class="text-sky-600">"Selesai"</b>, sistem otomatis akan menghitung *fee* platform, memperbarui Dompet Saldo Anda, dan melepaskan jadwal bokingan barang ini!
                     </p>
                 </div>
             </div>

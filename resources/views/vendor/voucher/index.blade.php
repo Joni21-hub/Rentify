@@ -31,7 +31,7 @@
         <!-- KOLOM KIRI: Form Buat Voucher -->
         <div class="lg:col-span-1">
             <div class="rentify-card p-6 -slate-100 rentify-card sticky top-28">
-                <h3 class="text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-3"><i class="fa-solid fa-ticket text-brand-main mr-2"></i> Buat Voucher Baru</h3>
+                <h3 class="text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-3"><i class="fa-solid fa-ticket text-sky-600 mr-2"></i> Buat Voucher Baru</h3>
                 
                 <form action="{{ route('vendor.voucher.store') }}" method="POST" class="space-y-4">
                     @csrf
@@ -106,7 +106,7 @@
                     <div class="flex-1 p-5 relative">
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <span class="inline-block px-2 py-1 bg-blue-50 text-brand-main rounded text-[10px] font-black uppercase tracking-widest mb-1 border border-blue-100">
+                                <span class="inline-block px-2 py-1 bg-blue-50 text-sky-600 rounded text-[10px] font-black uppercase tracking-widest mb-1 border border-blue-100">
                                     {{ $v->kode_voucher }}
                                 </span>
                                 <h4 class="font-black text-slate-800 text-lg">
@@ -132,7 +132,7 @@
                         
                         <div class="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-100">
                             <div class="text-[11px] text-slate-500 font-bold">
-                                <i class="fa-regular fa-clock text-brand-main mr-1"></i> 
+                                <i class="fa-regular fa-clock text-sky-600 mr-1"></i> 
                                 Berlaku: {{ \Carbon\Carbon::parse($v->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($v->tanggal_selesai)->format('d M Y') }}
                             </div>
                             <div class="text-[11px] text-slate-500 font-bold">

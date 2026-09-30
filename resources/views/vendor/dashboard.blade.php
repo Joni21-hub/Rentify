@@ -9,7 +9,7 @@
         <p class="text-sm text-slate-500 font-medium mt-1">Pantau ringkasan bisnis penyewaan Anda hari ini.</p>
     </div>
     <div class="flex items-center gap-4">
-        <button class="w-11 h-11 rentify-card -slate-200 text-slate-500 hover:text-brand-main hover:-brand-main transition-all flex items-center justify-center relative">
+        <button class="w-11 h-11 rentify-card -slate-200 text-slate-500 hover:text-sky-600 hover:-brand-main transition-all flex items-center justify-center relative">
             <i class="fa-regular fa-bell text-lg"></i>
             <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
         </button>
@@ -26,7 +26,7 @@
         
         <div class="rounded-3xl p-6 gradient-bg text-white shadow-xl shadow-brand-main/20 relative overflow-hidden group">
             <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
-            <p class="text-brand-light text-sm font-semibold mb-1">Total Saldo Tersedia</p>
+            <p class="text-sky-100 text-sm font-semibold mb-1">Total Saldo Tersedia</p>
             <h3 class="text-3xl font-black mb-4 tracking-tight">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</h3>
             <div class="flex justify-between items-end">
                 <a href="{{ route('vendor.saldo.index') }}" class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-sm">Tarik Dana</a>
@@ -66,7 +66,7 @@
                     <p class="text-slate-500 text-sm font-semibold mb-1">Produk Aktif</p>
                     <h3 class="text-3xl font-black text-slate-800">{{ $produkAktif }} <span class="text-sm font-medium text-slate-400">/ {{ $totalProduk }}</span></h3>
                 </div>
-                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-brand-main flex items-center justify-center text-xl shadow-sm">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-sky-600 flex items-center justify-center text-xl shadow-sm">
                     <i class="fa-solid fa-box-open"></i>
                 </div>
             </div>
@@ -94,11 +94,11 @@
             
             <div class="space-y-4 flex-1">
                 <a href="{{ route('vendor.barang.create') }}" class="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 hover:border-brand-main hover:bg-brand-50 transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-brand-light text-brand-main flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div class="w-12 h-12 rounded-xl bg-brand-light text-sky-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-plus text-xl"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-slate-800 group-hover:text-brand-main transition-colors">Tambah Produk</h4>
+                        <h4 class="font-bold text-slate-800 group-hover:text-sky-600 transition-colors">Tambah Produk</h4>
                         <p class="text-xs text-slate-500 mt-0.5">Upload barang sewaan baru</p>
                     </div>
                 </a>

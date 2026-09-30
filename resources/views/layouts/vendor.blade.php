@@ -50,7 +50,7 @@
                 <a href="{{ url('/') }}" class="flex items-center gap-3">
                     <!-- MASUKKAN KODE INI -->
                 <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo Rentify" class="h-10 w-auto object-contain">
-                    <span class="text-2xl font-extrabold text-white tracking-tight">Rentify<span class="text-brand-sky">.</span></span>
+                    <span class="text-2xl font-extrabold text-white tracking-tight">Rentify<span class="text-sky-500">.</span></span>
                 </a>
             </div>
 
@@ -92,7 +92,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-white truncate">{{ Auth::user()->vendor_name ?? Auth::user()->name }}</p>
-                        <p class="text-xs text-brand-sky truncate">Mitra Vendor</p>
+                        <p class="text-xs text-sky-500 truncate">Mitra Vendor</p>
                     </div>
                 </div>
                 

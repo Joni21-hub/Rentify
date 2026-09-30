@@ -65,7 +65,7 @@
                     <input type="file" name="foto_profil" id="foto_profil_input" class="hidden" accept="image/*" onchange="previewImage(event)">
 
                     <h2 class="text-2xl font-black tracking-tight mt-2">{{ $user->vendor_name ?? 'Nama Toko' }}</h2>
-                    <p class="text-brand-sky font-bold text-sm mt-1">Pemilik: {{ $user->name }}</p>
+                    <p class="text-sky-500 font-bold text-sm mt-1">Pemilik: {{ $user->name }}</p>
                     
                     <div class="mt-6 pt-6 border-t border-white/20 flex justify-center gap-4 text-sm font-medium">
                         <span class="bg-white/20 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-shield-halved mr-1 text-emerald-300"></i> Terverifikasi</span>
@@ -76,7 +76,7 @@
             <!-- KOLOM KANAN: Form Pengaturan Data -->
             <div class="lg:col-span-2">
                 <div class="rentify-card p-6 md:p-10 -slate-100 rentify-card">
-                    <h3 class="text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-2"><i class="fa-solid fa-address-card text-brand-main mr-2"></i> Informasi Dasar</h3>
+                    <h3 class="text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-2"><i class="fa-solid fa-address-card text-sky-600 mr-2"></i> Informasi Dasar</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>

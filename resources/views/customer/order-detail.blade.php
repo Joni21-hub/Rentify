@@ -31,7 +31,7 @@
             <div class="space-y-1.5 text-sm md:text-right">
                 <p class="text-xs font-bold uppercase text-slate-400">Rincian Waktu Rental:</p>
                 <p class="text-slate-600">Tanggal Order: <strong>{{ date('d M Y', strtotime($order->created_at)) }}</strong></p>
-                <p class="text-blue-700">Mulai: <strong>{{ date('d M Y H:i', strtotime($order->start_rent)) }}</strong></p>
+                <p class="text-sky-700">Mulai: <strong>{{ date('d M Y H:i', strtotime($order->start_rent)) }}</strong></p>
                 <p class="text-red-600">Kembali: <strong>{{ date('d M Y H:i', strtotime($order->end_rent)) }}</strong></p>
                 <p class="text-xs font-bold bg-slate-100 text-slate-700 inline-block px-2.5 py-1 rounded-md mt-1">Durasi total: {{ $order->duration_days }} Hari</p>
             </div>
@@ -64,7 +64,7 @@
                 </div>
                 <div class="flex justify-between text-base font-black text-slate-900 pt-2 border-t">
                     <span>Total Pembayaran (Net):</span>
-                    <span class="text-xl text-blue-800">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                    <span class="text-xl text-sky-800">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
                 </div>
             </div>
             

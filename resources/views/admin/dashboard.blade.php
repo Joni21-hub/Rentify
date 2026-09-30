@@ -219,14 +219,14 @@
 
                     <section class="rentify-card -slate-200/80 overflow-hidden flex flex-col">
                         <div class="p-5 border-b border-slate-100 bg-slate-50/50">
-                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-images text-blue-500 mr-2"></i>Manajemen Banner Aplikasi</h3>
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-images text-sky-500 mr-2"></i>Manajemen Banner Aplikasi</h3>
                         </div>
                         <div class="p-5 flex-1">
                             <form action="/admin/banner" method="POST" enctype="multipart/form-data" class="flex gap-3 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 @csrf
                                 <div class="flex-1 space-y-2">
                                     <input type="text" name="judul_promo" placeholder="Judul Banner Promo..." required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-400">
-                                    <input type="file" name="gambar" required class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold">
+                                    <input type="file" name="gambar" required class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-sky-700 file:font-bold">
                                 </div>
                                 <button type="submit" class="rentify-btn text-white font-bold px-4 rounded-lg text-xs shadow-sm transition">Upload</button>
                             </form>
@@ -400,7 +400,7 @@
                                     </td>
                                     <td class="p-4 text-center">
                                         <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
-                                            {{ strtolower($trx->status ?? '') == 'selesai' ? 'bg-emerald-100 text-emerald-700' : (in_array(strtolower($trx->status ?? ''), ['dibatalkan', 'batal', 'cancelled']) ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700') }}">
+                                            {{ strtolower($trx->status ?? '') == 'selesai' ? 'bg-emerald-100 text-emerald-700' : (in_array(strtolower($trx->status ?? ''), ['dibatalkan', 'batal', 'cancelled']) ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-sky-700') }}">
                                             {{ $trx->status ?? 'Pending' }}
                                         </span>
                                     </td>
@@ -598,7 +598,7 @@
                 <div><p class="text-xs text-slate-500 font-bold mb-1 ml-1"><i class="fas fa-align-left mr-1"></i> DESKRIPSI PRODUK</p><p id="md_deskripsi" class="text-slate-600 bg-slate-50 p-4 rounded-xl text-xs leading-relaxed border border-slate-100"></p></div>
                 
                 <div class="grid grid-cols-3 gap-3 text-center">
-                    <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl"><p class="text-[9px] text-blue-600 font-black tracking-widest uppercase">TARIF SEWA / HARI</p><p id="md_harga" class="font-black text-blue-900 text-lg"></p></div>
+                    <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl"><p class="text-[9px] text-sky-600 font-black tracking-widest uppercase">TARIF SEWA / HARI</p><p id="md_harga" class="font-black text-sky-900 text-lg"></p></div>
                     <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl"><p class="text-[9px] text-emerald-600 font-black tracking-widest uppercase">DEPOSIT JAMINAN</p><p id="md_deposit" class="font-black text-emerald-900 text-lg"></p></div>
                     <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl"><p class="text-[9px] text-rose-600 font-black tracking-widest uppercase">DENDA TELAT / HARI</p><p id="md_denda" class="font-black text-rose-900 text-lg"></p></div>
                 </div>
@@ -640,7 +640,7 @@
                     </div>
                     <div class="text-right">
                         <span class="block text-[9px] font-black text-slate-400 uppercase">METODE & STATUS</span>
-                        <span id="tx_method" class="font-bold text-blue-600"></span> | <span id="tx_status" class="font-bold text-emerald-600"></span>
+                        <span id="tx_method" class="font-bold text-sky-600"></span> | <span id="tx_status" class="font-bold text-emerald-600"></span>
                     </div>
                 </div>
 
@@ -667,7 +667,7 @@
 
                     <div class="flex justify-between text-slate-800 text-sm font-black pt-2 border-t border-dashed">
                         <span>Total Akhir Dibayar:</span>
-                        <span id="tx_total" class="text-blue-600"></span>
+                        <span id="tx_total" class="text-sky-600"></span>
                     </div>
                     <div class="flex justify-between bg-emerald-50 p-2 rounded-lg text-emerald-800 font-black text-sm mt-2 border border-emerald-100">
                         <span>Hak Rentify (Fee 5% dari Harga Dasar):</span>

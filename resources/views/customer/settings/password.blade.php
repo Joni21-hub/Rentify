@@ -56,11 +56,11 @@
             @if(Auth::user()->google_id && !Auth::user()->password_changed_at)
                 <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-start gap-3">
                     <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <i class="fa-brands fa-google text-blue-500 text-sm"></i>
+                        <i class="fa-brands fa-google text-sky-500 text-sm"></i>
                     </div>
                     <div>
-                        <p class="text-blue-800 text-sm font-bold">Login via Google</p>
-                        <p class="text-blue-600 text-xs font-medium mt-0.5 leading-relaxed">
+                        <p class="text-sky-800 text-sm font-bold">Login via Google</p>
+                        <p class="text-sky-600 text-xs font-medium mt-0.5 leading-relaxed">
                             Buat kata sandi untuk bisa login manual tanpa Google.
                             Setelah diatur, Anda wajib memasukkan sandi lama saat ingin mengubahnya.
                         </p>

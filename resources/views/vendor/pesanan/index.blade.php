@@ -39,18 +39,18 @@
                         <tr class="hover:bg-blue-50/30 transition-colors group">
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <p class="font-bold text-slate-700">#ORD-{{ $pesanan->id }}</p>
-                                <p class="text-xs text-slate-500 mt-1 font-medium"><i class="fa-regular fa-clock mr-1 text-brand-sky"></i> {{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</p>
+                                <p class="text-xs text-slate-500 mt-1 font-medium"><i class="fa-regular fa-clock mr-1 text-sky-500"></i> {{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</p>
                             </td>
                             <td class="px-6 py-5">
                                 <p class="font-bold text-slate-800">{{ $pesanan->customer_name }}</p>
                                 
-                                <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-brand-main text-[10px] font-bold">
+                                <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-sky-600 text-[10px] font-bold">
                                     <i class="fa-regular fa-calendar-check"></i> Mulai: {{ \Carbon\Carbon::parse($pesanan->start_rent)->format('d M Y') }}
                                 </div>
                             </td>
                             <td class="px-6 py-5 align-middle">
                                 @if(strtoupper($pesanan->payment_method) == 'QRIS')
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-brand-main text-[11px] font-bold shadow-sm">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-sky-600 text-[11px] font-bold shadow-sm">
                                         <i class="fa-solid fa-qrcode"></i> QRIS
                                     </span>
                                 @else
@@ -67,7 +67,7 @@
                                     $statusClass = 'bg-slate-50 text-slate-600 border-slate-200';
                                     $icon = 'fa-circle-info';
                                     if($pesanan->status == 'Menunggu Konfirmasi') { $statusClass = 'bg-amber-50 text-amber-600 border-amber-100'; $icon = 'fa-clock'; }
-                                    elseif($pesanan->status == 'Disetujui') { $statusClass = 'bg-blue-50 text-brand-main border-blue-100'; $icon = 'fa-thumbs-up'; }
+                                    elseif($pesanan->status == 'Disetujui') { $statusClass = 'bg-blue-50 text-sky-600 border-blue-100'; $icon = 'fa-thumbs-up'; }
                                     elseif($pesanan->status == 'Sedang Disewa') { $statusClass = 'bg-purple-50 text-purple-600 border-purple-100'; $icon = 'fa-people-carry-box'; }
                                     elseif($pesanan->status == 'Selesai') { $statusClass = 'bg-emerald-50 text-emerald-600 border-emerald-100'; $icon = 'fa-check'; }
                                     elseif($pesanan->status == 'Dibatalkan') { $statusClass = 'bg-rose-50 text-rose-600 border-rose-100'; $icon = 'fa-xmark'; }
@@ -77,7 +77,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-5 text-right align-middle">
-                                <a href="{{ route('vendor.pesanan.show', $pesanan->id) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 text-brand-main hover:bg-brand-main hover:text-white transition-colors border border-slate-200 hover:border-brand-main font-bold text-xs shadow-sm">
+                                <a href="{{ route('vendor.pesanan.show', $pesanan->id) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 text-sky-600 hover:bg-brand-main hover:text-white transition-colors border border-slate-200 hover:border-brand-main font-bold text-xs shadow-sm">
                                     Proses / Detail <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                             </td>
@@ -85,7 +85,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-6 py-20 text-center">
-                                <div class="inline-flex w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-brand-main items-center justify-center mb-5 shadow-inner border border-white">
+                                <div class="inline-flex w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-sky-600 items-center justify-center mb-5 shadow-inner border border-white">
                                     <i class="fa-solid fa-clipboard-list text-4xl opacity-80"></i>
                                 </div>
                                 <h3 class="text-xl font-black text-slate-800 mb-2">Belum ada pesanan</h3>

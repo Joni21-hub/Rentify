@@ -127,11 +127,11 @@
             <div class="rentify-card p-4 rounded-2xl relative overflow-hidden">
                 <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/20">
                     <h3 class="font-extrabold text-slate-800 text-sm">Pesanan</h3>
-                    <a href="{{ route('customer.pesanan') }}" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">Lihat Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
+                    <a href="{{ route('customer.pesanan') }}" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 transition flex items-center gap-1">Lihat Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center relative z-10">
                     <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:rentify-card transition mb-1.5 relative">
+                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-sky-600 group-hover:rentify-card transition mb-1.5 relative">
                             <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                             @if(isset($countMenunggu) && $countMenunggu > 0)
                                 <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countMenunggu }}</span>
@@ -140,7 +140,7 @@
                         <span class="text-[9px] font-bold text-slate-700 leading-tight">Menunggu<br>Konfirmasi</span>
                     </a>
                     <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:rentify-card transition mb-1.5 relative">
+                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-sky-600 group-hover:rentify-card transition mb-1.5 relative">
                             <i class="fa-solid fa-truck-fast text-lg"></i>
                             @if(isset($countDiproses) && $countDiproses > 0)
                                 <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDiproses }}</span>
@@ -167,7 +167,7 @@
                         <span class="block text-[10px] font-medium text-slate-500 mt-0.5">Atur GPS untuk cari barang terdekat</span>
                     </div>
                 </div>
-                <i class="fa-solid fa-chevron-right text-slate-400 text-sm group-hover:text-blue-600 transition"></i>
+                <i class="fa-solid fa-chevron-right text-slate-400 text-sm group-hover:text-sky-600 transition"></i>
             </a>
             <!-- PUSAT BANTUAN -->
             @php $linkWaAdmin = "https://wa.me/6283183494835?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp

@@ -72,7 +72,7 @@
                     <i class="fas fa-bars"></i>
                 </div>
                 <div>
-                    <h2 class="text-base font-black text-navy tracking-tight">Validasi Pendaftaran Vendor Baru</h2>
+                    <h2 class="text-base font-black text-slate-800 tracking-tight">Validasi Pendaftaran Vendor Baru</h2>
                     <p class="text-[11px] text-slate-400 font-medium">Tinjau, setujui, atau tolak permohonan kemitraan pemilik toko sewaan baru</p>
                 </div>
             </div>
@@ -95,7 +95,7 @@
 
             <div class="rentify-card -slate-200/60 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 class="text-xs font-black text-navy uppercase tracking-wider">Daftar Antrean Permohonan</h3>
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Daftar Antrean Permohonan</h3>
                     <span class="text-[10px] font-bold bg-brandBlue/10 text-brandBlue px-2.5 py-1 rounded-full border border-brandBlue/20">
                         {{ $vendors->count() }} Pendaftar
                     </span>
@@ -113,7 +113,7 @@
                         <tbody class="divide-y divide-slate-50 text-xs text-slate-600 font-medium">
                             @foreach($vendors as $vendor)
                             <tr class="hover:bg-slate-50/50 transition">
-                                <td class="p-4 pl-6 font-bold text-navy">{{ $vendor['name'] }}</td>
+                                <td class="p-4 pl-6 font-bold text-slate-800">{{ $vendor['name'] }}</td>
                                 <td class="p-4 text-slate-500 font-mono text-[11px]">{{ $vendor['email'] }}</td>
                                 <td class="p-4 pr-6 text-center">
                                     @if(($vendor['vendor_status'] ?? 'pending') == 'pending')
@@ -214,7 +214,7 @@
                     <i class="fas fa-bars"></i>
                 </div>
                 <div>
-                    <h2 class="text-base font-black text-navy tracking-tight">Validasi Pendaftaran Vendor Baru</h2>
+                    <h2 class="text-base font-black text-slate-800 tracking-tight">Validasi Pendaftaran Vendor Baru</h2>
                     <p class="text-[11px] text-slate-400 font-medium">Tinjau, setujui, atau tolak permohonan kemitraan pemilik toko sewaan baru</p>
                 </div>
             </div>
@@ -237,7 +237,7 @@
 
             <div class="rentify-card -slate-200/60 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 class="text-xs font-black text-navy uppercase tracking-wider">Daftar Antrean Permohonan</h3>
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Daftar Antrean Permohonan</h3>
                     <span class="text-[10px] font-bold bg-brandBlue/10 text-brandBlue px-2.5 py-1 rounded-full border border-brandBlue/20">
                         {{ $vendors->count() }} Pendaftar
                     </span>
@@ -255,7 +255,7 @@
                         <tbody class="divide-y divide-slate-50 text-xs text-slate-600 font-medium">
                             @foreach($vendors as $vendor)
                             <tr class="hover:bg-slate-50/50 transition">
-                                <td class="p-4 pl-6 font-bold text-navy">{{ $vendor['name'] }}</td>
+                                <td class="p-4 pl-6 font-bold text-slate-800">{{ $vendor['name'] }}</td>
                                 <td class="p-4 text-slate-500 font-mono text-[11px]">{{ $vendor['email'] }}</td>
                                 <td class="p-4 pr-6 text-center">
                                     @if(($vendor['vendor_status'] ?? 'pending') == 'pending')

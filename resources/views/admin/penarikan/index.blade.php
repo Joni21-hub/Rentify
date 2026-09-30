@@ -143,7 +143,7 @@
                                             <p class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
                                                 <i class="fas fa-building-columns text-slate-400 mr-1"></i> {{ $penarikan->metode }} - {{ $penarikan->nama_bank_ewallet }}
                                             </p>
-                                            <p class="text-xs font-medium text-slate-600">No. Rek: <span class="font-mono text-indigo-600 font-bold">{{ $penarikan->nomor_rekening }}</span></p>
+                                            <p class="text-xs font-medium text-slate-600">No. Rek: <span class="font-mono text-sky-600 font-bold">{{ $penarikan->nomor_rekening }}</span></p>
                                             <p class="text-[10px] font-medium text-slate-500 mt-0.5">A.N: {{ $penarikan->nama_pemilik }}</p>
                                         </div>
                                     </td>

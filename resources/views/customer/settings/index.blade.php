@@ -88,7 +88,7 @@
                 {{-- Ubah Profil --}}
                 <a href="{{ route('customer.settings.profile') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-blue-100 text-sky-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
                             <i class="fa-solid fa-user-pen"></i>
                         </div>
                         <div>

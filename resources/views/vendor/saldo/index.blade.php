@@ -23,9 +23,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="rounded-3xl p-6 gradient-bg text-white shadow-xl shadow-brand-main/20 relative overflow-hidden">
                     <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                    <p class="text-brand-light text-sm font-semibold mb-1">Saldo Aktif (Bisa Ditarik)</p>
+                    <p class="text-sky-100 text-sm font-semibold mb-1">Saldo Aktif (Bisa Ditarik)</p>
                     <h3 class="text-4xl font-black mb-4 tracking-tight">Rp {{ number_format($saldo->saldo_aktif ?? 0, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-brand-light/80 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> Bertambah saat pesanan QRIS selesai.</p>
+                    <p class="text-[10px] text-sky-100/80 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> Bertambah saat pesanan QRIS selesai.</p>
                 </div>
 
                 <div class="rentify-card p-6 -slate-200 rentify-card">
@@ -99,7 +99,7 @@
 
         <div class="lg:col-span-1">
             <div class="rentify-card p-6 -slate-200 rentify-card sticky top-28">
-                <h3 class="font-extrabold text-lg text-slate-800 mb-4 border-b border-slate-100 pb-4"><i class="fa-solid fa-money-bill-transfer text-brand-main mr-2"></i> Ajukan Penarikan</h3>
+                <h3 class="font-extrabold text-lg text-slate-800 mb-4 border-b border-slate-100 pb-4"><i class="fa-solid fa-money-bill-transfer text-sky-600 mr-2"></i> Ajukan Penarikan</h3>
 
                 <form action="{{ route('vendor.saldo.tarik') }}" method="POST" class="space-y-4">
                     @csrf

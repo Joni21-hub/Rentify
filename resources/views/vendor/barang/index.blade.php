@@ -38,7 +38,7 @@
                 <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Aktif (Disetujui)</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Kurasi</option>
             </select>
-            <button type="submit" class="px-5 py-3.5 rentify-card -slate-200 text-slate-600 hover:text-brand-main hover:-brand-main transition-colors font-bold">
+            <button type="submit" class="px-5 py-3.5 rentify-card -slate-200 text-slate-600 hover:text-sky-600 hover:-brand-main transition-colors font-bold">
                 <i class="fa-solid fa-filter"></i> Terapkan
             </button>
         </div>
@@ -73,9 +73,9 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-slate-800 text-base group-hover:text-brand-main transition-colors">{{ $barang->nama }}</h3>
+                                    <h3 class="font-bold text-slate-800 text-base group-hover:text-sky-600 transition-colors">{{ $barang->nama }}</h3>
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-semibold text-slate-500 mt-1.5">
-                                        <i class="fa-solid fa-tags text-brand-sky"></i> 
+                                        <i class="fa-solid fa-tags text-sky-500"></i> 
                                         {{ $barang->kategori->nama ?? 'Tanpa Kategori' }}
                                     </span>
                                 </div>
@@ -90,7 +90,7 @@
                         </td>
 
                         <td class="px-6 py-5 align-middle">
-                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-sm font-bold text-brand-main border border-blue-100 shadow-sm">
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-sm font-bold text-sky-600 border border-blue-100 shadow-sm">
                                 <i class="fa-solid fa-boxes-stacked opacity-70"></i> {{ $barang->stok_total }}
                             </div>
                         </td>
@@ -112,7 +112,7 @@
                         <td class="px-6 py-5 align-middle text-right">
                             <div class="flex items-center justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                                 
-                                <a href="{{ route('vendor.barang.show', $barang->id) }}" class="w-9 h-9 rounded-xl bg-sky-50 text-brand-sky hover:bg-brand-sky hover:text-white transition-colors flex items-center justify-center tooltip border border-sky-100" title="Lihat Detail">
+                                <a href="{{ route('vendor.barang.show', $barang->id) }}" class="w-9 h-9 rounded-xl bg-sky-50 text-sky-500 hover:bg-brand-sky hover:text-white transition-colors flex items-center justify-center tooltip border border-sky-100" title="Lihat Detail">
                                     <i class="fa-solid fa-eye text-sm"></i>
                                 </a>
 
@@ -130,12 +130,12 @@
                     @empty
                     <tr>
                         <td colspan="5" class="px-6 py-20 text-center">
-                            <div class="inline-flex w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-brand-main items-center justify-center mb-5 shadow-inner border border-white">
+                            <div class="inline-flex w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-sky-600 items-center justify-center mb-5 shadow-inner border border-white">
                                 <i class="fa-solid fa-box-open text-4xl opacity-80"></i>
                             </div>
                             <h3 class="text-xl font-black text-slate-800 mb-2">Belum ada produk di etalase</h3>
                             <p class="text-slate-500 text-sm max-w-md mx-auto mb-6 font-medium">Toko Anda saat ini masih kosong. Mulai tambahkan barang sewaan pertama Anda agar pelanggan bisa mulai menyewa.</p>
-                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 rentify-card -slate-200 text-slate-700 font-bold hover:text-brand-main hover:-brand-main hover: transition-all text-sm">
+                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 rentify-card -slate-200 text-slate-700 font-bold hover:text-sky-600 hover:-brand-main hover: transition-all text-sm">
                                 <i class="fa-solid fa-plus"></i> Tambah Barang Sekarang
                             </a>
                         </td>
