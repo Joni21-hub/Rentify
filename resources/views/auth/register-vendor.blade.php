@@ -12,35 +12,7 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        /* Latar Belakang Gradasi Melingkar */
-        .bg-flowing {
-            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
-        }
-
-        .glass-panel {
-            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
-            border-radius: 2rem;
-        }
-
-        .input-glass {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: #0f172a;
-            transition: all 0.3s ease;
-        }
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: #ffffff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
-    </style>
+    
 </head>
 
 <body class="min-h-screen w-full flex flex-col p-4 sm:p-6 relative overflow-x-hidden text-slate-800">
@@ -54,7 +26,7 @@
 
     <div class="w-full max-w-[850px] relative z-10 m-auto">
 
-        <div class="glass-panel relative flex flex-col md:flex-row overflow-hidden">
+        <div class="rentify-card relative flex flex-col md:flex-row overflow-hidden">
 
             <!-- BAGIAN KIRI (Info Vendor) -->
             <div class="md:w-5/12 p-8 sm:p-10 flex flex-col justify-center bg-white/40 border-b md:border-b-0 md:border-r border-slate-300/50 text-slate-800 relative overflow-hidden">
@@ -118,7 +90,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user-tie text-xs"></i></span>
-                                <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="">
                             </div>
                         </div>
 
@@ -127,7 +99,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Nama Toko Rental</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-store text-xs"></i></span>
-                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="">
                             </div>
                         </div>
 
@@ -136,7 +108,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Email Aktif (Utama)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-envelope text-xs"></i></span>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="vendor@email.com">
+                                <input type="email" name="email" value="{{ old('email') }}" required class="rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="vendor@email.com">
                             </div>
                         </div>
 
@@ -145,7 +117,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">No. WhatsApp Toko</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="081234567xxx">
+                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="081234567xxx">
                             </div>
                         </div>
 
@@ -154,7 +126,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Kata Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                                <input type="password" id="passInput" name="password" required class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Min 8 karakter">
+                                <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Min 8 karakter">
                                 <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>
@@ -164,7 +136,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Konfirmasi Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                                <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Ulangi sandi">
+                                <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Ulangi sandi">
                                 <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>
@@ -207,7 +179,7 @@
 
     <!-- MODAL POPUP SYARAT & KETENTUAN VENDOR (TERANG) -->
     <div id="termsModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="glass-panel max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
+        <div class="rentify-card max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
             <div class="bg-slate-50 px-6 py-4 flex justify-between items-center shrink-0 border-b border-slate-200">
                 <div>
                     <h3 class="font-bold text-slate-800 text-sm tracking-wide">Syarat & Ketentuan Vendor Rentify</h3>

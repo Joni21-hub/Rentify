@@ -10,42 +10,15 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        /* Latar Belakang Gradasi Melingkar */
-        .bg-flowing {
-            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
-        }
-
-        .glass-panel {
-            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
-            border-radius: 2rem;
-        }
-
-        .input-glass {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: #0f172a;
-            transition: all 0.3s ease;
-        }
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: #ffffff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
-    </style>
+    
+<link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
 </head>
 <body class="min-h-screen w-full flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4 relative overflow-hidden bg-flowing text-slate-800">
 
     <!-- Efek Bintang Berkedip -->
     <div class="w-full max-w-[380px] relative z-10 ">
         
-        <div class="glass-panel p-8 sm:p-10 relative">
+        <div class="rentify-card p-8 sm:p-10 relative">
             
             <div class="text-center mb-8">
                 <h1 class="text-5xl sm:text-6xl font-black tracking-tighter text-sky-500 mb-2">Rentify</h1>
@@ -81,23 +54,23 @@
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user text-xs"></i></span>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Nama Lengkap">
+                    <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Nama Lengkap">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="No. WhatsApp">
+                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="No. WhatsApp">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                    <input type="password" id="passInput" name="password" required class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
+                    <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
                     <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
+                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
                     <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
@@ -223,35 +196,7 @@
         </div>
     </div>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        /* Latar Belakang Gradasi Melingkar */
-        .bg-flowing {
-            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
-        }
-
-        .glass-panel {
-            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
-            border-radius: 2rem;
-        }
-
-        .input-glass {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: #0f172a;
-            transition: all 0.3s ease;
-        }
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: #ffffff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
-    </style>
+    
 
     <script>
         function togglePass(inputId, eyeId) {
