@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk ke Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -20,7 +19,12 @@
             background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
         }
 
-        
+        .glass-panel {
+            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            border-radius: 2rem;
+        }
 
         .input-glass {
             background: rgba(255, 255, 255, 0.4);
@@ -36,11 +40,11 @@
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4 relative overflow-hidden text-slate-800">
+<body class="min-h-screen w-full flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4 relative overflow-hidden bg-flowing text-slate-800">
 
     <div class="w-full max-w-[380px] relative z-10">
         
-        <div class="rentify-card p-8 sm:p-10 relative">
+        <div class="glass-panel p-8 sm:p-10 relative">
             
             <div class="text-center mb-8">
                 <h1 class="text-5xl sm:text-6xl font-black tracking-tighter text-sky-500 mb-2">
@@ -89,7 +93,7 @@
                 @endif
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <span>MASUK</span>
                     </button>
                 </div>
@@ -101,7 +105,7 @@
                 </div>
 
                 <!-- Di Login, Asumsinya mereka sudah pernah mendaftar dan menyetujui S&K -->
-                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 rentify-card/60 hover:rentify-card/80 -slate-300 transition-all font-extrabold text-[#475569] text-sm">
+                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-[#475569] text-sm shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -118,7 +122,7 @@
                 </p>
                 <div class="h-px w-1/2 mx-auto bg-slate-300"></div>
                 <div class="pt-1">
-                    <a href="/vendor/register" class="inline-block px-5 py-2 rentify-card/65 -sky-200 text-[11px] font-extrabold text-sky-600 hover:rentify-card/90 hover:text-sky-700 hover:-sky-300 hover: transition-all">
+                    <a href="/vendor/register" class="inline-block px-5 py-2 bg-white/65 border border-sky-200 rounded-full text-[11px] font-extrabold text-sky-600 hover:bg-white/90 hover:text-sky-700 hover:border-sky-300 hover:shadow-sm transition-all">
                         Daftar menjadi bagian dari rentify
                     </a>
                 </div>
