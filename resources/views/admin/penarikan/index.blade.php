@@ -12,7 +12,7 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body class="bg-[#e0f2fe]/20 text-slate-800 flex h-screen overflow-hidden">
+<body class="text-slate-800 flex h-screen overflow-hidden">
 
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-10 overflow-y-auto">
         <div>

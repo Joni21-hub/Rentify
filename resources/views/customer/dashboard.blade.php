@@ -64,7 +64,7 @@
 </head>
 
 <!-- =================== MOBILE VERSION (body bg-flowing) =================== -->
-<body class="bg-flowing min-h-screen text-slate-800 pb-24 md:pb-0">
+<body class="min-h-screen text-slate-800 pb-24 md:pb-0">
 
     <!-- Efek Bintang -->
     <div class="sparkle" style="top:10%;left:10%;animation-delay:0s;"></div>

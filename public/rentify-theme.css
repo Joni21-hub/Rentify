@@ -92,9 +92,15 @@
 
 /* ─── UTILITAS GLOBAL ───────────────────────────────────── */
 
-/* Pastikan font seragam di semua halaman */
+/* Pastikan font dan background seragam di semua halaman */
 body {
     font-family: var(--rentify-font) !important;
+    background: var(--rentify-bg-gradient) !important;
+    background-attachment: fixed !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    min-height: 100vh;
 }
 
 /* Kelas helper untuk gradient button standar Rentify */

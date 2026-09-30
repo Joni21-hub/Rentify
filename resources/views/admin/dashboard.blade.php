@@ -14,7 +14,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-800 flex h-screen overflow-hidden">
+<body class="text-slate-800 flex h-screen overflow-hidden">
 
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-10 overflow-y-auto">
         <div>

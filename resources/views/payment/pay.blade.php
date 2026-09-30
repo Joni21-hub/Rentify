@@ -9,7 +9,7 @@
     <!-- Tailwind CSS (Optional, asumsi proyek ini pakai Tailwind/Vite) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen">
     
     <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
         <h2 class="text-2xl font-bold mb-4">Selesaikan Pembayaran</h2>

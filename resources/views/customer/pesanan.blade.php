@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-slate-50 min-h-screen pb-24 text-slate-700">
+<body class="min-h-screen pb-24 text-slate-700">
 
     <div class="max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-md">
         

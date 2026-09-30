@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
 </head>
-<body class="bg-slate-50 flex items-center justify-center min-h-screen p-4 font-sans">
+<body class="flex items-center justify-center min-h-screen p-4 font-sans">
 
     <div class="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full text-center border border-slate-100">
         <div class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">

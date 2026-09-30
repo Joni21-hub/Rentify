@@ -46,7 +46,7 @@
         }
     </style>
 </head>
-<body class="bg-brand-light font-sans text-slate-800 antialiased overflow-x-hidden">
+<body class="font-sans text-slate-800 antialiased overflow-x-hidden">
     <div class="flex min-h-screen">
         
         <aside class="w-72 fixed inset-y-0 left-0 z-50 bg-navydark shadow-2xl flex flex-col transition-all duration-300">

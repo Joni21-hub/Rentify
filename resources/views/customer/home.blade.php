@@ -19,7 +19,7 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
+<body class="text-slate-800 antialiased">
 
     <!-- ===== TOP NAVBAR (DESKTOP ONLY - HIDDEN ON MOBILE) ===== -->
     <header class="hidden md:flex bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">

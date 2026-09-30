@@ -21,7 +21,7 @@
         .radio-card-no input:checked + div { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
     </style>
 </head>
-<body class="bg-[#F4F8FF] font-sans text-slate-700 antialiased overflow-x-hidden">
+<body class="font-sans text-slate-700 antialiased overflow-x-hidden">
 
     <div class="flex min-h-screen">
         <aside class="w-64 fixed inset-y-0 left-0 z-50 glass-panel shadow-sm border-r border-slate-200 flex flex-col">

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-slate-100 font-sans text-slate-800 p-4 md:p-10">
+<body class="font-sans text-slate-800 p-4 md:p-10">
 
     <div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200" id="printable-struk">
         

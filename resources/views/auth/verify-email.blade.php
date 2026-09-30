@@ -12,7 +12,7 @@
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
 
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
         <h2 class="text-2xl font-bold mb-4">Verifikasi Email Anda</h2>
         

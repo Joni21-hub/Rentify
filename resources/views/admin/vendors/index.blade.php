@@ -23,7 +23,7 @@
         }
     </script>
 </head>
-<body class="bg-bgSoft flex h-screen overflow-hidden text-slate-800 font-sans">
+<body class="flex h-screen overflow-hidden text-slate-800 font-sans">
 
     <aside class="w-72 bg-navy text-white flex flex-col justify-between hidden md:flex shadow-2xl z-10">
         <div>
@@ -165,7 +165,7 @@
         }
     </script>
 </head>
-<body class="bg-bgSoft flex h-screen overflow-hidden text-slate-800 font-sans">
+<body class="flex h-screen overflow-hidden text-slate-800 font-sans">
 
     <aside class="w-72 bg-navy text-white flex flex-col justify-between hidden md:flex shadow-2xl z-10">
         <div>

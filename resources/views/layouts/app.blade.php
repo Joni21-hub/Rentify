@@ -39,7 +39,7 @@
     
     @stack('head')
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased">
+<body class="text-gray-800 antialiased">
 
     <!-- Area Konten Utama -->
     <main>

@@ -108,7 +108,7 @@
     </style>
 </head>
 
-<body class="min-h-screen w-full flex flex-col p-4 sm:p-6 relative overflow-x-hidden bg-flowing text-slate-800">
+<body class="min-h-screen w-full flex flex-col p-4 sm:p-6 relative overflow-x-hidden text-slate-800">
 
     <!-- Efek Bintang Berkedip -->
     <div class="sparkle top-[10%] left-[10%]" style="animation-delay: 0s;"></div>

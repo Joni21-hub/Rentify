@@ -60,7 +60,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-flowing text-slate-800">
+<body class="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden text-slate-800">
 
     <!-- Bintang Berkedip -->
     <div class="sparkle" style="top:10%;left:20%;animation-delay:0.5s"></div>
