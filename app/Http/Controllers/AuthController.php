@@ -30,8 +30,8 @@ class AuthController extends Controller
         if (Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
             $user = Auth::user();
 
-            // Cek apakah WA sudah diverifikasi
-            if (is_null($user->whatsapp_verified_at)) {
+            // Cek apakah WA sudah diverifikasi (kecuali admin)
+            if (is_null($user->whatsapp_verified_at) && $user->role !== 'admin') {
                 // Logout sementara karena belum terverifikasi
                 Auth::logout();
                 
