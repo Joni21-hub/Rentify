@@ -2,76 +2,32 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Profil - Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%) fixed !important;
         }
         .bg-flowing {
-            background: linear-gradient(-45deg, #0284c7, #38bdf8, #0ea5e9, #0369a1);
-            background-size: 300% 300%;
-            animation: gradientFlow 15s ease infinite;
-        }
-        
-        .glass-menu {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-        }
-        .glass-menu:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-        .sparkle {
-            position: absolute;
-            width: 3px; height: 3px;
-            background-color: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 4s infinite ease-in-out;
-        }
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 0.8; transform: scale(1.5); box-shadow: 0 0 10px rgba(255,255,255,1); }
-        }
-        .bottom-nav-glass {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 1);
+            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%) fixed !important;
         }
     </style>
 </head>
 
-<!-- =================== MOBILE VERSION (body bg-flowing) =================== -->
-<body class="min-h-screen text-slate-800 pb-24 md:pb-0">
-
-    <!-- Efek Bintang -->
-    <div class="sparkle" style="top:10%;left:10%;animation-delay:0s;"></div>
-    <div class="sparkle" style="top:25%;right:15%;animation-delay:1.5s;"></div>
-    <div class="sparkle" style="top:50%;left:20%;animation-delay:0.7s;"></div>
-    <div class="sparkle hidden md:block" style="top:75%;right:30%;animation-delay:2s;"></div>
-    <div class="sparkle hidden md:block" style="top:40%;right:40%;animation-delay:1s;"></div>
+<body class="min-h-screen text-slate-800 pb-24 md:pb-8 bg-flowing overflow-x-hidden w-full max-w-full">
 
     <!-- ===== DESKTOP TOP NAVBAR (HIDDEN ON MOBILE) ===== -->
-    <header class="rentify-navbar hidden md:flex sticky top-0 z-50 ">
-        <div class="max-w-6xl mx-auto w-full px-6 py-3 flex items-center gap-4">
+    <header class="rentify-navbar hidden md:flex sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto w-full px-6 py-3 flex items-center justify-between gap-4">
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
                 <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
                 <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
-            <div class="flex-1"></div>
             <nav class="flex items-center gap-1">
                 <a href="{{ route('customer.home') }}" class="flex flex-col items-center px-4 py-2 text-slate-400 hover:text-sky-500 rounded-xl transition">
                     <i class="fa-solid fa-house text-lg"></i>
@@ -93,115 +49,124 @@
         </div>
     </header>
 
-    <!-- ===== MOBILE: Full Screen Profile ===== -->
-    <div class="md:hidden max-w-md mx-auto min-h-screen relative z-10">
-        <!-- HEADER GLASSMORPHISM -->
-        <div class="px-5 pt-10 pb-8 text-center text-white relative">
-            <a href="{{ route('customer.settings') }}" class="absolute top-8 right-6 w-10 h-10 rentify-card/10 backdrop-blur-md flex items-center justify-center -white/20 text-white hover:rentify-card/30 transition z-20">
-                <i class="fa-solid fa-gear text-lg"></i>
+    <!-- ===== MOBILE: Profile View ===== -->
+    <div class="md:hidden max-w-sm mx-auto px-4 pt-6 relative z-10 w-full">
+        <!-- KARTU PROFIL HEADER -->
+        <div class="rentify-card p-6 text-center relative mb-4 shadow-lg rounded-3xl">
+            <a href="{{ route('customer.settings') }}" class="absolute top-4 right-4 w-9 h-9 bg-white/70 hover:bg-white rounded-xl flex items-center justify-center text-slate-600 hover:text-sky-600 transition shadow-sm" title="Pengaturan">
+                <i class="fa-solid fa-gear text-sm"></i>
             </a>
             
-            <div class="relative inline-block mb-4">
-                <div class="w-24 h-24 rentify-card/20 backdrop-blur-md overflow-hidden flex items-center justify-center text-white text-4xl font-black -4 -white/50 relative z-10">
+            <div class="relative inline-block mb-3">
+                <div class="w-20 h-20 rounded-full bg-sky-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center text-sky-600 text-3xl font-black mx-auto">
                     @if(Auth::user()->foto_profil)
                         <img src="{{ str_starts_with(Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
                     @else
                         {{ substr(Auth::user()->name ?? 'C', 0, 1) }}
                     @endif
                 </div>
-                
             </div>
-            <h2 class="text-2xl font-black drop-shadow-md">{{ Auth::user()->name ?? 'Customer' }}</h2>
-            <div class="inline-flex items-center gap-2 mt-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/30 text-xs font-semibold">
-                <i class="fa-solid fa-envelope"></i>
-                <span>{{ Auth::user()->email ?? (Auth::user()->whatsapp ?? 'customer@rentify.com') }}</span>
+
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">{{ Auth::user()->name ?? 'Customer' }}</h2>
+            <div class="inline-flex items-center gap-1.5 mt-1.5 bg-white/60 px-3 py-1 rounded-full border border-slate-200/60 text-xs font-semibold text-slate-600">
+                <i class="fa-solid fa-envelope text-[11px] text-sky-500"></i>
+                <span class="truncate max-w-[200px]">{{ Auth::user()->email ?? (Auth::user()->whatsapp ?? 'customer@rentify.com') }}</span>
             </div>
+            
             @if(Auth::user()->whatsapp_verified_at)
-            <div class="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-900/30 px-3 py-1 rounded-full border border-emerald-500/30">
-                <i class="fa-solid fa-shield-check"></i> WA Terverifikasi
+            <div class="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                <i class="fa-solid fa-shield-check text-emerald-600"></i> WA Terverifikasi
             </div>
             @endif
         </div>
-        <div class="px-5 space-y-4">
+
+        <!-- MENU-MENU MOBILE -->
+        <div class="space-y-3">
             <!-- PESANAN SAYA -->
-            <div class="rentify-card p-4 rounded-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/20">
-                    <h3 class="font-extrabold text-slate-800 text-sm">Pesanan</h3>
-                    <a href="{{ route('customer.pesanan') }}" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 transition flex items-center gap-1">Lihat Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
+            <div class="rentify-card p-4 rounded-2xl">
+                <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-200/60">
+                    <h3 class="font-black text-slate-800 text-xs uppercase tracking-wider">Pesanan Saya</h3>
+                    <a href="{{ route('customer.pesanan') }}" class="text-[11px] font-bold text-sky-600 hover:text-sky-700 transition flex items-center gap-1">
+                        Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                    </a>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-center relative z-10">
-                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-sky-600 group-hover:rentify-card transition mb-1.5 relative">
-                            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
+                        <div class="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 group-hover:scale-105 transition mb-1 relative shadow-sm">
+                            <i class="fa-solid fa-clock-rotate-left text-base"></i>
                             @if(isset($countMenunggu) && $countMenunggu > 0)
-                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countMenunggu }}</span>
+                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">{{ $countMenunggu }}</span>
                             @endif
                         </div>
-                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Menunggu<br>Konfirmasi</span>
+                        <span class="text-[10px] font-bold text-slate-700 leading-tight">Konfirmasi</span>
                     </a>
-                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-sky-600 group-hover:rentify-card transition mb-1.5 relative">
-                            <i class="fa-solid fa-truck-fast text-lg"></i>
+                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
+                        <div class="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 group-hover:scale-105 transition mb-1 relative shadow-sm">
+                            <i class="fa-solid fa-truck-fast text-base"></i>
                             @if(isset($countDiproses) && $countDiproses > 0)
-                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDiproses }}</span>
+                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">{{ $countDiproses }}</span>
                             @endif
                         </div>
-                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Sedang<br>Berjalan</span>
+                        <span class="text-[10px] font-bold text-slate-700 leading-tight">Berjalan</span>
                     </a>
-                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-emerald-500 group-hover:rentify-card transition mb-1.5">
-                            <i class="fa-solid fa-star text-lg"></i>
+                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-105 transition mb-1 shadow-sm">
+                            <i class="fa-solid fa-star text-base"></i>
                         </div>
-                        <span class="text-[9px] font-bold text-slate-700 leading-tight">Beri<br>Ulasan</span>
+                        <span class="text-[10px] font-bold text-slate-700 leading-tight">Ulasan</span>
                     </a>
                 </div>
             </div>
+
             <!-- GANTI TITIK LOKASI -->
-            <a href="{{ url('/customer/lokasi') }}" class="flex items-center justify-between glass-menu p-4 rounded-2xl group">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-full flex items-center justify-center shadow-md">
-                        <i class="fa-solid fa-location-dot"></i>
+            <a href="{{ url('/customer/lokasi') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-location-dot text-base"></i>
                     </div>
                     <div>
-                        <span class="block font-extrabold text-slate-800 text-sm">Ganti Titik Lokasi</span>
-                        <span class="block text-[10px] font-medium text-slate-500 mt-0.5">Atur GPS untuk cari barang terdekat</span>
+                        <span class="block font-black text-slate-800 text-xs">Ganti Titik Lokasi</span>
+                        <span class="block text-[10px] font-medium text-slate-500">Atur GPS untuk cari barang terdekat</span>
                     </div>
                 </div>
-                <i class="fa-solid fa-chevron-right text-slate-400 text-sm group-hover:text-sky-600 transition"></i>
+                <i class="fa-solid fa-chevron-right text-slate-400 text-xs group-hover:text-sky-600 transition"></i>
             </a>
+
             <!-- PUSAT BANTUAN -->
             @php $linkWaAdmin = "https://wa.me/6283183494835?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp
-            <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center justify-between glass-menu p-4 rounded-2xl group">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-sky-500 text-white rounded-xl flex items-center justify-center shadow-md shadow-sky-500/40">
-                        <i class="fa-brands fa-whatsapp text-xl"></i>
+            <a href="{{ $linkWaAdmin }}" target="_blank" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center shadow-sm">
+                        <i class="fa-brands fa-whatsapp text-lg"></i>
                     </div>
                     <div>
-                        <span class="block font-extrabold text-sky-700 text-sm">Pusat Bantuan</span>
-                        <span class="block text-[10px] font-bold text-sky-600/70 mt-0.5">Hubungi Admin Rentify (24/7)</span>
+                        <span class="block font-black text-emerald-800 text-xs">Pusat Bantuan WhatsApp</span>
+                        <span class="block text-[10px] font-semibold text-emerald-600/80">Hubungi Admin Rentify (24/7)</span>
                     </div>
                 </div>
-                <i class="fa-solid fa-arrow-right text-sky-400 text-sm"></i>
+                <i class="fa-solid fa-arrow-right text-emerald-500 text-xs"></i>
             </a>
-            <!-- KELUAR -->
-            <form action="/logout" method="POST" class="w-full pt-4 pb-8 flex justify-center">
+
+            <!-- KELUAR TOMBOL AKUN (SESUAI DENGAN MASTER THEME) -->
+            <form action="/logout" method="POST" class="w-full pt-4 pb-4 flex justify-center">
                 @csrf
-                <button type="submit" class="flex items-center justify-center rentify-card/20 backdrop-blur-md px-6 py-3 -white/50 hover:bg-rose-500 hover:-rose-500 hover:text-white transition-all gap-2 group text-white w-full max-w-[200px]">
+                <button type="submit" class="rentify-btn-danger w-full max-w-[220px] py-3.5 px-6 rounded-2xl text-xs font-black tracking-widest uppercase flex items-center justify-center gap-2 shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0">
                     <i class="fa-solid fa-power-off text-sm"></i>
-                    <span class="font-extrabold text-xs tracking-wide">KELUAR AKUN</span>
+                    <span>KELUAR AKUN</span>
                 </button>
             </form>
         </div>
+
         <!-- BOTTOM NAV MOBILE -->
-        <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none">
-            <nav class="rentify-card/70 backdrop-blur-xl -white/50 pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
-                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-500 hover:text-sky-500 transition-colors">
+        <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
+            <nav class="rentify-card backdrop-blur-xl border border-white/80 pointer-events-auto px-6 py-2.5 w-full max-w-xs flex justify-around items-center shadow-lg rounded-2xl">
+                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-600 transition-colors">
                     <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Beranda</span>
                 </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-500 hover:text-sky-500 transition-colors">
+                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-600 transition-colors">
                     <i class="fa-solid fa-heart text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Favorit</span>
                 </a>
-                <a href="#" class="flex flex-col items-center text-sky-600">
+                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-sky-600">
                     <i class="fa-solid fa-user text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Akun</span>
                 </a>
             </nav>
@@ -214,42 +179,43 @@
             <!-- SIDEBAR KIRI (PROFIL) -->
             <aside class="w-72 flex-shrink-0">
                 <!-- Kartu Profil -->
-                <div class="rentify-card/20 backdrop-blur-xl -white/40 p-6 text-white text-center mb-4">
-                    <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 border-4 border-white/50 shadow-xl">
+                <div class="rentify-card p-6 text-center mb-4 rounded-3xl">
+                    <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 border-4 border-white shadow-md flex items-center justify-center bg-sky-100 text-sky-600 text-3xl font-black">
                         @if(Auth::user()->foto_profil)
                             <img src="{{ str_starts_with(Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
                         @else
-                            <div class="w-full h-full bg-white/30 flex items-center justify-center text-3xl font-black">{{ substr(Auth::user()->name ?? 'C', 0, 1) }}</div>
+                            {{ substr(Auth::user()->name ?? 'C', 0, 1) }}
                         @endif
                     </div>
-                    <h2 class="font-black text-lg">{{ Auth::user()->name ?? 'Customer' }}</h2>
-                    <p class="text-sky-200 text-[11px] mt-1 break-all">{{ Auth::user()->email ?? Auth::user()->whatsapp }}</p>
+                    <h2 class="font-black text-lg text-slate-800">{{ Auth::user()->name ?? 'Customer' }}</h2>
+                    <p class="text-slate-500 text-xs mt-0.5 break-all">{{ Auth::user()->email ?? Auth::user()->whatsapp }}</p>
                     @if(Auth::user()->whatsapp_verified_at)
-                    <div class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-900/30 px-3 py-1 rounded-full border border-emerald-500/30">
+                    <div class="mt-2.5 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
                         <i class="fa-solid fa-shield-check"></i> WA Terverifikasi
                     </div>
                     @endif
                 </div>
+
                 <!-- Menu Navigasi Sidebar -->
-                <div class="rentify-card overflow-hidden">
-                    <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-3 px-5 py-3.5 bg-white/40 border-l-4 border-sky-500 text-sky-700 font-bold text-sm">
+                <div class="rentify-card overflow-hidden rounded-2xl">
+                    <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-3 px-5 py-3.5 bg-sky-50 border-l-4 border-sky-500 text-sky-700 font-bold text-sm">
                         <i class="fa-solid fa-user w-5 text-center"></i> Profil
                     </a>
-                    <a href="{{ route('customer.pesanan') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.pesanan') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
                         <i class="fa-solid fa-box-open w-5 text-center"></i> Pesanan
                     </a>
-                    <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
                         <i class="fa-solid fa-heart w-5 text-center"></i> Favorit
                     </a>
-                    <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
                         <i class="fa-solid fa-location-dot w-5 text-center"></i> Titik Lokasi
                     </a>
-                    <a href="{{ route('customer.settings') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-white/40 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-50">
+                    <a href="{{ route('customer.settings') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
                         <i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan Akun
                     </a>
                     <form action="/logout" method="POST">
                         @csrf
-                        <button type="submit" class="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-rose-50 text-slate-500 hover:text-rose-500 font-semibold text-sm transition text-left">
+                        <button type="submit" class="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-rose-50 text-rose-600 hover:text-rose-700 font-bold text-sm transition text-left">
                             <i class="fa-solid fa-power-off w-5 text-center"></i> Keluar Akun
                         </button>
                     </form>
@@ -259,13 +225,13 @@
             <!-- KONTEN KANAN -->
             <div class="flex-1 space-y-5">
                 <!-- Ringkasan Pesanan -->
-                <div class="rentify-card p-6">
+                <div class="rentify-card p-6 rounded-3xl">
                     <div class="flex justify-between items-center mb-5">
-                        <h3 class="font-extrabold text-slate-800 text-base">Pesanan</h3>
+                        <h3 class="font-black text-slate-800 text-base">Pesanan Saya</h3>
                         <a href="{{ route('customer.pesanan') }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
-                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-sky-50 hover:bg-sky-100 transition group">
+                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 transition group shadow-sm">
                             <div class="relative">
                                 <i class="fa-solid fa-clock-rotate-left text-2xl text-sky-500"></i>
                                 @if(isset($countMenunggu) && $countMenunggu > 0)
@@ -274,43 +240,43 @@
                             </div>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Menunggu Konfirmasi</span>
                         </a>
-                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition group">
+                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 transition group shadow-sm">
                             <div class="relative">
-                                <i class="fa-solid fa-truck-fast text-2xl text-emerald-500"></i>
+                                <i class="fa-solid fa-truck-fast text-2xl text-sky-600"></i>
                                 @if(isset($countDiproses) && $countDiproses > 0)
                                     <span class="absolute -top-2 -right-2 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{{ $countDiproses }}</span>
                                 @endif
                             </div>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Sedang Berjalan</span>
                         </a>
-                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition group">
-                            <i class="fa-solid fa-star text-2xl text-amber-500"></i>
+                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition group shadow-sm">
+                            <i class="fa-solid fa-star text-2xl text-emerald-500"></i>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Beri Ulasan</span>
                         </a>
                     </div>
                 </div>
 
                 <!-- Menu Cepat -->
-                <div class="rentify-card p-6">
-                    <h3 class="font-extrabold text-slate-800 text-base mb-4">Aksi Cepat</h3>
+                <div class="rentify-card p-6 rounded-3xl">
+                    <h3 class="font-black text-slate-800 text-base mb-4">Aksi Cepat</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <a href="{{ url('/customer/lokasi') }}" class="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50 transition">
-                            <div class="w-10 h-10 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center">
+                        <a href="{{ url('/customer/lokasi') }}" class="flex items-center gap-3 p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/60 hover:border-sky-300 transition shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
                                 <i class="fa-solid fa-location-dot"></i>
                             </div>
                             <div>
-                                <span class="block font-bold text-sm text-slate-700">Ganti Lokasi</span>
-                                <span class="block text-[11px] text-slate-400">Atur titik GPS Anda</span>
+                                <span class="block font-bold text-sm text-slate-800">Ganti Lokasi</span>
+                                <span class="block text-[11px] text-slate-500">Atur titik GPS Anda</span>
                             </div>
                         </a>
                         @php $linkWaAdmin = "https://wa.me/6281262364197?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp
-                        <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50 transition">
+                        <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center gap-3 p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/60 hover:border-emerald-300 transition shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                                 <i class="fa-brands fa-whatsapp text-xl"></i>
                             </div>
                             <div>
-                                <span class="block font-bold text-sm text-slate-700">Pusat Bantuan</span>
-                                <span class="block text-[11px] text-slate-400">Hubungi Admin 24/7</span>
+                                <span class="block font-bold text-sm text-slate-800">Pusat Bantuan</span>
+                                <span class="block text-[11px] text-slate-500">Hubungi Admin 24/7</span>
                             </div>
                         </a>
                     </div>
