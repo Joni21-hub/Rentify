@@ -8,6 +8,8 @@
         { "src": "/build/(.*)", "dest": "/public/build/$1" },
         { "src": "/manifest.json", "dest": "/public/manifest.json" },
         { "src": "/sw.js", "dest": "/public/sw.js" },
+        { "src": "/rentify-theme.css", "dest": "/public/rentify-theme.css" },
+        { "src": "/(.*\\.(?:css|js|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|json))", "dest": "/public/$1" },
         { "src": "/(.*)", "dest": "/api/index.php" }
     ]
 }
