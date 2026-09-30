@@ -180,7 +180,7 @@
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-slate-100">
 
                 {{-- Pusat Bantuan --}}
-                <a href="https://wa.me/6283183494835" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
+                <a href="https://wa.me/6281262364197" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
                             <i class="fa-solid fa-headset"></i>

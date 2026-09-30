@@ -69,14 +69,6 @@
                            class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
                 </div>
 
-                <!-- KONFIRMASI KATA SANDI -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Konfirmasi Kata Sandi</label>
-                    <input type="password" name="password_konfirmasi" required placeholder="Masukkan kata sandi Anda untuk menyimpan"
-                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
-                    <p class="text-[11px] text-slate-400 mt-1 ml-1">Diperlukan untuk memverifikasi perubahan profil.</p>
-                </div>
-
                 <!-- SIMPAN -->
                 <div class="pt-4">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5">

@@ -55,17 +55,11 @@ class CustomerDashboardController extends Controller
     {
         $user = User::find(Auth::id());
 
-        // Validasi: untuk ganti profil wajib masukkan kata sandi
+        // Validasi: perbarui profil tanpa perlu sandi
         $request->validate([
             'name' => 'required|string|max:255',
-            'password_konfirmasi' => 'required|string',
-            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'foto_profil' => 'nullable|image|max:10240',
         ]);
-
-        // Verifikasi kata sandi
-        if (!Hash::check($request->password_konfirmasi, $user->password)) {
-            return back()->with('error', 'Kata sandi tidak sesuai. Perubahan tidak disimpan.');
-        }
 
         $user->name = $request->name;
 
