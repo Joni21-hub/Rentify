@@ -30,21 +30,21 @@
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
             </div>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk Anda..." class="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-brand-main/20 focus:border-brand-main outline-none transition-all shadow-sm font-medium placeholder-slate-400">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk Anda..." class="w-full pl-11 pr-4 py-3.5 rentify-card -slate-200 text-sm focus:ring-2 focus:ring-brand-main/20 focus:-brand-main outline-none transition-all font-medium placeholder-slate-400">
         </div>
         <div class="flex gap-3">
-            <select name="status" class="px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-600 focus:ring-2 focus:ring-brand-main/20 focus:border-brand-main outline-none shadow-sm transition-all">
+            <select name="status" class="px-4 py-3.5 rentify-card -slate-200 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-brand-main/20 focus:-brand-main outline-none transition-all">
                 <option value="">Semua Status</option>
                 <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Aktif (Disetujui)</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Kurasi</option>
             </select>
-            <button type="submit" class="px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:text-brand-main hover:border-brand-main transition-colors shadow-sm font-bold">
+            <button type="submit" class="px-5 py-3.5 rentify-card -slate-200 text-slate-600 hover:text-brand-main hover:-brand-main transition-colors font-bold">
                 <i class="fa-solid fa-filter"></i> Terapkan
             </button>
         </div>
     </form>
 
-    <div class="glass-card rounded-3xl shadow-sm border border-white/50 overflow-hidden">
+    <div class="rentify-card p-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -135,7 +135,7 @@
                             </div>
                             <h3 class="text-xl font-black text-slate-800 mb-2">Belum ada produk di etalase</h3>
                             <p class="text-slate-500 text-sm max-w-md mx-auto mb-6 font-medium">Toko Anda saat ini masih kosong. Mulai tambahkan barang sewaan pertama Anda agar pelanggan bisa mulai menyewa.</p>
-                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:text-brand-main hover:border-brand-main hover:shadow-md transition-all text-sm">
+                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 rentify-card -slate-200 text-slate-700 font-bold hover:text-brand-main hover:-brand-main hover: transition-all text-sm">
                                 <i class="fa-solid fa-plus"></i> Tambah Barang Sekarang
                             </a>
                         </td>

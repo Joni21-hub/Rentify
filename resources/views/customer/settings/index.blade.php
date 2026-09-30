@@ -27,7 +27,7 @@
             <h1 class="text-center text-white font-extrabold text-lg tracking-wide"></h1>
 
             {{-- Kartu profil --}}
-            <div class="mt-6 bg-white rounded-2xl shadow-lg px-5 py-4 flex items-center gap-4">
+            <div class="mt-6 rentify-card px-5 py-4 flex items-center gap-4">
                 {{-- Foto profil / Inisial --}}
                 @if($user->foto_profil)
                     <img src="{{ $user->foto_profil }}" alt="Foto Profil"
@@ -83,7 +83,7 @@
             ════════════════════════════════════ --}}
             <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] ml-1 mt-2">Akun Saya</p>
 
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-slate-100">
+            <div class="rentify-card overflow-hidden divide-y divide-slate-100">
 
                 {{-- Ubah Profil --}}
                 <a href="{{ route('customer.settings.profile') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
@@ -178,7 +178,7 @@
             ════════════════════════════════════ --}}
             <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] ml-1 mt-4">Bantuan</p>
 
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-slate-100">
+            <div class="rentify-card overflow-hidden divide-y divide-slate-100">
 
                 {{-- Pusat Bantuan --}}
                 <a href="https://wa.me/6281262364197" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
@@ -217,7 +217,7 @@
                     @csrf
                     <button type="submit"
                             onclick="return confirm('Yakin ingin keluar dari akun Rentify?')"
-                            class="w-full flex items-center justify-center gap-2 bg-white border-2 border-rose-200 text-rose-500 hover:bg-rose-50 active:bg-rose-100 font-extrabold py-3.5 rounded-2xl text-sm shadow-sm transition">
+                            class="w-full flex items-center justify-center gap-2 rentify-card -2 -rose-200 text-rose-500 hover:bg-rose-50 active:bg-rose-100 font-extrabold py-3.5 text-sm transition">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         Keluar Akun
                     </button>

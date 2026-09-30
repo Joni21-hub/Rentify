@@ -21,16 +21,7 @@
             background-size: 300% 300%;
             animation: gradientFlow 15s ease infinite;
         }
-        .glass-panel {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255,255,255,0.4);
-            border-top: 1px solid rgba(255,255,255,0.7);
-            border-left: 1px solid rgba(255,255,255,0.7);
-            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
-            border-radius: 2rem;
-        }
+        
         .input-glass {
             background: rgba(255,255,255,0.4);
             border: 1px solid rgba(255,255,255,0.5);
@@ -64,11 +55,11 @@
     <div class="sparkle" style="top:60%;left:10%;animation-delay:1.5s"></div>
 
     <div class="w-full max-w-[400px] relative z-10">
-        <div class="glass-panel p-8 sm:p-10">
+        <div class="rentify-card p-8 sm:p-10">
 
             <!-- Header -->
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-white/20 border border-white/40 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div class="w-16 h-16 rentify-card/20 -white/40 flex items-center justify-center mx-auto mb-4">
                     <i class="fa-solid fa-key text-2xl text-white drop-shadow"></i>
                 </div>
                 <h1 class="text-2xl font-extrabold text-white drop-shadow mb-1">Lupa Kata Sandi?</h1>

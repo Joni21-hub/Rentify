@@ -10,7 +10,7 @@
     body { background-color: #f0f8ff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .qris-container { max-width: 500px; margin: 40px auto; padding: 0 15px; text-align: center; }
     
-    .rentify-card { background: white; padding: 30px 20px; box-shadow: 0 10px 25px rgba(2, 132, 199, 0.1); border-radius: 16px; border-top: 5px solid #0ea5e9; }
+    
     
     .rentify-logo { font-size: 24px; font-weight: 800; color: #0284c7; margin-bottom: 5px; }
     .rentify-logo span { color: #38bdf8; }

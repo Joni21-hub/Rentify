@@ -5,7 +5,7 @@
 @section('content')
 <div class="p-4 md:p-8">
     <div class="mb-6">
-        <a href="{{ route('vendor.pesanan.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:text-brand-main hover:border-brand-main transition-all shadow-sm text-sm">
+        <a href="{{ route('vendor.pesanan.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rentify-card -slate-200 text-slate-600 font-bold hover:text-brand-main hover:-brand-main transition-all text-sm">
             <i class="fa-solid fa-arrow-left"></i> Kembali ke Riwayat Pesanan
         </a>
     </div>
@@ -21,7 +21,7 @@
         
         <div class="lg:col-span-2 space-y-6">
             
-            <div class="glass-card rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 bg-white">
+            <div class="rentify-card p-6 md:p-8 -slate-100 rentify-card">
                 <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
                     <div class="w-10 h-10 rounded-xl bg-blue-50 text-brand-main flex items-center justify-center text-lg"><i class="fa-solid fa-user-tag"></i></div>
                     <div>
@@ -73,7 +73,7 @@
                 </div>
             </div>
 
-            <div class="glass-card rounded-3xl shadow-sm border border-slate-100 bg-white overflow-hidden">
+            <div class="rentify-card -slate-100 rentify-card overflow-hidden">
                 <div class="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50">
                     <h2 class="text-xl font-extrabold text-slate-800">Daftar Barang Disewa</h2>
                 </div>
@@ -106,7 +106,7 @@
         </div>
 
         <div class="lg:col-span-1">
-            <div class="glass-card rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 bg-white sticky top-28">
+            <div class="rentify-card p-6 md:p-8 -slate-100 rentify-card sticky top-28">
                 
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 rounded-full bg-blue-50 text-brand-main flex items-center justify-center text-2xl mx-auto mb-4">
@@ -125,7 +125,7 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Tindakan Selanjutnya</label>
-                        <select name="status" class="w-full px-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-main/20 focus:border-brand-main outline-none shadow-sm transition-all appearance-none">
+                        <select name="status" class="w-full px-4 py-4 rentify-card -slate-200 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-main/20 focus:-brand-main outline-none transition-all appearance-none">
                             <option value="Menunggu Konfirmasi" {{ $pesanan->status == 'Menunggu Konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
                             <option value="Disetujui" {{ $pesanan->status == 'Disetujui' ? 'selected' : '' }}>Disetujui (Siap)</option>
                             <option value="Sedang Disewa" {{ $pesanan->status == 'Sedang Disewa' ? 'selected' : '' }}>Sedang Disewa (Berjalan)</option>

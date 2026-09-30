@@ -39,16 +39,7 @@
             animation: gradientFlow 15s ease infinite;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
-            border-radius: 2rem;
-        }
+        
 
         .input-glass {
             background: rgba(255, 255, 255, 0.4);
@@ -119,7 +110,7 @@
 
     <div class="w-full max-w-[850px] relative z-10 m-auto">
 
-        <div class="glass-panel relative flex flex-col md:flex-row overflow-hidden">
+        <div class="rentify-card relative flex flex-col md:flex-row overflow-hidden">
 
             <!-- BAGIAN KIRI (Info Vendor) -->
             <div class="md:w-5/12 p-8 sm:p-10 flex flex-col justify-center bg-white/10 border-b md:border-b-0 md:border-r border-white/30 text-white relative overflow-hidden">
@@ -134,7 +125,7 @@
 
                     <div class="space-y-6">
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 shadow-lg border border-white/30 text-white">
+                            <div class="w-10 h-10 rentify-card/20 flex items-center justify-center shrink-0 -white/30 text-white">
                                 <i class="fa-solid fa-chart-line"></i>
                             </div>
                             <div>
@@ -143,7 +134,7 @@
                             </div>
                         </div>
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 shadow-lg border border-white/30 text-white">
+                            <div class="w-10 h-10 rentify-card/20 flex items-center justify-center shrink-0 -white/30 text-white">
                                 <i class="fa-solid fa-shield-halved"></i>
                             </div>
                             <div>
@@ -272,7 +263,7 @@
 
     <!-- MODAL POPUP SYARAT & KETENTUAN VENDOR (TERANG) -->
     <div id="termsModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-2xl w-full flex flex-col shadow-2xl max-h-[85vh] overflow-hidden">
+        <div class="rentify-card max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
             <div class="bg-slate-50 px-6 py-4 flex justify-between items-center shrink-0 border-b border-slate-200">
                 <div>
                     <h3 class="font-bold text-slate-800 text-sm tracking-wide">Syarat & Ketentuan Vendor Rentify</h3>

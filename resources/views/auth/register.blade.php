@@ -27,16 +27,7 @@
             animation: gradientFlow 15s ease infinite;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
-            border-radius: 2rem;
-        }
+        
 
         .input-glass {
             background: rgba(255, 255, 255, 0.4);
@@ -77,7 +68,7 @@
 
     <div class="w-full max-w-[380px] relative z-10 my-[2vh] lg:my-0">
         
-        <div class="glass-panel p-6 sm:p-8 relative">
+        <div class="rentify-card p-6 sm:p-8 relative">
             
             <div class="text-center mb-6">
                 <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-1.5" style="text-shadow: 0 0 20px rgba(255,255,255,0.4);">
@@ -100,7 +91,7 @@
                 @csrf 
 
                 <!-- Tombol Google di-intercept oleh JS untuk memastikan S&K dicentang -->
-                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-xs shadow-sm mb-2">
+                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3 rentify-card/20 hover:rentify-card/30 -white/50 transition-all font-extrabold text-white text-xs mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -173,7 +164,7 @@
 
     <!-- MODAL POPUP SYARAT & KETENTUAN (TERANG) -->
     <div id="termsModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-2xl w-full flex flex-col shadow-2xl max-h-[85vh] overflow-hidden">
+        <div class="rentify-card max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
             <!-- Header Modal -->
             <div class="bg-slate-50 px-6 py-4 flex justify-between items-center shrink-0 border-b border-slate-200">
                 <div>
@@ -246,7 +237,7 @@
 
     <!-- MODAL PERINGATAN GOOGLE (TERANG) -->
     <div id="googleAlertModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-95 opacity-0" id="googleAlertBox">
+        <div class="rentify-card max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0" id="googleAlertBox">
             <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-shield-halved text-rose-500 text-2xl"></i>
             </div>

@@ -23,16 +23,7 @@
             animation: gradientFlow 15s ease infinite;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
-            border-radius: 2rem;
-        }
+        
 
         .input-glass {
             background: rgba(255, 255, 255, 0.4);
@@ -75,9 +66,9 @@
     <div class="sparkle bottom-[20%] right-[15%]" style="animation-delay: 2s;"></div>
 
     <div class="w-full max-w-[400px] relative z-10">
-        <div class="glass-panel p-8 sm:p-10 text-center relative">
+        <div class="rentify-card p-8 sm:p-10 text-center relative">
             
-            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-5 border border-white/40 shadow-lg">
+            <div class="w-16 h-16 rentify-card/20 flex items-center justify-center mx-auto mb-5 -white/40">
                 <i class="fa-solid fa-mobile-screen-button text-2xl text-white"></i>
             </div>
 

@@ -30,7 +30,7 @@
         
         <!-- KOLOM KIRI: Form Buat Voucher -->
         <div class="lg:col-span-1">
-            <div class="glass-card rounded-3xl p-6 shadow-sm border border-slate-100 bg-white sticky top-28">
+            <div class="rentify-card p-6 -slate-100 rentify-card sticky top-28">
                 <h3 class="text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-3"><i class="fa-solid fa-ticket text-brand-main mr-2"></i> Buat Voucher Baru</h3>
                 
                 <form action="{{ route('vendor.voucher.store') }}" method="POST" class="space-y-4">
@@ -93,7 +93,7 @@
         <!-- KOLOM KANAN: Daftar Voucher -->
         <div class="lg:col-span-2 space-y-4">
             @forelse($vouchers as $v)
-                <div class="flex flex-col sm:flex-row bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group">
+                <div class="flex flex-col sm:flex-row rentify-card -slate-100 overflow-hidden group">
                     <!-- Sisi Kiri Kupon (Warna warni) -->
                     <div class="w-full sm:w-32 {{ $v->is_active && $v->tanggal_selesai >= date('Y-m-d') ? 'gradient-bg' : 'bg-slate-300' }} text-white p-4 flex flex-col justify-center items-center relative border-r-2 border-dashed border-white/50">
                         <i class="fa-solid fa-ticket text-3xl mb-1 opacity-80"></i>

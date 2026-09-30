@@ -34,7 +34,7 @@
             
             <div class="lg:col-span-2 space-y-6">
                 
-                <div class="bg-white p-6 rounded-2xl border border-ice shadow-sm space-y-4">
+                <div class="rentify-card p-6 -ice space-y-4">
                     <h3 class="font-bold text-navy text-lg border-b pb-2"><i class="fas fa-user-edit text-brandBlue mr-2"></i> Data Lengkap Pemesan</h3>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nama Lengkap</label>
@@ -54,7 +54,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-ice shadow-sm space-y-4">
+                <div class="rentify-card p-6 -ice space-y-4">
                     <h3 class="font-bold text-navy text-lg border-b pb-2"><i class="fas fa-clock text-brandBlue mr-2"></i> Atur Durasi Waktu Rental (Sistem Flat 24 Jam)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -69,7 +69,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-ice shadow-sm">
+                    <div class="rentify-card p-6 -ice">
                         <h4 class="font-bold text-navy mb-3"><i class="fas fa-truck text-brandBlue mr-1"></i> Opsi Pengiriman</h4>
                         <label class="flex items-center space-x-3 p-3 border rounded-xl mb-2 cursor-pointer hover:bg-slate-50">
                             <input type="radio" name="shipping_method" value="ambil" checked onchange="updateOngkir(0)" class="text-brandBlue">
@@ -81,7 +81,7 @@
                         </label>
                     </div>
 
-                    <div class="bg-white p-6 rounded-2xl border border-ice shadow-sm">
+                    <div class="rentify-card p-6 -ice">
                         <h4 class="font-bold text-navy mb-3"><i class="fas fa-wallet text-brandBlue mr-1"></i> Metode Pembayaran</h4>
                         <label class="flex items-center space-x-3 p-3 border rounded-xl mb-2 cursor-pointer">
                             <input type="radio" name="payment_method" value="COD" checked onclick="toggleQris(false)" class="text-brandBlue">
@@ -101,7 +101,7 @@
             </div>
 
             <div class="space-y-6">
-                <div class="bg-white p-6 rounded-2xl border border-ice shadow-sm space-y-4 sticky top-24">
+                <div class="rentify-card p-6 -ice space-y-4 sticky top-24">
                     <h3 class="font-bold text-navy text-lg border-b pb-2">Keranjang Item</h3>
                     
                     <div class="max-h-48 overflow-y-auto space-y-3 pr-1">
@@ -138,7 +138,7 @@
             </div>
         </form>
         @else
-        <div class="bg-white p-12 rounded-2xl border text-center shadow-sm">
+        <div class="rentify-card p-12 text-center">
             <i class="fas fa-shopping-cart text-5xl text-slate-300 mb-4"></i>
             <p class="text-slate-500 font-medium">Keranjang belanjamu masih kosong nih.</p>
             <a href="/customer" class="mt-4 inline-block bg-brandBlue text-white font-bold py-2 px-6 rounded-xl text-sm hover:bg-navy transition">Mulai Belanja</a>

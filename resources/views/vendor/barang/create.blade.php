@@ -15,7 +15,7 @@
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 900: '#1e3a8a' } } } } }
     </script>
     <style> 
-        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); } 
+         
         /* Styling Kartu Radio Pilihan */
         .radio-card input:checked + div { border-color: #3b82f6; background-color: #eff6ff; color: #1e3a8a; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15); }
         .radio-card-no input:checked + div { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
@@ -24,7 +24,7 @@
 <body class="font-sans text-slate-700 antialiased overflow-x-hidden">
 
     <div class="flex min-h-screen">
-        <aside class="w-64 fixed inset-y-0 left-0 z-50 glass-panel shadow-sm border-r border-slate-200 flex flex-col">
+        <aside class="w-64 fixed inset-y-0 left-0 z-50 rentify-card shadow-sm border-r border-slate-200 flex flex-col">
             <div class="h-20 flex items-center justify-center border-b border-white/50 px-6">
                 <a href="{{ url('/') }}" class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-brand-900 flex items-center justify-center text-white"><i class="fa-solid fa-store text-sm"></i></div>
@@ -33,14 +33,14 @@
             </div>
             <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu Utama</p>
-                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all font-medium"><i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Dashboard Utama</span></a>
-                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-brand-900 shadow-sm border border-slate-100 font-medium transition-all"><i class="fa-solid fa-box-open w-5 text-center"></i> <span>Manajemen Produk</span></a>
+                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:rentify-card hover:text-slate-700 hover: transition-all font-medium"><i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Dashboard Utama</span></a>
+                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3 px-4 py-3 rentify-card text-brand-900 -slate-100 font-medium transition-all"><i class="fa-solid fa-box-open w-5 text-center"></i> <span>Manajemen Produk</span></a>
             </div>
         </aside>
 
         <main class="flex-1 ml-64 p-8">
             <header class="mb-8 flex items-center gap-4">
-                <a href="{{ route('vendor.barang.index') }}" class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all shadow-sm"><i class="fa-solid fa-arrow-left"></i></a>
+                <a href="{{ route('vendor.barang.index') }}" class="w-10 h-10 rentify-card -slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all"><i class="fa-solid fa-arrow-left"></i></a>
                 <div><h1 class="text-2xl font-bold text-slate-800">Tambah Produk Baru</h1><p class="text-slate-500 mt-1">Lengkapi detail barang yang akan disewakan. Barang akan ditinjau oleh Admin.</p></div>
             </header>
 
@@ -56,7 +56,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-6">
                         
-                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
                             <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Informasi Dasar</h2>
                             <div class="space-y-4">
                                 <div>
@@ -90,7 +90,7 @@
                         </div>
 
                         <!-- PANEL LOKASI & PENGIRIMAN YANG SUDAH DIPERBESAR & OTOMATIS -->
-                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
                             <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Lokasi & Opsi Pengiriman</h2>
                             
                             <div class="space-y-5">
@@ -148,7 +148,7 @@
                             </div>
                         </div>
 
-                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
                             <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Harga & Ketersediaan</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label class="block text-sm font-semibold text-slate-700 mb-1">Harga Sewa / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="harga_sewa_harian" required class="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none bg-white"></div></div>
@@ -160,7 +160,7 @@
                     </div>
 
                     <div class="space-y-6">
-                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
                             <h2 class="text-lg font-bold text-slate-800 mb-2 border-b border-slate-100 pb-3">Foto Produk <span class="text-rose-500">*</span></h2>
                             <p class="text-xs text-slate-500 mb-4">Pilih foto satu per satu atau sekaligus.</p>
                             <input type="file" name="fotos[]" id="fotos" multiple accept="image/*" class="hidden">
@@ -171,7 +171,7 @@
                             <div id="preview-container" class="mt-4 grid grid-cols-2 gap-3"></div>
                         </div>
 
-                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
                             <button type="submit" class="w-full py-3 px-4 bg-brand-900 text-white font-bold rounded-xl shadow-sm hover:bg-brand-800"><i class="fa-solid fa-paper-plane mr-2"></i> Ajukan Barang</button>
                         </div>
                     </div>

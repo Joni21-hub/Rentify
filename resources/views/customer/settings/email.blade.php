@@ -81,7 +81,7 @@
             @else
                 <!-- STEP 2: Form Masukkan OTP -->
                 <div class="mb-6 bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center">
-                    <div class="w-12 h-12 bg-white text-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-xl">
+                    <div class="w-12 h-12 rentify-card text-orange-500 flex items-center justify-center mx-auto mb-3 text-xl">
                         <i class="fa-solid fa-envelope-open-text"></i>
                     </div>
                     <p class="text-xs text-orange-700 font-bold leading-relaxed">

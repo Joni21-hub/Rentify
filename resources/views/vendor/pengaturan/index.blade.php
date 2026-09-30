@@ -34,14 +34,14 @@
             
             <!-- KOLOM KIRI: Profil & Upload Foto Ala Shopee -->
             <div class="lg:col-span-1 space-y-6">
-                <div class="glass-card rounded-3xl p-8 shadow-sm border border-slate-100 bg-gradient-to-br from-brand-deep to-brand-main text-white text-center relative overflow-hidden">
+                <div class="rentify-card rounded-3xl p-8 shadow-sm border border-slate-100 bg-gradient-to-br from-brand-deep to-brand-main text-white text-center relative overflow-hidden">
                     <div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
                     
                     <!-- UI UPLOAD FOTO ALA SHOPEE -->
                     <div class="relative w-28 h-28 mx-auto mb-4 group cursor-pointer" onclick="document.getElementById('foto_profil_input').click()">
                         
                         <!-- Lingkaran Foto -->
-                        <div class="w-full h-full bg-white/20 border-2 border-white/50 backdrop-blur-sm rounded-full flex items-center justify-center text-4xl shadow-lg overflow-hidden relative">
+                        <div class="w-full h-full bg-white/20 border-2 border-white/50 backdrop-blur-sm flex items-center justify-center text-4xl overflow-hidden relative">
                             
                             <!-- Gambar Preview (Akan muncul foto asli / foto yang baru dipilih) -->
                             <img id="preview_image" src="{{ $user->foto_profil ? asset($user->foto_profil) : '' }}" class="{{ $user->foto_profil ? '' : 'hidden' }} w-full h-full object-cover">
@@ -75,7 +75,7 @@
 
             <!-- KOLOM KANAN: Form Pengaturan Data -->
             <div class="lg:col-span-2">
-                <div class="glass-card rounded-3xl p-6 md:p-10 shadow-sm border border-slate-100 bg-white">
+                <div class="rentify-card p-6 md:p-10 -slate-100 rentify-card">
                     <h3 class="text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-2"><i class="fa-solid fa-address-card text-brand-main mr-2"></i> Informasi Dasar</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

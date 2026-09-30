@@ -19,7 +19,7 @@
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-10 overflow-y-auto">
         <div>
             <div class="p-6 border-b border-slate-100 flex items-center space-x-3 bg-gradient-to-r from-[#e0f2fe] to-[#bae6fd]">
-                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md p-1 overflow-hidden border border-sky-100">
+                <div class="w-10 h-10 rentify-card flex items-center justify-center p-1 overflow-hidden -sky-100">
                     <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-full h-full object-contain" onerror="this.outerHTML='<i class=\'fas fa-briefcase text-sky-600 text-lg\'></i>'">
                 </div>
                 <div>
@@ -113,29 +113,29 @@
 
             <div id="tab-dashboard" class="tab-content block space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="rentify-card p-6 -slate-100 relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-boxes text-5xl"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Produk Pending</p>
                         <p class="text-3xl font-black text-amber-500 mt-1">{{ $stats['total_pending'] ?? 0 }}</p>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="rentify-card p-6 -slate-100 relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-check-circle text-5xl"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Produk Aktif</p>
                         <p class="text-3xl font-black text-[#0369a1] mt-1">{{ $stats['total_disetujui'] ?? 0 }}</p>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="rentify-card p-6 -slate-100 relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-store text-5xl"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Vendor</p>
                         <p class="text-3xl font-black text-slate-800 mt-1">{{ $stats['total_vendor_total'] ?? 0 }}</p>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="rentify-card p-6 -slate-100 relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-users text-5xl"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Pelanggan</p>
                         <p class="text-3xl font-black text-slate-800 mt-1">{{ $stats['total_customer'] ?? 0 }}</p>
                     </div>
                 </div>
 
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <section class="rentify-card -slate-200/80 overflow-hidden">
                     <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-clipboard-check text-amber-500 mr-2"></i>Antrean Kurasi Produk</h3>
                         <span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-1 rounded-md font-bold">{{ $pendingBarangs->count() }} Butuh Review</span>
@@ -180,7 +180,7 @@
                 </section>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+                    <section class="rentify-card -slate-200/80 overflow-hidden flex flex-col">
                         <div class="p-5 border-b border-slate-100 bg-slate-50/50">
                             <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-user-check text-purple-500 mr-2"></i>Pendaftaran Vendor Baru</h3>
                         </div>
@@ -217,7 +217,7 @@
                         </div>
                     </section>
 
-                    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+                    <section class="rentify-card -slate-200/80 overflow-hidden flex flex-col">
                         <div class="p-5 border-b border-slate-100 bg-slate-50/50">
                             <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-images text-blue-500 mr-2"></i>Manajemen Banner Aplikasi</h3>
                         </div>
@@ -253,7 +253,7 @@
             </div>
 
             <div id="tab-voucher" class="tab-content hidden">
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <section class="rentify-card -slate-200/80 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50/10">
                         <h3 class="text-base font-black text-slate-800"><i class="fas fa-ticket-alt text-rose-500 mr-2"></i>Pemantauan Voucher & Kill-Switch</h3>
                         <p class="text-[10px] text-slate-500 font-bold bg-white px-3 py-1 rounded-full border border-slate-200">Matikan paksa voucher yang melanggar aturan</p>
@@ -340,12 +340,12 @@
                         <h3 class="text-3xl font-black mt-1 text-white">Rp {{ number_format($totalPendapatanRentify, 0, ',', '.') }}</h3>
                         <p class="text-[11px] text-blue-100 mt-1"><i class="fas fa-info-circle mr-1"></i> Diperoleh dari komisi fee 5% setiap transaksi yang sah (tidak termasuk pesanan batal).</p>
                     </div>
-                    <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 text-2xl font-black shadow-inner">
+                    <div class="w-14 h-14 rentify-card/10 flex items-center justify-center backdrop-blur-md -white/20 text-2xl font-black">
                         <i class="fas fa-wallet"></i>
                     </div>
                 </div>
 
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <section class="rentify-card -slate-200/80 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-black text-slate-800">Database Transaksi Keseluruhan</h3>
                         <div class="relative">
@@ -420,7 +420,7 @@
             </div>
 
             <div id="tab-produk" class="tab-content hidden">
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <section class="rentify-card -slate-200/80 overflow-hidden">
                     <div class="p-6 border-b border-slate-100">
                         <h3 class="text-base font-black text-slate-800">Master Data: Inventaris Barang</h3>
                     </div>
@@ -441,7 +441,7 @@
                                 @forelse($allBarangs as $p)
                                 <tr class="hover:bg-slate-50/60 transition">
                                     <td class="p-4 pl-6">
-                                        <div class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
+                                        <div class="w-12 h-12 -slate-200 overflow-hidden rentify-card">
                                             @php
                                                 $coverUrl = 'https://placehold.co/50?text=No+Img';
                                                 if($p->cover_photo){
@@ -477,7 +477,7 @@
             </div>
 
             <div id="tab-vendor" class="tab-content hidden">
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <section class="rentify-card -slate-200/80 overflow-hidden">
                     <div class="p-6 border-b border-slate-100">
                         <h3 class="text-base font-black text-slate-800">Master Data: Direktori Mitra Vendor</h3>
                     </div>
@@ -534,7 +534,7 @@
             </div>
 
             <div id="tab-customer" class="tab-content hidden">
-                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <section class="rentify-card -slate-200/80 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-black text-slate-800">Master Data: Direktori Pelanggan</h3>
                         <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full">{{ $allCustomers->count() }} Pengguna Terdaftar</span>
@@ -578,7 +578,7 @@
     </main>
 
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto border-t-4 border-[#0369a1]">
+        <div class="rentify-card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto -t-4 -[#0369a1]">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Detail Formulir Pengajuan Produk</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition">&times;</button>
@@ -586,7 +586,7 @@
             
             <div class="space-y-4 text-sm">
                 <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <div class="w-24 h-24 rounded-lg overflow-hidden border border-slate-200 shadow-sm shrink-0 bg-white p-1">
+                    <div class="w-24 h-24 overflow-hidden -slate-200 shrink-0 rentify-card p-1">
                         <img id="md_foto" src="" class="w-full h-full object-cover rounded" onerror="this.src='https://placehold.co/150?text=No+Img'">
                     </div>
                     <div class="flex-1 grid grid-cols-2 gap-4">
@@ -602,13 +602,13 @@
                     <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl"><p class="text-[9px] text-emerald-600 font-black tracking-widest uppercase">DEPOSIT JAMINAN</p><p id="md_deposit" class="font-black text-emerald-900 text-lg"></p></div>
                     <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl"><p class="text-[9px] text-rose-600 font-black tracking-widest uppercase">DENDA TELAT / HARI</p><p id="md_denda" class="font-black text-rose-900 text-lg"></p></div>
                 </div>
-                <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex justify-between items-center"><p class="text-xs text-slate-500 font-bold">KAPASITAS GUDANG / STOK</p><p id="md_stok" class="font-black text-slate-800 text-lg bg-white px-4 py-1 rounded-lg shadow-sm"></p></div>
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex justify-between items-center"><p class="text-xs text-slate-500 font-bold">KAPASITAS GUDANG / STOK</p><p id="md_stok" class="font-black text-slate-800 text-lg rentify-card px-4 py-1"></p></div>
             </div>
         </div>
     </div>
 
     <div id="vendorModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-t-4 border-purple-500">
+        <div class="rentify-card max-w-md w-full p-6 -t-4 -purple-500">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Identitas Pengaju Vendor</h3>
                 <button onclick="closeVendorModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition">&times;</button>
@@ -623,7 +623,7 @@
     </div>
 
     <div id="transaksiModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-t-4 border-emerald-500 max-h-[90vh] overflow-y-auto">
+        <div class="rentify-card max-w-lg w-full p-6 -t-4 -emerald-500 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <div>
                     <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Struk Rincian Pesanan</h3>

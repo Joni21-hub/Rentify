@@ -6,7 +6,7 @@
 <div class="p-4 md:p-8">
     
     <div class="mb-6">
-        <a href="{{ route('vendor.barang.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:text-brand-main hover:border-brand-main transition-all shadow-sm text-sm">
+        <a href="{{ route('vendor.barang.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rentify-card -slate-200 text-slate-600 font-bold hover:text-brand-main hover:-brand-main transition-all text-sm">
             <i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar Produk
         </a>
     </div>
@@ -14,7 +14,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         <div class="lg:col-span-1 space-y-4">
-            <div class="glass-card rounded-3xl p-4 shadow-sm border border-slate-100 bg-white">
+            <div class="rentify-card p-4 -slate-100 rentify-card">
                 <div class="aspect-square rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
                     @if($barang->cover_photo)
                         <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain">
@@ -27,7 +27,7 @@
             @if(isset($fotoTambahans) && $fotoTambahans->count() > 0)
             <div class="flex gap-3 overflow-x-auto pb-2">
                 @foreach($fotoTambahans as $foto)
-                <div class="w-20 h-20 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 bg-white shadow-sm">
+                <div class="w-20 h-20 overflow-hidden -slate-200 flex-shrink-0 rentify-card">
                     <img src="{{ asset(str_replace('public/', '', $foto->foto_path)) }}" class="w-full h-full object-cover">
                 </div>
                 @endforeach
@@ -36,7 +36,7 @@
         </div>
 
         <div class="lg:col-span-2">
-            <div class="glass-card rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 bg-white h-full">
+            <div class="rentify-card p-6 md:p-8 -slate-100 rentify-card h-full">
                 
                 <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-xs font-bold text-brand-main">

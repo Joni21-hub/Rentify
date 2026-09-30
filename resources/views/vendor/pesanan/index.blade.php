@@ -18,7 +18,7 @@
         </div>
     @endif
 
-    <div class="glass-card rounded-3xl shadow-sm border border-white/50 overflow-hidden">
+    <div class="rentify-card p-6">
         <div class="p-6 border-b border-slate-100 bg-white/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h3 class="font-extrabold text-lg text-slate-800">Riwayat Transaksi Customer</h3>
         </div>

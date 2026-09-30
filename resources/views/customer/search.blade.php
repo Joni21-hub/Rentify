@@ -79,7 +79,7 @@
                     @php 
                         $hargaTampil = $barang->harga_sewa_customer ?? $barang->harga_sewa_harian; 
                     @endphp
-                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="bg-white rounded-lg border border-slate-100 overflow-hidden hover:shadow-md hover:border-sky-200 transition duration-200 flex flex-col group relative">
+                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="rentify-card -slate-100 overflow-hidden hover: hover:-sky-200 transition duration-200 flex flex-col group relative">
                         
                         <!-- Area Foto -->
                         <div class="relative w-full aspect-square bg-white flex items-center justify-center p-2 border-b border-slate-50">

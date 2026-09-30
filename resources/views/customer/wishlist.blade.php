@@ -38,7 +38,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     
                     @foreach($wishlists as $fav)
-                    <div class="relative block bg-white rounded-xl shadow-sm border border-sky-50 hover:shadow-md transition">
+                    <div class="relative block rentify-card -sky-50 hover: transition">
                         <a href="{{ url('/customer/barang/' . ($fav->barang->slug ?? $fav->barang->id)) }}" class="block p-2">
                             <div class="relative h-28 bg-slate-100 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
                                 @if($fav->barang->cover_photo)
@@ -53,7 +53,7 @@
                         
                         <form action="{{ route('customer.wishlist.toggle', $fav->barang->id) }}" method="POST" class="absolute top-3 right-3 z-10">
                             @csrf
-                            <button type="submit" class="w-7 h-7 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-pink-500 hover:text-slate-300 shadow-sm transition">
+                            <button type="submit" class="w-7 h-7 rentify-card/80 backdrop-blur-md flex items-center justify-center text-pink-500 hover:text-slate-300 transition">
                                 <i class="fa-solid fa-heart text-xs"></i>
                             </button>
                         </form>

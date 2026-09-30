@@ -28,7 +28,7 @@
     @endif
 
     @if($keranjangs->isEmpty())
-        <div class="bg-white m-4 p-10 rounded-2xl text-center border border-slate-100 shadow-sm">
+        <div class="rentify-card m-4 p-10 text-center -slate-100">
             <div class="w-20 h-20 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-[0_0_15px_rgba(14,165,233,0.3)]">
                 <i class="fa-solid fa-cart-shopping"></i>
             </div>
@@ -146,7 +146,7 @@
 
 <!-- MODAL KALENDER MELAYANG (BATCH 3) -->
 <div id="booking-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-100 transition-transform">
+    <div class="rentify-card w-full max-w-sm overflow-hidden transform scale-100 transition-transform">
         <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative">
             <h3 class="text-white font-black text-[17px] flex items-center gap-2">
                 <i class="fa-regular fa-calendar-check text-xl"></i> Atur Jadwal Sewa

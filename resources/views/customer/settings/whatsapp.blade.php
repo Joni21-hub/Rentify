@@ -76,7 +76,7 @@
             @else
                 <!-- FORM MASUKKAN OTP -->
                 <div class="mb-6 bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center">
-                    <div class="w-12 h-12 bg-white text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-xl">
+                    <div class="w-12 h-12 rentify-card text-emerald-500 flex items-center justify-center mx-auto mb-3 text-xl">
                         <i class="fa-solid fa-message-sms"></i>
                     </div>
                     <p class="text-xs text-emerald-700 font-bold leading-relaxed">

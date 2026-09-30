@@ -122,7 +122,7 @@
                         </div>
                         <h3 class="text-white font-black text-lg mb-2">Tentukan Lokasimu Dulu Yuk!</h3>
                         <p class="text-sky-100 text-[13px] font-medium leading-relaxed mb-6">Biar kami bisa mencarikan barang sewaan terdekat (maksimal 50 KM) dari tempatmu.</p>
-                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 bg-white text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 rounded-full shadow-lg transition-transform hover:scale-105">
+                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 rentify-card text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 transition-transform hover:scale-105">
                             <i class="fa-solid fa-map-pin"></i> Atur Titik Lokasi
                         </a>
                     </div>
@@ -131,7 +131,7 @@
 
         @elseif($daftarBarang->isEmpty())
             <section class="px-3 mt-6 md:px-0">
-                <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-sky-100 max-w-md mx-auto">
+                <div class="rentify-card p-8 text-center -sky-100 max-w-md mx-auto">
                     <div class="w-20 h-20 bg-sky-50 text-sky-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                         <i class="fa-solid fa-face-frown-open"></i>
                     </div>
@@ -151,7 +151,7 @@
                 <!-- GRID: 2 kolom HP, 3 kolom tablet, 5 kolom Desktop -->
                 <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
                     @foreach($daftarBarang as $barang)
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden relative flex flex-col hover:shadow-md transition">
+                        <div class="rentify-card -slate-100 overflow-hidden relative flex flex-col hover: transition">
                             <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
                                 @if($barang->cover_photo)
                                     <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
@@ -169,7 +169,7 @@
                             @endphp
                             <form action="{{ route('customer.wishlist.toggle', $barang->id) }}" method="POST" class="absolute top-2 right-2 z-10">
                                 @csrf
-                                <button type="submit" class="w-7 h-7 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} shadow-sm border border-slate-100">
+                                <button type="submit" class="w-7 h-7 rentify-card/90 backdrop-blur-md flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} -slate-100">
                                     <i class="fa-solid fa-heart text-[11px]"></i>
                                 </button>
                             </form>
@@ -188,7 +188,7 @@
 
     <!-- BOTTOM NAV (MOBILE ONLY) -->
     <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none">
-        <nav class="bg-white/70 backdrop-blur-xl shadow-lg border border-white/50 rounded-full pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
+        <nav class="rentify-card backdrop-blur-xl border border-white/50 pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
             <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600">
                 <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Beranda</span>
             </a>

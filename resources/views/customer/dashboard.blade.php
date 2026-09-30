@@ -20,16 +20,7 @@
             background-size: 300% 300%;
             animation: gradientFlow 15s ease infinite;
         }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            border-radius: 1.5rem;
-        }
+        
         .glass-menu {
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
@@ -106,12 +97,12 @@
     <div class="md:hidden max-w-md mx-auto min-h-screen relative z-10">
         <!-- HEADER GLASSMORPHISM -->
         <div class="px-5 pt-10 pb-8 text-center text-white relative">
-            <a href="{{ route('customer.settings') }}" class="absolute top-8 right-6 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 text-white hover:bg-white/30 transition shadow-lg z-20">
+            <a href="{{ route('customer.settings') }}" class="absolute top-8 right-6 w-10 h-10 rentify-card/10 backdrop-blur-md flex items-center justify-center -white/20 text-white hover:rentify-card/30 transition z-20">
                 <i class="fa-solid fa-gear text-lg"></i>
             </a>
             
             <div class="relative inline-block mb-4">
-                <div class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full overflow-hidden flex items-center justify-center text-white text-4xl font-black shadow-2xl border-4 border-white/50 relative z-10">
+                <div class="w-24 h-24 rentify-card/20 backdrop-blur-md overflow-hidden flex items-center justify-center text-white text-4xl font-black -4 -white/50 relative z-10">
                     @if(Auth::user()->foto_profil)
                         <img src="{{ str_starts_with(Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
                     @else
@@ -133,14 +124,14 @@
         </div>
         <div class="px-5 space-y-4">
             <!-- PESANAN SAYA -->
-            <div class="glass-panel p-4 rounded-2xl relative overflow-hidden">
+            <div class="rentify-card p-4 rounded-2xl relative overflow-hidden">
                 <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/20">
                     <h3 class="font-extrabold text-slate-800 text-sm">Pesanan</h3>
                     <a href="{{ route('customer.pesanan') }}" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">Lihat Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center relative z-10">
                     <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
+                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:rentify-card transition mb-1.5 relative">
                             <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                             @if(isset($countMenunggu) && $countMenunggu > 0)
                                 <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countMenunggu }}</span>
@@ -149,7 +140,7 @@
                         <span class="text-[9px] font-bold text-slate-700 leading-tight">Menunggu<br>Konfirmasi</span>
                     </a>
                     <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:bg-white shadow-sm transition mb-1.5 relative">
+                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-blue-600 group-hover:rentify-card transition mb-1.5 relative">
                             <i class="fa-solid fa-truck-fast text-lg"></i>
                             @if(isset($countDiproses) && $countDiproses > 0)
                                 <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">{{ $countDiproses }}</span>
@@ -158,7 +149,7 @@
                         <span class="text-[9px] font-bold text-slate-700 leading-tight">Sedang<br>Berjalan</span>
                     </a>
                     <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center group relative">
-                        <div class="w-10 h-10 bg-white/60 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-emerald-500 group-hover:bg-white shadow-sm transition mb-1.5">
+                        <div class="w-10 h-10 rentify-card/60 flex items-center justify-center text-slate-600 group-hover:text-emerald-500 group-hover:rentify-card transition mb-1.5">
                             <i class="fa-solid fa-star text-lg"></i>
                         </div>
                         <span class="text-[9px] font-bold text-slate-700 leading-tight">Beri<br>Ulasan</span>
@@ -195,7 +186,7 @@
             <!-- KELUAR -->
             <form action="/logout" method="POST" class="w-full pt-4 pb-8 flex justify-center">
                 @csrf
-                <button type="submit" class="flex items-center justify-center bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/50 hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-all gap-2 group shadow-lg text-white w-full max-w-[200px]">
+                <button type="submit" class="flex items-center justify-center rentify-card/20 backdrop-blur-md px-6 py-3 -white/50 hover:bg-rose-500 hover:-rose-500 hover:text-white transition-all gap-2 group text-white w-full max-w-[200px]">
                     <i class="fa-solid fa-power-off text-sm"></i>
                     <span class="font-extrabold text-xs tracking-wide">KELUAR AKUN</span>
                 </button>
@@ -203,7 +194,7 @@
         </div>
         <!-- BOTTOM NAV MOBILE -->
         <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none">
-            <nav class="bg-white/70 backdrop-blur-xl shadow-lg border border-white/50 rounded-full pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
+            <nav class="rentify-card/70 backdrop-blur-xl -white/50 pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
                 <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-500 hover:text-sky-500 transition-colors">
                     <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Beranda</span>
                 </a>
@@ -223,7 +214,7 @@
             <!-- SIDEBAR KIRI (PROFIL) -->
             <aside class="w-72 flex-shrink-0">
                 <!-- Kartu Profil -->
-                <div class="bg-white/20 backdrop-blur-xl border border-white/40 rounded-2xl p-6 text-white text-center shadow-lg mb-4">
+                <div class="rentify-card/20 backdrop-blur-xl -white/40 p-6 text-white text-center mb-4">
                     <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 border-4 border-white/50 shadow-xl">
                         @if(Auth::user()->foto_profil)
                             <img src="{{ str_starts_with(Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url(Auth::user()->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
@@ -240,7 +231,7 @@
                     @endif
                 </div>
                 <!-- Menu Navigasi Sidebar -->
-                <div class="glass-panel overflow-hidden">
+                <div class="rentify-card overflow-hidden">
                     <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-3 px-5 py-3.5 bg-white/40 border-l-4 border-sky-500 text-sky-700 font-bold text-sm">
                         <i class="fa-solid fa-user w-5 text-center"></i> Profil
                     </a>
@@ -268,7 +259,7 @@
             <!-- KONTEN KANAN -->
             <div class="flex-1 space-y-5">
                 <!-- Ringkasan Pesanan -->
-                <div class="glass-panel p-6">
+                <div class="rentify-card p-6">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-extrabold text-slate-800 text-base">Pesanan</h3>
                         <a href="{{ route('customer.pesanan') }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
@@ -300,7 +291,7 @@
                 </div>
 
                 <!-- Menu Cepat -->
-                <div class="glass-panel p-6">
+                <div class="rentify-card p-6">
                     <h3 class="font-extrabold text-slate-800 text-base mb-4">Aksi Cepat</h3>
                     <div class="grid grid-cols-2 gap-3">
                         <a href="{{ url('/customer/lokasi') }}" class="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50 transition">

@@ -3,13 +3,13 @@
 @section('title', 'Dashboard - Rentify')
 
 @section('content')
-<header class="sticky top-0 z-40 glass-card px-10 py-5 flex justify-between items-center shadow-sm">
+<header class="sticky top-0 z-40 rentify-card px-10 py-5 flex justify-between items-center shadow-sm">
     <div>
         <h1 class="text-2xl font-extrabold text-slate-800">Halo, {{ explode(' ', trim($user->name ?? Auth::user()->name))[0] }} </h1>
         <p class="text-sm text-slate-500 font-medium mt-1">Pantau ringkasan bisnis penyewaan Anda hari ini.</p>
     </div>
     <div class="flex items-center gap-4">
-        <button class="w-11 h-11 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-brand-main hover:border-brand-main transition-all flex items-center justify-center relative shadow-sm">
+        <button class="w-11 h-11 rentify-card -slate-200 text-slate-500 hover:text-brand-main hover:-brand-main transition-all flex items-center justify-center relative">
             <i class="fa-regular fa-bell text-lg"></i>
             <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
         </button>
@@ -34,7 +34,7 @@
             </div>
         </div>
 
-        <div class="glass-card rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div class="rentify-card rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-slate-500 text-sm font-semibold mb-1">Pesanan Aktif</p>
@@ -47,7 +47,7 @@
             <p class="text-xs font-semibold text-emerald-500 mt-4 bg-emerald-50 inline-block px-2 py-1 rounded-md"><i class="fa-solid fa-arrow-trend-up"></i> Perlu diproses</p>
         </div>
 
-        <div class="glass-card rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div class="rentify-card rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-slate-500 text-sm font-semibold mb-1">Total Penyewaan</p>
@@ -60,7 +60,7 @@
             <p class="text-xs font-semibold text-slate-400 mt-4">Transaksi berhasil</p>
         </div>
 
-        <div class="glass-card rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div class="rentify-card rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-slate-500 text-sm font-semibold mb-1">Produk Aktif</p>
@@ -76,7 +76,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="lg:col-span-2 glass-card rounded-3xl p-8 shadow-sm">
+        <div class="lg:col-span-2 rentify-card rounded-3xl p-8 shadow-sm">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-bold text-slate-800">Grafik Pendapatan</h3>
                 <select class="bg-slate-50 border border-slate-200 text-slate-600 text-sm rounded-xl focus:ring-brand-main focus:border-brand-main block p-2 font-medium">
@@ -89,7 +89,7 @@
             </div>
         </div>
 
-        <div class="glass-card rounded-3xl p-8 shadow-sm flex flex-col">
+        <div class="rentify-card rounded-3xl p-8 shadow-sm flex flex-col">
             <h3 class="text-lg font-bold text-slate-800 mb-6">Akses Cepat</h3>
             
             <div class="space-y-4 flex-1">

@@ -130,3 +130,21 @@ body {
 .link-rentify:hover {
     color: var(--rentify-primary-darker);
 }
+
+
+/* --- CARD MASTER THEME ------------------------------------- */
+/* Diterapkan dari .glass-panel halaman login */
+.rentify-card {
+    background: var(--rentify-card-gradient) !important;
+    border: 1px solid var(--rentify-card-border) !important;
+    box-shadow: var(--rentify-card-shadow) !important;
+    border-radius: var(--rentify-card-radius) !important;
+    position: relative;
+    overflow: hidden; /* Mencegah konten keluar dari radius besar */
+}
+
+/* Varian untuk card yang butuh scrolling (misal modal/table container) */
+.rentify-card-scrollable {
+    overflow-y: auto;
+    overflow-x: hidden;
+}

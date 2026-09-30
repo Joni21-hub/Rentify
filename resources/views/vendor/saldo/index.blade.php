@@ -28,14 +28,14 @@
                     <p class="text-[10px] text-brand-light/80 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> Bertambah saat pesanan QRIS selesai.</p>
                 </div>
 
-                <div class="glass-card rounded-3xl p-6 shadow-sm border border-slate-200 bg-white">
+                <div class="rentify-card p-6 -slate-200 rentify-card">
                     <p class="text-slate-500 text-sm font-semibold mb-1">Saldo Ditahan (Proses Tarik)</p>
                     <h3 class="text-4xl font-black text-amber-500 mb-4 tracking-tight">Rp {{ number_format($saldo->saldo_ditahan ?? 0, 0, ',', '.') }}</h3>
                     <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-clock mr-1"></i> Menunggu transfer Admin.</p>
                 </div>
             </div>
 
-            <div class="glass-card rounded-3xl shadow-sm border border-slate-200 bg-white overflow-hidden">
+            <div class="rentify-card -slate-200 rentify-card overflow-hidden">
                 <div class="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                     <h3 class="font-extrabold text-lg text-slate-800">Mutasi & Riwayat Transaksi</h3>
                 </div>
@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                    <a href="{{ route('vendor.saldo.export') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:text-emerald-600 hover:border-emerald-300 transition-all text-xs shadow-sm">
+                    <a href="{{ route('vendor.saldo.export') }}" class="inline-flex items-center gap-2 px-4 py-2 rentify-card -slate-200 text-slate-600 font-bold hover:text-emerald-600 hover:-emerald-300 transition-all text-xs">
                         <i class="fa-solid fa-file-excel text-emerald-500"></i> Unduh Laporan (.xls)
                     </a>
                 </div>
@@ -98,7 +98,7 @@
         </div>
 
         <div class="lg:col-span-1">
-            <div class="glass-card rounded-3xl p-6 shadow-sm border border-slate-200 bg-white sticky top-28">
+            <div class="rentify-card p-6 -slate-200 rentify-card sticky top-28">
                 <h3 class="font-extrabold text-lg text-slate-800 mb-4 border-b border-slate-100 pb-4"><i class="fa-solid fa-money-bill-transfer text-brand-main mr-2"></i> Ajukan Penarikan</h3>
 
                 <form action="{{ route('vendor.saldo.tarik') }}" method="POST" class="space-y-4">
