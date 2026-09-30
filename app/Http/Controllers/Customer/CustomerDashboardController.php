@@ -191,11 +191,12 @@ class CustomerDashboardController extends Controller
 
         $user = User::find(Auth::id());
         $user->whatsapp = session('otp_wa_baru');
+        $user->whatsapp_verified_at = now();
         $user->save();
 
         session()->forget(['otp_wa_baru', 'otp_code_change']);
 
-        return redirect()->route('customer.settings')->with('success', 'Nomor WhatsApp berhasil diubah!');
+        return redirect()->route('customer.settings')->with('success', 'Nomor WhatsApp berhasil diubah dan terverifikasi!');
     }
 
     // --- EMAIL (UBAH EMAIL DENGAN OTP) ---
