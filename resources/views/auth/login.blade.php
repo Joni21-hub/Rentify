@@ -47,17 +47,17 @@
         <div class="glass-panel p-8 sm:p-10 relative">
             
             <div class="text-center mb-8">
-                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-slate-800 mb-2">
+                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-[#1E3A5F] mb-2">
                     RENTIFY
                 </h1>
-                <p class="text-[12px] text-slate-600 font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
+                <p class="text-[12px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
 
             <form action="/login" method="POST" class="space-y-4">
                 @csrf
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-[#3B6E9C] transition">
                         <i class="fa-solid fa-user"></i>
                     </span>
                     <input type="text" name="login" required placeholder="No. WhatsApp / Email" 
@@ -65,18 +65,18 @@
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-[#3B6E9C] transition">
                         <i class="fa-solid fa-lock text-sm"></i>
                     </span>
                     <input type="password" id="passwordField" name="password" required placeholder="Kata Sandi" 
                         class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold">
-                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition">
+                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-[#475569] hover:text-[#3B6E9C] transition">
                         <i id="eyeIcon" class="fa-regular fa-eye-slash text-sm"></i>
                     </button>
                 </div>
                 
                 <div class="flex justify-end -mt-2 mb-2">
-                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-blue-700 hover:text-blue-900 transition">Lupa kata sandi?</a>
+                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-[#0369A1] hover:text-[#1E3A5F] transition">Lupa kata sandi?</a>
                 </div>
 
                 @if ($errors->any())
@@ -93,19 +93,19 @@
                 @endif
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="w-full bg-gradient-to-br from-[#1E3A5F] to-[#2B5B84] hover:from-[#162A45] hover:to-[#1F4160] text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <span>MASUK</span>
                     </button>
                 </div>
                 
                 <div class="flex items-center gap-3 my-5">
                     <div class="h-px bg-slate-300 flex-1"></div>
-                    <span class="text-[10px] font-bold text-slate-500 tracking-widest">ATAU</span>
+                    <span class="text-[10px] font-bold text-[#475569] tracking-widest">ATAU</span>
                     <div class="h-px bg-slate-300 flex-1"></div>
                 </div>
 
                 <!-- Di Login, Asumsinya mereka sudah pernah mendaftar dan menyetujui S&K -->
-                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-slate-700 text-sm shadow-sm">
+                <a href="{{ route('google.login') }}" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-[#475569] text-sm shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -117,15 +117,15 @@
             </form>
 
             <div class="mt-8 space-y-4 text-center">
-                <p class="text-[11px] text-slate-600 font-medium">Belum punya akun? 
-                    <a href="/register" class="text-blue-700 font-extrabold hover:text-blue-900 hover:underline transition ml-1">Daftar sekarang</a>
+                <p class="text-[11px] text-[#475569] font-medium">Belum punya akun? 
+                    <a href="/register" class="text-[#0369A1] font-extrabold hover:text-[#1E3A5F] hover:underline transition ml-1">Daftar sekarang</a>
                 </p>
                 <div class="h-px w-1/2 mx-auto bg-slate-300"></div>
-                <p class="text-[11px]">
-                    <a href="/vendor/register" class="text-amber-600 font-extrabold hover:text-amber-700 hover:underline underline-offset-4 transition">
+                <div class="pt-1">
+                    <a href="/vendor/register" class="inline-block px-5 py-2 bg-white/65 border border-[#CBD5E1] rounded-full text-[11px] font-extrabold text-[#1E3A5F] hover:bg-white/90 hover:shadow-sm transition-all">
                         Daftar menjadi bagian dari rentify
                     </a>
-                </p>
+                </div>
             </div>
             
         </div>
