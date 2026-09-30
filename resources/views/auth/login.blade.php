@@ -57,7 +57,7 @@
                 @csrf
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-[#3B6E9C] transition">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-sky-500 transition">
                         <i class="fa-solid fa-user"></i>
                     </span>
                     <input type="text" name="login" required placeholder="No. WhatsApp / Email" 
@@ -65,18 +65,18 @@
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-[#3B6E9C] transition">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-sky-500 transition">
                         <i class="fa-solid fa-lock text-sm"></i>
                     </span>
                     <input type="password" id="passwordField" name="password" required placeholder="Kata Sandi" 
                         class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold">
-                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-[#475569] hover:text-[#3B6E9C] transition">
+                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-[#475569] hover:text-sky-500 transition">
                         <i id="eyeIcon" class="fa-regular fa-eye-slash text-sm"></i>
                     </button>
                 </div>
                 
                 <div class="flex justify-end -mt-2 mb-2">
-                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-[#0369A1] hover:text-[#1E3A5F] transition">Lupa kata sandi?</a>
+                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-sky-600 hover:text-sky-700 transition">Lupa kata sandi?</a>
                 </div>
 
                 @if ($errors->any())
@@ -93,7 +93,7 @@
                 @endif
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-gradient-to-br from-[#1E3A5F] to-[#2B5B84] hover:from-[#162A45] hover:to-[#1F4160] text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <span>MASUK</span>
                     </button>
                 </div>
@@ -118,11 +118,11 @@
 
             <div class="mt-8 space-y-4 text-center">
                 <p class="text-[11px] text-[#475569] font-medium">Belum punya akun? 
-                    <a href="/register" class="text-[#0369A1] font-extrabold hover:text-[#1E3A5F] hover:underline transition ml-1">Daftar sekarang</a>
+                    <a href="/register" class="text-sky-600 font-extrabold hover:text-sky-700 hover:underline transition ml-1">Daftar sekarang</a>
                 </p>
                 <div class="h-px w-1/2 mx-auto bg-slate-300"></div>
                 <div class="pt-1">
-                    <a href="/vendor/register" class="inline-block px-5 py-2 bg-white/65 border border-[#CBD5E1] rounded-full text-[11px] font-extrabold text-[#1E3A5F] hover:bg-white/90 hover:shadow-sm transition-all">
+                    <a href="/vendor/register" class="inline-block px-5 py-2 bg-white/65 border border-sky-200 rounded-full text-[11px] font-extrabold text-sky-600 hover:bg-white/90 hover:text-sky-700 hover:border-sky-300 hover:shadow-sm transition-all">
                         Daftar menjadi bagian dari rentify
                     </a>
                 </div>
