@@ -10,6 +10,7 @@
     <meta name="google-site-verification" content="4y_McbDs1dvq3scZmY9q_XMoaPfzxNrcNR94o3N0nEc" />
     <title>@yield('title', 'RENTIFY') — Marketplace Rental</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <script>
         tailwind.config = {
             theme: { 

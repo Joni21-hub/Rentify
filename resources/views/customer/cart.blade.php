@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout Rentify - Shopee Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { navy: '#0D1B3E', brandBlue: '#1E4DAA', sky: '#5C9EE8', ice: '#C8DFF8', bgSoft: '#F4F8FF', accent: '#1FBF8F' } } }
+            theme: { extend: { colors: { navy: '#0369a1', brandBlue: '#0ea5e9', sky: '#38bdf8', ice: '#bae6fd', bgSoft: '#f0f9ff', accent: '#0284c7' } } }
         }
     </script>
 </head>
@@ -18,7 +19,7 @@
         <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
             <a href="/customer" class="flex items-center space-x-2">
                 <div class="w-10 h-10 bg-brandBlue rounded-lg flex items-center justify-center font-bold text-white text-xl">R</div>
-                <span class="text-2xl font-bold text-navy tracking-wider">RENTIFY</span>
+                <span class="text-2xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
             <a href="/customer" class="text-sm font-semibold text-brandBlue hover:underline"><i class="fas fa-arrow-left mr-1"></i> Kembali</a>
         </div>

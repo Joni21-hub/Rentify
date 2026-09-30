@@ -1,0 +1,126 @@
+/* =====================================================
+   RENTIFY MASTER THEME
+   Sumber: resources/views/auth/login.blade.php
+   Dibuat: 2026-09-30
+   
+   Semua nilai diambil LANGSUNG dari kode Login.
+   File ini adalah satu-satunya sumber kebenaran warna.
+   ===================================================== */
+
+:root {
+    /* ─── FONT ─────────────────────────────────────────── */
+    --rentify-font: 'Plus Jakarta Sans', sans-serif;
+
+    /* ─── PRIMARY BRAND ─────────────────────────────────── */
+    /* Sumber: text-sky-500/600/700/400 di login.blade.php */
+    --rentify-primary:        #0ea5e9;   /* sky-500 — logo Rentify, ikon focus */
+    --rentify-primary-light:  #38bdf8;   /* sky-400 — button gradient mulai */
+    --rentify-primary-dark:   #0284c7;   /* sky-600 — button gradient akhir, link */
+    --rentify-primary-darker: #0369a1;   /* sky-700 — link hover, button hover end */
+    --rentify-primary-soft:   #bae6fd;   /* sky-200 — vendor pill border */
+    --rentify-primary-softer: #7dd3fc;   /* sky-300 — vendor pill border hover */
+    --rentify-primary-pale:   #e0f2fe;   /* sky-100 — latar aksen ringan */
+
+    /* ─── BACKGROUND ────────────────────────────────────── */
+    /* Sumber: .bg-flowing { background: radial-gradient(...) } di login.blade.php */
+    --rentify-bg-gradient: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
+    --rentify-bg-start:    #fff9ef;      /* warm cream — pusat radial gradient */
+    --rentify-bg-end:      #bad6eb;      /* light steel blue — tepi gradient */
+    --rentify-theme-color: #38bdf8;      /* meta theme-color */
+
+    /* ─── CARD / GLASS PANEL ────────────────────────────── */
+    /* Sumber: .glass-panel { background: linear-gradient(...) } di login.blade.php */
+    --rentify-card-gradient: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
+    --rentify-card-start:    #FFFDF5;    /* warm white */
+    --rentify-card-end:      #CBE0F5;    /* soft blue */
+    --rentify-card-border:   rgba(255, 255, 255, 0.8);
+    --rentify-card-shadow:   0 25px 45px rgba(0, 0, 0, 0.1);
+    --rentify-card-radius:   2rem;
+
+    /* ─── INPUT ─────────────────────────────────────────── */
+    /* Sumber: .input-glass di login.blade.php */
+    --rentify-input-bg:           rgba(255, 255, 255, 0.4);
+    --rentify-input-border:       rgba(255, 255, 255, 0.5);
+    --rentify-input-bg-focus:     rgba(255, 255, 255, 0.7);
+    --rentify-input-border-focus: #ffffff;
+    --rentify-input-shadow-focus: 0 0 15px rgba(255, 255, 255, 0.5);
+    --rentify-input-placeholder:  rgba(15, 23, 42, 0.5);  /* slate-900 50% */
+
+    /* ─── TEXT ──────────────────────────────────────────── */
+    /* Sumber: class text-* di login.blade.php */
+    --rentify-text-primary:    #0f172a;  /* slate-900 — teks input */
+    --rentify-text-body:       #1e293b;  /* slate-800 — teks body utama */
+    --rentify-text-secondary:  #475569;  /* slate-600 — subtitle, icon, label */
+    --rentify-text-on-primary: #ffffff;  /* putih — teks di atas tombol */
+
+    /* ─── DIVIDER ───────────────────────────────────────── */
+    /* Sumber: bg-slate-300 di login.blade.php */
+    --rentify-divider: #cbd5e1;          /* slate-300 */
+
+    /* ─── BUTTON PRIMARY ────────────────────────────────── */
+    /* Sumber: tombol MASUK di login.blade.php */
+    --rentify-btn-from:        #38bdf8;  /* sky-400 */
+    --rentify-btn-to:          #0284c7;  /* sky-600 */
+    --rentify-btn-from-hover:  #0ea5e9;  /* sky-500 */
+    --rentify-btn-to-hover:    #0369a1;  /* sky-700 */
+    --rentify-btn-text:        #ffffff;
+    --rentify-btn-gradient: linear-gradient(to bottom right, #38bdf8, #0284c7);
+    --rentify-btn-gradient-hover: linear-gradient(to bottom right, #0ea5e9, #0369a1);
+
+    /* ─── BUTTON SECONDARY (Google) ─────────────────────── */
+    /* Sumber: tombol Google di login.blade.php */
+    --rentify-btn-secondary-bg:       rgba(255, 255, 255, 0.6);
+    --rentify-btn-secondary-bg-hover: rgba(255, 255, 255, 0.8);
+    --rentify-btn-secondary-border:   #cbd5e1;  /* slate-300 */
+    --rentify-btn-secondary-text:     #475569;  /* slate-600 */
+
+    /* ─── ERROR / ALERT ─────────────────────────────────── */
+    /* Sumber: error div di login.blade.php */
+    --rentify-error-bg:     #ffe4e6;     /* rose-100 */
+    --rentify-error-border: #fda4af;     /* rose-300 */
+    --rentify-error-text:   #be123c;     /* rose-700 */
+
+    /* ─── SUCCESS (semantik tambahan) ───────────────────── */
+    --rentify-success-bg:     #d1fae5;   /* emerald-100 */
+    --rentify-success-border: #6ee7b7;   /* emerald-300 */
+    --rentify-success-text:   #065f46;   /* emerald-800 */
+
+    /* ─── HEADER MOBILE (customer pages) ────────────────── */
+    /* Sumber: header customer pages yang sudah seragam */
+    --rentify-header-gradient: linear-gradient(to right, #0369a1, #38bdf8);
+}
+
+/* ─── UTILITAS GLOBAL ───────────────────────────────────── */
+
+/* Pastikan font seragam di semua halaman */
+body {
+    font-family: var(--rentify-font) !important;
+}
+
+/* Kelas helper untuk gradient button standar Rentify */
+.btn-rentify-primary {
+    background: var(--rentify-btn-gradient);
+    color: var(--rentify-btn-text);
+    font-weight: 800;
+    border-radius: 1rem;
+    padding: 0.875rem 1.5rem;
+    transition: all 0.2s ease;
+    transform: translateY(0);
+}
+.btn-rentify-primary:hover {
+    background: var(--rentify-btn-gradient-hover);
+    transform: translateY(-2px);
+}
+.btn-rentify-primary:active {
+    transform: translateY(0);
+}
+
+/* Link standar Rentify */
+.link-rentify {
+    color: var(--rentify-primary-dark);
+    font-weight: 700;
+    transition: color 0.2s;
+}
+.link-rentify:hover {
+    color: var(--rentify-primary-darker);
+}
