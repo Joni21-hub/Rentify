@@ -10,7 +10,7 @@
             <p class="text-slate-500 mt-2 font-medium">Kelola daftar barang sewaan Anda dan pantau status persetujuan dari Admin Rentify.</p>
         </div>
         
-        <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 gradient-bg text-white font-bold rounded-2xl hover:opacity-90 transition-opacity shadow-lg shadow-brand-main/30 group">
+        <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rentify-btn text-white font-bold rounded-2xl hover:opacity-90 transition-opacity shadow-lg shadow-brand-main/30 group">
             <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform duration-300"></i> Tambah Barang Baru
         </a>
     </header>

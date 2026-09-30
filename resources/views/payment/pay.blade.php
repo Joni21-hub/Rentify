@@ -20,7 +20,7 @@
             <p class="text-gray-600">Total Biaya: <span class="font-bold text-gray-800 text-lg">Rp {{ number_format($order->total_biaya, 0, ',', '.') }}</span></p>
         </div>
 
-        <button id="pay-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition duration-200">
+        <button id="pay-button" class="w-full rentify-btn text-white font-bold py-3 px-4 rounded transition duration-200">
             Pilih Metode Pembayaran
         </button>
 

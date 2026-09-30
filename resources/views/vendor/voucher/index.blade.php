@@ -83,7 +83,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-brand-main hover:bg-brand-deep text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-brand-main/30 mt-4">
+                    <button type="submit" class="w-full rentify-btn text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-brand-main/30 mt-4">
                         Buat Voucher Promo <i class="fa-solid fa-arrow-right ml-1"></i>
                     </button>
                 </form>

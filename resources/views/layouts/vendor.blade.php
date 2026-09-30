@@ -57,30 +57,30 @@
             <div class="flex-1 overflow-y-auto py-8 px-5 space-y-2">
                 <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Menu Utama</p>
                 
-                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.dashboard') ? 'gradient-bg text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.dashboard') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
                     <i class="fa-solid fa-chart-pie w-5 text-center text-lg"></i> <span>Dashboard</span>
                 </a>
 
-                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.barang.*') ? 'gradient-bg text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.barang.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
                     <i class="fa-solid fa-box-open w-5 text-center text-lg"></i> <span>Manajemen Produk</span>
                 </a>
 
-                <a href="{{ route('vendor.pesanan.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.pesanan.*') ? 'gradient-bg text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+                <a href="{{ route('vendor.pesanan.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.pesanan.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
                     <i class="fa-solid fa-clipboard-list w-5 text-center text-lg"></i> <span>Pesanan Masuk</span>
                 </a>
 
-                <a href="{{ route('vendor.saldo.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.saldo.*') ? 'gradient-bg text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+                <a href="{{ route('vendor.saldo.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.saldo.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
                     <i class="fa-solid fa-wallet w-5 text-center text-lg"></i> <span>Saldo & Penarikan</span>
                 </a>
 
-                <a href="{{ route('vendor.voucher.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.voucher.*') ? 'gradient-bg text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+                <a href="{{ route('vendor.voucher.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.voucher.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
                 <i class="fa-solid fa-ticket w-5 text-center text-lg"></i> <span>Voucher Toko</span>
                 </a>
 
                 <div class="my-6 border-t border-white/5"></div>
                 <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Toko</p>
 
-               <a href="{{ route('vendor.pengaturan.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.pengaturan.*') ? 'gradient-bg text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+               <a href="{{ route('vendor.pengaturan.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.pengaturan.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
                 <i class="fa-solid fa-store-gear w-5 text-center text-lg"></i> <span>Pengaturan Toko</span>
             </a>
             </div>

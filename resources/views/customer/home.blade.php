@@ -66,7 +66,7 @@
                     <span class="text-[10px] font-bold mt-0.5">Akun</span>
                 </a>
                 @else
-                <a href="{{ route('login') }}" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-5 py-2 rounded-full text-sm transition">
+                <a href="{{ route('login') }}" class="rentify-btn text-white font-bold px-5 py-2 rounded-full text-sm transition">
                     Masuk
                 </a>
                 @endauth

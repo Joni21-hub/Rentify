@@ -133,7 +133,7 @@
                             <option value="Dibatalkan" {{ $pesanan->status == 'Dibatalkan' ? 'selected' : '' }}>❌ Dibatalkan</option>
                         </select>
                     </div>
-                    <button type="submit" class="w-full bg-brand-main hover:bg-brand-deep text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-brand-main/30 group">
+                    <button type="submit" class="w-full rentify-btn text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-brand-main/30 group">
                         Simpan Perubahan <i class="fa-solid fa-check ml-2 group-hover:scale-125 transition-transform"></i>
                     </button>
                 </form>

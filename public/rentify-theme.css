@@ -148,3 +148,70 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
 }
+
+/* --- BUTTON MASTER THEME ------------------------------------- */
+/* Diterapkan dari tombol 'MASUK' dan Google di halaman Login */
+
+/* Base rentify button logic */
+.rentify-btn, .rentify-btn-success, .rentify-btn-danger, .rentify-btn-warning, .rentify-btn-secondary {
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    transition: all 0.2s ease !important;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.rentify-btn:hover, .rentify-btn-success:hover, .rentify-btn-danger:hover, .rentify-btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+.rentify-btn:active, .rentify-btn-success:active, .rentify-btn-danger:active, .rentify-btn-warning:active, .rentify-btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* 1. Primary Button (Sky Blue - Default Rentify) */
+.rentify-btn {
+    background: linear-gradient(to bottom right, #38bdf8, #0284c7) !important;
+    color: #ffffff !important;
+}
+.rentify-btn:hover {
+    background: linear-gradient(to bottom right, #0ea5e9, #0369a1) !important;
+}
+
+/* 2. Success Button (Emerald) */
+.rentify-btn-success {
+    background: linear-gradient(to bottom right, #34d399, #059669) !important;
+    color: #ffffff !important;
+}
+.rentify-btn-success:hover {
+    background: linear-gradient(to bottom right, #10b981, #047857) !important;
+}
+
+/* 3. Danger Button (Rose) */
+.rentify-btn-danger {
+    background: linear-gradient(to bottom right, #fb7185, #e11d48) !important;
+    color: #ffffff !important;
+}
+.rentify-btn-danger:hover {
+    background: linear-gradient(to bottom right, #f43f5e, #be123c) !important;
+}
+
+/* 4. Warning Button (Amber) */
+.rentify-btn-warning {
+    background: linear-gradient(to bottom right, #fbbf24, #d97706) !important;
+    color: #ffffff !important;
+}
+.rentify-btn-warning:hover {
+    background: linear-gradient(to bottom right, #f59e0b, #b45309) !important;
+}
+
+/* 5. Secondary / Outline (seperti tombol Google) */
+.rentify-btn-secondary {
+    background: rgba(255, 255, 255, 0.6) !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.rentify-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.8) !important;
+}

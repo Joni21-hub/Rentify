@@ -126,7 +126,7 @@
                         <label class="block text-xs font-extrabold text-slate-500 uppercase mb-1">Nama Pemilik Rekening</label>
                         <input type="text" name="nama_pemilik" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-main/20 outline-none" placeholder="Atas nama">
                     </div>
-                    <button type="submit" class="w-full bg-navydark hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-2">
+                    <button type="submit" class="w-full rentify-btn text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-2">
                         Kirim Pengajuan
                     </button>
                 </form>

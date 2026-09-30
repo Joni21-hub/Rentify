@@ -120,7 +120,7 @@
                     </div>
 
                     <div class="pt-6 mt-8 border-t border-slate-100 text-right">
-                        <button type="submit" class="inline-flex items-center gap-2 px-8 py-4 bg-brand-main hover:bg-brand-deep text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-main/30 group">
+                        <button type="submit" class="inline-flex items-center gap-2 px-8 py-4 rentify-btn text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-main/30 group">
                             Simpan Pengaturan <i class="fa-solid fa-floppy-disk group-hover:scale-125 transition-transform"></i>
                         </button>
                     </div>

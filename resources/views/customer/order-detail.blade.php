@@ -72,7 +72,7 @@
                 <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-3 rounded-xl font-bold text-xs transition shadow-md">
                     <i class="fas fa-download mr-1"></i> Download Struk
                 </button>
-                <a href="https://wa.me/6283183494835" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-xl font-bold text-xs transition shadow-md flex justify-center items-center">
+                <a href="https://wa.me/6283183494835" target="_blank" class="rentify-btn text-white text-center py-3 rounded-xl font-bold text-xs transition shadow-md flex justify-center items-center">
                     <i class="fab fa-whatsapp mr-1 text-sm"></i> Hubungi Vendor
                 </a>
                 @if($order->status == 'Menunggu Konfirmasi')

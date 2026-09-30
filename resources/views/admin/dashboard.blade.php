@@ -163,11 +163,11 @@
                                     <td class="p-4 flex justify-center space-x-2">
                                         <form action="/admin/barang/{{ $barang->id }}/approve" method="POST">
                                             @csrf @method('PATCH')
-                                            <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition">Setuju</button>
+                                            <button type="submit" class="rentify-btn-success text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition">Setuju</button>
                                         </form>
                                         <form action="/admin/barang/{{ $barang->id }}/reject" method="POST">
                                             @csrf @method('PATCH')
-                                            <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition">Tolak</button>
+                                            <button type="submit" class="rentify-btn-danger text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition">Tolak</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -228,7 +228,7 @@
                                     <input type="text" name="judul_promo" placeholder="Judul Banner Promo..." required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-400">
                                     <input type="file" name="gambar" required class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold">
                                 </div>
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 rounded-lg text-xs shadow-sm transition">Upload</button>
+                                <button type="submit" class="rentify-btn text-white font-bold px-4 rounded-lg text-xs shadow-sm transition">Upload</button>
                             </form>
                             
                             <div class="grid grid-cols-2 gap-3 max-h-[160px] overflow-y-auto pr-1">
@@ -238,7 +238,7 @@
                                     <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                                         <form action="/admin/banner/{{ $banner->id }}" method="POST">
                                             @csrf @method('DELETE')
-                                            <button type="submit" onclick="return confirm('Padam banner ini?')" class="bg-rose-500 text-white px-3 py-1 rounded-md text-xs font-bold"><i class="fas fa-trash mr-1"></i> Hapus</button>
+                                            <button type="submit" onclick="return confirm('Padam banner ini?')" class="rentify-btn-danger text-white px-3 py-1 rounded-md text-xs font-bold"><i class="fas fa-trash mr-1"></i> Hapus</button>
                                         </form>
                                     </div>
                                     <div class="p-2 bg-slate-800 text-white text-[9px] font-bold truncate text-center">{{ $banner->judul_promo }}</div>

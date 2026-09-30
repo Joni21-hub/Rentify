@@ -72,7 +72,7 @@
 
                 <!-- SIMPAN -->
                 <div class="pt-4">
-                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5">
+                    <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5">
                         Simpan Profil
                     </button>
                 </div>

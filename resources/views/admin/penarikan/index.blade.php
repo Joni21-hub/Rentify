@@ -170,7 +170,7 @@
                                                 {{-- Tombol Setujui --}}
                                                 <form action="{{ route('admin.penarikan.approve', $penarikan->id) }}" method="POST" onsubmit="return confirm('YAKIN SETUJUI?\n\nPastikan Anda SUDAH mentransfer uang sebesar Rp {{ number_format($penarikan->nominal, 0, ',', '.') }} ke rekening {{ $penarikan->nama_bank_ewallet }} tersebut sebelum menekan OK.');">
                                                     @csrf
-                                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold py-2 px-3 rounded-lg shadow-sm transition duration-150 flex items-center">
+                                                    <button type="submit" class="rentify-btn-success text-white text-[11px] font-bold py-2 px-3 rounded-lg shadow-sm transition duration-150 flex items-center">
                                                         Setujui
                                                     </button>
                                                 </form>
@@ -178,7 +178,7 @@
                                                 {{-- Tombol Tolak --}}
                                                 <form action="{{ route('admin.penarikan.reject', $penarikan->id) }}" method="POST" onsubmit="return confirm('TOLAK PENARIKAN?\n\nUang akan dikembalikan secara otomatis ke Saldo Aktif Vendor.');">
                                                     @csrf
-                                                    <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold py-2 px-3 rounded-lg shadow-sm transition duration-150 flex items-center">
+                                                    <button type="submit" class="rentify-btn-danger text-white text-[11px] font-bold py-2 px-3 rounded-lg shadow-sm transition duration-150 flex items-center">
                                                         Tolak
                                                     </button>
                                                 </form>

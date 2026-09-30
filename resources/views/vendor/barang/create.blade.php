@@ -131,7 +131,7 @@
                                     <input type="hidden" name="longitude" id="lon_produk" value="{{ old('longitude') }}">
                                     
                                     <div class="flex flex-col sm:flex-row gap-3 mb-3">
-                                        <button type="button" onclick="getLokasiProduk()" class="px-5 py-3 bg-brand-900 hover:bg-brand-800 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2">
+                                        <button type="button" onclick="getLokasiProduk()" class="px-5 py-3 rentify-btn text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-location-crosshairs text-lg"></i> Deteksi Lokasi
                                         </button>
                                         <div id="status_gps" class="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-medium flex items-center justify-center sm:justify-start">
@@ -248,7 +248,7 @@
                     const coverBadge = index === 0 ? '<div class="absolute bottom-0 left-0 right-0 bg-emerald-500 text-white text-[10px] text-center py-1 font-bold">COVER</div>' : '';
                     div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">${coverBadge}
                         <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="button" onclick="removeFile(${index})" class="w-8 h-8 rounded-full bg-rose-500 text-white shadow-lg"><i class="fa-solid fa-trash text-xs"></i></button>
+                            <button type="button" onclick="removeFile(${index})" class="w-8 h-8 rounded-full rentify-btn-danger text-white shadow-lg"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>`;
                     previewContainer.appendChild(div);
                 }
