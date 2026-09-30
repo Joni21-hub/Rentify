@@ -190,10 +190,10 @@
         </div>
         <div class="p-6">
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Tanggal Mulai <span class="text-rose-500">*</span></label>
-            <input type="date" id="modal-date" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-sky-700 focus:border-sky-500 focus:ring-sky-200 outline-none mb-4 transition">
+            <input type="date" id="modal-date" required class="rentify-input w-full px-4 py-2.5 text-sm font-bold text-sky-700 focus:outline-none mb-4 transition">
 
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Jam Pengambilan/Pengantaran <span class="text-rose-500">*</span></label>
-            <select id="modal-time" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-sky-700 focus:border-sky-500 focus:ring-sky-200 outline-none mb-4 transition">
+            <select id="modal-time" required class="rentify-input w-full px-4 py-2.5 text-sm font-bold text-sky-700 focus:outline-none mb-4 transition">
                 <option value="">-- Pilih Jam (WIB) --</option>
                 <option value="08:00">08:00 WIB (Pagi)</option>
                 <option value="09:00">09:00 WIB</option>
@@ -212,7 +212,7 @@
 
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Durasi Sewa <span class="text-rose-500">*</span></label>
             <div class="flex items-center border-2 border-slate-200 rounded-xl px-4 py-2 mb-6 focus-within:border-sky-500 transition">
-                <input type="number" id="modal-durasi" value="1" min="1" required class="w-full bg-transparent border-none text-sm font-black text-sky-700 focus:ring-0 p-0 outline-none">
+                <input type="number" id="modal-durasi" value="1" min="1" required class="rentify-input w-full text-sm font-black text-sky-700 p-0 outline-none">
                 <span class="text-xs font-bold text-slate-400">Hari</span>
             </div>
 

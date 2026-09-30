@@ -79,7 +79,7 @@
         <div class="lg:col-span-2 rentify-card rounded-3xl p-8 shadow-sm">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-bold text-slate-800">Grafik Pendapatan</h3>
-                <select class="bg-slate-50 border border-slate-200 text-slate-600 text-sm rounded-xl focus:ring-brand-main focus:border-brand-main block p-2 font-medium">
+                <select class="rentify-input text-slate-600 text-sm focus:block p-2 font-medium">
                     <option>7 Hari Terakhir</option>
                     <option>Bulan Ini</option>
                 </select>

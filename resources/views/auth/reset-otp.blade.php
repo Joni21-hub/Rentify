@@ -129,7 +129,7 @@
                         maxlength="6"
                         autofocus
                         placeholder="• • • • • •"
-                        class="input-glass w-full py-4 rounded-2xl text-3xl font-extrabold tracking-[0.6em] text-center focus:outline-none"
+                        class="rentify-input w-full py-4 text-3xl font-extrabold tracking-[0.6em] text-center focus:outline-none"
                     >
                 </div>
 

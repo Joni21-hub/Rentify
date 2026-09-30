@@ -81,18 +81,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Nama Toko (Etalase)</label>
-                            <input type="text" name="vendor_name" value="{{ old('vendor_name', $user->vendor_name) }}" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all">
+                            <input type="text" name="vendor_name" value="{{ old('vendor_name', $user- class="rentify-input">vendor_name) }}" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Nama Pemilik Akun</label>
-                            <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all">
+                            <input type="text" name="name" value="{{ old('name', $user- class="rentify-input">name) }}" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Alamat Email Login</label>
-                            <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all">
+                            <input type="email" name="email" value="{{ old('email', $user- class="rentify-input">email) }}" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Nomor WhatsApp Toko</label>
@@ -100,7 +100,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <i class="fa-brands fa-whatsapp text-emerald-500 text-lg"></i>
                                 </div>
-                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor', $user->whatsapp_vendor) }}" class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all" placeholder="Contoh: 08123456789">
+                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor', $user- class="rentify-input">whatsapp_vendor) }}" class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all" placeholder="Contoh: 08123456789">
                             </div>
                         </div>
                     </div>
@@ -111,11 +111,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Kata Sandi Baru</label>
-                            <input type="password" name="password" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all" placeholder="Minimal 6 karakter">
+                            <input type="password" name="password" class="rentify-input w-full px-4 py-3.5 text-sm font-bold text-slate-800 outline-none transition-all" placeholder="Minimal 6 karakter">
                         </div>
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Konfirmasi Kata Sandi Baru</label>
-                            <input type="password" name="password_confirmation" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none shadow-sm transition-all" placeholder="Ulangi sandi baru">
+                            <input type="password" name="password_confirmation" class="rentify-input w-full px-4 py-3.5 text-sm font-bold text-slate-800 outline-none transition-all" placeholder="Ulangi sandi baru">
                         </div>
                     </div>
 

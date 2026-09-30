@@ -30,10 +30,10 @@
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
             </div>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk Anda..." class="w-full pl-11 pr-4 py-3.5 rentify-card -slate-200 text-sm focus:ring-2 focus:ring-brand-main/20 focus:-brand-main outline-none transition-all font-medium placeholder-slate-400">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk Anda..." class="rentify-input w-full pl-11 pr-4 py-3.5 rentify-card -slate-200 text-sm focus:-brand-main outline-none transition-all font-medium placeholder-slate-400">
         </div>
         <div class="flex gap-3">
-            <select name="status" class="px-4 py-3.5 rentify-card -slate-200 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-brand-main/20 focus:-brand-main outline-none transition-all">
+            <select name="status" class="rentify-input px-4 py-3.5 rentify-card -slate-200 text-sm font-medium text-slate-600 focus:-brand-main outline-none transition-all">
                 <option value="">Semua Status</option>
                 <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Aktif (Disetujui)</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Kurasi</option>

@@ -63,13 +63,13 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Konfirmasi Kata Sandi Aktif</label>
                         <input type="password" name="password_konfirmasi" required placeholder="Masukkan kata sandi Anda"
-                               class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 font-bold text-sm transition">
+                               class="rentify-input w-full px-4 py-3 focus:outline-none focus: font-bold text-sm transition">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Email Baru</label>
                         <input type="email" name="email_baru" required placeholder="email.baru@contoh.com"
-                               class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 font-bold text-sm transition">
+                               class="rentify-input w-full px-4 py-3 focus:outline-none focus: font-bold text-sm transition">
                     </div>
 
                     <div class="pt-2">
@@ -94,7 +94,7 @@
                     @csrf
                     <div>
                         <input type="number" name="otp_email" required maxlength="6"
-                            class="w-full text-center tracking-[0.5em] text-2xl py-4 rounded-2xl border-2 border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 focus:outline-none font-bold bg-slate-50 transition"
+                            class="rentify-input w-full text-center tracking-[0.5em] text-2xl py-4 focus: focus:outline-none font-bold transition"
                             placeholder="••••••" autofocus>
                     </div>
 

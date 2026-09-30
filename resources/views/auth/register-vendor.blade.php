@@ -174,7 +174,7 @@
                             <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user-tie text-xs"></i></span>
-                                <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="">
                             </div>
                         </div>
 
@@ -183,7 +183,7 @@
                             <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Nama Toko Rental</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-store text-xs"></i></span>
-                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="">
                             </div>
                         </div>
 
@@ -192,7 +192,7 @@
                             <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Email Aktif (Utama)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-envelope text-xs"></i></span>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="vendor@email.com">
+                                <input type="email" name="email" value="{{ old('email') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="vendor@email.com">
                             </div>
                         </div>
 
@@ -201,7 +201,7 @@
                             <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">No. WhatsApp Toko</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="081234567xxx">
+                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="081234567xxx">
                             </div>
                         </div>
 
@@ -210,7 +210,7 @@
                             <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Kata Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                                <input type="password" id="passInput" name="password" required class="input-glass w-full pl-9 pr-9 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="Min 8 karakter">
+                                <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-9 pr-9 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="Min 8 karakter">
                                 <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>
@@ -220,7 +220,7 @@
                             <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Konfirmasi Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                                <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-9 pr-9 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="Ulangi sandi">
+                                <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-9 pr-9 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="Ulangi sandi">
                                 <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>

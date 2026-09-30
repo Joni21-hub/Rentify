@@ -98,7 +98,7 @@
                         autofocus
                         placeholder="No. WhatsApp / Email"
                         value="{{ old('identitas') }}"
-                        class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold"
+                        class="rentify-input w-full pl-11 pr-4 py-3.5 text-sm focus:outline-none font-bold"
                     >
                 </div>
 

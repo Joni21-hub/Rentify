@@ -102,7 +102,7 @@
                         required
                         placeholder="Kata Sandi Baru"
                         oninput="checkStrength(this.value)"
-                        class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold"
+                        class="rentify-input w-full pl-11 pr-11 py-3.5 text-sm focus:outline-none font-bold"
                     >
                     <button type="button" onclick="togglePwd('passwordField','eye1')"
                         class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition">
@@ -131,7 +131,7 @@
                         name="password_confirmation"
                         required
                         placeholder="Konfirmasi Kata Sandi Baru"
-                        class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold"
+                        class="rentify-input w-full pl-11 pr-11 py-3.5 text-sm focus:outline-none font-bold"
                     >
                     <button type="button" onclick="togglePwd('passwordConfirm','eye2')"
                         class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition">

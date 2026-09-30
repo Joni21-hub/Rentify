@@ -125,7 +125,7 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-2">Tindakan Selanjutnya</label>
-                        <select name="status" class="w-full px-4 py-4 rentify-card -slate-200 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-main/20 focus:-brand-main outline-none transition-all appearance-none">
+                        <select name="status" class="rentify-input w-full px-4 py-4 rentify-card -slate-200 text-sm font-bold text-slate-700 focus:-brand-main outline-none transition-all appearance-none">
                             <option value="Menunggu Konfirmasi" {{ $pesanan->status == 'Menunggu Konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
                             <option value="Disetujui" {{ $pesanan->status == 'Disetujui' ? 'selected' : '' }}>Disetujui (Siap)</option>
                             <option value="Sedang Disewa" {{ $pesanan->status == 'Sedang Disewa' ? 'selected' : '' }}>Sedang Disewa (Berjalan)</option>

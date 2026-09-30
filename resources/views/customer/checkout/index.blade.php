@@ -179,7 +179,7 @@
                 </label>
                 <div id="panel_antar_{{ $vendorId }}" class="panel-lokasi bg-white border-t border-slate-200">
                     <div style="font-weight: 800; color: #0f172a; margin-bottom: 8px;">📍 Masukkan Alamat Pengiriman Anda:</div>
-                    <textarea class="sync-alamat w-full rounded-lg border border-slate-300 p-3 text-sm mb-3 focus:border-sky-500 outline-none" rows="2" placeholder="Cth: Jl. Merdeka No. 10 (Gunakan tombol GPS di bawah agar otomatis)" onchange="syncData()"></textarea>
+                    <textarea class="rentify-input sync-alamat w-full p-3 text-sm mb-3 focus:outline-none" rows="2" placeholder="Cth: Jl. Merdeka No. 10 (Gunakan tombol GPS di bawah agar otomatis)" onchange="syncData()"></textarea>
                     <button type="button" onclick="dapatkanLokasi()" style="width: 100%; background: #0284c7; color: white; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px;">📍 Sinkronisasi Titik GPS Saya</button>
                     <div class="status-gps mt-2 text-xs font-bold text-sky-600 text-center"></div>
                 </div>
@@ -200,7 +200,7 @@
         <div class="section-title">Informasi Kontak Anda</div>
         <div class="clean-card p-4" style="border-left: 4px solid #0284c7;">
             <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">No WhatsApp <span style="color: #0284c7;">*</span></label>
-            <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()->user()->no_hp ?? '' }}" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+            <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()- class="rentify-input">user()->no_hp ?? '' }}" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
         </div>
 
         <div class="section-title mt-4">Metode Pembayaran</div>
@@ -228,7 +228,7 @@
             </div>
             <div id="voucher-panel" style="display: none; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik kode voucher toko" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik kode voucher toko" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" class="rentify-input">
                     <button type="button" onclick="terapkanVoucher()" id="btn-terapkan-voucher" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s;">Pakai</button>
                 </div>
                 <div id="voucher-message" style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #ef4444; display: none;"></div>

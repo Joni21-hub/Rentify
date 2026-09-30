@@ -61,12 +61,12 @@
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-bold text-slate-700 mb-1">Nama Barang <span class="text-rose-500">*</span></label>
-                                    <input type="text" name="nama" value="{{ old('nama') }}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all bg-white" placeholder="">
+                                    <input type="text" name="nama" value="{{ old('nama') }}" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all" placeholder="">
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-bold text-slate-700 mb-1">Kategori <span class="text-rose-500">*</span></label>
-                                        <select name="kategori_id" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all bg-white">
+                                        <select name="kategori_id" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all">
                                             <option value="">-- Pilih Kategori --</option>
                                             @foreach($kategoris as $k)
                                                 <option value="{{ $k->id }}" {{ old('kategori_id') == $k->id ? 'selected' : '' }}>{{ $k->nama }}</option>
@@ -75,7 +75,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-700 mb-1">Kondisi Barang <span class="text-rose-500">*</span></label>
-                                        <select name="kondisi" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all bg-white">
+                                        <select name="kondisi" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all">
                                             <option value="Sangat Baik">Sangat Baik</option>
                                             <option value="Baik">Baik</option>
                                             <option value="Cukup">Cukup (Ada minus wajar)</option>
@@ -84,7 +84,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-slate-700 mb-1">Deskripsi Lengkap <span class="text-rose-500">*</span></label>
-                                    <textarea name="deskripsi" rows="4" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all bg-white">{{ old('deskripsi') }}</textarea>
+                                    <textarea name="deskripsi" rows="4" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all">{{ old('deskripsi') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -141,7 +141,7 @@
 
                                     <div>
                                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1">Alamat Lengkap Produk / Gudang <span class="text-rose-500">*</span></label>
-                                        <textarea name="alamat" id="alamat_produk" rows="2" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white text-sm" placeholder="Akan terisi otomatis saat tombol 'Deteksi Lokasi' diklik... (Bisa diedit manual juga)">{{ old('alamat') }}</textarea>
+                                        <textarea name="alamat" id="alamat_produk" rows="2" required class="rentify-input w-full px-4 py-2.5 focus:text-sm" placeholder="Akan terisi otomatis saat tombol 'Deteksi Lokasi' diklik... (Bisa diedit manual juga)">{{ old('alamat') }}</textarea>
                                     </div>
                                 </div>
 
@@ -151,10 +151,10 @@
                         <div class="rentify-card p-6 rounded-2xl shadow-sm">
                             <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Harga & Ketersediaan</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Harga Sewa / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="harga_sewa_harian" required class="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none bg-white"></div></div>
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Stok Total <span class="text-rose-500">*</span></label><input type="number" name="stok_total" value="1" required min="1" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none bg-white"></div>
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Deposit Jaminan <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="deposit" required class="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none bg-white"></div></div>
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Denda Terlambat / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="denda_per_hari" required class="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none bg-white"></div></div>
+                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Harga Sewa / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="harga_sewa_harian" required class="rentify-input w-full pl-12 pr-4 py-2.5 focus:outline-none"></div></div>
+                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Stok Total <span class="text-rose-500">*</span></label><input type="number" name="stok_total" value="1" required min="1" class="rentify-input w-full px-4 py-2.5 focus:outline-none"></div>
+                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Deposit Jaminan <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="deposit" required class="rentify-input w-full pl-12 pr-4 py-2.5 focus:outline-none"></div></div>
+                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Denda Terlambat / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="denda_per_hari" required class="rentify-input w-full pl-12 pr-4 py-2.5 focus:outline-none"></div></div>
                             </div>
                         </div>
                     </div>

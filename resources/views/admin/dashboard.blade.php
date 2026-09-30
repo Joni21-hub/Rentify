@@ -225,7 +225,7 @@
                             <form action="/admin/banner" method="POST" enctype="multipart/form-data" class="flex gap-3 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 @csrf
                                 <div class="flex-1 space-y-2">
-                                    <input type="text" name="judul_promo" placeholder="Judul Banner Promo..." required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-400">
+                                    <input type="text" name="judul_promo" placeholder="Judul Banner Promo..." required class="rentify-input w-full px-3 py-2 text-xs outline-none focus:">
                                     <input type="file" name="gambar" required class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-sky-700 file:font-bold">
                                 </div>
                                 <button type="submit" class="rentify-btn text-white font-bold px-4 rounded-lg text-xs shadow-sm transition">Upload</button>
@@ -350,7 +350,7 @@
                         <h3 class="text-base font-black text-slate-800">Database Transaksi Keseluruhan</h3>
                         <div class="relative">
                             <i class="fas fa-search absolute left-3 top-2.5 text-slate-300"></i>
-                            <input type="text" placeholder="Cari ID Pesanan..." class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-400">
+                            <input type="text" placeholder="Cari ID Pesanan..." class="rentify-input pl-9 pr-4 py-2 text-sm focus:outline-none focus:">
                         </div>
                     </div>
                     <div class="p-0 overflow-x-auto">

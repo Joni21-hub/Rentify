@@ -38,48 +38,48 @@
                     
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Kode Voucher</label>
-                        <input type="text" name="kode_voucher" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-800 focus:ring-2 focus:ring-brand-main/20 outline-none uppercase" placeholder="D1sk0n10">
+                        <input type="text" name="kode_voucher" required class="rentify-input w-full px-4 py-3 text-sm font-black text-slate-800 outline-none uppercase" placeholder="D1sk0n10">
                         <p class="text-[10px] text-slate-400 mt-1">Tanpa spasi, maksimal 10 karakter disarankan.</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Tipe Diskon</label>
-                            <select name="tipe_diskon" id="tipe_diskon" onchange="toggleMaksimalDiskon()" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-brand-main/20 outline-none">
+                            <select name="tipe_diskon" id="tipe_diskon" onchange="toggleMaksimalDiskon()" required class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none">
                                 <option value="nominal">Nominal (Rp)</option>
                                 <option value="persen">Persentase (%)</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Nilai Diskon</label>
-                            <input type="number" name="nilai_diskon" required min="1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-brand-main/20 outline-none" placeholder="10000">
+                            <input type="number" name="nilai_diskon" required min="1" class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none" placeholder="10000">
                         </div>
                     </div>
 
                     <div id="box_maksimal_diskon" class="hidden">
                         <label class="block text-xs font-extrabold text-rose-500 uppercase tracking-widest mb-1">Maksimal Potongan (Rp)</label>
-                        <input type="number" name="maksimal_diskon" id="maksimal_diskon" min="1" class="w-full px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-rose-500/20 outline-none text-rose-700" placeholder="Contoh: 20000">
+                        <input type="number" name="maksimal_diskon" id="maksimal_diskon" min="1" class="rentify-input w-full px-4 py-3 bg-rose-50 text-sm font-bold outline-none text-rose-700" placeholder="Contoh: 20000">
                         <p class="text-[10px] text-rose-400 mt-1">* Wajib diisi agar Anda tidak rugi jika transaksi sangat besar.</p>
                     </div>
 
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Min. Belanja (Rp)</label>
-                        <input type="number" name="minimal_belanja" required min="0" value="0" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-brand-main/20 outline-none" placeholder="0 untuk tanpa batas">
+                        <input type="number" name="minimal_belanja" required min="0" value="0" class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none" placeholder="0 untuk tanpa batas">
                     </div>
 
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Kuota Total</label>
-                        <input type="number" name="kuota_total" required min="1" value="50" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-brand-main/20 outline-none">
+                        <input type="number" name="kuota_total" required min="1" value="50" class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Tgl Mulai</label>
-                            <input type="date" name="tanggal_mulai" required min="{{ date('Y-m-d') }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-main/20 outline-none">
+                            <input type="date" name="tanggal_mulai" required min="{{ date('Y-m-d') }}" class="rentify-input w-full px-4 py-3 text-xs font-bold outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Tgl Berakhir</label>
-                            <input type="date" name="tanggal_selesai" required min="{{ date('Y-m-d') }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-main/20 outline-none">
+                            <input type="date" name="tanggal_selesai" required min="{{ date('Y-m-d') }}" class="rentify-input w-full px-4 py-3 text-xs font-bold outline-none">
                         </div>
                     </div>
 

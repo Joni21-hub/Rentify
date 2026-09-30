@@ -41,7 +41,7 @@
             @csrf
             <!-- Input yang akan terisi otomatis oleh GPS -->
             <label style="display: block; font-size: 12px; font-weight: 800; color: #0284c7; margin-bottom: 6px;">Detail Alamat Lengkap</label>
-            <textarea name="alamat_lengkap" id="input_alamat" rows="3" required readonly placeholder="Klik tombol GPS di atas untuk mengisi alamat otomatis..." style="width: 100%; border: 1.5px solid #bae6fd; border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 700; color: #0f172a; outline: none; background: #f8fafc; margin-bottom: 15px;"></textarea>
+            <textarea name="alamat_lengkap" id="input_alamat" rows="3" required readonly placeholder="Klik tombol GPS di atas untuk mengisi alamat otomatis..." style="width: 100%; border: 1.5px solid #bae6fd; border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 700; color: #0f172a; outline: none; background: #f8fafc; margin-bottom: 15px;" class="rentify-input"></textarea>
 
             <input type="hidden" name="latitude" id="input_lat">
             <input type="hidden" name="longitude" id="input_lon">

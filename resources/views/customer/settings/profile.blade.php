@@ -66,7 +66,7 @@
                 <!-- NAMA -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nama Lengkap</label>
-                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                    <input type="text" name="name" value="{{ old('name', $user- class="rentify-input">name) }}" required
                            class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 font-bold text-sm transition">
                 </div>
 

@@ -72,7 +72,7 @@
                             
                             <div class="inline-flex items-center gap-1 bg-sky-50 text-sky-500 text-[11.5px] font-bold px-3 py-1 rounded mb-2 border border-sky-100 shadow-sm cursor-text">
                                 <span>Durasi: </span>
-                                <input type="number" value="{{ $durasiAktif }}" min="1" class="item-durasi w-8 bg-transparent border-none p-0 text-center text-sky-600 focus:ring-0 outline-none font-black" onfocus="this.select()">
+                                <input type="number" value="{{ $durasiAktif }}" min="1" class="rentify-input item-durasi w-8 p-0 text-center text-sky-600 outline-none font-black" onfocus="this.select()">
                                 <span>Hari</span>
                                 <i class="fa-solid fa-pen text-[9px] ml-1 opacity-50"></i>
                             </div>
@@ -84,7 +84,7 @@
                                 
                                 <div class="flex items-center border border-slate-200 rounded-lg bg-white">
                                     <button type="button" class="btn-minus w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-50 text-lg transition">−</button>
-                                    <input type="number" value="{{ $item->jumlah }}" class="item-qty w-8 h-7 text-center border-none text-sm font-bold text-slate-700 p-0 focus:ring-0 bg-transparent" readonly>
+                                    <input type="number" value="{{ $item- class="rentify-input">jumlah }}" class="item-qty w-8 h-7 text-center border-none text-sm font-bold text-slate-700 p-0 focus:ring-0 bg-transparent" readonly>
                                     <button type="button" class="btn-plus w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-50 text-lg transition">+</button>
                                 </div>
                             </div>
@@ -109,7 +109,7 @@
                         
                         <div id="voucher-input-area" class="hidden px-5 pb-4 pt-1 bg-white">
                             <div class="flex gap-3">
-                                <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus:border-sky-400 focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
+                                <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="rentify-input flex-1 px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus: focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
                                 <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 shadow-[0_0_10px_rgba(14,165,233,0.3)] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition">Pakai</button>
                             </div>
                         </div>
@@ -155,10 +155,10 @@
         </div>
         <div class="p-6">
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Tanggal Mulai <span class="text-rose-500">*</span></label>
-            <input type="date" id="modal-date" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-sky-700 focus:border-sky-500 focus:ring-sky-200 outline-none mb-5 transition">
+            <input type="date" id="modal-date" required class="rentify-input w-full px-4 py-3 text-sm font-bold text-sky-700 focus:outline-none mb-5 transition">
 
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Jam Pengambilan/Pengantaran <span class="text-rose-500">*</span></label>
-            <select id="modal-time" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-sky-700 focus:border-sky-500 focus:ring-sky-200 outline-none mb-7 transition">
+            <select id="modal-time" required class="rentify-input w-full px-4 py-3 text-sm font-bold text-sky-700 focus:outline-none mb-7 transition">
                 <option value="">-- Pilih Jam (WIB) --</option>
                 <option value="08:00">08:00 WIB (Pagi)</option>
                 <option value="09:00">09:00 WIB</option>

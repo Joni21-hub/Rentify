@@ -38,19 +38,19 @@
                     <h3 class="font-bold text-slate-800 text-lg border-b pb-2"><i class="fas fa-user-edit text-brandBlue mr-2"></i> Data Lengkap Pemesan</h3>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nama Lengkap</label>
-                        <input type="text" name="customer_name" required class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue" placeholder="Contoh: Muhammad Rafli">
+                        <input type="text" name="customer_name" required class="rentify-input w-full p-3 text-sm focus:outline-none" placeholder="Contoh: Muhammad Rafli">
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nomor WhatsApp Aktif</label>
-                        <input type="text" name="customer_whatsapp" required class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue" placeholder="Contoh: 0831xxxxxxx">
+                        <input type="text" name="customer_whatsapp" required class="rentify-input w-full p-3 text-sm focus:outline-none" placeholder="Contoh: 0831xxxxxxx">
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Alamat Pengiriman Detail</label>
-                        <textarea name="shipping_address" required rows="3" class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue" placeholder="Nama Jalan, nomor rumah, RT/RW atau keterangan patokan lokasi"></textarea>
+                        <textarea name="shipping_address" required rows="3" class="rentify-input w-full p-3 text-sm focus:outline-none" placeholder="Nama Jalan, nomor rumah, RT/RW atau keterangan patokan lokasi"></textarea>
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Titik Lokasi (Link Share-Loc Google Maps)</label>
-                        <input type="text" name="pin_location" class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue" placeholder="Tempel link pin maps disini">
+                        <input type="text" name="pin_location" class="rentify-input w-full p-3 text-sm focus:outline-none" placeholder="Tempel link pin maps disini">
                     </div>
                 </div>
 
@@ -59,11 +59,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tanggal & Jam Mulai</label>
-                            <input type="datetime-local" id="start_rent" name="start_rent" required class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue">
+                            <input type="datetime-local" id="start_rent" name="start_rent" required class="rentify-input w-full p-3 text-sm focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tanggal & Jam Pengembalian</label>
-                            <input type="datetime-local" id="end_rent" name="end_rent" required class="w-full border border-ice rounded-xl p-3 text-sm focus:outline-brandBlue">
+                            <input type="datetime-local" id="end_rent" name="end_rent" required class="rentify-input w-full p-3 text-sm focus:outline-none">
                         </div>
                     </div>
                 </div>

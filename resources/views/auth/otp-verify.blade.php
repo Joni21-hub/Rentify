@@ -100,7 +100,7 @@
                 @csrf
                 <div class="relative">
                     <input type="number" name="otp" required maxlength="6"
-                        class="input-glass w-full text-center tracking-[0.5em] text-2xl py-4 rounded-2xl focus:outline-none font-bold" 
+                        class="rentify-input w-full text-center tracking-[0.5em] text-2xl py-4 focus:outline-none font-bold" 
                         placeholder="••••••" autofocus>
                 </div>
 
