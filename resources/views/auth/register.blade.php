@@ -146,7 +146,7 @@
                     <div class="ml-2 text-[10px]">
                         <label class="font-bold text-white/90 leading-tight block drop-shadow-sm">
                             Menyetujui 
-                            <button type="button" onclick="openModal()" class="font-extrabold text-blue-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan</button>.
+                            <button type="button" onclick="openModal()" class="font-extrabold text-sky-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan</button>.
                         </label>
                         <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
                             <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk menyetujui

@@ -336,9 +336,9 @@
                 @endphp
                <div class="mb-6 bg-gradient-to-r from-blue-700 to-indigo-900 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-extrabold uppercase tracking-widest text-blue-200">Total Akumulasi Pendapatan Bersih</p>
+                        <p class="text-xs font-extrabold uppercase tracking-widest text-sky-200">Total Akumulasi Pendapatan Bersih</p>
                         <h3 class="text-3xl font-black mt-1 text-white">Rp {{ number_format($totalPendapatanRentify, 0, ',', '.') }}</h3>
-                        <p class="text-[11px] text-blue-100 mt-1"><i class="fas fa-info-circle mr-1"></i> Diperoleh dari komisi fee 5% setiap transaksi yang sah (tidak termasuk pesanan batal).</p>
+                        <p class="text-[11px] text-sky-100 mt-1"><i class="fas fa-info-circle mr-1"></i> Diperoleh dari komisi fee 5% setiap transaksi yang sah (tidak termasuk pesanan batal).</p>
                     </div>
                     <div class="w-14 h-14 rentify-card/10 flex items-center justify-center backdrop-blur-md -white/20 text-2xl font-black">
                         <i class="fas fa-wallet"></i>

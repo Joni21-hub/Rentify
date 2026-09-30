@@ -28,13 +28,13 @@
             <div class="h-20 flex items-center justify-center border-b border-white/50 px-6">
                 <a href="{{ url('/') }}" class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-brand-900 flex items-center justify-center text-white"><i class="fa-solid fa-store text-sm"></i></div>
-                    <span class="text-xl font-bold text-brand-900 tracking-tight">Rentify<span class="text-emerald-500">.</span></span>
+                    <span class="text-xl font-bold text-slate-800 tracking-tight">Rentify<span class="text-emerald-500">.</span></span>
                 </a>
             </div>
             <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu Utama</p>
                 <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:rentify-card hover:text-slate-700 hover: transition-all font-medium"><i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Dashboard Utama</span></a>
-                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3 px-4 py-3 rentify-card text-brand-900 -slate-100 font-medium transition-all"><i class="fa-solid fa-box-open w-5 text-center"></i> <span>Manajemen Produk</span></a>
+                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3 px-4 py-3 rentify-card text-slate-800 -slate-100 font-medium transition-all"><i class="fa-solid fa-box-open w-5 text-center"></i> <span>Manajemen Produk</span></a>
             </div>
         </aside>
 
@@ -165,8 +165,8 @@
                             <p class="text-xs text-slate-500 mb-4">Pilih foto satu per satu atau sekaligus.</p>
                             <input type="file" name="fotos[]" id="fotos" multiple accept="image/*" class="hidden">
                             <label for="fotos" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-300 rounded-xl bg-brand-50 hover:bg-brand-100 cursor-pointer">
-                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-brand-500 mb-2"></i>
-                                <span class="text-sm font-semibold text-brand-900">Klik Tambah Foto</span>
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-sky-500 mb-2"></i>
+                                <span class="text-sm font-semibold text-slate-800">Klik Tambah Foto</span>
                             </label>
                             <div id="preview-container" class="mt-4 grid grid-cols-2 gap-3"></div>
                         </div>
