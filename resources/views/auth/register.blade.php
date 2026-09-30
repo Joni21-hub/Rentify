@@ -40,22 +40,16 @@
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
+<body class="min-h-screen w-full flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4 relative overflow-hidden bg-flowing text-slate-800">
 
     <!-- Efek Bintang Berkedip -->
-    <div class="sparkle top-[15%] left-[10%]" style="animation-delay: 0s;"></div>
-    <div class="sparkle top-[25%] right-[20%]" style="animation-delay: 1.5s;"></div>
-    <div class="sparkle bottom-[20%] left-[25%]" style="animation-delay: 0.7s;"></div>
-    <div class="sparkle bottom-[35%] right-[10%]" style="animation-delay: 2s;"></div>
-    <div class="sparkle top-[50%] left-[5%]" style="animation-delay: 2.5s;"></div>
-
-    <div class="w-full max-w-[380px] relative z-10 my-[2vh] lg:my-0">
+    <div class="w-full max-w-[380px] relative z-10 ">
         
-        <div class="glass-panel p-6 sm:p-8 relative">
+        <div class="glass-panel p-8 sm:p-10 relative">
             
-            <div class="text-center mb-6">
+            <div class="text-center mb-8">
                 <h1 class="text-5xl sm:text-6xl font-black tracking-tighter text-sky-500 mb-2">Rentify</h1>
-                <p class="text-[11px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
+                <p class="text-[12px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
 
             @if ($errors->any())
@@ -68,37 +62,42 @@
                 </div>
             @endif
 
-            <form action="{{ route('register') }}" method="POST" id="registerForm" class="space-y-3.5">
+            <form action="{{ route('register') }}" method="POST" id="registerForm" class="space-y-4">
                 @csrf 
 
                 <!-- Tombol Google di-intercept oleh JS untuk memastikan S&K dicentang -->
-                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-[#475569] text-sm shadow-sm mb-2"><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5 bg-white rounded-full p-0.5">Daftar dengan Google</button>
+                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-[#475569] text-sm shadow-sm mb-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 bg-white rounded-full p-0.5">
+                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                    </svg>Daftar dengan Google</button>
 
-                <div class="flex items-center gap-3 my-2">
-                    <div class="h-px bg-slate-200 flex-1"></div>
-                    <span class="text-[9px] font-bold text-[#475569] tracking-widest">ATAU MANUAL</span>
-                    <div class="h-px bg-slate-200 flex-1"></div>
+                <div class="flex items-center gap-3 my-5">
+                    <div class="h-px bg-slate-300 flex-1"></div>
+                    <span class="text-[10px] font-bold text-[#475569] tracking-widest">ATAU</span>
+                    <div class="h-px bg-slate-300 flex-1"></div>
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user text-xs"></i></span>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
+                    <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Nama Lengkap">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp">
+                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="No. WhatsApp">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                    <input type="password" id="passInput" name="password" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
+                    <input type="password" id="passInput" name="password" required class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
                     <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
+                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
                     <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
@@ -126,7 +125,7 @@
                 </div>
             </form>
 
-            <div class="mt-5 text-center">
+            <div class="mt-8 space-y-4 text-center">
                 <p class="text-[11px] text-[#475569] font-medium">Sudah punya akun? 
                     <a href="{{ route('login') }}" class="text-sky-600 font-extrabold hover:text-sky-700 hover:underline transition ml-1">Masuk di sini</a>
                 </p>
@@ -215,7 +214,7 @@
                 <i class="fa-solid fa-shield-halved text-rose-500 text-2xl"></i>
             </div>
             <h3 class="text-lg font-extrabold text-slate-800 mb-2">Tindakan Diperlukan</h3>
-            <p class="text-xs text-slate-600 mb-6 leading-relaxed">
+            <p class="text-xs text-slate-600 mb-8 leading-relaxed">
                 Untuk alasan keamanan dan hukum, Anda <b>wajib membaca dan menyetujui Syarat & Ketentuan</b> kami di bawah formulir ini sebelum dapat melanjutkan pendaftaran menggunakan Google.
             </p>
             <button onclick="closeGoogleAlert()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">
