@@ -65,7 +65,7 @@
     <div class="sparkle hidden md:block" style="top:40%;right:40%;animation-delay:1s;"></div>
 
     <!-- ===== DESKTOP TOP NAVBAR (HIDDEN ON MOBILE) ===== -->
-    <header class="hidden md:flex bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
+    <header class="rentify-navbar hidden md:flex sticky top-0 z-50 ">
         <div class="max-w-6xl mx-auto w-full px-6 py-3 flex items-center gap-4">
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
                 <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">

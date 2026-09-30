@@ -17,7 +17,7 @@
     <div class="max-w-md mx-auto min-h-screen bg-white relative shadow-md">
 
         <!-- HEADER -->
-        <div class="bg-white px-5 pt-6 pb-4 sticky top-0 z-50 shadow-sm flex items-center gap-4">
+        <div class="rentify-navbar px-5 pt-6 pb-4 sticky top-0 z-50 flex items-center gap-4">
             <a href="{{ route('customer.settings') }}" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>

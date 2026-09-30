@@ -66,7 +66,7 @@
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white border-b border-slate-200/80 px-8 py-4 flex items-center justify-between shadow-xs">
+        <header class="rentify-navbar /80 px-8 py-4 flex items-center justify-between ">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-brandBlue/5 rounded-xl text-brandBlue md:hidden">
                     <i class="fas fa-bars"></i>
@@ -208,7 +208,7 @@
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white border-b border-slate-200/80 px-8 py-4 flex items-center justify-between shadow-xs">
+        <header class="rentify-navbar /80 px-8 py-4 flex items-center justify-between ">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-brandBlue/5 rounded-xl text-brandBlue md:hidden">
                     <i class="fas fa-bars"></i>

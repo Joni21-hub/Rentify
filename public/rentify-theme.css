@@ -240,3 +240,14 @@ select.rentify-input option {
     background: #ffffff;
     color: #0f172a;
 }
+
+/* --- NAVBAR & FOOTER MASTER THEME -------------------------- */
+/* Menerapkan prinsip Glass Panel dari Login ke bar navigasi */
+.rentify-navbar {
+    background: linear-gradient(to right, rgba(255, 253, 245, 0.95) 0%, rgba(203, 224, 245, 0.95) 100%) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.8) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
+}

@@ -15,7 +15,7 @@
 </head>
 <body class="font-sans text-slate-800">
 
-    <nav class="bg-white border-b border-ice sticky top-0 z-50 shadow-sm">
+    <nav class="rentify-navbar sticky top-0 z-50 ">
         <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
             <a href="/customer" class="flex items-center space-x-2">
                 <div class="w-10 h-10 bg-brandBlue rounded-lg flex items-center justify-center font-bold text-white text-xl">R</div>

@@ -85,7 +85,7 @@
 
     <main class="flex-1 flex flex-col overflow-hidden">
         
-        <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-0 shadow-sm">
+        <header class="rentify-navbar h-16 px-8 flex items-center justify-between z-0 ">
             <div class="flex items-center space-x-3">
                 <h2 id="header-title" class="text-lg font-black text-slate-800 tracking-tight">Pusat Kendali Sistem Utama</h2>
                 <span class="text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center shadow-sm">

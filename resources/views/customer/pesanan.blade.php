@@ -12,7 +12,7 @@
 
     <div class="max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-md">
         
-        <div class="bg-gradient-to-r from-sky-400 to-[#0369a1] sticky top-0 z-50 shadow-md px-4 py-4 flex items-center gap-4">
+        <div class="rentify-navbar bg-gradient-to-r from-sky-400 to-[#0369a1] sticky top-0 z-50 px-4 py-4 flex items-center gap-4">
             <a href="{{ route('customer.dashboard') }}" class="text-white hover:text-sky-200 transition">
                 <i class="fa-solid fa-arrow-left text-lg"></i>
             </a>
@@ -32,7 +32,7 @@
             </div>
         </div>
         
-        <nav class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] rounded-t-2xl z-50">
+        <nav class="rentify-navbar fixed bottom-0 left-0 w-full -[0_-4px_10px_rgba(0,0,0,0.05)] rounded-t-2xl z-50">
             <div class="max-w-md mx-auto flex justify-between items-center px-8 py-3">
                 <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-ocean-dark transition">
                     <i class="fa-solid fa-house text-xl mb-1"></i>

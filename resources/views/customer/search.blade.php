@@ -11,7 +11,7 @@
 <div class="min-h-screen bg-slate-50 pb-10">
 
     <!-- 1. HEADER PENCARIAN ALA SHOPEE -->
-    <div class="bg-white sticky top-0 z-50 px-4 py-3 shadow-sm flex gap-3 items-center">
+    <div class="rentify-navbar sticky top-0 z-50 px-4 py-3 flex gap-3 items-center">
         <!-- Tombol Kembali -->
         <a href="{{ route('customer.home') }}" class="text-slate-500 hover:text-sky-600 text-xl transition">
             <i class="fa-solid fa-arrow-left"></i>

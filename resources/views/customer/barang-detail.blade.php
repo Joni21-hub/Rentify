@@ -145,7 +145,7 @@
         <p class="text-[10px] text-slate-400 text-center mt-1.5 font-medium">*Titik Maps akurat & alamat lengkap akan diberikan di struk pesanan.</p>
     </div>
 
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-3 py-2.5 flex items-center justify-center z-50">
+    <div class="rentify-navbar fixed bottom-0 left-0 w-full px-3 py-2.5 flex items-center justify-center z-50">
         <div class="w-full max-w-md flex gap-2">
             
             @if($stokNyata > 0)

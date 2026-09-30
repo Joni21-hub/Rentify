@@ -29,7 +29,7 @@
 
     <div class="max-w-md mx-auto min-h-screen bg-slate-100 relative shadow-xl">
         
-        <div class="bg-gradient-to-r from-[#0369a1] to-sky-400 sticky top-0 z-50 shadow-md px-5 py-4 flex items-center gap-4">
+        <div class="rentify-navbar bg-gradient-to-r from-[#0369a1] to-sky-400 sticky top-0 z-50 px-5 py-4 flex items-center gap-4">
             <h1 class="text-lg font-extrabold text-white flex-1 text-center tracking-wide">Favorit Saya</h1>
         </div>
 
@@ -75,7 +75,7 @@
             @endif
         </div>
         
-        <nav class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] rounded-t-2xl z-50">
+        <nav class="rentify-navbar fixed bottom-0 left-0 w-full -[0_-4px_10px_rgba(0,0,0,0.05)] rounded-t-2xl z-50">
             <div class="max-w-md mx-auto flex justify-between items-center px-8 py-3">
                 
                 <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-ocean-dark transition">

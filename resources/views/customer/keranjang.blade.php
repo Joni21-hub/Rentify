@@ -12,7 +12,7 @@
 <div class="cart-container relative">
 
     <!-- TOP BAR -->
-    <div class="bg-white sticky top-0 z-30 px-4 py-4 shadow-sm border-b border-slate-100 flex items-center">
+    <div class="rentify-navbar sticky top-0 z-30 px-4 py-4 flex items-center">
         <div class="flex items-center gap-3">
             <a href="{{ route('customer.home') }}" class="text-slate-600 hover:text-sky-500 transition">
                 <i class="fa-solid fa-arrow-left text-xl"></i>
@@ -94,7 +94,7 @@
             </div>
 
             <!-- BLOK BAWAH TERKUNCI -->
-            <div class="fixed bottom-0 left-0 w-full z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.06)]">
+            <div class="rentify-navbar fixed bottom-0 left-0 w-full z-40 -[0_-8px_25px_rgba(0,0,0,0.06)]">
                 <div class="max-w-[600px] mx-auto bg-white border-t border-slate-200 flex flex-col rounded-t-2xl overflow-hidden">
                     
                     <div id="voucher-container" class="w-full border-b border-slate-100 bg-white transition-all duration-300">

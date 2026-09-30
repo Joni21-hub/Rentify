@@ -66,7 +66,7 @@
 
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
         
-        <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-0 shadow-sm">
+        <header class="rentify-navbar h-16 px-8 flex items-center justify-between z-0 ">
             <div class="flex items-center space-x-3">
                 <h2 class="text-lg font-black text-slate-800 tracking-tight">Manajemen Pencairan Saldo Vendor</h2>
             </div>
