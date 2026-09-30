@@ -12,91 +12,7 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        @keyframes gradientFlow {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        .bg-flowing {
-            background: linear-gradient(-45deg, #0284c7, #38bdf8, #0ea5e9, #0369a1);
-            background-size: 300% 300%;
-            animation: gradientFlow 15s ease infinite;
-        }
-
-        
-
-        .input-glass {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: #0f172a;
-            transition: all 0.3s ease;
-        }
-
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: #ffffff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-
-        .input-glass::placeholder {
-            color: rgba(15, 23, 42, 0.5);
-            font-weight: 500;
-        }
-
-        .sparkle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background-color: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 4s infinite ease-in-out;
-        }
-
-        @keyframes twinkle {
-
-            0%,
-            100% {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-
-            50% {
-                opacity: 0.8;
-                transform: scale(1.5);
-                box-shadow: 0 0 12px rgba(255, 255, 255, 1);
-            }
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
 </head>
 
 <body class="min-h-screen w-full flex flex-col p-4 sm:p-6 relative overflow-x-hidden text-slate-800">
@@ -113,33 +29,33 @@
         <div class="rentify-card relative flex flex-col md:flex-row overflow-hidden">
 
             <!-- BAGIAN KIRI (Info Vendor) -->
-            <div class="md:w-5/12 p-8 sm:p-10 flex flex-col justify-center bg-white/10 border-b md:border-b-0 md:border-r border-white/30 text-white relative overflow-hidden">
+            <div class="md:w-5/12 p-8 sm:p-10 flex flex-col justify-center bg-white/40 border-b md:border-b-0 md:border-r border-white/50 text-slate-800 relative overflow-hidden">
                 <!-- Aksen cahaya latar -->
                 <div class="absolute -top-20 -left-20 w-64 h-64 bg-white/20 blur-[80px] rounded-full"></div>
 
                 <div class="relative z-10">
-                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-2" style="text-shadow: 0 0 20px rgba(255,255,255,0.4);">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-2" >
                         RENTIFY<br>VENDOR
                     </h1>
-                    <p class="text-xs text-white/90 font-medium tracking-wide mb-8 leading-relaxed">Bergabunglah menjadi mitra resmi Rentify dan kembangkan bisnis rental Anda ke level selanjutnya.</p>
+                    <p class="text-xs text-slate-600 font-medium tracking-wide mb-8 leading-relaxed">Bergabunglah menjadi mitra resmi Rentify dan kembangkan bisnis rental Anda ke level selanjutnya.</p>
 
                     <div class="space-y-6">
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rentify-card/20 flex items-center justify-center shrink-0 -white/30 text-white">
+                            <div class="w-10 h-10 bg-sky-100 border border-sky-200 text-sky-600">
                                 <i class="fa-solid fa-chart-line"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-extrabold mb-1">Jangkauan Luas</h4>
-                                <p class="text-[10px] text-white/80 leading-relaxed">Temukan pelanggan baru yang siap menyewa barang Anda setiap harinya.</p>
+                                <p class="text-[10px] text-slate-600 leading-relaxed">Temukan pelanggan baru yang siap menyewa barang Anda setiap harinya.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rentify-card/20 flex items-center justify-center shrink-0 -white/30 text-white">
+                            <div class="w-10 h-10 bg-sky-100 border border-sky-200 text-sky-600">
                                 <i class="fa-solid fa-shield-halved"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-extrabold mb-1">Keamanan Transaksi</h4>
-                                <p class="text-[10px] text-white/80 leading-relaxed">Sistem pembayaran otomatis yang aman, tercatat, dan dapat diandalkan.</p>
+                                <p class="text-[10px] text-slate-600 leading-relaxed">Sistem pembayaran otomatis yang aman, tercatat, dan dapat diandalkan.</p>
                             </div>
                         </div>
                     </div>
@@ -150,8 +66,8 @@
             <div class="md:w-7/12 p-8 sm:p-10 relative">
 
                 <div class="mb-6">
-                    <h2 class="text-2xl font-extrabold text-white drop-shadow-md">Daftar Akun Mitra</h2>
-                    <p class="text-[11px] text-white/90">Lengkapi data di bawah ini untuk membuka toko.</p>
+                    <h2 class="text-2xl font-extrabold text-slate-800">Daftar Akun Mitra</h2>
+                    <p class="text-[11px] text-slate-600">Lengkapi data di bawah ini untuk membuka toko.</p>
                 </div>
 
                 @if ($errors->any())
@@ -171,7 +87,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- Nama Lengkap Pemilik -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user-tie text-xs"></i></span>
                                 <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="">
@@ -180,7 +96,7 @@
 
                         <!-- Nama Toko -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Nama Toko Rental</label>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Nama Toko Rental</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-store text-xs"></i></span>
                                 <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="">
@@ -189,7 +105,7 @@
 
                         <!-- Email -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Email Aktif (Utama)</label>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Email Aktif (Utama)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-envelope text-xs"></i></span>
                                 <input type="email" name="email" value="{{ old('email') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="vendor@email.com">
@@ -198,7 +114,7 @@
 
                         <!-- WhatsApp -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">No. WhatsApp Toko</label>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">No. WhatsApp Toko</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
                                 <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="081234567xxx">
@@ -207,7 +123,7 @@
 
                         <!-- Password -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Kata Sandi</label>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Kata Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
                                 <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-9 pr-9 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="Min 8 karakter">
@@ -217,7 +133,7 @@
 
                         <!-- Confirm Password -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-white/90 mb-1.5 ml-1">Konfirmasi Sandi</label>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Konfirmasi Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
                                 <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-9 pr-9 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="Ulangi sandi">
@@ -233,7 +149,7 @@
                                 class="w-3.5 h-3.5 border border-white/50 rounded focus:ring-2 focus:ring-sky-300 bg-white/30 checked:bg-sky-500 transition opacity-50 cursor-not-allowed">
                         </div>
                         <div class="ml-2 text-[10px]">
-                            <label class="font-bold text-white/90 leading-tight block drop-shadow-sm">
+                            <label class="font-bold text-slate-600 leading-tight block drop-shadow-sm">
                                 Saya menyatakan data di atas asli dan menyetujui seluruh
                                 <button type="button" onclick="openModal()" class="font-extrabold text-sky-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan Vendor</button>.
                             </label>
@@ -244,7 +160,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex justify-center items-center gap-2">
+                        <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest">
                             <span>BUKA TOKO SEKARANG</span>
                             <i class="fa-solid fa-arrow-right ml-1"></i>
                         </button>
@@ -252,8 +168,8 @@
                 </form>
 
                 <div class="mt-6 text-center">
-                    <p class="text-[11px] text-white/90 font-medium">Bukan Vendor?
-                        <a href="{{ route('register') }}" class="text-white font-extrabold hover:text-sky-100 hover:underline transition ml-1">Daftar sebagai Customer</a>
+                    <p class="text-[11px] text-slate-600 font-medium">Bukan Vendor?
+                        <a href="{{ route('register') }}" class="text-sky-600 font-extrabold hover:text-sky-700 hover:underline transition ml-1">Daftar sebagai Customer</a>
                     </p>
                 </div>
 

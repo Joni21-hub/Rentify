@@ -10,60 +10,7 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        /* Latar Belakang Biru Bersih (Tanpa Ungu) */
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .bg-flowing {
-            background: linear-gradient(-45deg, #0284c7, #38bdf8, #0ea5e9, #0369a1);
-            background-size: 300% 300%;
-            animation: gradientFlow 15s ease infinite;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
-            border-radius: 2rem;
-        }
-
-        .input-glass {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: #0f172a;
-            transition: all 0.3s ease;
-        }
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: #ffffff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
-
-        /* Bintang Berkedip (Sparkles) untuk membuat desain lebih hidup */
-        .sparkle {
-            position: absolute;
-            width: 4px; height: 4px;
-            background-color: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 4s infinite ease-in-out;
-        }
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 0.8; transform: scale(1.5); box-shadow: 0 0 12px rgba(255,255,255,1); }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
 </head>
 <body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
 
@@ -76,13 +23,11 @@
 
     <div class="w-full max-w-[380px] relative z-10 my-[2vh] lg:my-0">
         
-        <div class="glass-panel p-6 sm:p-8 relative">
+        <div class="rentify-card p-6 sm:p-8 relative">
             
             <div class="text-center mb-6">
-                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-1.5" style="text-shadow: 0 0 20px rgba(255,255,255,0.4);">
-                    RENTIFY
-                </h1>
-                <p class="text-[11px] text-white/90 font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
+                <h1 class="text-5xl sm:text-6xl font-black tracking-tighter text-sky-500 mb-2">Rentify</h1>
+                <p class="text-[12px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
 
             @if ($errors->any())
@@ -99,7 +44,7 @@
                 @csrf 
 
                 <!-- Tombol Google di-intercept oleh JS untuk memastikan S&K dicentang -->
-                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3 bg-white/20 hover:bg-white/30 border border-white/50 rounded-2xl transition-all font-extrabold text-white text-xs shadow-sm mb-2">
+                <button type="button" onclick="handleGoogleLogin()" class="rentify-btn-secondary w-full flex justify-center items-center gap-3 py-3 text-sm mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4 bg-white rounded-full p-0.5">
                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -117,23 +62,23 @@
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user text-xs"></i></span>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
+                    <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp">
+                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="rentify-input w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                    <input type="password" id="passInput" name="password" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
+                    <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
                     <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
+                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
                     <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
@@ -146,16 +91,16 @@
                     <div class="ml-2 text-[10px]">
                         <label class="font-bold text-white/90 leading-tight block drop-shadow-sm">
                             Menyetujui 
-                            <button type="button" onclick="openModal()" class="font-extrabold text-sky-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan</button>.
+                            <button type="button" onclick="openModal()" class="font-extrabold text-sky-600 hover:text-sky-700 underline transition cursor-pointer">Syarat & Ketentuan</button>.
                         </label>
-                        <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
+                        <p id="scrollAlert" class="text-[8.5px] text-rose-500 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
                             <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk menyetujui
                         </p>
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest">
                         <span>BUAT AKUN</span>
                     </button>
                 </div>
@@ -163,7 +108,7 @@
 
             <div class="mt-5 text-center">
                 <p class="text-[11px] text-white/90 font-medium">Sudah punya akun? 
-                    <a href="{{ route('login') }}" class="text-white font-extrabold hover:text-sky-100 hover:underline transition ml-1">Masuk di sini</a>
+                    <a href="{{ route('login') }}" class="text-sky-600 font-extrabold hover:text-sky-700 hover:underline transition ml-1">Masuk di sini</a>
                 </p>
             </div>
             
@@ -296,13 +241,13 @@
                 
                 const alertText = document.getElementById('scrollAlert');
                 alertText.innerHTML = '<i class="fa-solid fa-check-circle mr-0.5"></i> Syarat dibaca, silakan centang.';
-                alertText.classList.replace('text-rose-300', 'text-emerald-300');
+                alertText.classList.replace('text-rose-500', 'text-emerald-500');
                 alertText.classList.remove('animate-pulse');
 
                 const progressText = document.getElementById('scrollProgress');
-                progressText.innerHTML = '<i class="fa-solid fa-check text-emerald-300 mr-1"></i> Disetujui';
-                progressText.classList.remove('text-rose-300', 'animate-pulse');
-                progressText.classList.add('text-white/80');
+                progressText.innerHTML = '<i class="fa-solid fa-check text-emerald-500 mr-1"></i> Disetujui';
+                progressText.classList.remove('text-rose-500', 'animate-pulse');
+                progressText.classList.add('text-[#475569]');
             }
         }
 
