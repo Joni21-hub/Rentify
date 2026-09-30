@@ -47,8 +47,8 @@
         <div class="glass-panel p-8 sm:p-10 relative">
             
             <div class="text-center mb-8">
-                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-[#1E3A5F] mb-2">
-                    RENTIFY
+                <h1 class="text-5xl sm:text-6xl font-black tracking-tighter text-sky-500 mb-2">
+                    Rentify
                 </h1>
                 <p class="text-[12px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
