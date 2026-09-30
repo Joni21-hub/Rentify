@@ -18,14 +18,17 @@
                 }
             }
         }
-    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-24 text-slate-700">
+<body class="min-h-screen pb-24 text-slate-700">
 
-    <div class="max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-md">
+    <div class="max-w-md mx-auto min-h-screen bg-slate-100 relative shadow-xl">
         
-        <div class="bg-gradient-to-r from-sky-400 to-[#0369a1] sticky top-0 z-50 shadow-md px-4 py-4 flex items-center gap-4">
-            <h1 class="text-lg font-bold text-white flex-1 text-center">Favorit Saya</h1>
+        <div class="bg-gradient-to-r from-[#0369a1] to-sky-400 sticky top-0 z-50 shadow-md px-5 py-4 flex items-center gap-4">
+            <h1 class="text-lg font-extrabold text-white flex-1 text-center tracking-wide">Favorit Saya</h1>
         </div>
 
         <div class="p-4">
