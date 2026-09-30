@@ -105,7 +105,7 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase mb-1">Nominal Tarik (Rp)</label>
-                        <input type="number" name="nominal" min="10000" max="{{ $saldo- class="rentify-input">saldo_aktif ?? 0 }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-brand-main/20 outline-none" placeholder="10000">
+                        <input type="number" name="nominal" min="10000" max="{{ $saldo->saldo_aktif ?? 0 }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-brand-main/20 outline-none" placeholder="10000">
                     </div>
                     <div>
                         <label class="block text-xs font-extrabold text-slate-500 uppercase mb-1">Metode</label>
