@@ -30,14 +30,14 @@
         
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf
-            <button type="submit" class="w-full rentify-btn text-white font-bold py-2 px-4 rounded transition duration-200">
+            <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest uppercase">
                 Kirim Ulang Email Verifikasi
             </button>
         </form>
 
         <form method="POST" action="{{ route('logout') }}" class="mt-4">
             @csrf
-            <button type="submit" class="text-sm text-red-500 hover:text-red-700 underline">
+            <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest uppercase">
                 Logout
             </button>
         </form>
