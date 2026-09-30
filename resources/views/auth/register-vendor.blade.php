@@ -12,7 +12,35 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
 
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Latar Belakang Gradasi Melingkar */
+        .bg-flowing {
+            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
+        }
+
+        .glass-panel {
+            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            border-radius: 2rem;
+        }
+
+        .input-glass {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #0f172a;
+            transition: all 0.3s ease;
+        }
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
+    </style>
 </head>
 
 <body class="min-h-screen w-full flex flex-col p-4 sm:p-6 relative overflow-x-hidden text-slate-800">
@@ -26,36 +54,36 @@
 
     <div class="w-full max-w-[850px] relative z-10 m-auto">
 
-        <div class="rentify-card relative flex flex-col md:flex-row overflow-hidden">
+        <div class="glass-panel relative flex flex-col md:flex-row overflow-hidden">
 
             <!-- BAGIAN KIRI (Info Vendor) -->
-            <div class="md:w-5/12 p-8 sm:p-10 flex flex-col justify-center bg-white/40 border-b md:border-b-0 md:border-r border-white/50 text-slate-800 relative overflow-hidden">
+            <div class="md:w-5/12 p-8 sm:p-10 flex flex-col justify-center bg-white/40 border-b md:border-b-0 md:border-r border-slate-300/50 text-slate-800 relative overflow-hidden">
                 <!-- Aksen cahaya latar -->
-                <div class="absolute -top-20 -left-20 w-64 h-64 bg-white/20 blur-[80px] rounded-full"></div>
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-sky-200/40 blur-[80px] rounded-full"></div>
 
                 <div class="relative z-10">
                     <h1 class="text-3xl sm:text-4xl font-extrabold tracking-widest drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] mb-2" >
                         RENTIFY<br>VENDOR
                     </h1>
-                    <p class="text-xs text-slate-600 font-medium tracking-wide mb-8 leading-relaxed">Bergabunglah menjadi mitra resmi Rentify dan kembangkan bisnis rental Anda ke level selanjutnya.</p>
+                    <p class="text-xs text-[#475569] font-medium tracking-wide mb-8 leading-relaxed">Bergabunglah menjadi mitra resmi Rentify dan kembangkan bisnis rental Anda ke level selanjutnya.</p>
 
                     <div class="space-y-6">
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 bg-sky-100 border border-sky-200 text-sky-600">
+                            <div class="w-10 h-10 bg-sky-100 border border-sky-200 flex items-center justify-center shrink-0 text-sky-600 rounded-xl">
                                 <i class="fa-solid fa-chart-line"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-extrabold mb-1">Jangkauan Luas</h4>
-                                <p class="text-[10px] text-slate-600 leading-relaxed">Temukan pelanggan baru yang siap menyewa barang Anda setiap harinya.</p>
+                                <p class="text-[10px] text-[#475569] leading-relaxed">Temukan pelanggan baru yang siap menyewa barang Anda setiap harinya.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 bg-sky-100 border border-sky-200 text-sky-600">
+                            <div class="w-10 h-10 bg-sky-100 border border-sky-200 flex items-center justify-center shrink-0 text-sky-600 rounded-xl">
                                 <i class="fa-solid fa-shield-halved"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-extrabold mb-1">Keamanan Transaksi</h4>
-                                <p class="text-[10px] text-slate-600 leading-relaxed">Sistem pembayaran otomatis yang aman, tercatat, dan dapat diandalkan.</p>
+                                <p class="text-[10px] text-[#475569] leading-relaxed">Sistem pembayaran otomatis yang aman, tercatat, dan dapat diandalkan.</p>
                             </div>
                         </div>
                     </div>
@@ -67,7 +95,7 @@
 
                 <div class="mb-6">
                     <h2 class="text-2xl font-extrabold text-slate-800">Daftar Akun Mitra</h2>
-                    <p class="text-[11px] text-slate-600">Lengkapi data di bawah ini untuk membuka toko.</p>
+                    <p class="text-[11px] text-[#475569]">Lengkapi data di bawah ini untuk membuka toko.</p>
                 </div>
 
                 @if ($errors->any())
@@ -87,56 +115,56 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- Nama Lengkap Pemilik -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
+                            <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user-tie text-xs"></i></span>
-                                <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="">
                             </div>
                         </div>
 
                         <!-- Nama Toko -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Nama Toko Rental</label>
+                            <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Nama Toko Rental</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-store text-xs"></i></span>
-                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="">
                             </div>
                         </div>
 
                         <!-- Email -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Email Aktif (Utama)</label>
+                            <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Email Aktif (Utama)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-envelope text-xs"></i></span>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="vendor@email.com">
+                                <input type="email" name="email" value="{{ old('email') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="vendor@email.com">
                             </div>
                         </div>
 
                         <!-- WhatsApp -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">No. WhatsApp Toko</label>
+                            <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">No. WhatsApp Toko</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="rentify-input w-full pl-9 pr-4 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="081234567xxx">
+                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="input-glass w-full pl-9 pr-4 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="081234567xxx">
                             </div>
                         </div>
 
                         <!-- Password -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Kata Sandi</label>
+                            <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Kata Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                                <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-9 pr-9 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="Min 8 karakter">
+                                <input type="password" id="passInput" name="password" required class="input-glass w-full pl-9 pr-9 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="Min 8 karakter">
                                 <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>
 
                         <!-- Confirm Password -->
                         <div class="relative group">
-                            <label class="block text-[10px] font-bold text-slate-600 mb-1.5 ml-1">Konfirmasi Sandi</label>
+                            <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Konfirmasi Sandi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                                <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-9 pr-9 py-2.5 text-[11px] focus:outline-none font-bold" placeholder="Ulangi sandi">
+                                <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-9 pr-9 py-2.5 rounded-xl text-[11px] focus:outline-none font-bold" placeholder="Ulangi sandi">
                                 <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>
@@ -149,9 +177,9 @@
                                 class="w-3.5 h-3.5 border border-white/50 rounded focus:ring-2 focus:ring-sky-300 bg-white/30 checked:bg-sky-500 transition opacity-50 cursor-not-allowed">
                         </div>
                         <div class="ml-2 text-[10px]">
-                            <label class="font-bold text-slate-600 leading-tight block drop-shadow-sm">
+                            <label class="font-bold text-[#475569] leading-tight block drop-shadow-sm">
                                 Saya menyatakan data di atas asli dan menyetujui seluruh
-                                <button type="button" onclick="openModal()" class="font-extrabold text-sky-200 hover:text-white underline transition cursor-pointer">Syarat & Ketentuan Vendor</button>.
+                                <button type="button" onclick="openModal()" class="font-extrabold text-sky-600 hover:text-sky-700 underline transition cursor-pointer">Syarat & Ketentuan Vendor</button>.
                             </label>
                             <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
                                 <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk membuka kunci pendaftaran
@@ -160,7 +188,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest">
+                        <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest uppercase flex justify-center items-center gap-2">
                             <span>BUKA TOKO SEKARANG</span>
                             <i class="fa-solid fa-arrow-right ml-1"></i>
                         </button>
@@ -168,7 +196,7 @@
                 </form>
 
                 <div class="mt-6 text-center">
-                    <p class="text-[11px] text-slate-600 font-medium">Bukan Vendor?
+                    <p class="text-[11px] text-[#475569] font-medium">Bukan Vendor?
                         <a href="{{ route('register') }}" class="text-sky-600 font-extrabold hover:text-sky-700 hover:underline transition ml-1">Daftar sebagai Customer</a>
                     </p>
                 </div>
@@ -179,7 +207,7 @@
 
     <!-- MODAL POPUP SYARAT & KETENTUAN VENDOR (TERANG) -->
     <div id="termsModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="rentify-card max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
+        <div class="glass-panel max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
             <div class="bg-slate-50 px-6 py-4 flex justify-between items-center shrink-0 border-b border-slate-200">
                 <div>
                     <h3 class="font-bold text-slate-800 text-sm tracking-wide">Syarat & Ketentuan Vendor Rentify</h3>

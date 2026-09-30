@@ -10,7 +10,35 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
 
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Latar Belakang Gradasi Melingkar */
+        .bg-flowing {
+            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
+        }
+
+        .glass-panel {
+            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            border-radius: 2rem;
+        }
+
+        .input-glass {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #0f172a;
+            transition: all 0.3s ease;
+        }
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
+    </style>
 </head>
 <body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
 
@@ -23,11 +51,11 @@
 
     <div class="w-full max-w-[380px] relative z-10 my-[2vh] lg:my-0">
         
-        <div class="rentify-card p-6 sm:p-8 relative">
+        <div class="glass-panel p-6 sm:p-8 relative">
             
             <div class="text-center mb-6">
                 <h1 class="text-5xl sm:text-6xl font-black tracking-tighter text-sky-500 mb-2">Rentify</h1>
-                <p class="text-[12px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
+                <p class="text-[11px] text-[#475569] font-medium tracking-wide">Mulai petualangan serumu bersama kami.</p>
             </div>
 
             @if ($errors->any())
@@ -44,41 +72,33 @@
                 @csrf 
 
                 <!-- Tombol Google di-intercept oleh JS untuk memastikan S&K dicentang -->
-                <button type="button" onclick="handleGoogleLogin()" class="rentify-btn-secondary w-full flex justify-center items-center gap-3 py-3 text-sm mb-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4 bg-white rounded-full p-0.5">
-                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
-                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
-                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                    </svg>
-                    Daftar dengan Google
-                </button>
+                <button type="button" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 py-3.5 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl transition-all font-extrabold text-[#475569] text-sm shadow-sm mb-2"><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5 bg-white rounded-full p-0.5">Daftar dengan Google</button>
 
                 <div class="flex items-center gap-3 my-2">
-                    <div class="h-px bg-white/40 flex-1"></div>
-                    <span class="text-[9px] font-bold text-white tracking-widest">ATAU MANUAL</span>
-                    <div class="h-px bg-white/40 flex-1"></div>
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                    <span class="text-[9px] font-bold text-[#475569] tracking-widest">ATAU MANUAL</span>
+                    <div class="h-px bg-slate-200 flex-1"></div>
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user text-xs"></i></span>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="rentify-input w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
+                    <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="rentify-input w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp">
+                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="No. WhatsApp">
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
-                    <input type="password" id="passInput" name="password" required class="rentify-input w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
+                    <input type="password" id="passInput" name="password" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
                     <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
-                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="rentify-input w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
+                    <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
                     <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
@@ -89,25 +109,25 @@
                             class="w-3.5 h-3.5 border border-white/50 rounded focus:ring-2 focus:ring-sky-300 bg-white/30 checked:bg-sky-500 transition opacity-50 cursor-not-allowed">
                     </div>
                     <div class="ml-2 text-[10px]">
-                        <label class="font-bold text-white/90 leading-tight block drop-shadow-sm">
+                        <label class="font-bold text-[#475569] leading-tight block drop-shadow-sm">
                             Menyetujui 
                             <button type="button" onclick="openModal()" class="font-extrabold text-sky-600 hover:text-sky-700 underline transition cursor-pointer">Syarat & Ketentuan</button>.
                         </label>
-                        <p id="scrollAlert" class="text-[8.5px] text-rose-500 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
+                        <p id="scrollAlert" class="text-[8.5px] text-rose-300 font-extrabold mt-0.5 animate-pulse drop-shadow-sm">
                             <i class="fa-solid fa-lock mr-0.5"></i> Baca dokumen untuk menyetujui
                         </p>
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest">
-                        <span>BUAT AKUN</span>
-                    </button>
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+<span>BUAT AKUN</span>
+</button>
                 </div>
             </form>
 
             <div class="mt-5 text-center">
-                <p class="text-[11px] text-white/90 font-medium">Sudah punya akun? 
+                <p class="text-[11px] text-[#475569] font-medium">Sudah punya akun? 
                     <a href="{{ route('login') }}" class="text-sky-600 font-extrabold hover:text-sky-700 hover:underline transition ml-1">Masuk di sini</a>
                 </p>
             </div>
@@ -205,9 +225,33 @@
     </div>
 
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Latar Belakang Gradasi Melingkar */
+        .bg-flowing {
+            background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
+        }
+
+        .glass-panel {
+            background: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            border-radius: 2rem;
+        }
+
+        .input-glass {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #0f172a;
+            transition: all 0.3s ease;
+        }
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
     </style>
 
     <script>
@@ -241,12 +285,12 @@
                 
                 const alertText = document.getElementById('scrollAlert');
                 alertText.innerHTML = '<i class="fa-solid fa-check-circle mr-0.5"></i> Syarat dibaca, silakan centang.';
-                alertText.classList.replace('text-rose-500', 'text-emerald-500');
+                alertText.classList.replace('text-rose-300', 'text-emerald-300');
                 alertText.classList.remove('animate-pulse');
 
                 const progressText = document.getElementById('scrollProgress');
-                progressText.innerHTML = '<i class="fa-solid fa-check text-emerald-500 mr-1"></i> Disetujui';
-                progressText.classList.remove('text-rose-500', 'animate-pulse');
+                progressText.innerHTML = '<i class="fa-solid fa-check text-emerald-300 mr-1"></i> Disetujui';
+                progressText.classList.remove('text-rose-300', 'animate-pulse');
                 progressText.classList.add('text-[#475569]');
             }
         }
