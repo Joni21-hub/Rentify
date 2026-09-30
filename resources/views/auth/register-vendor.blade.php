@@ -107,7 +107,7 @@
     </style>
 </head>
 
-<body class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-flowing text-slate-800">
+<body class="min-h-screen w-full flex flex-col p-4 sm:p-6 relative overflow-x-hidden bg-flowing text-slate-800">
 
     <!-- Efek Bintang Berkedip -->
     <div class="sparkle top-[10%] left-[10%]" style="animation-delay: 0s;"></div>
@@ -116,7 +116,7 @@
     <div class="sparkle bottom-[10%] right-[20%]" style="animation-delay: 2s;"></div>
     <div class="sparkle top-[60%] left-[5%]" style="animation-delay: 2.5s;"></div>
 
-    <div class="w-full max-w-[850px] relative z-10 my-[2vh] lg:my-0">
+    <div class="w-full max-w-[850px] relative z-10 m-auto">
 
         <div class="glass-panel relative flex flex-col md:flex-row overflow-hidden">
 
