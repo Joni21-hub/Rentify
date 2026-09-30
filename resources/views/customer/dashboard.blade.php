@@ -70,7 +70,7 @@
             <h2 class="text-xl font-black text-slate-800 tracking-tight">{{ Auth::user()->name ?? 'Customer' }}</h2>
             <div class="inline-flex items-center gap-1.5 mt-1.5 bg-white/60 px-3 py-1 rounded-full border border-slate-200/60 text-xs font-semibold text-slate-600">
                 <i class="fa-solid fa-envelope text-[11px] text-sky-500"></i>
-                <span class="truncate max-w-[200px]">{{ Auth::user()->email ?? (Auth::user()->whatsapp ?? 'customer@rentify.com') }}</span>
+                <span class="truncate max-w-[200px]">{{ Auth::user()->display_contact }}</span>
             </div>
             
             @if(Auth::user()->whatsapp_verified_at)
@@ -188,7 +188,7 @@
                         @endif
                     </div>
                     <h2 class="font-black text-lg text-slate-800">{{ Auth::user()->name ?? 'Customer' }}</h2>
-                    <p class="text-slate-500 text-xs mt-0.5 break-all">{{ Auth::user()->email ?? Auth::user()->whatsapp }}</p>
+                    <p class="text-slate-500 text-xs mt-0.5 break-all">{{ Auth::user()->display_contact }}</p>
                     @if(Auth::user()->whatsapp_verified_at)
                     <div class="mt-2.5 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
                         <i class="fa-solid fa-shield-check"></i> WA Terverifikasi

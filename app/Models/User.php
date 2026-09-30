@@ -60,4 +60,35 @@ class User extends Authenticatable implements MustVerifyEmail
             'password'             => 'hashed',
         ];
     }
+
+    /**
+     * Cek apakah user memiliki email asli (bukan dummy nomor@rentify.local)
+     */
+    public function hasRealEmail(): bool
+    {
+        return !empty($this->email) && !str_ends_with($this->email, '@rentify.local');
+    }
+
+    /**
+     * Kontak utama untuk ditampilkan di UI (Email asli jika ada, jika tidak nomor WhatsApp)
+     */
+    public function getDisplayContactAttribute(): string
+    {
+        if ($this->hasRealEmail()) {
+            return $this->email;
+        }
+        if (!empty($this->whatsapp)) {
+            // Format nomor telepon menjadi 0831-2592-2565 jika memungkinkan
+            return preg_replace('/(\d{4})(\d{4})(\d+)/', '$1-$2-$3', $this->whatsapp);
+        }
+        return '-';
+    }
+
+    /**
+     * Email asli untuk UI. Mengembalikan null jika masih dummy @rentify.local
+     */
+    public function getDisplayEmailAttribute(): ?string
+    {
+        return $this->hasRealEmail() ? $this->email : null;
+    }
 }
