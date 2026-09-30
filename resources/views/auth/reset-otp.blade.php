@@ -78,12 +78,12 @@
             @if ($isVendor)
                 <div class="flex items-center justify-center gap-2 mb-5">
                     <div class="flex items-center gap-1.5">
-                        <div class="w-7 h-7 rounded-full {{ !$step2 ? 'bg-white text-blue-600' : 'bg-white/30 text-white' }} flex items-center justify-center text-xs font-black shadow transition-all">1</div>
+                        <div class="w-7 h-7 rounded-full {{ !$step2 ? 'bg-white text-sky-600' : 'bg-white/30 text-white' }} flex items-center justify-center text-xs font-black shadow transition-all">1</div>
                         <span class="text-xs text-white/80 font-semibold">WA</span>
                     </div>
                     <div class="h-px w-8 bg-white/40"></div>
                     <div class="flex items-center gap-1.5">
-                        <div class="w-7 h-7 rounded-full {{ $step2 ? 'bg-white text-blue-600' : 'bg-white/20 text-white/60' }} flex items-center justify-center text-xs font-black transition-all">2</div>
+                        <div class="w-7 h-7 rounded-full {{ $step2 ? 'bg-white text-sky-600' : 'bg-white/20 text-white/60' }} flex items-center justify-center text-xs font-black transition-all">2</div>
                         <span class="text-xs text-white/80 font-semibold">Email</span>
                     </div>
                 </div>
@@ -103,8 +103,8 @@
                         <p class="text-xs text-white/80 font-medium">Masukkan OTP yang dikirim ke WhatsApp Anda.</p>
                     @endif
                 @else
-                    <div class="w-16 h-16 bg-blue-400/30 border border-blue-300/50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <i class="fa-solid fa-envelope text-2xl text-blue-100 drop-shadow"></i>
+                    <div class="w-16 h-16 bg-sky-400/30 border border-sky-300/50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <i class="fa-solid fa-envelope text-2xl text-sky-100 drop-shadow"></i>
                     </div>
                     @if ($isVendor)
                         <h1 class="text-xl font-extrabold text-white drop-shadow mb-1">Langkah 2/2 — Verifikasi Email</h1>
@@ -149,7 +149,7 @@
 
                 <div class="pt-1">
                     <button type="submit"
-                        class="w-full bg-white hover:bg-gray-50 text-blue-600 font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                        class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-check-circle"></i>
                         <span>Verifikasi OTP</span>
                     </button>

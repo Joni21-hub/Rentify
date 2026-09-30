@@ -112,7 +112,7 @@
                         placeholder="••••••" autofocus>
                 </div>
 
-                <button type="submit" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                     <i class="fa-solid fa-check-circle"></i>
                     <span>Verifikasi</span>
                 </button>
@@ -122,7 +122,7 @@
                 <p>Belum menerima kode?</p>
                 <form action="{{ route('otp.resend') }}" method="POST">
                     @csrf
-                    <button type="submit" class="font-extrabold text-blue-100 hover:text-white underline transition">
+                    <button type="submit" class="font-extrabold text-sky-200 hover:text-white underline transition">
                         Kirim Ulang Kode
                     </button>
                 </form>

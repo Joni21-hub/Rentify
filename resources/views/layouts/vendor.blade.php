@@ -21,7 +21,7 @@
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: {
                         navydark: '#0F172A',
-                        brand: { deep: '#1E3A8A', main: '#2563EB', sky: '#38BDF8', light: '#E0F2FE' }
+                        brand: { deep: '#0369a1', main: '#0ea5e9', sky: '#38BDF8', light: '#E0F2FE' }
                     }
                 }
             }
@@ -36,12 +36,12 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
         .gradient-text {
-            background: linear-gradient(135deg, #1E3A8A 0%, #38BDF8 100%);
+            background: linear-gradient(135deg, #0369a1 0%, #38BDF8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .gradient-bg {
-            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #38BDF8 100%);
+            background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 50%, #38BDF8 100%);
         }
     </style>
 </head>

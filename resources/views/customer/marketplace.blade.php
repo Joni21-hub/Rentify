@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rentify Marketplace</title>
     <style>
-        body { font-family: sans-serif; background: #f0fdf4; padding: 40px; text-align: center; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f9ff; padding: 40px; text-align: center; }
         .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
-        h1 { color: #166534; }
+        h1 { color: #0284c7; }
     </style>
 </head>
 <body>

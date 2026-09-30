@@ -85,7 +85,7 @@
                                    id="password_lama"
                                    required
                                    placeholder="Masukkan sandi Anda saat ini"
-                                   class="w-full px-4 py-3 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-semibold text-sm transition">
+                                   class="w-full px-4 py-3 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 font-semibold text-sm transition">
                             <button type="button" onclick="togglePassword('password_lama', 'eye_lama')"
                                     class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
                                 <i id="eye_lama" class="fa-solid fa-eye-slash text-sm"></i>
@@ -106,7 +106,7 @@
                                required
                                placeholder="Minimal 8 karakter"
                                oninput="checkStrength(this.value)"
-                               class="w-full px-4 py-3 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-semibold text-sm transition">
+                               class="w-full px-4 py-3 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 font-semibold text-sm transition">
                         <button type="button" onclick="togglePassword('password_baru', 'eye_baru')"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
                             <i id="eye_baru" class="fa-solid fa-eye-slash text-sm"></i>
@@ -135,7 +135,7 @@
                                id="password_conf"
                                required
                                placeholder="Ketik ulang sandi baru"
-                               class="w-full px-4 py-3 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-semibold text-sm transition">
+                               class="w-full px-4 py-3 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 font-semibold text-sm transition">
                         <button type="button" onclick="togglePassword('password_conf', 'eye_conf')"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
                             <i id="eye_conf" class="fa-solid fa-eye-slash text-sm"></i>

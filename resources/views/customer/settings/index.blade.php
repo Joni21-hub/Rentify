@@ -23,7 +23,7 @@
             <a href="{{ route('customer.dashboard') }}" class="absolute top-5 left-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition">
                 <i class="fa-solid fa-arrow-left text-sm"></i>
             </a>
-            <h1 class="text-center text-white font-extrabold text-lg tracking-wide">Akun Saya</h1>
+            <h1 class="text-center text-white font-extrabold text-lg tracking-wide"></h1>
 
             {{-- Kartu profil --}}
             <div class="mt-6 bg-white rounded-2xl shadow-lg px-5 py-4 flex items-center gap-4">

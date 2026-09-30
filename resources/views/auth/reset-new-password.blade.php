@@ -100,7 +100,7 @@
 
                 {{-- Password --}}
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition">
                         <i class="fa-solid fa-lock text-sm"></i>
                     </span>
                     <input
@@ -113,7 +113,7 @@
                         class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold"
                     >
                     <button type="button" onclick="togglePwd('passwordField','eye1')"
-                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition">
+                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition">
                         <i id="eye1" class="fa-regular fa-eye-slash text-sm"></i>
                     </button>
                 </div>
@@ -130,7 +130,7 @@
 
                 {{-- Konfirmasi Password --}}
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition">
                         <i class="fa-solid fa-lock-open text-sm"></i>
                     </span>
                     <input
@@ -142,14 +142,14 @@
                         class="input-glass w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm focus:outline-none font-bold"
                     >
                     <button type="button" onclick="togglePwd('passwordConfirm','eye2')"
-                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition">
+                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition">
                         <i id="eye2" class="fa-regular fa-eye-slash text-sm"></i>
                     </button>
                 </div>
 
                 <div class="pt-1">
                     <button type="submit"
-                        class="w-full bg-white hover:bg-gray-50 text-blue-600 font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                        class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-floppy-disk"></i>
                         <span>Simpan Sandi Baru</span>
                     </button>

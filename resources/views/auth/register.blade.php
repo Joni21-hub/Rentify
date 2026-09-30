@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition"><i class="fa-solid fa-user text-xs"></i></span>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user text-xs"></i></span>
                     <input type="text" name="name" value="{{ old('name') }}" required class="input-glass w-full pl-10 pr-4 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Nama Lengkap">
                 </div>
 
@@ -126,22 +126,22 @@
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition"><i class="fa-solid fa-lock text-xs"></i></span>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-lock text-xs"></i></span>
                     <input type="password" id="passInput" name="password" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Kata Sandi (Min 8)">
-                    <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
+                    <button type="button" onclick="togglePass('passInput', 'eye1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye1" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-blue-600 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-shield-halved text-xs"></i></span>
                     <input type="password" id="passConfirmInput" name="password_confirmation" required class="input-glass w-full pl-10 pr-10 py-2.5 rounded-2xl text-[11px] focus:outline-none font-bold" placeholder="Konfirmasi Kata Sandi">
-                    <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-blue-600 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
+                    <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                 </div>
 
                 <!-- Bagian Syarat & Ketentuan -->
                 <div class="flex items-start pt-1 pb-1">
                     <div class="flex items-center h-4 relative group mt-0.5">
                         <input id="terms_customer" name="terms" type="checkbox" required disabled
-                            class="w-3.5 h-3.5 border border-white/50 rounded focus:ring-2 focus:ring-blue-300 bg-white/30 checked:bg-blue-600 transition opacity-50 cursor-not-allowed">
+                            class="w-3.5 h-3.5 border border-white/50 rounded focus:ring-2 focus:ring-sky-300 bg-white/30 checked:bg-sky-500 transition opacity-50 cursor-not-allowed">
                     </div>
                     <div class="ml-2 text-[10px]">
                         <label class="font-bold text-white/90 leading-tight block drop-shadow-sm">
@@ -155,7 +155,7 @@
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-extrabold py-3.5 rounded-2xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <span>BUAT AKUN</span>
                     </button>
                 </div>
@@ -163,7 +163,7 @@
 
             <div class="mt-5 text-center">
                 <p class="text-[11px] text-white/90 font-medium">Sudah punya akun? 
-                    <a href="{{ route('login') }}" class="text-white font-extrabold hover:text-blue-100 hover:underline transition ml-1">Masuk di sini</a>
+                    <a href="{{ route('login') }}" class="text-white font-extrabold hover:text-sky-100 hover:underline transition ml-1">Masuk di sini</a>
                 </p>
             </div>
             
@@ -253,7 +253,7 @@
             <p class="text-xs text-slate-600 mb-6 leading-relaxed">
                 Untuk alasan keamanan dan hukum, Anda <b>wajib membaca dan menyetujui Syarat & Ketentuan</b> kami di bawah formulir ini sebelum dapat melanjutkan pendaftaran menggunakan Google.
             </p>
-            <button onclick="closeGoogleAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">
+            <button onclick="closeGoogleAlert()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">
                 Mengerti
             </button>
         </div>

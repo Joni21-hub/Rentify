@@ -72,7 +72,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-orange-500/30 transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
+                        <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
                             <i class="fa-solid fa-envelope text-lg"></i> Kirim Kode OTP
                         </button>
                     </div>

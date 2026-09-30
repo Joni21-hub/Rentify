@@ -66,12 +66,12 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nama Lengkap</label>
                     <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 font-bold text-sm transition">
+                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 font-bold text-sm transition">
                 </div>
 
                 <!-- SIMPAN -->
                 <div class="pt-4">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5">
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5">
                         Simpan Profil
                     </button>
                 </div>

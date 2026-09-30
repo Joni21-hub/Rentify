@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pendaftaran Berhasil - Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
 </head>
 <body class="bg-slate-50 flex items-center justify-center min-h-screen p-4 font-sans">
 
@@ -29,7 +33,7 @@
         
         <p class="mb-6 text-xs text-slate-400">Terima kasih telah bergabung bersama Rentify.</p>
         
-        <a href="/" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
+        <a href="/" class="block w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
             Kembali ke Beranda
         </a>
     </div>
