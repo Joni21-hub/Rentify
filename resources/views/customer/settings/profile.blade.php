@@ -72,7 +72,7 @@
 
                 <!-- SIMPAN -->
                 <div class="pt-4">
-                    <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5">
+                    <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 active:translate-y-0">
                         Simpan Profil
                     </button>
                 </div>

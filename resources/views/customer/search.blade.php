@@ -84,7 +84,7 @@
                         <!-- Area Foto -->
                         <div class="relative w-full aspect-square bg-white flex items-center justify-center p-2 border-b border-slate-50">
                             @if($barang->cover_photo)
-                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition duration-300">
+                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain mix-blend-multiply group-transform hover:-translate-y-1 active:translate-y-0 transition duration-300">
                             @else
                                 <i class="fa-solid fa-image text-slate-200 text-3xl"></i>
                             @endif

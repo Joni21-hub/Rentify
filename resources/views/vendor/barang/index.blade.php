@@ -11,12 +11,12 @@
         </div>
         
         <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rentify-btn text-white font-bold rounded-2xl hover:opacity-90 transition-opacity shadow-lg shadow-brand-main/30 group">
-            <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform duration-300"></i> Tambah Barang Baru
+            <i class="fa-solid fa-plus group-hover:rotate-90 transition-all duration-300"></i> Tambah Barang Baru
         </a>
     </header>
 
     @if(session('success'))
-        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm animate-fade-in-down">
+        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm ">
             <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
                 <i class="fa-solid fa-check"></i>
             </div>
@@ -65,7 +65,7 @@
                                 <div class="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm relative group-hover:shadow-md transition-all">
                                     @if($barang->cover_photo)
                                         <!-- SESUDAHNYA (Hapus kata 'storage/') -->
-                                        <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                        <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover group-transform hover:-translate-y-1 active:translate-y-0 transition-all duration-500">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
                                             <i class="fa-solid fa-image text-2xl"></i>
@@ -135,7 +135,7 @@
                             </div>
                             <h3 class="text-xl font-black text-slate-800 mb-2">Belum ada produk di etalase</h3>
                             <p class="text-slate-500 text-sm max-w-md mx-auto mb-6 font-medium">Toko Anda saat ini masih kosong. Mulai tambahkan barang sewaan pertama Anda agar pelanggan bisa mulai menyewa.</p>
-                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 rentify-card -slate-200 text-slate-700 font-bold hover:text-sky-600 hover:-brand-main hover: transition-all text-sm">
+                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 rentify-card -slate-200 text-slate-700 font-bold hover:text-sky-600 hover:-brand-main transition-all text-sm">
                                 <i class="fa-solid fa-plus"></i> Tambah Barang Sekarang
                             </a>
                         </td>
@@ -150,11 +150,10 @@
 
 <style>
     /* Tambahan animasi ringan saat notifikasi muncul */
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-10px); }
+    
         to { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in-down {
+    . {
         animation: fadeInDown 0.5s ease-out;
     }
 </style>

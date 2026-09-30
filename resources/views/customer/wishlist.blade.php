@@ -38,7 +38,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     
                     @foreach($wishlists as $fav)
-                    <div class="relative block rentify-card -sky-50 hover: transition">
+                    <div class="relative block rentify-card -sky-50 transition">
                         <a href="{{ url('/customer/barang/' . ($fav->barang->slug ?? $fav->barang->id)) }}" class="block p-2">
                             <div class="relative h-28 bg-slate-100 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
                                 @if($fav->barang->cover_photo)

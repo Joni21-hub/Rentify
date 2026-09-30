@@ -122,7 +122,7 @@
                         </div>
                         <h3 class="text-white font-black text-lg mb-2">Tentukan Lokasimu Dulu Yuk!</h3>
                         <p class="text-sky-100 text-[13px] font-medium leading-relaxed mb-6">Biar kami bisa mencarikan barang sewaan terdekat (maksimal 50 KM) dari tempatmu.</p>
-                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 rentify-card text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 transition-transform hover:scale-105">
+                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 rentify-card text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 transition-all transform hover:-translate-y-1 active:translate-y-0">
                             <i class="fa-solid fa-map-pin"></i> Atur Titik Lokasi
                         </a>
                     </div>
@@ -151,7 +151,7 @@
                 <!-- GRID: 2 kolom HP, 3 kolom tablet, 5 kolom Desktop -->
                 <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
                     @foreach($daftarBarang as $barang)
-                        <div class="rentify-card -slate-100 overflow-hidden relative flex flex-col hover: transition">
+                        <div class="rentify-card -slate-100 overflow-hidden relative flex flex-col transition">
                             <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
                                 @if($barang->cover_photo)
                                     <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">

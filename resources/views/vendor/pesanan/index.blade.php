@@ -12,7 +12,7 @@
     </header>
 
     @if(session('success'))
-        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm animate-fade-in-down">
+        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm ">
             <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-check"></i></div>
             <p class="font-semibold">{{ session('success') }}</p>
         </div>
@@ -99,7 +99,7 @@
     </div>
 </div>
 <style>
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in-down { animation: fadeInDown 0.5s ease-out; }
+     to { opacity: 1; transform: translateY(0); } }
+    . { animation: fadeInDown 0.5s ease-out; }
 </style>
 @endsection

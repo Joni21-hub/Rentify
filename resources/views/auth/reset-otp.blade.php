@@ -141,7 +141,7 @@
 
                 <div class="pt-1">
                     <button type="submit"
-                        class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                        class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-check-circle"></i>
                         <span>Verifikasi OTP</span>
                     </button>

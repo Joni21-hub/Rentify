@@ -160,7 +160,7 @@
                 {{-- TOMBOL SIMPAN --}}
                 <div class="pt-2">
                     <button type="submit"
-                            class="w-full bg-gradient-to-r from-[#0369a1] to-sky-500 hover:from-[#025d8f] hover:to-sky-600 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                            class="w-full bg-gradient-to-r from-[#0369a1] to-sky-500 hover:from-[#025d8f] hover:to-sky-600 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-shield-check"></i>
                         @if(Auth::user()->google_id && !Auth::user()->password_changed_at)
                             Buat Kata Sandi

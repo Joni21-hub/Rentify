@@ -56,7 +56,7 @@
                         </div>
                         
                         <!-- Ikon + Kecil Ala Shopee di Pojok Kanan Bawah -->
-                        <div class="absolute bottom-0 right-0 w-8 h-8 bg-brand-sky border-2 border-brand-deep rounded-full flex items-center justify-center text-white font-bold shadow-md hover:scale-110 transition-transform">
+                        <div class="absolute bottom-0 right-0 w-8 h-8 bg-brand-sky border-2 border-brand-deep rounded-full flex items-center justify-center text-white font-bold shadow-md transform hover:-translate-y-1 active:translate-y-0 transition-all">
                             <i class="fa-solid fa-plus text-sm"></i>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
 
                     <div class="pt-6 mt-8 border-t border-slate-100 text-right">
                         <button type="submit" class="inline-flex items-center gap-2 px-8 py-4 rentify-btn text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-main/30 group">
-                            Simpan Pengaturan <i class="fa-solid fa-floppy-disk group-hover:scale-125 transition-transform"></i>
+                            Simpan Pengaturan <i class="fa-solid fa-floppy-disk group-hover:scale-125 transition-all"></i>
                         </button>
                     </div>
                 </div>

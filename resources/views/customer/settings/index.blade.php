@@ -88,7 +88,7 @@
                 {{-- Ubah Profil --}}
                 <a href="{{ route('customer.settings.profile') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 text-sky-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-blue-100 text-sky-600 rounded-full flex items-center justify-center flex-shrink-0 group-transform hover:-translate-y-1 active:translate-y-0 transition">
                             <i class="fa-solid fa-user-pen"></i>
                         </div>
                         <div>
@@ -102,7 +102,7 @@
                 {{-- Ubah Nomor WA --}}
                 <a href="{{ route('customer.settings.whatsapp') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 group-transform hover:-translate-y-1 active:translate-y-0 transition">
                             <i class="fa-brands fa-whatsapp text-lg"></i>
                         </div>
                         <div>
@@ -130,7 +130,7 @@
                 {{-- Keamanan Akun --}}
                 <a href="{{ route('customer.settings.password') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center flex-shrink-0 group-transform hover:-translate-y-1 active:translate-y-0 transition">
                             <i class="fa-solid fa-lock"></i>
                         </div>
                         <div>
@@ -155,7 +155,7 @@
                 {{-- Alamat Saya --}}
                 <a href="{{ route('customer.lokasi') }}" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center flex-shrink-0 group-transform hover:-translate-y-1 active:translate-y-0 transition">
                             <i class="fa-solid fa-map-location-dot"></i>
                         </div>
                         <div>
@@ -183,7 +183,7 @@
                 {{-- Pusat Bantuan --}}
                 <a href="https://wa.me/6281262364197" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center flex-shrink-0 group-transform hover:-translate-y-1 active:translate-y-0 transition">
                             <i class="fa-solid fa-headset"></i>
                         </div>
                         <div>
@@ -197,7 +197,7 @@
                 {{-- Kebijakan Privasi --}}
                 <a href="#" class="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                        <div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center flex-shrink-0 group-transform hover:-translate-y-1 active:translate-y-0 transition">
                             <i class="fa-solid fa-shield-halved"></i>
                         </div>
                         <div>

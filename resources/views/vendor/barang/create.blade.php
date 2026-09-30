@@ -33,7 +33,7 @@
             </div>
             <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu Utama</p>
-                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:rentify-card hover:text-slate-700 hover: transition-all font-medium"><i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Dashboard Utama</span></a>
+                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:rentify-card hover:text-slate-700 transition-all font-medium"><i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Dashboard Utama</span></a>
                 <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3 px-4 py-3 rentify-card text-slate-800 -slate-100 font-medium transition-all"><i class="fa-solid fa-box-open w-5 text-center"></i> <span>Manajemen Produk</span></a>
             </div>
         </aside>

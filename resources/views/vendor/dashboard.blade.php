@@ -94,7 +94,7 @@
             
             <div class="space-y-4 flex-1">
                 <a href="{{ route('vendor.barang.create') }}" class="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 hover:border-brand-main hover:bg-brand-50 transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-brand-light text-sky-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div class="w-12 h-12 rounded-xl bg-brand-light text-sky-600 flex items-center justify-center group-transform hover:-translate-y-1 active:translate-y-0 transition-all">
                         <i class="fa-solid fa-plus text-xl"></i>
                     </div>
                     <div>
@@ -104,7 +104,7 @@
                 </a>
 
                 <a href="{{ route('vendor.pesanan.index') }}" class="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 hover:border-amber-400 hover:bg-amber-50 transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center group-transform hover:-translate-y-1 active:translate-y-0 transition-all">
                         <i class="fa-solid fa-clock-rotate-left text-xl"></i>
                     </div>
                     <div>

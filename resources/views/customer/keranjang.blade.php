@@ -103,7 +103,7 @@
                                 <i class="fa-solid fa-ticket text-base"></i> Voucher Rentify
                             </div>
                             <div class="text-xs text-slate-400 font-medium flex items-center gap-2" id="voucher-status-text">
-                                Gunakan/masukkan kode <i class="fa-solid fa-chevron-up text-[10px] transition-transform duration-200" id="voucher-arrow"></i>
+                                Gunakan/masukkan kode <i class="fa-solid fa-chevron-up text-[10px] transition-all duration-200" id="voucher-arrow"></i>
                             </div>
                         </div>
                         
@@ -146,7 +146,7 @@
 
 <!-- MODAL KALENDER MELAYANG (BATCH 3) -->
 <div id="booking-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-    <div class="rentify-card w-full max-w-sm overflow-hidden transform scale-100 transition-transform">
+    <div class="rentify-card w-full max-w-sm overflow-hidden transform scale-100 transition-all">
         <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative">
             <h3 class="text-white font-black text-[17px] flex items-center gap-2">
                 <i class="fa-regular fa-calendar-check text-xl"></i> Atur Jadwal Sewa

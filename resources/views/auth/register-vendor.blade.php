@@ -244,7 +244,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                        <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-xs tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex justify-center items-center gap-2">
                             <span>BUKA TOKO SEKARANG</span>
                             <i class="fa-solid fa-arrow-right ml-1"></i>
                         </button>

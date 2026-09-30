@@ -181,7 +181,7 @@
 </div>
 
 <div id="booking-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-    <div class="rentify-card w-full max-w-sm overflow-hidden transform scale-100 transition-transform">
+    <div class="rentify-card w-full max-w-sm overflow-hidden transform scale-100 transition-all">
         <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative">
             <h3 class="text-white font-black text-[17px] flex items-center gap-2">
                 <i class="fa-regular fa-calendar-check text-xl"></i> Atur Jadwal Sewa

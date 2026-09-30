@@ -73,7 +73,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
+                        <button type="submit" class="w-full rentify-btn text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                             <i class="fa-solid fa-envelope text-lg"></i> Kirim Kode OTP
                         </button>
                     </div>
@@ -99,7 +99,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-slate-900/30 transition transform hover:-translate-y-0.5">
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-slate-900/30 transition transform hover:-translate-y-0.5 active:translate-y-0">
                             Verifikasi &amp; Simpan Email
                         </button>
                     </div>
