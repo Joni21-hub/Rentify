@@ -40,9 +40,9 @@
         .input-glass::placeholder { color: rgba(15, 23, 42, 0.5); font-weight: 500; }
     </style>
 </head>
-<body class="min-h-screen w-full flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4 relative overflow-hidden bg-flowing text-slate-800">
+<body class="min-h-screen w-full flex items-center justify-center p-4 py-8 relative overflow-x-hidden bg-flowing text-slate-800">
 
-    <div class="w-full max-w-[380px] relative z-10">
+    <div class="w-full max-w-[380px] relative z-10 my-auto">
         
         <div class="glass-panel p-8 sm:p-10 relative">
             
