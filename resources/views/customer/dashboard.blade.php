@@ -147,15 +147,6 @@
                 <i class="fa-solid fa-arrow-right text-emerald-500 text-xs"></i>
             </a>
 
-            <!-- KELUAR TOMBOL AKUN (SESUAI DENGAN MASTER THEME) -->
-            <form action="/logout" method="POST" class="w-full pt-4 pb-4 flex justify-center">
-                @csrf
-                <button type="submit" class="rentify-btn-danger w-full max-w-[220px] py-3.5 px-6 rounded-2xl text-xs font-black tracking-widest uppercase flex items-center justify-center gap-2 shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0">
-                    <i class="fa-solid fa-power-off text-sm"></i>
-                    <span>KELUAR AKUN</span>
-                </button>
-            </form>
-        </div>
 
         <!-- BOTTOM NAV MOBILE -->
         <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none px-4">

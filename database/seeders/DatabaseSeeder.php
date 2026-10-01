@@ -11,13 +11,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Akun Admin
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@rentify.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-            'email_verified_at' => now(),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'rentify.id@gmail.com'],
+            [
+                'name' => 'Admin Rentify',
+                'password' => Hash::make('Rentify21'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Akun Vendor
         User::create([
