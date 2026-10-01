@@ -82,8 +82,8 @@
                 </div>
             @endif
 
-            <!-- SEKSI: AKUN SAYA -->
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Akun Saya</p>
+            <!-- SEKSI: PENGATURAN AKUN -->
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Pengaturan Akun</p>
 
             <div class="rentify-card rounded-2xl overflow-hidden divide-y divide-slate-100/80 mb-4 shadow-sm">
 
@@ -139,7 +139,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         @if($user->hasRealEmail())
-                            <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">Terverifikasi</span>
+                            <span class="text-[9px] font-bold bg-sky-50 text-sky-600 px-2 py-0.5 rounded-full border border-sky-200">Terverifikasi</span>
                         @else
                             <span class="text-[9px] font-extrabold bg-sky-100 text-sky-600 px-2.5 py-0.5 rounded-full border border-sky-200 group-hover:bg-sky-500 group-hover:text-white transition shadow-sm">
                                 + Tambahkan
@@ -174,14 +174,14 @@
                     </div>
                 </a>
 
-                <!-- Alamat Saya -->
+                <!-- Alamat Pengiriman -->
                 <a href="{{ route('customer.lokasi') }}" class="flex items-center justify-between p-3.5 hover:bg-white/60 transition group">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-sm">
                             <i class="fa-solid fa-map-location-dot text-sm"></i>
                         </div>
                         <div>
-                            <span class="block text-xs font-bold text-slate-800">Alamat Saya</span>
+                            <span class="block text-xs font-bold text-slate-800">Alamat Pengiriman</span>
                             <span class="block text-[10px] text-slate-400 font-medium">
                                 @if($user->alamat_lengkap)
                                     {{ Str::limit($user->alamat_lengkap, 28) }}

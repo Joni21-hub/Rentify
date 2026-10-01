@@ -68,8 +68,14 @@
             </div>
 
             <h2 class="text-xl font-black text-slate-800 tracking-tight">{{ Auth::user()->name ?? 'Customer' }}</h2>
+            
+            <!-- Kontak Utama Dinamis (Ikon WA jika nomor WA, Ikon Email jika Gmail) -->
             <div class="inline-flex items-center gap-1.5 mt-1.5 bg-white/60 px-3 py-1 rounded-full border border-slate-200/60 text-xs font-semibold text-slate-600">
-                <i class="fa-solid fa-envelope text-[11px] text-sky-500"></i>
+                @if(Auth::user()->hasRealEmail())
+                    <i class="fa-solid fa-envelope text-[11px] text-sky-500"></i>
+                @else
+                    <i class="fa-brands fa-whatsapp text-[12px] text-emerald-500"></i>
+                @endif
                 <span class="truncate max-w-[200px]">{{ Auth::user()->display_contact }}</span>
             </div>
             
@@ -82,16 +88,16 @@
 
         <!-- MENU-MENU MOBILE -->
         <div class="space-y-3">
-            <!-- PESANAN SAYA -->
+            <!-- PESANAN (TANPA KATA SAYA) -->
             <div class="rentify-card p-4 rounded-2xl">
                 <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-200/60">
-                    <h3 class="font-black text-slate-800 text-xs uppercase tracking-wider">Pesanan Saya</h3>
-                    <a href="{{ route('customer.pesanan') }}" class="text-[11px] font-bold text-sky-600 hover:text-sky-700 transition flex items-center gap-1">
+                    <h3 class="font-black text-slate-800 text-xs uppercase tracking-wider">Pesanan</h3>
+                    <a href="{{ route('customer.pesanan', ['status' => 'semua']) }}" class="text-[11px] font-bold text-sky-600 hover:text-sky-700 transition flex items-center gap-1">
                         Riwayat <i class="fa-solid fa-chevron-right text-[8px]"></i>
                     </a>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
-                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
+                    <a href="{{ route('customer.pesanan', ['status' => 'menunggu']) }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
                         <div class="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 group-hover:scale-105 transition mb-1 relative shadow-sm">
                             <i class="fa-solid fa-clock-rotate-left text-base"></i>
                             @if(isset($countMenunggu) && $countMenunggu > 0)
@@ -100,7 +106,7 @@
                         </div>
                         <span class="text-[10px] font-bold text-slate-700 leading-tight">Konfirmasi</span>
                     </a>
-                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
+                    <a href="{{ route('customer.pesanan', ['status' => 'berjalan']) }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
                         <div class="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 group-hover:scale-105 transition mb-1 relative shadow-sm">
                             <i class="fa-solid fa-truck-fast text-base"></i>
                             @if(isset($countDiproses) && $countDiproses > 0)
@@ -109,8 +115,9 @@
                         </div>
                         <span class="text-[10px] font-bold text-slate-700 leading-tight">Berjalan</span>
                     </a>
-                    <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-105 transition mb-1 shadow-sm">
+                    <!-- Ulasan Rating: Kuning Emas / Amber (Bebas Hijau Sesuai Regulasi) -->
+                    <a href="{{ route('customer.pesanan', ['status' => 'selesai']) }}" class="flex flex-col items-center p-2 rounded-xl hover:bg-white/50 transition group">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 group-hover:scale-105 transition mb-1 shadow-sm">
                             <i class="fa-solid fa-star text-base"></i>
                         </div>
                         <span class="text-[10px] font-bold text-slate-700 leading-tight">Ulasan</span>
@@ -118,21 +125,35 @@
                 </div>
             </div>
 
-            <!-- GANTI TITIK LOKASI -->
+            <!-- VOUCHER & PROMO (TANPA KATA SAYA) -->
+            <a href="{{ route('customer.wishlist') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-ticket text-base"></i>
+                    </div>
+                    <div>
+                        <span class="block font-black text-slate-800 text-xs">Voucher & Promo</span>
+                        <span class="block text-[10px] font-medium text-slate-500">Klaim kupon diskon sewa dari vendor</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-400 text-xs group-hover:text-sky-600 transition"></i>
+            </a>
+
+            <!-- TITIK LOKASI -->
             <a href="{{ url('/customer/lokasi') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center shadow-sm">
                         <i class="fa-solid fa-location-dot text-base"></i>
                     </div>
                     <div>
-                        <span class="block font-black text-slate-800 text-xs">Ganti Titik Lokasi</span>
+                        <span class="block font-black text-slate-800 text-xs">Titik Lokasi</span>
                         <span class="block text-[10px] font-medium text-slate-500">Atur GPS untuk cari barang terdekat</span>
                     </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-slate-400 text-xs group-hover:text-sky-600 transition"></i>
             </a>
 
-            <!-- PUSAT BANTUAN -->
+            <!-- PUSAT BANTUAN WHATSAPP (HIJAU KHUSUS WA DENGAN CHEVRON KONSISTEN) -->
             @php $linkWaAdmin = "https://wa.me/6283183494835?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp
             <a href="{{ $linkWaAdmin }}" target="_blank" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
                 <div class="flex items-center gap-3">
@@ -144,33 +165,22 @@
                         <span class="block text-[10px] font-semibold text-emerald-600/80">Hubungi Admin Rentify (24/7)</span>
                     </div>
                 </div>
-                <i class="fa-solid fa-arrow-right text-emerald-500 text-xs"></i>
-            <!-- MODE VENDOR / BUKA TOKO (MOBILE) -->
+                <i class="fa-solid fa-chevron-right text-slate-400 text-xs group-hover:text-emerald-600 transition"></i>
+            </a>
+
+            <!-- MODE TOKO VENDOR: HANYA TAMPIL JIKA SUDAH TERDAFTAR SEBAGAI VENDOR (BEBAS HIJAU & TANPA KATA SAYA) -->
             @if(Auth::user()->isVendor())
-            <a href="{{ route('role.switch', 'vendor') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition bg-gradient-to-r from-sky-50 to-emerald-50 border border-emerald-200">
+            <a href="{{ route('role.switch', 'vendor') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-sm">
+                    <div class="w-10 h-10 bg-sky-600 text-white rounded-xl flex items-center justify-center shadow-sm">
                         <i class="fa-solid fa-store text-base"></i>
                     </div>
                     <div>
-                        <span class="block font-black text-slate-800 text-xs">Beralih ke Toko Saya</span>
-                        <span class="block text-[10px] font-semibold text-emerald-700 truncate max-w-[180px]">{{ Auth::user()->vendor_name }} &bull; Masuk Mode Toko</span>
+                        <span class="block font-black text-slate-800 text-xs">Beralih ke Mode Toko</span>
+                        <span class="block text-[10px] font-semibold text-sky-700 truncate max-w-[180px]">{{ Auth::user()->vendor_name }} &bull; Masuk Dashboard Toko</span>
                     </div>
                 </div>
-                <i class="fa-solid fa-arrow-right text-emerald-600 text-xs"></i>
-            </a>
-            @else
-            <a href="{{ route('vendor.register') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition bg-gradient-to-r from-white to-sky-50 border border-sky-200">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-sky-500 text-white rounded-xl flex items-center justify-center shadow-sm">
-                        <i class="fa-solid fa-shop text-base"></i>
-                    </div>
-                    <div>
-                        <span class="block font-black text-slate-800 text-xs">Buka Toko Rental</span>
-                        <span class="block text-[10px] font-semibold text-sky-700">Daftar sebagai Mitra & sewakan barang</span>
-                    </div>
-                </div>
-                <i class="fa-solid fa-arrow-right text-sky-600 text-xs"></i>
+                <i class="fa-solid fa-chevron-right text-sky-400 text-xs group-hover:text-sky-600 transition"></i>
             </a>
             @endif
         </div>
@@ -229,12 +239,8 @@
                         <i class="fa-solid fa-location-dot w-5 text-center"></i> Titik Lokasi
                     </a>
                     @if(Auth::user()->isVendor())
-                    <a href="{{ route('role.switch', 'vendor') }}" class="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 font-extrabold text-sm transition border-b border-emerald-200">
-                        <i class="fa-solid fa-store w-5 text-center text-emerald-600"></i> Mode Toko Vendor
-                    </a>
-                    @else
-                    <a href="{{ route('vendor.register') }}" class="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-sky-50 to-blue-50 hover:from-sky-100 hover:to-blue-100 text-sky-800 font-extrabold text-sm transition border-b border-sky-200">
-                        <i class="fa-solid fa-shop w-5 text-center text-sky-600"></i> Buka Toko Rental
+                    <a href="{{ route('role.switch', 'vendor') }}" class="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-sky-50 to-indigo-50 hover:from-sky-100 hover:to-indigo-100 text-sky-900 font-extrabold text-sm transition border-b border-sky-200">
+                        <i class="fa-solid fa-store w-5 text-center text-sky-600"></i> Mode Toko Vendor
                     </a>
                     @endif
                     <a href="{{ route('customer.settings') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
@@ -251,10 +257,10 @@
 
             <!-- KONTEN KANAN -->
             <div class="flex-1 space-y-5">
-                <!-- Ringkasan Pesanan -->
+                <!-- Ringkasan Pesanan (Tanpa Kata Saya) -->
                 <div class="rentify-card p-6 rounded-3xl">
                     <div class="flex justify-between items-center mb-5">
-                        <h3 class="font-black text-slate-800 text-base">Pesanan Saya</h3>
+                        <h3 class="font-black text-slate-800 text-base">Pesanan</h3>
                         <a href="{{ route('customer.pesanan', ['status' => 'semua']) }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
@@ -276,12 +282,12 @@
                             </div>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Sedang Berjalan</span>
                         </a>
-                        <a href="{{ route('customer.pesanan', ['status' => 'selesai']) }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition group shadow-sm active:scale-95">
-                            <i class="fa-solid fa-star text-2xl text-emerald-500"></i>
+                        <!-- Rating: Amber Gold (Bebas Hijau) -->
+                        <a href="{{ route('customer.pesanan', ['status' => 'selesai']) }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-amber-50 hover:bg-amber-100 transition group shadow-sm active:scale-95">
+                            <i class="fa-solid fa-star text-2xl text-amber-500"></i>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Beri Ulasan</span>
                         </a>
                     </div>
-
                 </div>
 
                 <!-- Menu Cepat -->
@@ -293,18 +299,18 @@
                                 <i class="fa-solid fa-location-dot"></i>
                             </div>
                             <div>
-                                <span class="block font-bold text-sm text-slate-800">Ganti Lokasi</span>
-                                <span class="block text-[11px] text-slate-500">Atur titik GPS Anda</span>
+                                <span class="block font-bold text-sm text-slate-800">Titik Lokasi</span>
+                                <span class="block text-[11px] text-slate-500">Atur GPS Anda</span>
                             </div>
                         </a>
-                        @php $linkWaAdmin = "https://wa.me/6281262364197?text=" . urlencode("Halo admin, saya mengalami masalah di Rentify, mohon bantuannya."); @endphp
+                        @php $linkWaAdmin = "https://wa.me/6281262364197?text=" . urlencode("Halo admin, saya butuh bantuan di Rentify."); @endphp
                         <a href="{{ $linkWaAdmin }}" target="_blank" class="flex items-center gap-3 p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/60 hover:border-emerald-300 transition shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                                 <i class="fa-brands fa-whatsapp text-xl"></i>
                             </div>
                             <div>
                                 <span class="block font-bold text-sm text-slate-800">Pusat Bantuan</span>
-                                <span class="block text-[11px] text-slate-500">Hubungi Admin 24/7</span>
+                                <span class="block text-[11px] text-slate-500">Hubungi CS WhatsApp 24/7</span>
                             </div>
                         </a>
                     </div>

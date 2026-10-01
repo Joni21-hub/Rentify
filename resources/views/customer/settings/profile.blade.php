@@ -22,12 +22,12 @@
 
     <div class="max-w-md mx-auto min-h-screen relative pb-8">
 
-        <!-- HEADER -->
+        <!-- HEADER (TANPA KATA SAYA) -->
         <header class="rentify-navbar sticky top-0 z-50 px-5 py-3.5 flex items-center justify-between shadow-sm">
             <a href="{{ route('customer.settings') }}" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/70 hover:bg-white text-slate-600 hover:text-sky-600 transition shadow-sm">
                 <i class="fa-solid fa-arrow-left text-sm"></i>
             </a>
-            <h1 class="text-base font-black text-slate-800 flex-1 text-center tracking-tight pr-9">Profil Saya</h1>
+            <h1 class="text-base font-black text-slate-800 flex-1 text-center tracking-tight pr-9">Ubah Profil</h1>
         </header>
 
         <div class="px-4 py-6">
@@ -40,8 +40,8 @@
             @endif
 
             @if(session('success'))
-                <div class="mb-5 p-3.5 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+                <div class="mb-5 p-3.5 rounded-2xl bg-sky-100 border border-sky-300 text-sky-800 text-xs font-bold flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-circle-check text-sky-600 text-sm"></i>
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
@@ -56,25 +56,42 @@
                 </div>
             @endif
 
-            <form action="{{ route('customer.settings.profile.update') }}" method="POST" enctype="multipart/form-data" class="rentify-card p-6 rounded-3xl shadow-sm space-y-6">
+            <form id="profileForm" action="{{ route('customer.settings.profile.update') }}" method="POST" enctype="multipart/form-data" class="rentify-card p-6 rounded-3xl shadow-sm space-y-6" onsubmit="handleFormSubmit()">
                 @csrf
 
-                <!-- FOTO PROFIL -->
+                <!-- FOTO PROFIL DENGAN PREVIEW INSTAN -->
                 <div class="flex flex-col items-center">
                     <div class="relative group cursor-pointer mb-2">
-                        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-sky-100 flex items-center justify-center text-sky-600 text-3xl font-black relative">
-                            @if($user->foto_profil)
-                                <img src="{{ str_starts_with($user->foto_profil, 'http') ? $user->foto_profil : Storage::url($user->foto_profil) }}" alt="Foto" class="w-full h-full object-cover">
-                            @else
-                                {{ substr($user->name ?? 'C', 0, 1) }}
-                            @endif
+                        <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-sky-100 flex items-center justify-center text-sky-600 text-3xl font-black relative">
+                            <!-- Image Element (Tampil jika sudah ada foto atau dipilih foto baru) -->
+                            <img id="avatarPreviewImage" 
+                                 src="{{ $user->foto_profil ? (str_starts_with($user->foto_profil, 'http') ? $user->foto_profil : Storage::url($user->foto_profil)) : '' }}" 
+                                 alt="Foto" 
+                                 class="w-full h-full object-cover {{ $user->foto_profil ? '' : 'hidden' }}">
+                            
+                            <!-- Placeholder Inisial (Tampil jika belum ada foto profil) -->
+                            <span id="avatarPlaceholder" class="{{ $user->foto_profil ? 'hidden' : '' }}">
+                                {{ strtoupper(substr($user->name ?? 'C', 0, 1)) }}
+                            </span>
+
+                            <!-- Overlay Kamera Hover / Tap -->
                             <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full">
-                                <i class="fa-solid fa-camera text-white text-xl"></i>
+                                <i class="fa-solid fa-camera text-white text-2xl"></i>
                             </div>
                         </div>
-                        <input type="file" name="foto_profil" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+
+                        <!-- Input File Tersembunyi (Langsung Bereaksi Saat Dipilih) -->
+                        <input type="file" id="fotoProfilInput" name="foto_profil" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onchange="previewAvatar(event)">
                     </div>
-                    <span class="text-xs text-slate-500 font-medium">Ketuk untuk mengganti foto profil</span>
+
+                    <!-- Label Panduan -->
+                    <span class="text-xs text-slate-500 font-medium">Ketuk foto untuk memilih gambar baru</span>
+
+                    <!-- Badge Indikator Pratinjau (Muncul Seketika Saat File Dipilih) -->
+                    <div id="previewBadge" class="hidden mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-800 text-[11px] font-bold rounded-full border border-sky-300 shadow-sm animate-pulse">
+                        <i class="fa-solid fa-sparkles text-sky-600"></i>
+                        <span>Pratinjau Foto Baru &bull; Klik Simpan jika cocok</span>
+                    </div>
                 </div>
 
                 <!-- NAMA -->
@@ -84,14 +101,54 @@
                            class="rentify-input input-glass w-full px-4 py-3.5 rounded-2xl font-bold text-sm focus:outline-none transition">
                 </div>
 
-                <!-- SIMPAN -->
+                <!-- SIMPAN PERUBAHAN -->
                 <div class="pt-2">
-                    <button type="submit" class="rentify-btn w-full py-3.5 rounded-2xl text-xs font-black tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0">
-                        Simpan Profil
+                    <button id="btnSubmit" type="submit" class="rentify-btn w-full py-3.5 rounded-2xl text-xs font-black tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk text-sm"></i>
+                        <span id="btnSubmitText">Simpan Perubahan</span>
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- JAVASCRIPT REAL-TIME PREVIEW & LOADING FEEDBACK -->
+    <script>
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Buat Object URL instan tanpa delay
+                const previewUrl = URL.createObjectURL(file);
+                const img = document.getElementById('avatarPreviewImage');
+                const placeholder = document.getElementById('avatarPlaceholder');
+                const badge = document.getElementById('previewBadge');
+                const btnText = document.getElementById('btnSubmitText');
+
+                if (img) {
+                    img.src = previewUrl;
+                    img.classList.remove('hidden');
+                }
+                if (placeholder) {
+                    placeholder.classList.add('hidden');
+                }
+                if (badge) {
+                    badge.classList.remove('hidden');
+                }
+                if (btnText) {
+                    btnText.innerText = 'Simpan Perubahan';
+                }
+            }
+        }
+
+        function handleFormSubmit() {
+            const btn = document.getElementById('btnSubmit');
+            const btnText = document.getElementById('btnSubmitText');
+            if (btn && btnText) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-sm mr-1"></i> Menyimpan Foto...';
+            }
+        }
+    </script>
 </body>
 </html>

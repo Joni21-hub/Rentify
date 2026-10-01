@@ -32,7 +32,7 @@
         </div>
 
         <button type="button" class="btn-gps" onclick="dapatkanLokasi()">
-            <i class="fa-solid fa-crosshairs"></i> Gunakan Titik GPS Saya Saat Ini
+            <i class="fa-solid fa-crosshairs"></i> Gunakan Titik GPS Saat Ini
         </button>
 
         <div id="status-gps" style="text-align: center; font-size: 12px; font-weight: 800; color: #0ea5e9; margin-bottom: 15px;"></div>
@@ -46,7 +46,7 @@
             <input type="hidden" name="latitude" id="input_lat">
             <input type="hidden" name="longitude" id="input_lon">
 
-            <button type="submit" id="btn-submit" class="btn-simpan" disabled>Simpan Lokasi Saya</button>
+            <button type="submit" id="btn-submit" class="btn-simpan" disabled>Simpan Titik Lokasi</button>
         </form>
     </div>
 </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Favorit Saya - Rentify</title>
+    <title>Favorit - Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -28,7 +28,7 @@
             <a href="{{ route('customer.home') }}" class="w-9 h-9 rounded-xl bg-white/60 hover:bg-white flex items-center justify-center text-slate-600 hover:text-sky-600 transition shadow-sm">
                 <i class="fa-solid fa-arrow-left text-sm"></i>
             </a>
-            <h1 class="text-base font-black text-slate-800 flex-1 text-center tracking-tight pr-9">Favorit Saya</h1>
+            <h1 class="text-base font-black text-slate-800 flex-1 text-center tracking-tight pr-9">Favorit</h1>
         </header>
 
         <main class="p-4">

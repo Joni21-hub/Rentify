@@ -30,7 +30,7 @@
 <div class="history-container">
     <div class="header-title">
         <a href="{{ route('customer.dashboard') }}" style="text-decoration: none; color: #0284c7; font-size: 20px; transition: 0.2s;" onmouseover="this.style.color='#0ea5e9'" onmouseout="this.style.color='#0284c7'">←</a> 
-        <span>Riwayat Transaksi Saya</span>
+        <span>Riwayat Transaksi</span>
     </div>
 
     <!-- TAB FILTER STATUS PESANAN CUSTOMER -->

@@ -17,7 +17,7 @@
             <a href="{{ route('customer.home') }}" class="text-slate-600 hover:text-sky-500 transition">
                 <i class="fa-solid fa-arrow-left text-xl"></i>
             </a>
-            <h1 class="font-black text-slate-800 text-lg">Keranjang Saya ({{ $keranjangs->count() }})</h1>
+            <h1 class="font-black text-slate-800 text-lg">Keranjang ({{ $keranjangs->count() }})</h1>
         </div>
     </div>
 
