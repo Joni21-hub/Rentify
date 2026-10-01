@@ -67,9 +67,14 @@ class Barang extends Model
         return $this->hasMany(Wishlist::class);
     }
 
+    public function details()
+    {
+        return $this->hasMany(DetailPenyewaan::class, 'product_id');
+    }
+
     public function detailPenyewaan()
     {
-        return $this->hasMany(DetailPenyewaan::class);
+        return $this->hasMany(DetailPenyewaan::class, 'product_id');
     }
 
     // ─── Scopes ───────────────────────────────────────
