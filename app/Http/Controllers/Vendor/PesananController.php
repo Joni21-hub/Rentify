@@ -14,11 +14,12 @@ class PesananController extends Controller
     {
         $vendorId = Auth::id();
 
-        $pesananMasuk = Penyewaan::whereHas('details.barang', function ($query) use ($vendorId) {
-            $query->where('vendor_id', $vendorId);
-        })
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $pesananMasuk = Penyewaan::with(['customer', 'details.barang'])
+            ->whereHas('details.barang', function ($query) use ($vendorId) {
+                $query->where('vendor_id', $vendorId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         // Dikirim dengan 2 nama sekaligus agar anti-error di halaman index
         return view('vendor.pesanan.index', [

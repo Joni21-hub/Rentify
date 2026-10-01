@@ -148,13 +148,4 @@
     </div>
 </div>
 
-<style>
-    /* Tambahan animasi ringan saat notifikasi muncul */
-    
-        to { opacity: 1; transform: translateY(0); }
-    }
-    . {
-        animation: fadeInDown 0.5s ease-out;
-    }
-</style>
-@endsection
+@endsection

@@ -79,4 +79,9 @@ class Penyewaan extends Model
     {
         return $this->tanggal_selesai;
     }
-}
+
+    public function getCustomerNameAttribute(): string
+    {
+        return $this->customer->name ?? 'Pelanggan';
+    }
+}

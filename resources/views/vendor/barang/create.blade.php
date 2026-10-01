@@ -1,260 +1,409 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Tambah Produk - Vendor Rentify</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 900: '#1e3a8a' } } } } }
-    </script>
-    <style> 
-         
-        /* Styling Kartu Radio Pilihan */
-        .radio-card input:checked + div { border-color: #3b82f6; background-color: #eff6ff; color: #1e3a8a; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15); }
-        .radio-card-no input:checked + div { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
-    </style>
-</head>
-<body class="font-sans text-slate-700 antialiased overflow-x-hidden">
+@extends('layouts.vendor')
 
-    <div class="flex min-h-screen">
-        <aside class="w-64 fixed inset-y-0 left-0 z-50 rentify-card shadow-sm border-r border-slate-200 flex flex-col">
-            <div class="h-20 flex items-center justify-center border-b border-white/50 px-6">
-                <a href="{{ url('/') }}" class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-brand-900 flex items-center justify-center text-white"><i class="fa-solid fa-store text-sm"></i></div>
-                    <span class="text-xl font-bold text-slate-800 tracking-tight">Rentify<span class="text-emerald-500">.</span></span>
-                </a>
-            </div>
-            <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-                <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu Utama</p>
-                <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:rentify-card hover:text-slate-700 transition-all font-medium"><i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Dashboard Utama</span></a>
-                <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3 px-4 py-3 rentify-card text-slate-800 -slate-100 font-medium transition-all"><i class="fa-solid fa-box-open w-5 text-center"></i> <span>Manajemen Produk</span></a>
-            </div>
-        </aside>
+@section('title', 'Upload Produk Baru — Vendor Rentify')
 
-        <main class="flex-1 ml-64 p-8">
-            <header class="mb-8 flex items-center gap-4">
-                <a href="{{ route('vendor.barang.index') }}" class="w-10 h-10 rentify-card -slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all"><i class="fa-solid fa-arrow-left"></i></a>
-                <div><h1 class="text-2xl font-bold text-slate-800">Tambah Produk Baru</h1><p class="text-slate-500 mt-1">Lengkapi detail barang yang akan disewakan. Barang akan ditinjau oleh Admin.</p></div>
-            </header>
+@section('content')
+<div class="px-4 sm:px-6 lg:px-8 py-6 max-w-5xl mx-auto space-y-6">
 
-            @if($errors->any())
-                <div class="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl">
-                    <div class="flex items-center gap-2 font-bold mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Terjadi Kesalahan!</div>
-                    <ul class="list-disc list-inside text-sm">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-                </div>
-            @endif
-
-            <form action="{{ route('vendor.barang.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                @csrf
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 space-y-6">
-                        
-                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
-                            <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Informasi Dasar</h2>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-1">Nama Barang <span class="text-rose-500">*</span></label>
-                                    <input type="text" name="nama" value="{{ old('nama') }}" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all" placeholder="">
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-bold text-slate-700 mb-1">Kategori <span class="text-rose-500">*</span></label>
-                                        <select name="kategori_id" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all">
-                                            <option value="">-- Pilih Kategori --</option>
-                                            @foreach($kategoris as $k)
-                                                <option value="{{ $k->id }}" {{ old('kategori_id') == $k->id ? 'selected' : '' }}>{{ $k->nama }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-bold text-slate-700 mb-1">Kondisi Barang <span class="text-rose-500">*</span></label>
-                                        <select name="kondisi" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all">
-                                            <option value="Sangat Baik">Sangat Baik</option>
-                                            <option value="Baik">Baik</option>
-                                            <option value="Cukup">Cukup (Ada minus wajar)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-1">Deskripsi Lengkap <span class="text-rose-500">*</span></label>
-                                    <textarea name="deskripsi" rows="4" required class="rentify-input w-full px-4 py-2.5 focus:outline-none transition-all">{{ old('deskripsi') }}</textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- PANEL LOKASI & PENGIRIMAN YANG SUDAH DIPERBESAR & OTOMATIS -->
-                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
-                            <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Lokasi & Opsi Pengiriman</h2>
-                            
-                            <div class="space-y-5">
-                                <!-- PILIHAN YA / TIDAK DIPERBESAR -->
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-800 mb-2">Apakah Toko Menyediakan Layanan Antar (Kurir)? <span class="text-rose-500">*</span></label>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <label class="radio-card cursor-pointer">
-                                            <input type="radio" name="is_delivery_supported" value="1" checked class="hidden">
-                                            <div class="p-4 rounded-xl border-2 border-slate-200 transition-all flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-full bg-blue-100 text-sky-600 flex items-center justify-center text-lg font-bold">o</div>
-                                                <div>
-                                                    <div class="font-bold text-sm">Ya, Sediakan Antar</div>
-                                                    <div class="text-xs text-slate-500 mt-0.5">Kurir toko bisa antar (Rp 4.000/Km)</div>
-                                                </div>
-                                            </div>
-                                        </label>
-
-                                        <label class="radio-card-no cursor-pointer">
-                                            <input type="radio" name="is_delivery_supported" value="0" class="hidden">
-                                            <div class="p-4 rounded-xl border-2 border-slate-200 transition-all flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-lg font-bold">o</div>
-                                                <div>
-                                                    <div class="font-bold text-sm">Tidak, Hanya Ambil</div>
-                                                    <div class="text-xs text-slate-500 mt-0.5">Pembeli wajib datang ke toko</div>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <!-- DETEKSI GPS & ALAMAT OTOMATIS -->
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                    <label class="block text-sm font-bold text-slate-800 mb-1">Deteksi Titik GPS & Alamat Gudang <span class="text-rose-500">*</span></label>
-                                    <p class="text-xs text-slate-500 mb-3">Klik tombol di bawah ini saat Anda berada di lokasi produk. Sistem akan otomatis mengisi koordinat dan alamat jalan Anda!</p>
-                                    
-                                    <input type="hidden" name="latitude" id="lat_produk" value="{{ old('latitude') }}">
-                                    <input type="hidden" name="longitude" id="lon_produk" value="{{ old('longitude') }}">
-                                    
-                                    <div class="flex flex-col sm:flex-row gap-3 mb-3">
-                                        <button type="button" onclick="getLokasiProduk()" class="px-5 py-3 rentify-btn text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2">
-                                            <i class="fa-solid fa-location-crosshairs text-lg"></i> Deteksi Lokasi
-                                        </button>
-                                        <div id="status_gps" class="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-medium flex items-center justify-center sm:justify-start">
-                                            <i class="fa-regular fa-clock mr-2 text-amber-500"></i> Lokasi belum dideteksi
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1">Alamat Lengkap Produk / Gudang <span class="text-rose-500">*</span></label>
-                                        <textarea name="alamat" id="alamat_produk" rows="2" required class="rentify-input w-full px-4 py-2.5 focus:text-sm" placeholder="Akan terisi otomatis saat tombol 'Deteksi Lokasi' diklik... (Bisa diedit manual juga)">{{ old('alamat') }}</textarea>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-
-                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
-                            <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Harga & Ketersediaan</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Harga Sewa / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="harga_sewa_harian" required class="rentify-input w-full pl-12 pr-4 py-2.5 focus:outline-none"></div></div>
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Stok Total <span class="text-rose-500">*</span></label><input type="number" name="stok_total" value="1" required min="1" class="rentify-input w-full px-4 py-2.5 focus:outline-none"></div>
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Deposit Jaminan <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="deposit" required class="rentify-input w-full pl-12 pr-4 py-2.5 focus:outline-none"></div></div>
-                                <div><label class="block text-sm font-bold text-slate-700 mb-1">Denda Terlambat / Hari <span class="text-rose-500">*</span></label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">Rp</div><input type="number" name="denda_per_hari" required class="rentify-input w-full pl-12 pr-4 py-2.5 focus:outline-none"></div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
-                            <h2 class="text-lg font-bold text-slate-800 mb-2 border-b border-slate-100 pb-3">Foto Produk <span class="text-rose-500">*</span></h2>
-                            <p class="text-xs text-slate-500 mb-4">Pilih foto satu per satu atau sekaligus.</p>
-                            <input type="file" name="fotos[]" id="fotos" multiple accept="image/*" class="hidden">
-                            <label for="fotos" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-300 rounded-xl bg-brand-50 hover:bg-brand-100 cursor-pointer">
-                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-sky-500 mb-2"></i>
-                                <span class="text-sm font-semibold text-slate-800">Klik Tambah Foto</span>
-                            </label>
-                            <div id="preview-container" class="mt-4 grid grid-cols-2 gap-3"></div>
-                        </div>
-
-                        <div class="rentify-card p-6 rounded-2xl shadow-sm">
-                            <button type="submit" class="w-full py-3 px-4 bg-brand-900 text-white font-bold rounded-xl shadow-sm hover:bg-brand-800"><i class="fa-solid fa-paper-plane mr-2"></i> Ajukan Barang</button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </main>
+    <!-- Header & Navigation -->
+    <div class="flex items-center gap-3">
+        <a href="{{ route('vendor.barang.index') }}" class="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:text-sky-600 hover:border-sky-300 flex items-center justify-center shadow-xs transition active:scale-95">
+            <i class="fa-solid fa-arrow-left text-sm"></i>
+        </a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Upload Produk Baru</h1>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium">Bisa langsung foto produk lewat kamera HP atau pilih dari galeri.</p>
+        </div>
     </div>
 
-    <script>
-        // SCRIPT LOKASI & ALAMAT OTOMATIS (REVERSE GEOCODING)
-        async function getLokasiProduk() {
-            const statusDiv = document.getElementById('status_gps');
-            const alamatInput = document.getElementById('alamat_produk');
-            
-            statusDiv.innerHTML = '<span class="text-amber-600 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Mencari koordinat & alamat...</span>';
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    async function(pos) {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        
-                        document.getElementById('lat_produk').value = lat;
-                        document.getElementById('lon_produk').value = lon;
-                        
-                        // Menerjemahkan Koordinat Menjadi Nama Jalan via OpenStreetMap
-                        try {
-                            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                            const data = await response.json();
-                            if(data.display_name) {
-                                alamatInput.value = data.display_name;
-                            }
-                        } catch(e) {
-                            console.log("Gagal mengambil nama jalan, koordinat tetap aman.");
-                        }
+    <!-- Error Alerts -->
+    @if($errors->any())
+        <div class="p-4 sm:p-5 bg-rose-50 border border-rose-200 text-rose-700 rounded-3xl space-y-2 shadow-xs">
+            <div class="flex items-center gap-2 font-bold text-sm">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+                <span>Mohon periksa kembali formulir:</span>
+            </div>
+            <ul class="list-disc list-inside text-xs space-y-1 font-medium text-rose-600">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-                        statusDiv.innerHTML = '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-check-circle mr-2"></i> ✅ Lokasi & Alamat Terisi!</span>';
-                        statusDiv.className = "flex-1 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-medium flex items-center justify-center sm:justify-start";
-                    }, 
-                    function() {
-                        statusDiv.innerHTML = '<span class="text-rose-600 font-bold"><i class="fa-solid fa-xmark mr-2"></i> Akses GPS Ditolak!</span>';
-                        alert("Harap izinkan akses lokasi (GPS) pada browser Anda agar alamat bisa terisi otomatis.");
-                    }
-                );
-            } else {
-                alert("Browser Anda tidak mendukung fitur GPS.");
+    <form action="{{ route('vendor.barang.store') }}" method="POST" enctype="multipart/form-data" id="formUploadBarang" class="space-y-6">
+        @csrf
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- ============================================== -->
+            <!-- KOLOM KIRI (2 SPAN): INFO DASAR & PENGIRIMAN -->
+            <!-- ============================================== -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- 1. FOTO PRODUK (MOBILE FIRST: DI ATAS AGAR MUDAH DIFOTO) -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-camera text-sky-500"></i> Foto Barang <span class="text-rose-500">*</span>
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Upload minimal 1 foto (foto pertama akan jadi Sampul/Cover).</p>
+                        </div>
+                        <span id="photoCounter" class="text-xs font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg">
+                            0 Foto dipilih
+                        </span>
+                    </div>
+
+                    <!-- Hidden Input -->
+                    <input type="file" name="fotos[]" id="fotos" multiple accept="image/jpeg,image/png,image/jpg" class="hidden">
+
+                    <!-- Mobile-First Big Touch Area -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                        <!-- Tombol Buka Kamera / Galeri -->
+                        <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-400/80 bg-sky-50/60 hover:bg-sky-100/70 transition flex items-center justify-center gap-3 text-sky-700 active:scale-98">
+                            <div class="w-11 h-11 rounded-xl bg-sky-500 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-xs font-black">Buka Kamera / Galeri</span>
+                                <span class="block text-[11px] text-sky-600/80 font-medium">Bisa pilih banyak foto</span>
+                            </div>
+                        </label>
+
+                        <!-- Tips Foto HP -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-3 text-slate-600">
+                            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-lightbulb text-sm"></i>
+                            </div>
+                            <p class="text-[11px] leading-snug">
+                                Gunakan pencahayaan terang dan foto dari berbagai sudut agar cepat disewa!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Live Previews Grid -->
+                    <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <!-- Preview Cards will be appended here -->
+                    </div>
+                </div>
+
+                <!-- 2. INFORMASI DASAR -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="text-base font-black text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-sky-500"></i> Informasi Barang
+                    </h2>
+
+                    <!-- Nama Barang -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                            Nama Barang <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" name="nama" value="{{ old('nama') }}" required placeholder="Contoh: Kamera Sony A7 III + Lensa 28-70mm" class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                    </div>
+
+                    <!-- Kategori & Kondisi -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                                Kategori <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="kategori_id" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition bg-white">
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($kategoris as $k)
+                                    <option value="{{ $k->id }}" {{ old('kategori_id') == $k->id ? 'selected' : '' }}>
+                                        {{ $k->nama }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                                Kondisi Fisik <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="kondisi" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition bg-white">
+                                <option value="Sangat Baik" {{ old('kondisi') == 'Sangat Baik' ? 'selected' : '' }}>Sangat Baik (Mulus / Seperti Baru)</option>
+                                <option value="Baik" {{ old('kondisi', 'Baik') == 'Baik' ? 'selected' : '' }}>Baik (Normal & Berfungsi Penuh)</option>
+                                <option value="Cukup" {{ old('kondisi') == 'Cukup' ? 'selected' : '' }}>Cukup (Ada Minus Lecet Wajar)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Deskripsi Barang -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                            Deskripsi & Kelengkapan Unit <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea name="deskripsi" rows="4" required placeholder="Tuliskan spesifikasi, kelengkapan (tas, charger, baterai tambahan), aturan sewa, atau peringatan penggunaan..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition leading-relaxed">{{ old('deskripsi') }}</textarea>
+                    </div>
+                </div>
+
+                <!-- 3. LOKASI GUDANG / PRODUK (GPS 1-TAP MOBILE) -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="text-base font-black text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-sky-500"></i> Titik Lokasi Gudang & Opsi Antar
+                    </h2>
+
+                    <!-- Pilihan Layanan Antar Kurir -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                            Layanan Antar ke Penyewa (Kurir Toko) <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="is_delivery_supported" value="1" {{ old('is_delivery_supported', '1') == '1' ? 'checked' : '' }} class="peer sr-only">
+                                <div class="p-3.5 rounded-2xl border-2 border-slate-200 peer-checked:border-sky-500 peer-checked:bg-sky-50/50 flex items-center gap-3 transition">
+                                    <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-sm font-bold">
+                                        <i class="fa-solid fa-motorcycle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-black text-slate-800">Sedia Kurir Antar</p>
+                                        <p class="text-[11px] text-slate-500">Dihitung otomatis per KM</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="is_delivery_supported" value="0" {{ old('is_delivery_supported') == '0' ? 'checked' : '' }} class="peer sr-only">
+                                <div class="p-3.5 rounded-2xl border-2 border-slate-200 peer-checked:border-rose-400 peer-checked:bg-rose-50/50 flex items-center gap-3 transition">
+                                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm font-bold">
+                                        <i class="fa-solid fa-person-walking"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-black text-slate-800">Hanya Ambil di Toko</p>
+                                        <p class="text-[11px] text-slate-500">Penyewa wajib ambil sendiri</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Deteksi GPS HP Otomatis -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-black text-slate-800">1-Tap GPS Koordinat HP</span>
+                                <p class="text-[11px] text-slate-500">Tekan tombol saat Anda di toko untuk mengisi koordinat & alamat akurat.</p>
+                            </div>
+                            <button type="button" onclick="getLokasiGPS()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 text-white rounded-xl text-xs font-extrabold shadow-sm active:scale-95 transition">
+                                <i class="fa-solid fa-location-crosshairs text-sm"></i>
+                                <span>Deteksi GPS HP</span>
+                            </button>
+                        </div>
+
+                        <!-- Status Bar GPS -->
+                        <div id="status_gps" class="px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dot text-slate-400 text-xs"></i>
+                            <span>GPS belum diaktifkan (Bisa tekan tombol atau isi alamat langsung).</span>
+                        </div>
+
+                        <!-- Hidden Inputs Lat/Lon -->
+                        <input type="hidden" name="latitude" id="lat_produk" value="{{ old('latitude', '-6.200000') }}">
+                        <input type="hidden" name="longitude" id="lon_produk" value="{{ old('longitude', '106.816666') }}">
+
+                        <!-- Alamat Input -->
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                                Alamat Lengkap Toko / Gudang Penjemputan <span class="text-rose-500">*</span>
+                            </label>
+                            <textarea name="alamat" id="alamat_produk" rows="2" required placeholder="Jl. Contoh No. 12, RT/RW, Kelurahan, Kecamatan, Kota..." class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">{{ old('alamat') }}</textarea>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ============================================== -->
+            <!-- KOLOM KANAN (1 SPAN): HARGA, STOK & SUBMIT -->
+            <!-- ============================================== -->
+            <div class="space-y-6">
+                
+                <!-- Harga & Ketentuan Keuangan -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="text-base font-black text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-money-bill-wave text-emerald-500"></i> Tarif & Stok
+                    </h2>
+
+                    <!-- Harga Sewa / Hari -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                            Tarif Sewa / Hari <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-xs font-bold text-slate-400">Rp</span>
+                            <input type="number" name="harga_sewa_harian" value="{{ old('harga_sewa_harian') }}" required min="0" placeholder="150000" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-black focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                        </div>
+                    </div>
+
+                    <!-- Stok Unit Fisik -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                            Jumlah Stok Unit <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" name="stok_total" value="{{ old('stok_total', 1) }}" required min="1" class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-black focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                    </div>
+
+                    <!-- Deposit Jaminan -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                            Deposit Jaminan (Opsional/Rp) <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-xs font-bold text-slate-400">Rp</span>
+                            <input type="number" name="deposit" value="{{ old('deposit', 0) }}" required min="0" placeholder="0" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Dikembalikan utuh ke penyewa setelah barang kembali aman.</p>
+                    </div>
+
+                    <!-- Denda Keterlambatan -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                            Denda Telat / Hari <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-xs font-bold text-slate-400">Rp</span>
+                            <input type="number" name="denda_per_hari" value="{{ old('denda_per_hari', 0) }}" required min="0" placeholder="50000" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Tombol Aksi Submit -->
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+                    <button type="submit" id="btnSubmitBarang" class="w-full py-4 px-5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 active:scale-98 text-white font-black text-sm rounded-2xl shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-base"></i>
+                        <span>AJUKAN PRODUK SEKARANG</span>
+                    </button>
+                    <p class="text-[11px] text-slate-400 text-center font-medium">
+                        Produk Anda akan langsung masuk ke antrean kurasi Admin untuk ditinjau.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    // ==========================================
+    // 1. MOBILE CAMERA & MULTI-PHOTO PREVIEWS
+    // ==========================================
+    const inputFotos = document.getElementById('fotos');
+    const previewContainer = document.getElementById('preview-container');
+    const photoCounter = document.getElementById('photoCounter');
+    let selectedFiles = [];
+
+    inputFotos.addEventListener('change', function(e) {
+        if (!e.target.files.length) return;
+        selectedFiles = selectedFiles.concat(Array.from(e.target.files));
+        updateFileInput();
+        renderPreviews();
+    });
+
+    function updateFileInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        inputFotos.files = dt.files;
+        photoCounter.textContent = `${selectedFiles.length} Foto dipilih`;
+        if (selectedFiles.length > 0) {
+            photoCounter.className = "text-xs font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg";
+        } else {
+            photoCounter.className = "text-xs font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg";
+        }
+    }
+
+    function removePhoto(index) {
+        selectedFiles.splice(index, 1);
+        updateFileInput();
+        renderPreviews();
+    }
+
+    function renderPreviews() {
+        previewContainer.innerHTML = '';
+        if (selectedFiles.length === 0) return;
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const card = document.createElement('div');
+                card.className = "relative rounded-2xl overflow-hidden border-2 border-slate-200 aspect-square bg-slate-100 shadow-xs group";
+                
+                const isCover = index === 0;
+                const coverBadge = isCover 
+                    ? `<div class="absolute top-2 left-2 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-black rounded-lg shadow-sm tracking-wider">COVER UTAMA</div>`
+                    : '';
+
+                card.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" class="w-full h-full object-cover">
+                    ${coverBadge}
+                    <button type="button" onclick="removePhoto(${index})" class="absolute top-2 right-2 w-8 h-8 rounded-xl bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 shadow-sm cursor-pointer" title="Hapus foto">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                    <div class="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-slate-900/70 to-transparent text-[10px] text-white font-medium truncate px-2">
+                        ${file.name}
+                    </div>
+                `;
+                previewContainer.appendChild(card);
             }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // ==========================================
+    // 2. 1-TAP GPS REVERSE GEOCODING
+    // ==========================================
+    async function getLokasiGPS() {
+        const statusDiv = document.getElementById('status_gps');
+        const alamatInput = document.getElementById('alamat_produk');
+        
+        statusDiv.innerHTML = '<span class="text-sky-600 font-bold flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Mendeteksi koordinat & alamat jalan Anda...</span>';
+        statusDiv.className = "px-3.5 py-2.5 bg-sky-50 border border-sky-200 rounded-xl text-xs font-medium text-slate-700 flex items-center gap-2";
+
+        if (!navigator.geolocation) {
+            statusDiv.innerHTML = '<span class="text-rose-600 font-bold flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> GPS tidak didukung di browser ini.</span>';
+            return;
         }
 
-        // SCRIPT FOTO ASLI ANDA
-        const inputFotos = document.getElementById('fotos');
-        const previewContainer = document.getElementById('preview-container');
-        let selectedFiles = []; 
-        inputFotos.addEventListener('change', function(e) {
-            selectedFiles = selectedFiles.concat(Array.from(e.target.files));
-            updateInputFiles(); renderPreviews();
-        });
-        function updateInputFiles() {
-            const dataTransfer = new DataTransfer();
-            selectedFiles.forEach(file => dataTransfer.items.add(file));
-            inputFotos.files = dataTransfer.files;
-        }
-        function removeFile(index) {
-            selectedFiles.splice(index, 1);
-            updateInputFiles(); renderPreviews();
-        }
-        function renderPreviews() {
-            previewContainer.innerHTML = ''; 
-            selectedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const div = document.createElement('div');
-                    div.className = 'relative group rounded-xl overflow-hidden border border-slate-200 h-24 bg-slate-100';
-                    const coverBadge = index === 0 ? '<div class="absolute bottom-0 left-0 right-0 bg-emerald-500 text-white text-[10px] text-center py-1 font-bold">COVER</div>' : '';
-                    div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">${coverBadge}
-                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="button" onclick="removeFile(${index})" class="w-8 h-8 rounded-full rentify-btn-danger text-white shadow-lg"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>`;
-                    previewContainer.appendChild(div);
+        navigator.geolocation.getCurrentPosition(
+            async function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                document.getElementById('lat_produk').value = lat;
+                document.getElementById('lon_produk').value = lon;
+
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const data = await res.json();
+                    if (data && data.display_name) {
+                        alamatInput.value = data.display_name;
+                    }
+                } catch(err) {
+                    console.log("Reverse geocoding error:", err);
                 }
-                reader.readAsDataURL(file);
-            });
-        }
-    </script>
-</body>
-</html>
+
+                statusDiv.innerHTML = `<span class="text-emerald-700 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Titik GPS Berhasil Terkunci (${lat.toFixed(4)}, ${lon.toFixed(4)})</span>`;
+                statusDiv.className = "px-3.5 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium flex items-center gap-2";
+            },
+            function(err) {
+                statusDiv.innerHTML = '<span class="text-amber-700 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-exclamation text-amber-600"></i> Izin GPS ditolak. Koordinat default tersimpan, Anda tetap bisa mengisi alamat manual.</span>';
+                statusDiv.className = "px-3.5 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-medium flex items-center gap-2";
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    // Indikator Submit Loading
+    document.getElementById('formUploadBarang').addEventListener('submit', function() {
+        const btn = document.getElementById('btnSubmitBarang');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-base mr-2"></i> Mengunggah ke Cloud...';
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+    });
+</script>
+@endpush
