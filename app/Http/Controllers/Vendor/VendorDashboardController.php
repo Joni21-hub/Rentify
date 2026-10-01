@@ -109,14 +109,24 @@ class VendorDashboardController extends Controller
             $chart30Data[] = $pemasukan > 0 ? round($pemasukan / 1.05) : 0;
         }
 
-        // 6. PRODUK TERLARIS (TOP 4)
+        // 6. VOUCHER PROMO TOKO (PENTING UNTUK PROMOSI TOKO)
+        $totalVoucher = \App\Models\Voucher::where('vendor_id', $user->id)->count();
+        $vouchers = \App\Models\Voucher::where('vendor_id', $user->id)->latest()->take(3)->get();
+
+        // Status Ringkas Pesanan (Untuk 4-Grid Status ala Marketplace Besar)
+        $jmlMenungguKonfirmasi = (clone $pesananQuery)->where('status', 'Menunggu Konfirmasi')->count();
+        $jmlSedangDisewa = $unitSedangDisewa;
+        $jmlJatuhTempo = (clone $pesananQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])->whereDate('tanggal_selesai', '<=', now()->toDateString())->count();
+        $jmlSelesai = $totalPenyewaanSelesai;
+
+        // 7. PRODUK TERLARIS (TOP 4)
         $topProducts = Barang::where('vendor_id', $user->id)
             ->withCount(['details as total_sewa'])
             ->orderBy('total_sewa', 'desc')
             ->take(4)
             ->get();
 
-        // 7. PESANAN TERAKHIR (TABEL MINI)
+        // 8. PESANAN TERAKHIR (TABEL MINI)
         $recentOrders = (clone $pesananQuery)
             ->with(['customer', 'details.barang'])
             ->latest()
@@ -134,11 +144,17 @@ class VendorDashboardController extends Controller
             'tingkatKeterisian',
             'jmlPesananAktif',
             'totalPenyewaanSelesai',
+            'jmlMenungguKonfirmasi',
+            'jmlSedangDisewa',
+            'jmlJatuhTempo',
+            'jmlSelesai',
             'pesananMenunggu',
             'pengembalianHariIni',
             'totalSaldo',
             'saldoTertahan',
             'pendapatanBulanIni',
+            'totalVoucher',
+            'vouchers',
             'chart7Labels',
             'chart7Data',
             'chart30Labels',

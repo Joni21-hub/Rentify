@@ -52,20 +52,22 @@
     <!-- ========================================== -->
     <header class="lg:hidden sticky top-0 z-40 bg-navydark text-white px-4 py-3 flex items-center justify-between shadow-md">
         <div class="flex items-center gap-3">
-            <button type="button" onclick="toggleDrawer()" class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer">
-                <i class="fa-solid fa-bars-staggered text-base"></i>
+            <button type="button" onclick="toggleDrawer()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer">
+                <i class="fa-solid fa-bars-staggered text-sm"></i>
             </button>
             <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-2">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo" class="h-8 w-auto object-contain">
-                <span class="text-lg font-black tracking-tight text-white">Rentify<span class="text-sky-400">.</span></span>
+                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo" class="h-7 w-auto object-contain">
+                <span class="text-base font-black tracking-tight text-white">Rentify<span class="text-sky-400">.</span></span>
             </a>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-400 to-sky-600 text-white rounded-xl text-xs font-black shadow-sm">
-                <i class="fa-solid fa-plus text-xs"></i> <span>Upload</span>
-            </a>
-            <a href="{{ route('role.switch', 'customer') }}" class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-sky-300" title="Ke Mode Customer">
-                <i class="fa-solid fa-cart-shopping text-sm"></i>
+            @php $vStatus = Auth::user()->vendor_status ?? 'pending'; @endphp
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold {{ $vStatus === 'approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' : 'bg-amber-500/20 text-amber-300 border border-amber-400/30' }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ $vStatus === 'approved' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse' }}"></span>
+                {{ $vStatus === 'approved' ? 'Toko Aktif' : 'Kurasi' }}
+            </span>
+            <a href="{{ route('vendor.pengaturan.index') }}" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 transition" title="Pengaturan Toko">
+                <i class="fa-solid fa-gear text-xs"></i>
             </a>
         </div>
     </header>
@@ -195,10 +197,10 @@
             <span class="text-[9px] font-bold mt-0.5">Pesanan</span>
         </a>
 
-        <!-- Saldo -->
-        <a href="{{ route('vendor.saldo.index') }}" class="flex flex-col items-center py-1 px-2 {{ request()->routeIs('vendor.saldo.*') ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600' }}">
-            <i class="fa-solid fa-wallet text-lg"></i>
-            <span class="text-[9px] font-bold mt-0.5">Saldo</span>
+        <!-- Voucher Toko -->
+        <a href="{{ route('vendor.voucher.index') }}" class="flex flex-col items-center py-1 px-2 {{ request()->routeIs('vendor.voucher.*') ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600' }}">
+            <i class="fa-solid fa-ticket text-lg"></i>
+            <span class="text-[9px] font-bold mt-0.5">Voucher</span>
         </a>
     </nav>
 
