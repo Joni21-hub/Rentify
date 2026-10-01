@@ -1,151 +1,197 @@
 @extends('layouts.vendor')
 
-@section('title', 'Manajemen Produk - Vendor Rentify')
+@section('title', 'Katalog Produk — Vendor Rentify')
 
 @section('content')
-<div class="p-4 md:p-8">
-    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+<div class="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+
+    <!-- Header Bersih & Profesional -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Manajemen Produk <span class="text-2xl"></span></h1>
-            <p class="text-slate-500 mt-2 font-medium">Kelola daftar barang sewaan Anda dan pantau status persetujuan dari Admin Rentify.</p>
+            <h1 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">Katalog Produk</h1>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">{{ count($barangs) }} produk terdaftar di toko Anda</p>
         </div>
         
-        <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rentify-btn text-white font-bold rounded-2xl hover:opacity-90 transition-opacity shadow-lg shadow-brand-main/30 group">
-            <i class="fa-solid fa-plus group-hover:rotate-90 transition-all duration-300"></i> Tambah Barang Baru
+        <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 text-white rounded-xl text-xs font-black shadow-sm transition active:scale-95">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Tambah Produk</span>
         </a>
-    </header>
+    </div>
 
     @if(session('success'))
-        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm ">
-            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <p class="font-semibold">{{ session('success') }}</p>
+        <div class="px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs font-bold shadow-xs">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
     <!-- Toolbar Pencarian & Filter -->
-    <form method="GET" action="{{ route('vendor.barang.index') }}" class="flex flex-col md:flex-row gap-4 mb-6 w-full">
+    <form method="GET" action="{{ route('vendor.barang.index') }}" class="flex flex-col sm:flex-row gap-2.5">
         <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
-            </div>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk Anda..." class="rentify-input w-full pl-11 pr-4 py-3.5 rentify-card -slate-200 text-sm focus:-brand-main outline-none transition-all font-medium placeholder-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk..." class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 shadow-xs transition">
         </div>
-        <div class="flex gap-3">
-            <select name="status" class="rentify-input px-4 py-3.5 rentify-card -slate-200 text-sm font-medium text-slate-600 focus:-brand-main outline-none transition-all">
+        <div class="flex gap-2">
+            <select name="status" class="flex-1 sm:flex-none px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-sky-500 shadow-xs transition">
                 <option value="">Semua Status</option>
-                <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Aktif (Disetujui)</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Kurasi</option>
+                <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Aktif</option>
+                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Ditinjau</option>
             </select>
-            <button type="submit" class="px-5 py-3.5 rentify-card -slate-200 text-slate-600 hover:text-sky-600 hover:-brand-main transition-colors font-bold">
-                <i class="fa-solid fa-filter"></i> Terapkan
+            <button type="submit" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xs transition shrink-0">
+                Filter
             </button>
         </div>
     </form>
 
-    <div class="rentify-card p-6">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50/50 border-b border-slate-100">
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest whitespace-nowrap">Info Barang</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest whitespace-nowrap">Harga Sewa</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest whitespace-nowrap">Stok</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest whitespace-nowrap">Status Kurasi</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    
-                    @forelse($barangs as $barang)
-                    <tr class="hover:bg-blue-50/30 transition-colors duration-200 group">
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm relative group-hover:shadow-md transition-all">
-                                    @if($barang->cover_photo)
-                                        <!-- SESUDAHNYA (Hapus kata 'storage/') -->
-                                        <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover group-transform hover:-translate-y-1 active:translate-y-0 transition-all duration-500">
+    <!-- LIST PRODUK: CARD-BASED UNTUK HP (MOBILE FIRST) -->
+    <div class="block lg:hidden space-y-2.5">
+        @forelse($barangs as $barang)
+            @php
+                $imgUrl = $barang->cover_photo ?? ($barang->fotos->first()->foto_path ?? null);
+                if ($imgUrl && !str_starts_with($imgUrl, 'http')) {
+                    $imgUrl = asset(str_replace('public/', '', $imgUrl));
+                }
+            @endphp
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                        @if($imgUrl)
+                            <img src="{{ $imgUrl }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                <i class="fa-solid fa-image text-lg"></i>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1 mb-0.5">
+                            <span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md truncate">
+                                {{ $barang->kategori->nama ?? 'Umum' }}
+                            </span>
+                            @if($barang->is_approved == 1 || $barang->status_barang == 'disetujui')
+                                <span class="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">
+                                    Aktif
+                                </span>
+                            @else
+                                <span class="text-[9px] font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full shrink-0">
+                                    Ditinjau
+                                </span>
+                            @endif
+                        </div>
+                        <h3 class="text-xs font-black text-slate-800 truncate">{{ $barang->nama }}</h3>
+                        <p class="text-xs font-black text-slate-900 mt-1">
+                            Rp {{ number_format($barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[10px] font-normal text-slate-400">/hari</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-[11px] font-bold text-slate-500">
+                        Stok: <strong class="text-slate-800">{{ $barang->stok_total }} unit</strong>
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <a href="{{ route('vendor.barang.show', $barang->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition">
+                            Detail
+                        </a>
+                        <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini secara permanen?');" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition">
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400">
+                <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
+                <p class="text-xs font-medium">Belum ada produk di etalase toko.</p>
+            </div>
+        @endforelse
+    </div>
+
+    <!-- LIST PRODUK: TABLE UNTUK DESKTOP (LAYAR BESAR) -->
+    <div class="hidden lg:block bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <table class="w-full text-left text-xs">
+            <thead>
+                <tr class="border-b border-slate-100 bg-slate-50/50 text-slate-400 font-black uppercase text-[10px] tracking-wider">
+                    <th class="px-6 py-4">Produk</th>
+                    <th class="px-6 py-4">Tarif Sewa</th>
+                    <th class="px-6 py-4">Stok Fisik</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4 text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse($barangs as $barang)
+                    @php
+                        $imgUrl = $barang->cover_photo ?? ($barang->fotos->first()->foto_path ?? null);
+                        if ($imgUrl && !str_starts_with($imgUrl, 'http')) {
+                            $imgUrl = asset(str_replace('public/', '', $imgUrl));
+                        }
+                    @endphp
+                    <tr class="hover:bg-slate-50/60 transition">
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                    @if($imgUrl)
+                                        <img src="{{ $imgUrl }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover">
                                     @else
-                                        <div class="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                                            <i class="fa-solid fa-image text-2xl"></i>
+                                        <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                            <i class="fa-solid fa-image text-sm"></i>
                                         </div>
                                     @endif
                                 </div>
-                                <div>
-                                    <h3 class="font-bold text-slate-800 text-base group-hover:text-sky-600 transition-colors">{{ $barang->nama }}</h3>
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-semibold text-slate-500 mt-1.5">
-                                        <i class="fa-solid fa-tags text-sky-500"></i> 
-                                        {{ $barang->kategori->nama ?? 'Tanpa Kategori' }}
-                                    </span>
+                                <div class="min-w-0">
+                                    <h3 class="font-black text-slate-800 truncate text-xs">{{ $barang->nama }}</h3>
+                                    <span class="text-[10px] font-bold text-sky-600">{{ $barang->kategori->nama ?? 'Tanpa Kategori' }}</span>
                                 </div>
                             </div>
                         </td>
-
-                        <td class="px-6 py-5 align-middle">
-                            <div class="flex flex-col">
-                                <span class="font-black text-slate-800 text-base">Rp {{ number_format($barang->harga_sewa_harian, 0, ',', '.') }}</span>
-                                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Per Hari</span>
-                            </div>
+                        <td class="px-6 py-3.5 font-black text-slate-800">
+                            Rp {{ number_format($barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[10px] font-normal text-slate-400">/hari</span>
                         </td>
-
-                        <td class="px-6 py-5 align-middle">
-                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-sm font-bold text-sky-600 border border-blue-100 shadow-sm">
-                                <i class="fa-solid fa-boxes-stacked opacity-70"></i> {{ $barang->stok_total }}
-                            </div>
+                        <td class="px-6 py-3.5 font-bold text-slate-700">
+                            {{ $barang->stok_total }} unit
                         </td>
-
-                        <td class="px-6 py-5 align-middle">
-                            @if($barang->is_approved == 1)
-                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-bold shadow-sm">
-                                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                    Disetujui
-                                </div>
+                        <td class="px-6 py-3.5">
+                            @if($barang->is_approved == 1 || $barang->status_barang == 'disetujui')
+                                <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700">
+                                    Aktif
+                                </span>
                             @else
-                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 text-xs font-bold shadow-sm">
-                                    <i class="fa-solid fa-clock-rotate-left opacity-70"></i>
-                                    Menunggu
-                                </div>
+                                <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700">
+                                    Ditinjau
+                                </span>
                             @endif
                         </td>
-
-                        <td class="px-6 py-5 align-middle text-right">
-                            <div class="flex items-center justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-                                
-                                <a href="{{ route('vendor.barang.show', $barang->id) }}" class="w-9 h-9 rounded-xl bg-sky-50 text-sky-500 hover:bg-brand-sky hover:text-white transition-colors flex items-center justify-center tooltip border border-sky-100" title="Lihat Detail">
-                                    <i class="fa-solid fa-eye text-sm"></i>
+                        <td class="px-6 py-3.5 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a href="{{ route('vendor.barang.show', $barang->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
+                                    Detail
                                 </a>
-
-                                <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ({{ $barang->nama }}) ini secara permanen?');">
+                                <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini?');" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors flex items-center justify-center tooltip border border-rose-100" title="Hapus Barang">
-                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                    <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition">
+                                        Hapus
                                     </button>
                                 </form>
-                                
                             </div>
                         </td>
                     </tr>
-                    @empty
+                @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-20 text-center">
-                            <div class="inline-flex w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-sky-600 items-center justify-center mb-5 shadow-inner border border-white">
-                                <i class="fa-solid fa-box-open text-4xl opacity-80"></i>
-                            </div>
-                            <h3 class="text-xl font-black text-slate-800 mb-2">Belum ada produk di etalase</h3>
-                            <p class="text-slate-500 text-sm max-w-md mx-auto mb-6 font-medium">Toko Anda saat ini masih kosong. Mulai tambahkan barang sewaan pertama Anda agar pelanggan bisa mulai menyewa.</p>
-                            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center gap-2 px-6 py-3 rentify-card -slate-200 text-slate-700 font-bold hover:text-sky-600 hover:-brand-main transition-all text-sm">
-                                <i class="fa-solid fa-plus"></i> Tambah Barang Sekarang
-                            </a>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                            <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
+                            <p class="text-xs font-medium">Belum ada produk di etalase toko.</p>
                         </td>
                     </tr>
-                    @endforelse
-
-                </tbody>
-            </table>
-        </div>
+                @endforelse
+            </tbody>
+        </table>
     </div>
-</div>
 
-@endsection
+</div>
+@endsection

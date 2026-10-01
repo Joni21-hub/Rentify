@@ -1,185 +1,177 @@
 @extends('layouts.vendor')
 
-@section('title', 'Voucher Toko - Vendor Rentify')
+@section('title', 'Voucher Toko — Vendor Rentify')
 
 @section('content')
-<div class="p-4 md:p-8">
-    <header class="mb-8">
-        <h1 class="text-3xl font-black text-slate-800 tracking-tight">Voucher Toko <span class="text-2xl">🎟️</span></h1>
-        <p class="text-slate-500 mt-2 font-medium">Buat promo diskon eksklusif untuk menarik lebih banyak pelanggan.</p>
-    </header>
+<div class="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+
+    <!-- Header Bersih & Profesional -->
+    <div class="flex items-center justify-between bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
+        <div>
+            <h1 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">Voucher Diskon Toko</h1>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Kelola kode promosi diskon untuk menarik lebih banyak penyewa</p>
+        </div>
+        <span class="px-3 py-1 bg-amber-50 text-amber-800 text-xs font-black rounded-xl">
+            {{ count($vouchers) }} Voucher
+        </span>
+    </div>
 
     @if(session('success'))
-        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm">
-            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-check"></i></div>
-            <p class="font-semibold">{{ session('success') }}</p>
+        <div class="px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs font-bold shadow-xs">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
     
     @if ($errors->any())
-        <div class="mb-8 px-5 py-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl shadow-sm">
-            <ul class="list-disc list-inside text-sm font-semibold">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+        <div class="px-4 py-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs font-medium space-y-1 shadow-xs">
+            @foreach ($errors->all() as $error)
+                <p>• {{ $error }}</p>
+            @endforeach
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
         
-        <!-- KOLOM KIRI: Form Buat Voucher -->
+        <!-- KOLOM KIRI: Form Buat Voucher (Compact & Touch-Friendly) -->
         <div class="lg:col-span-1">
-            <div class="rentify-card p-6 -slate-100 rentify-card sticky top-28">
-                <h3 class="text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-3"><i class="fa-solid fa-ticket text-sky-600 mr-2"></i> Buat Voucher Baru</h3>
+            <div class="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5">
+                <h2 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus text-sky-500"></i> Buat Voucher Baru
+                </h2>
                 
-                <form action="{{ route('vendor.voucher.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('vendor.voucher.store') }}" method="POST" class="space-y-3">
                     @csrf
                     
                     <div>
-                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Kode Voucher</label>
-                        <input type="text" name="kode_voucher" required class="rentify-input w-full px-4 py-3 text-sm font-black text-slate-800 outline-none uppercase" placeholder="D1sk0n10">
-                        <p class="text-[10px] text-slate-400 mt-1">Tanpa spasi, maksimal 10 karakter disarankan.</p>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Kode Voucher</label>
+                        <input type="text" name="kode_voucher" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-800 uppercase focus:outline-none focus:border-sky-500 shadow-xs" placeholder="RENTALHEMAT">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Tipe Diskon</label>
-                            <select name="tipe_diskon" id="tipe_diskon" onchange="toggleMaksimalDiskon()" required class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none">
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Tipe</label>
+                            <select name="tipe_diskon" id="tipe_diskon" onchange="toggleMaksimalDiskon()" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                                 <option value="nominal">Nominal (Rp)</option>
                                 <option value="persen">Persentase (%)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Nilai Diskon</label>
-                            <input type="number" name="nilai_diskon" required min="1" class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none" placeholder="10000">
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Nilai Diskon</label>
+                            <input type="number" name="nilai_diskon" required min="1" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs" placeholder="10000">
                         </div>
                     </div>
 
                     <div id="box_maksimal_diskon" class="hidden">
-                        <label class="block text-xs font-extrabold text-rose-500 uppercase tracking-widest mb-1">Maksimal Potongan (Rp)</label>
-                        <input type="number" name="maksimal_diskon" id="maksimal_diskon" min="1" class="rentify-input w-full px-4 py-3 bg-rose-50 text-sm font-bold outline-none text-rose-700" placeholder="Contoh: 20000">
-                        <p class="text-[10px] text-rose-400 mt-1">* Wajib diisi agar Anda tidak rugi jika transaksi sangat besar.</p>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Maks. Potongan (Rp)</label>
+                        <input type="number" name="maksimal_diskon" id="maksimal_diskon" min="1" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs" placeholder="50000">
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Min. Belanja (Rp)</label>
-                        <input type="number" name="minimal_belanja" required min="0" value="0" class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none" placeholder="0 untuk tanpa batas">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Kuota Total</label>
-                        <input type="number" name="kuota_total" required min="1" value="50" class="rentify-input w-full px-4 py-3 text-sm font-bold outline-none">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Tgl Mulai</label>
-                            <input type="date" name="tanggal_mulai" required min="{{ date('Y-m-d') }}" class="rentify-input w-full px-4 py-3 text-xs font-bold outline-none">
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Min. Belanja</label>
+                            <input type="number" name="minimal_belanja" required min="0" value="0" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         </div>
                         <div>
-                            <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1">Tgl Berakhir</label>
-                            <input type="date" name="tanggal_selesai" required min="{{ date('Y-m-d') }}" class="rentify-input w-full px-4 py-3 text-xs font-bold outline-none">
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Kuota</label>
+                            <input type="number" name="kuota_total" required min="1" value="50" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full rentify-btn text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-brand-main/30 mt-4">
-                        Buat Voucher Promo <i class="fa-solid fa-arrow-right ml-1"></i>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Mulai</label>
+                            <input type="date" name="tanggal_mulai" required min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Selesai</label>
+                            <input type="date" name="tanggal_selesai" required min="{{ date('Y-m-d') }}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 text-white font-black text-xs rounded-xl shadow-xs transition active:scale-95">
+                        Simpan Voucher
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- KOLOM KANAN: Daftar Voucher -->
-        <div class="lg:col-span-2 space-y-4">
+        <!-- KOLOM KANAN: Daftar Kupon Voucher (Sleek Card List) -->
+        <div class="lg:col-span-2 space-y-3">
+            <h2 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">
+                Voucher Aktif & Riwayat
+            </h2>
+
             @forelse($vouchers as $v)
-                <div class="flex flex-col sm:flex-row rentify-card -slate-100 overflow-hidden group">
-                    <!-- Sisi Kiri Kupon (Warna warni) -->
-                    <div class="w-full sm:w-32 {{ $v->is_active && $v->tanggal_selesai >= date('Y-m-d') ? 'gradient-bg' : 'bg-slate-300' }} text-white p-4 flex flex-col justify-center items-center relative border-r-2 border-dashed border-white/50">
-                        <i class="fa-solid fa-ticket text-3xl mb-1 opacity-80"></i>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-center mt-1">
-                            {{ $v->tipe_diskon == 'persen' ? 'Diskon %' : 'Potongan' }}
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col sm:flex-row items-stretch">
+                    <!-- Sisi Kiri / Header Kupon -->
+                    <div class="w-full sm:w-28 {{ $v->is_active && $v->tanggal_selesai >= date('Y-m-d') ? 'bg-gradient-to-br from-sky-500 to-blue-600' : 'bg-slate-300' }} text-white p-3 sm:p-4 flex sm:flex-col items-center justify-between sm:justify-center border-b sm:border-b-0 sm:border-r-2 border-dashed border-white/40">
+                        <i class="fa-solid fa-ticket text-xl sm:text-2xl opacity-90"></i>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-center mt-0 sm:mt-1">
+                            {{ $v->tipe_diskon == 'persen' ? $v->nilai_diskon . '%' : 'Rp ' . number_format($v->nilai_diskon / 1000, 0) . 'k' }}
                         </span>
                     </div>
-                    
-                    <!-- Sisi Kanan Kupon (Detail) -->
-                    <div class="flex-1 p-5 relative">
-                        <div class="flex justify-between items-start mb-2">
+
+                    <!-- Isi Kupon -->
+                    <div class="flex-1 p-3.5 sm:p-4 flex flex-col justify-between gap-2">
+                        <div class="flex items-start justify-between gap-2">
                             <div>
-                                <span class="inline-block px-2 py-1 bg-blue-50 text-sky-600 rounded text-[10px] font-black uppercase tracking-widest mb-1 border border-blue-100">
+                                <span class="inline-block px-2 py-0.5 bg-sky-50 text-sky-700 rounded text-[10px] font-black uppercase tracking-widest border border-sky-100">
                                     {{ $v->kode_voucher }}
                                 </span>
-                                <h4 class="font-black text-slate-800 text-lg">
+                                <h3 class="font-black text-slate-800 text-xs sm:text-sm mt-1">
                                     @if($v->tipe_diskon == 'persen')
-                                        Diskon {{ $v->nilai_diskon }}% (Maks. Rp{{ number_format($v->maksimal_diskon, 0, ',', '.') }})
+                                        Diskon {{ $v->nilai_diskon }}% @if($v->maksimal_diskon)(Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }})@endif
                                     @else
-                                        Potongan Rp{{ number_format($v->nilai_diskon, 0, ',', '.') }}
+                                        Potongan Rp {{ number_format($v->nilai_diskon, 0, ',', '.') }}
                                     @endif
-                                </h4>
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Min. sewa: Rp {{ number_format($v->minimal_belanja, 0, ',', '.') }}</p>
                             </div>
-                            
-                            <!-- Tombol Hapus -->
-                            <form action="{{ route('vendor.voucher.destroy', $v->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus voucher ini?');">
+
+                            <form action="{{ route('vendor.voucher.destroy', $v->id) }}" method="POST" onsubmit="return confirm('Hapus voucher promo ini?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-colors">
-                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                <button type="submit" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center transition active:scale-90" title="Hapus">
+                                    <i class="fa-solid fa-trash text-xs"></i>
                                 </button>
                             </form>
                         </div>
-                        
-                        <p class="text-xs font-medium text-slate-500 mb-4">Min. Belanja: <span class="font-bold text-slate-700">Rp{{ number_format($v->minimal_belanja, 0, ',', '.') }}</span></p>
-                        
-                        <div class="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-100">
-                            <div class="text-[11px] text-slate-500 font-bold">
-                                <i class="fa-regular fa-clock text-sky-600 mr-1"></i> 
-                                Berlaku: {{ \Carbon\Carbon::parse($v->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($v->tanggal_selesai)->format('d M Y') }}
-                            </div>
-                            <div class="text-[11px] text-slate-500 font-bold">
-                                <i class="fa-solid fa-users text-amber-500 mr-1"></i>
-                                Kuota: <span class="text-amber-600">{{ $v->kuota_terpakai }}</span> / {{ $v->kuota_total }} Dipakai
-                            </div>
-                            
-                            <!-- Status Badge -->
-                            <div class="ml-auto">
-                                @if($v->tanggal_selesai < date('Y-m-d'))
-                                    <span class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-[10px] font-bold">Kedaluwarsa</span>
-                                @elseif($v->kuota_terpakai >= $v->kuota_total)
-                                    <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">Kuota Habis</span>
-                                @else
-                                    <span class="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold">Aktif</span>
-                                @endif
-                            </div>
+
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-medium text-slate-500">
+                            <span>
+                                Berlaku: {{ \Carbon\Carbon::parse($v->tanggal_mulai)->format('d M') }} — {{ \Carbon\Carbon::parse($v->tanggal_selesai)->format('d M Y') }}
+                            </span>
+                            <span>
+                                Kuota: <strong class="text-slate-800">{{ $v->kuota_terpakai }}/{{ $v->kuota_total }}</strong>
+                            </span>
                         </div>
                     </div>
                 </div>
             @empty
-                <div class="text-center py-16 bg-white border border-slate-100 rounded-3xl">
-                    <div class="w-20 h-20 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-slate-300 text-3xl mb-4">
-                        <i class="fa-solid fa-ticket-simple"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-700">Belum ada Voucher</h3>
-                    <p class="text-sm text-slate-500 mt-1">Buat voucher pertamamu di form sebelah kiri.</p>
+                <div class="bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400">
+                    <i class="fa-solid fa-ticket text-3xl mb-2 text-slate-300"></i>
+                    <p class="text-xs font-medium">Belum ada voucher diskon aktif.</p>
                 </div>
             @endforelse
         </div>
+
     </div>
+
 </div>
 
-<!-- Script untuk memunculkan kolom Maksimal Diskon jika memilih Persen -->
 <script>
     function toggleMaksimalDiskon() {
-        var tipe = document.getElementById('tipe_diskon').value;
-        var boxMaks = document.getElementById('box_maksimal_diskon');
-        var inputMaks = document.getElementById('maksimal_diskon');
-        
-        if(tipe === 'persen') {
-            boxMaks.classList.remove('hidden');
-            inputMaks.setAttribute('required', 'required');
+        const tipe = document.getElementById('tipe_diskon').value;
+        const box = document.getElementById('box_maksimal_diskon');
+        const input = document.getElementById('maksimal_diskon');
+        if (tipe === 'persen') {
+            box.classList.remove('hidden');
+            input.required = true;
         } else {
-            boxMaks.classList.add('hidden');
-            inputMaks.removeAttribute('required');
-            inputMaks.value = '';
+            box.classList.add('hidden');
+            input.required = false;
+            input.value = '';
         }
     }
 </script>

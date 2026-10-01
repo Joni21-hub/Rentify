@@ -1,105 +1,158 @@
 @extends('layouts.vendor')
 
-@section('title', 'Pesanan Masuk - Vendor Rentify')
+@section('title', 'Pesanan Masuk — Vendor Rentify')
 
 @section('content')
-<div class="p-4 md:p-8">
-    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+<div class="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+
+    <!-- Header Bersih & Profesional -->
+    <div class="flex items-center justify-between bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pesanan Masuk <span class="text-2xl"></span></h1>
-            <p class="text-slate-500 mt-2 font-medium">Kelola daftar pesanan dari customer, proses penyewaan, dan pantau riwayat.</p>
+            <h1 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">Pesanan Masuk</h1>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Pantau dan kelola seluruh transaksi penyewaan dari customer</p>
         </div>
-    </header>
+        <span class="px-3 py-1 bg-sky-50 text-sky-700 text-xs font-black rounded-xl">
+            {{ count($pesananMasuk) }} Transaksi
+        </span>
+    </div>
 
     @if(session('success'))
-        <div class="mb-8 px-5 py-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm ">
-            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-check"></i></div>
-            <p class="font-semibold">{{ session('success') }}</p>
+        <div class="px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs font-bold shadow-xs">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
-    <div class="rentify-card p-6">
-        <div class="p-6 border-b border-slate-100 bg-white/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 class="font-extrabold text-lg text-slate-800">Riwayat Transaksi Customer</h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm border-collapse">
-                <thead class="bg-slate-50/50 border-b border-slate-100">
-                    <tr>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Tgl Transaksi</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Customer & Jadwal</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Metode Bayar</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Total Tagihan</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest text-center">Status</th>
-                        <th class="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-widest text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @forelse($pesananMasuk as $pesanan)
-                        <tr class="hover:bg-blue-50/30 transition-colors group">
-                            <td class="px-6 py-5 whitespace-nowrap">
-                                <p class="font-bold text-slate-700">#ORD-{{ $pesanan->id }}</p>
-                                <p class="text-xs text-slate-500 mt-1 font-medium"><i class="fa-regular fa-clock mr-1 text-sky-500"></i> {{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</p>
-                            </td>
-                            <td class="px-6 py-5">
-                                <p class="font-bold text-slate-800">{{ $pesanan->customer_name }}</p>
-                                
-                                <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-sky-600 text-[10px] font-bold">
-                                    <i class="fa-regular fa-calendar-check"></i> Mulai: {{ \Carbon\Carbon::parse($pesanan->start_rent)->format('d M Y') }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-5 align-middle">
-                                @if(strtoupper($pesanan->payment_method) == 'QRIS')
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-sky-600 text-[11px] font-bold shadow-sm">
-                                        <i class="fa-solid fa-qrcode"></i> QRIS
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-100 text-orange-600 text-[11px] font-bold shadow-sm">
-                                        <i class="fa-solid fa-money-bill-wave"></i> COD
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-5 align-middle">
-                                <span class="font-black text-slate-800 text-base">Rp {{ number_format($pesanan->total_price, 0, ',', '.') }}</span>
-                            </td>
-                            <td class="px-6 py-5 text-center align-middle">
-                                @php
-                                    $statusClass = 'bg-slate-50 text-slate-600 border-slate-200';
-                                    $icon = 'fa-circle-info';
-                                    if($pesanan->status == 'Menunggu Konfirmasi') { $statusClass = 'bg-amber-50 text-amber-600 border-amber-100'; $icon = 'fa-clock'; }
-                                    elseif($pesanan->status == 'Disetujui') { $statusClass = 'bg-blue-50 text-sky-600 border-blue-100'; $icon = 'fa-thumbs-up'; }
-                                    elseif($pesanan->status == 'Sedang Disewa') { $statusClass = 'bg-purple-50 text-purple-600 border-purple-100'; $icon = 'fa-people-carry-box'; }
-                                    elseif($pesanan->status == 'Selesai') { $statusClass = 'bg-emerald-50 text-emerald-600 border-emerald-100'; $icon = 'fa-check'; }
-                                    elseif($pesanan->status == 'Dibatalkan') { $statusClass = 'bg-rose-50 text-rose-600 border-rose-100'; $icon = 'fa-xmark'; }
-                                @endphp
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl {{ $statusClass }} border text-[11px] font-bold shadow-sm whitespace-nowrap">
-                                    <i class="fa-solid {{ $icon }}"></i> {{ $pesanan->status }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-5 text-right align-middle">
-                                <a href="{{ route('vendor.pesanan.show', $pesanan->id) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 text-sky-600 hover:bg-brand-main hover:text-white transition-colors border border-slate-200 hover:border-brand-main font-bold text-xs shadow-sm">
-                                    Proses / Detail <i class="fa-solid fa-arrow-right"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-20 text-center">
-                                <div class="inline-flex w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-sky-600 items-center justify-center mb-5 shadow-inner border border-white">
-                                    <i class="fa-solid fa-clipboard-list text-4xl opacity-80"></i>
-                                </div>
-                                <h3 class="text-xl font-black text-slate-800 mb-2">Belum ada pesanan</h3>
-                                <p class="text-slate-500 text-sm max-w-md mx-auto font-medium">Saat ini belum ada customer yang menyewa barang Anda.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <!-- LIST PESANAN: CARD-BASED UNTUK HP (MOBILE FIRST) -->
+    <div class="block lg:hidden space-y-3">
+        @forelse($pesananMasuk as $pesanan)
+            @php
+                $st = strtolower($pesanan->status);
+                $badgeClass = 'bg-slate-100 text-slate-600';
+                if (in_array($st, ['selesai'])) $badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                elseif (in_array($st, ['menunggu konfirmasi', 'pending'])) $badgeClass = 'bg-amber-50 text-amber-700 border border-amber-200';
+                elseif (in_array($st, ['disetujui', 'sedang disewa', 'berjalan'])) $badgeClass = 'bg-sky-50 text-sky-700 border border-sky-200';
+                elseif (in_array($st, ['dibatalkan', 'ditolak'])) $badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
+            @endphp
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+                <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-black text-xs text-slate-800">#ORD-{{ $pesanan->id }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium truncate">• {{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</span>
+                    </div>
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-black {{ $badgeClass }} shrink-0">
+                        {{ ucfirst($pesanan->status) }}
+                    </span>
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-700">{{ $pesanan->customer_name ?? $pesanan->customer->name ?? 'Pelanggan' }}</span>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase px-2 py-0.5 bg-slate-100 rounded-md">
+                            {{ $pesanan->payment_method ?? 'COD' }}
+                        </span>
+                    </div>
+
+                    @if($pesanan->details && $pesanan->details->count() > 0)
+                        <p class="text-xs text-slate-600 truncate font-medium">
+                            <i class="fa-solid fa-box text-[10px] text-slate-400 mr-1"></i>
+                            {{ $pesanan->details->first()->barang->nama ?? 'Produk Rental' }}
+                            @if($pesanan->details->count() > 1)
+                                <span class="text-sky-600 font-bold">+{{ $pesanan->details->count() - 1 }} lainnya</span>
+                            @endif
+                        </p>
+                    @endif
+
+                    <div class="text-[11px] text-slate-500 flex items-center gap-1 font-medium">
+                        <i class="fa-regular fa-calendar text-sky-500 text-[10px]"></i>
+                        <span>{{ \Carbon\Carbon::parse($pesanan->start_rent ?? $pesanan->tanggal_mulai)->format('d M') }} — {{ \Carbon\Carbon::parse($pesanan->end_rent ?? $pesanan->tanggal_selesai)->format('d M Y') }}</span>
+                    </div>
+                </div>
+
+                <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Biaya</span>
+                        <span class="text-sm font-black text-slate-800">
+                            Rp {{ number_format($pesanan->total_biaya ?? $pesanan->total_price ?? 0, 0, ',', '.') }}
+                        </span>
+                    </div>
+                    <a href="{{ route('vendor.pesanan.show', $pesanan->id) }}" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black shadow-xs transition">
+                        Detail Pesanan &rarr;
+                    </a>
+                </div>
+            </div>
+        @empty
+            <div class="bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400">
+                <i class="fa-solid fa-clipboard-list text-3xl mb-2 text-slate-300"></i>
+                <p class="text-xs font-medium">Belum ada transaksi pesanan masuk.</p>
+            </div>
+        @endforelse
     </div>
+
+    <!-- LIST PESANAN: TABLE UNTUK DESKTOP (LAYAR BESAR) -->
+    <div class="hidden lg:block bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <table class="w-full text-left text-xs">
+            <thead>
+                <tr class="border-b border-slate-100 bg-slate-50/50 text-slate-400 font-black uppercase text-[10px] tracking-wider">
+                    <th class="px-6 py-4">ID & Tanggal</th>
+                    <th class="px-6 py-4">Customer & Durasi</th>
+                    <th class="px-6 py-4">Metode Bayar</th>
+                    <th class="px-6 py-4">Total Biaya</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4 text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse($pesananMasuk as $pesanan)
+                    @php
+                        $st = strtolower($pesanan->status);
+                        $badgeClass = 'bg-slate-100 text-slate-600';
+                        if (in_array($st, ['selesai'])) $badgeClass = 'bg-emerald-50 text-emerald-700';
+                        elseif (in_array($st, ['menunggu konfirmasi', 'pending'])) $badgeClass = 'bg-amber-50 text-amber-700';
+                        elseif (in_array($st, ['disetujui', 'sedang disewa', 'berjalan'])) $badgeClass = 'bg-sky-50 text-sky-700';
+                        elseif (in_array($st, ['dibatalkan', 'ditolak'])) $badgeClass = 'bg-rose-50 text-rose-700';
+                    @endphp
+                    <tr class="hover:bg-slate-50/60 transition">
+                        <td class="px-6 py-3.5">
+                            <span class="font-black text-slate-800 text-xs">#ORD-{{ $pesanan->id }}</span>
+                            <p class="text-[10px] text-slate-400 mt-0.5">{{ \Carbon\Carbon::parse($pesanan->created_at)->format('d M Y, H:i') }}</p>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <div class="font-bold text-slate-700 text-xs">{{ $pesanan->customer_name ?? $pesanan->customer->name ?? 'Pelanggan' }}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">
+                                {{ \Carbon\Carbon::parse($pesanan->start_rent ?? $pesanan->tanggal_mulai)->format('d M') }} — {{ \Carbon\Carbon::parse($pesanan->end_rent ?? $pesanan->tanggal_selesai)->format('d M Y') }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                                {{ $pesanan->payment_method ?? 'COD' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 font-black text-slate-800">
+                            Rp {{ number_format($pesanan->total_biaya ?? $pesanan->total_price ?? 0, 0, ',', '.') }}
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-black {{ $badgeClass }}">
+                                {{ ucfirst($pesanan->status) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 text-right">
+                            <a href="{{ route('vendor.pesanan.show', $pesanan->id) }}" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
+                                Detail
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                            <i class="fa-solid fa-clipboard-list text-3xl mb-2 text-slate-300"></i>
+                            <p class="text-xs font-medium">Belum ada transaksi pesanan masuk.</p>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
 </div>
-<style>
-     to { opacity: 1; transform: translateY(0); } }
-    . { animation: fadeInDown 0.5s ease-out; }
-</style>
 @endsection
