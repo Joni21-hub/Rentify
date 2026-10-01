@@ -245,17 +245,23 @@ class CheckoutController extends Controller
             $orderId = DB::table('orders')->insertGetId([
                 'user_id' => auth()->id(),
                 'vendor_id' => $vendorId, 
+                'kode_booking' => 'RNT' . strtoupper(uniqid()),
                 'customer_name' => auth()->user()->name ?? 'Customer',
                 'customer_whatsapp' => $nomorWaAman, 
+                'alamat_pengiriman' => $opsi === 'diantar' ? ($request->alamat_customer ?? 'Sesuai Titik GPS') : 'Diambil di Toko',
                 'shipping_address' => $opsi === 'diantar' ? ($request->alamat_customer ?? 'Sesuai Titik GPS') : 'Diambil di Toko',
                 'pin_location' => $opsi === 'diantar' ? ($request->cust_lat . ',' . $request->cust_lon) : null,
+                'metode_pengambilan' => $opsi,
                 'shipping_method' => $opsi,
                 'shipping_fee' => $ongkir,
+                'tanggal_mulai' => $waktuMulai,
                 'start_rent' => $waktuMulai,      
+                'tanggal_selesai' => $waktuKembali,
                 'end_rent' => $waktuKembali,      
                 'duration_days' => $durasi,
                 'jaminan' => $jaminanTerpilih, 
                 'payment_method' => $request->metode_pembayaran,
+                'total_biaya' => $totalHargaVendor,
                 'total_price' => $totalHargaVendor,
                 
                 // PERUBAHAN: Mencatat data voucher ke database

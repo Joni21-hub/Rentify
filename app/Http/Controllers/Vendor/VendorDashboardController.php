@@ -48,7 +48,7 @@ class VendorDashboardController extends Controller
             })
             ->where('status', 'Selesai')
             ->whereDate('updated_at', $tanggal->format('Y-m-d'))
-            ->sum('total_price');
+            ->sum('total_biaya');
 
             // Hitung harga asli setelah dipotong 5% (Total Price / 1.05)
             $pendapatanBersih = $pemasukanHarian > 0 ? ($pemasukanHarian / 1.05) : 0;

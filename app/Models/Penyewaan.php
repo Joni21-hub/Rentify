@@ -51,4 +51,32 @@ class Penyewaan extends Model
         if (!$this->isTerlambat()) return 0;
         return $this->tanggal_selesai->diffInDays($this->tanggal_kembali_aktual);
     }
+
+    /**
+     * Accessor alias untuk total_price -> total_biaya
+     */
+    public function getTotalPriceAttribute(): float
+    {
+        return (float) ($this->attributes['total_biaya'] ?? 0);
+    }
+
+    public function getShippingAddressAttribute(): ?string
+    {
+        return $this->attributes['alamat_pengiriman'] ?? null;
+    }
+
+    public function getShippingMethodAttribute(): ?string
+    {
+        return $this->attributes['metode_pengambilan'] ?? null;
+    }
+
+    public function getStartRentAttribute()
+    {
+        return $this->tanggal_mulai;
+    }
+
+    public function getEndRentAttribute()
+    {
+        return $this->tanggal_selesai;
+    }
 }
