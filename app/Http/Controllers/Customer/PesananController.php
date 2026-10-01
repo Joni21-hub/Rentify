@@ -9,15 +9,32 @@ use Carbon\Carbon;
 
 class PesananController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = DB::table('orders')
+        $userId = auth()->id();
+
+        $baseQuery = DB::table('orders')
             ->leftJoin('users as vendors', 'orders.vendor_id', '=', 'vendors.id')
-            // PERBAIKAN: Memanggil nama toko (vendor_name), bukan nama pemilik (name)
             ->select('orders.*', 'vendors.vendor_name', 'vendors.name as owner_name', 'vendors.whatsapp_vendor')
-            ->where('orders.user_id', auth()->id())
-            ->orderBy('orders.created_at', 'desc')
-            ->get();
+            ->where('orders.user_id', $userId);
+
+        $countSemua = (clone $baseQuery)->count();
+        $countMenunggu = (clone $baseQuery)->whereIn('orders.status', ['Menunggu Konfirmasi', 'pending'])->count();
+        $countBerjalan = (clone $baseQuery)->whereIn('orders.status', ['Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar'])->count();
+        $countSelesai = (clone $baseQuery)->where('orders.status', 'Selesai')->count();
+
+        $statusFilter = $request->query('status', 'semua');
+        $query = clone $baseQuery;
+
+        if ($statusFilter === 'menunggu') {
+            $query->whereIn('orders.status', ['Menunggu Konfirmasi', 'pending']);
+        } elseif ($statusFilter === 'berjalan') {
+            $query->whereIn('orders.status', ['Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar']);
+        } elseif ($statusFilter === 'selesai') {
+            $query->where('orders.status', 'Selesai');
+        }
+
+        $orders = $query->orderBy('orders.created_at', 'desc')->get();
 
         foreach ($orders as $order) {
             $order->items = DB::table('order_items')
@@ -27,8 +44,9 @@ class PesananController extends Controller
                 ->get();
         }
 
-        return view('customer.pesanan.index', compact('orders'));
+        return view('customer.pesanan.index', compact('orders', 'statusFilter', 'countSemua', 'countMenunggu', 'countBerjalan', 'countSelesai'));
     }
+
 
     public function selesaikan($id)
     {

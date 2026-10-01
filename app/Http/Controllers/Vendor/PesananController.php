@@ -10,21 +10,53 @@ use Illuminate\Support\Facades\DB;
 
 class PesananController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $vendorId = Auth::id();
 
-        $pesananMasuk = Penyewaan::with(['customer', 'details.barang'])
+        $baseQuery = Penyewaan::with(['customer', 'details.barang'])
             ->whereHas('details.barang', function ($query) use ($vendorId) {
                 $query->where('vendor_id', $vendorId);
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+            });
 
-        // Dikirim dengan 2 nama sekaligus agar anti-error di halaman index
+        // Hitung total untuk setiap tab status
+        $countSemua = (clone $baseQuery)->count();
+        $countMenunggu = (clone $baseQuery)->whereIn('status', ['Menunggu Konfirmasi', 'pending'])->count();
+        $countDisewa = (clone $baseQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])->count();
+        $countJatuhTempo = (clone $baseQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])
+            ->whereDate('tanggal_selesai', '<=', now()->toDateString())->count();
+        $countSelesai = (clone $baseQuery)->where('status', 'Selesai')->count();
+        $countBatal = (clone $baseQuery)->whereIn('status', ['Dibatalkan', 'ditolak'])->count();
+
+        // Filter berdasarkan tab yang dipilih
+        $statusFilter = $request->query('status', 'semua');
+        $query = clone $baseQuery;
+
+        if ($statusFilter === 'menunggu') {
+            $query->whereIn('status', ['Menunggu Konfirmasi', 'pending']);
+        } elseif ($statusFilter === 'disewa') {
+            $query->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui']);
+        } elseif ($statusFilter === 'jatuh_tempo') {
+            $query->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])
+                  ->whereDate('tanggal_selesai', '<=', now()->toDateString());
+        } elseif ($statusFilter === 'selesai') {
+            $query->where('status', 'Selesai');
+        } elseif ($statusFilter === 'dibatalkan') {
+            $query->whereIn('status', ['Dibatalkan', 'ditolak']);
+        }
+
+        $pesananMasuk = $query->orderBy('created_at', 'desc')->get();
+
         return view('vendor.pesanan.index', [
-            'pesananMasuk' => $pesananMasuk,
-            'orders'       => $pesananMasuk
+            'pesananMasuk'    => $pesananMasuk,
+            'orders'          => $pesananMasuk,
+            'statusFilter'    => $statusFilter,
+            'countSemua'      => $countSemua,
+            'countMenunggu'   => $countMenunggu,
+            'countDisewa'     => $countDisewa,
+            'countJatuhTempo' => $countJatuhTempo,
+            'countSelesai'    => $countSelesai,
+            'countBatal'      => $countBatal,
         ]);
     }
 

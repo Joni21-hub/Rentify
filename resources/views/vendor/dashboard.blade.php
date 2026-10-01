@@ -98,7 +98,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             
             <!-- 1. Perlu Konfirmasi -->
-            <a href="{{ route('vendor.pesanan.index') }}" class="p-3 sm:p-4 rounded-2xl bg-white border {{ $jmlMenungguKonfirmasi > 0 ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200/80' }} shadow-xs hover:border-amber-400 transition flex flex-col justify-between group">
+            <a href="{{ route('vendor.pesanan.index', ['status' => 'menunggu']) }}" class="p-3 sm:p-4 rounded-2xl bg-white border {{ $jmlMenungguKonfirmasi > 0 ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200/80' }} shadow-xs hover:border-amber-400 transition flex flex-col justify-between group active:scale-98">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[11px] sm:text-xs font-bold text-slate-600">Perlu Diproses</span>
                     <i class="fa-solid fa-bell text-xs {{ $jmlMenungguKonfirmasi > 0 ? 'text-amber-500 animate-bounce' : 'text-slate-300' }}"></i>
@@ -112,7 +112,7 @@
             </a>
 
             <!-- 2. Sedang Disewa -->
-            <a href="{{ route('vendor.pesanan.index') }}" class="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-sky-400 transition flex flex-col justify-between group">
+            <a href="{{ route('vendor.pesanan.index', ['status' => 'disewa']) }}" class="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-sky-400 transition flex flex-col justify-between group active:scale-98">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[11px] sm:text-xs font-bold text-slate-600">Sedang Disewa</span>
                     <i class="fa-solid fa-truck-ramp-box text-xs text-sky-500"></i>
@@ -126,7 +126,7 @@
             </a>
 
             <!-- 3. Jatuh Tempo / Pengembalian -->
-            <a href="{{ route('vendor.pesanan.index') }}" class="p-3 sm:p-4 rounded-2xl bg-white border {{ $jmlJatuhTempo > 0 ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200/80' }} shadow-xs hover:border-rose-400 transition flex flex-col justify-between group">
+            <a href="{{ route('vendor.pesanan.index', ['status' => 'jatuh_tempo']) }}" class="p-3 sm:p-4 rounded-2xl bg-white border {{ $jmlJatuhTempo > 0 ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200/80' }} shadow-xs hover:border-rose-400 transition flex flex-col justify-between group active:scale-98">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[11px] sm:text-xs font-bold text-slate-600">Jatuh Tempo</span>
                     <i class="fa-solid fa-clock-rotate-left text-xs {{ $jmlJatuhTempo > 0 ? 'text-rose-500' : 'text-slate-300' }}"></i>
@@ -140,7 +140,7 @@
             </a>
 
             <!-- 4. Transaksi Selesai -->
-            <a href="{{ route('vendor.pesanan.index') }}" class="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-emerald-400 transition flex flex-col justify-between group">
+            <a href="{{ route('vendor.pesanan.index', ['status' => 'selesai']) }}" class="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-emerald-400 transition flex flex-col justify-between group active:scale-98">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[11px] sm:text-xs font-bold text-slate-600">Selesai</span>
                     <i class="fa-solid fa-circle-check text-xs text-emerald-500"></i>
@@ -152,6 +152,7 @@
                     <span class="text-[10px] text-slate-400">sukses</span>
                 </div>
             </a>
+
 
         </div>
     </div>

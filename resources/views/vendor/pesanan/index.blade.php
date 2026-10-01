@@ -9,7 +9,7 @@
     <div class="flex items-center justify-between bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
             <h1 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">Pesanan Masuk</h1>
-            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Pantau dan kelola seluruh transaksi penyewaan dari customer</p>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Kelola seluruh transaksi sewa berdasarkan status pesanan</p>
         </div>
         <span class="px-3 py-1 bg-sky-50 text-sky-700 text-xs font-black rounded-xl">
             {{ count($pesananMasuk) }} Transaksi
@@ -22,6 +22,49 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
+
+    <!-- TAB FILTER STATUS PESANAN (ALA TOKOPEDIA / SHOPEE SELLER) -->
+    <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
+        <!-- 1. Semua -->
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'semua']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? 'semua') === 'semua' ? 'bg-slate-900 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+            <span>Semua</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? 'semua') === 'semua' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $countSemua ?? count($pesananMasuk) }}</span>
+        </a>
+
+        <!-- 2. Perlu Diproses -->
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'menunggu']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'menunggu' ? 'bg-amber-500 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+            <span>Perlu Diproses</span>
+            @if(($countMenunggu ?? 0) > 0)
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? '') === 'menunggu' ? 'bg-white text-amber-700' : 'bg-amber-100 text-amber-700' }} font-black">{{ $countMenunggu }}</span>
+            @endif
+        </a>
+
+        <!-- 3. Sedang Disewa -->
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'disewa']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'disewa' ? 'bg-sky-600 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+            <span>Sedang Disewa</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? '') === 'disewa' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $countDisewa ?? 0 }}</span>
+        </a>
+
+        <!-- 4. Jatuh Tempo -->
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'jatuh_tempo']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'jatuh_tempo' ? 'bg-rose-600 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+            <span>Jatuh Tempo</span>
+            @if(($countJatuhTempo ?? 0) > 0)
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? '') === 'jatuh_tempo' ? 'bg-white text-rose-700' : 'bg-rose-100 text-rose-700' }} font-black">{{ $countJatuhTempo }}</span>
+            @endif
+        </a>
+
+        <!-- 5. Selesai -->
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'selesai']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'selesai' ? 'bg-emerald-600 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+            <span>Selesai</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? '') === 'selesai' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $countSelesai ?? 0 }}</span>
+        </a>
+
+        <!-- 6. Dibatalkan -->
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'dibatalkan']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'dibatalkan' ? 'bg-slate-600 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+            <span>Dibatalkan</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? '') === 'dibatalkan' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $countBatal ?? 0 }}</span>
+        </a>
+    </div>
 
     <!-- LIST PESANAN: CARD-BASED UNTUK HP (MOBILE FIRST) -->
     <div class="block lg:hidden space-y-3">
@@ -84,7 +127,12 @@
         @empty
             <div class="bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400">
                 <i class="fa-solid fa-clipboard-list text-3xl mb-2 text-slate-300"></i>
-                <p class="text-xs font-medium">Belum ada transaksi pesanan masuk.</p>
+                <p class="text-xs font-medium">Tidak ada pesanan dengan status ini.</p>
+                @if(($statusFilter ?? 'semua') !== 'semua')
+                    <a href="{{ route('vendor.pesanan.index', ['status' => 'semua']) }}" class="mt-2 inline-block text-xs font-bold text-sky-600 hover:underline">
+                        Lihat Semua Pesanan &rarr;
+                    </a>
+                @endif
             </div>
         @endforelse
     </div>
@@ -146,7 +194,12 @@
                     <tr>
                         <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                             <i class="fa-solid fa-clipboard-list text-3xl mb-2 text-slate-300"></i>
-                            <p class="text-xs font-medium">Belum ada transaksi pesanan masuk.</p>
+                            <p class="text-xs font-medium">Tidak ada pesanan dalam status ini.</p>
+                            @if(($statusFilter ?? 'semua') !== 'semua')
+                                <a href="{{ route('vendor.pesanan.index', ['status' => 'semua']) }}" class="mt-2 inline-block text-xs font-bold text-sky-600 hover:underline">
+                                    Lihat Semua Pesanan &rarr;
+                                </a>
+                            @endif
                         </td>
                     </tr>
                 @endforelse

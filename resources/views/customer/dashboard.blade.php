@@ -255,10 +255,10 @@
                 <div class="rentify-card p-6 rounded-3xl">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-black text-slate-800 text-base">Pesanan Saya</h3>
-                        <a href="{{ route('customer.pesanan') }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
+                        <a href="{{ route('customer.pesanan', ['status' => 'semua']) }}" class="text-xs font-bold text-sky-600 hover:underline">Lihat Semua <i class="fa-solid fa-chevron-right text-[9px]"></i></a>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
-                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 transition group shadow-sm">
+                        <a href="{{ route('customer.pesanan', ['status' => 'menunggu']) }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 transition group shadow-sm active:scale-95">
                             <div class="relative">
                                 <i class="fa-solid fa-clock-rotate-left text-2xl text-sky-500"></i>
                                 @if(isset($countMenunggu) && $countMenunggu > 0)
@@ -267,7 +267,7 @@
                             </div>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Menunggu Konfirmasi</span>
                         </a>
-                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 transition group shadow-sm">
+                        <a href="{{ route('customer.pesanan', ['status' => 'berjalan']) }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-sky-50 hover:bg-sky-100 transition group shadow-sm active:scale-95">
                             <div class="relative">
                                 <i class="fa-solid fa-truck-fast text-2xl text-sky-600"></i>
                                 @if(isset($countDiproses) && $countDiproses > 0)
@@ -276,11 +276,12 @@
                             </div>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Sedang Berjalan</span>
                         </a>
-                        <a href="{{ route('customer.pesanan') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition group shadow-sm">
+                        <a href="{{ route('customer.pesanan', ['status' => 'selesai']) }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition group shadow-sm active:scale-95">
                             <i class="fa-solid fa-star text-2xl text-emerald-500"></i>
                             <span class="text-xs font-bold text-slate-600 text-center leading-tight">Beri Ulasan</span>
                         </a>
                     </div>
+
                 </div>
 
                 <!-- Menu Cepat -->

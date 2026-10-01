@@ -33,6 +33,23 @@
         <span>Riwayat Transaksi Saya</span>
     </div>
 
+    <!-- TAB FILTER STATUS PESANAN CUSTOMER -->
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px;">
+        <a href="{{ route('customer.pesanan', ['status' => 'semua']) }}" style="padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; transition: 0.2s; {{ ($statusFilter ?? 'semua') === 'semua' ? 'background: #0284c7; color: white;' : 'background: white; color: #475569; border: 1px solid #e2e8f0;' }}">
+            Semua ({{ $countSemua ?? count($orders) }})
+        </a>
+        <a href="{{ route('customer.pesanan', ['status' => 'menunggu']) }}" style="padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; transition: 0.2s; {{ ($statusFilter ?? '') === 'menunggu' ? 'background: #0284c7; color: white;' : 'background: white; color: #475569; border: 1px solid #e2e8f0;' }}">
+            Menunggu ({{ $countMenunggu ?? 0 }})
+        </a>
+        <a href="{{ route('customer.pesanan', ['status' => 'berjalan']) }}" style="padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; transition: 0.2s; {{ ($statusFilter ?? '') === 'berjalan' ? 'background: #0284c7; color: white;' : 'background: white; color: #475569; border: 1px solid #e2e8f0;' }}">
+            Berjalan ({{ $countBerjalan ?? 0 }})
+        </a>
+        <a href="{{ route('customer.pesanan', ['status' => 'selesai']) }}" style="padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; transition: 0.2s; {{ ($statusFilter ?? '') === 'selesai' ? 'background: #0284c7; color: white;' : 'background: white; color: #475569; border: 1px solid #e2e8f0;' }}">
+            Selesai ({{ $countSelesai ?? 0 }})
+        </a>
+    </div>
+
+
     @if(session('success'))
         <div style="background: #e0f2fe; border: 1px solid #7dd3fc; color: #0284c7; padding: 14px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 10px rgba(14,165,233,0.15);">
             <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
