@@ -87,7 +87,7 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('success', 'Banner promosi baru berjaya dimuat naik!');
     }
 
-    public function destroyBanner($id)
+    public function destroyBanner(string $id)
     {
         $banner = Banner::findOrFail($id);
 
@@ -116,7 +116,7 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('success', 'Banner promosi berjaya dipadam.');
     }
 
-    public function approveBarang($id)
+    public function approveBarang(string $id)
     {
         $barang = Barang::findOrFail($id);
         $barang->status_barang = 'disetujui';
@@ -127,7 +127,7 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('success', "Item '{$barang->nama}' diluluskan! Kini dipaparkan di katalog Customer.");
     }
 
-    public function rejectBarang($id)
+    public function rejectBarang(string $id)
     {
         $barang = Barang::findOrFail($id);
         $barang->status_barang = 'ditolak';
@@ -137,21 +137,21 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('error', "Item '{$barang->nama}' telah ditolak daripada sistem.");
     }
 
-    public function destroyBarang($id)
+    public function destroyBarang(string $id)
     {
         $barang = Barang::findOrFail($id);
         $barang->delete();
         return redirect()->back()->with('success', 'Produk berhasil dihapus secara permanen dari sistem.');
     }
 
-    public function destroyUser($id)
+    public function destroyUser(string $id)
     {
         $user = User::findOrFail($id);
         $user->delete();
         return redirect()->back()->with('success', 'Akun pengguna/vendor berhasil dihapus dari sistem.');
     }
     
-    public function suspendVendor($id)
+    public function suspendVendor(string $id)
     {
         $vendor = User::findOrFail($id);
         $vendor->vendor_status = 'suspended';
@@ -162,7 +162,7 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('error', "Akses Vendor '{$vendor->vendor_name}' telah Ditangguhkan (Banned). Semua produknya otomatis disembunyikan.");
     }
 
-    public function activateVendor($id)
+    public function activateVendor(string $id)
     {
         $vendor = User::findOrFail($id);
         $vendor->vendor_status = 'approved';
@@ -175,13 +175,13 @@ class AdminDashboardController extends Controller
 
     // --- FITUR BARU: MODERASI VOUCHER VENDOR (KILL-SWITCH) ---
     
-    public function suspendVoucher($id)
+    public function suspendVoucher(string $id)
     {
         DB::table('vouchers')->where('id', $id)->update(['is_active' => 0]);
         return redirect()->back()->with('error', "Voucher telah DIMATIKAN PAKSA! Customer tidak akan bisa lagi mengklaim voucher ini.");
     }
 
-    public function activateVoucher($id)
+    public function activateVoucher(string $id)
     {
         DB::table('vouchers')->where('id', $id)->update(['is_active' => 1]);
         return redirect()->back()->with('success', "Voucher diaktifkan kembali! Customer kini bisa menggunakannya lagi.");

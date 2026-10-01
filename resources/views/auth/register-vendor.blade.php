@@ -107,17 +107,27 @@
                 </div>
                 @endif
 
+                @auth
+                <div class="mb-5 bg-sky-100/80 border border-sky-300 text-sky-900 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+                    <i class="fa-solid fa-store text-sky-600 text-lg"></i>
+                    <div>
+                        <span class="block font-black">Buka Toko untuk Akun Anda</span>
+                        <span class="block text-[11px] text-sky-700">Toko akan otomatis terhubung ke akun <strong>{{ Auth::user()->name }}</strong> ({{ Auth::user()->display_contact }}).</span>
+                    </div>
+                </div>
+                @endauth
+
                 <form action="{{ route('vendor.register') }}" method="POST" class="space-y-4">
                     @csrf
 
-                    <!-- Grid untuk 2 Kolom Input -->
+                    <!-- Grid untuk Input -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- Nama Lengkap Pemilik -->
                         <div class="relative group">
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Nama Pemilik Sesuai KTP</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-user-tie text-xs"></i></span>
-                                <input type="text" name="name" value="{{ old('name') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="name" value="{{ old('name', Auth::check() ? Auth::user()->name : '') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Nama lengkap">
                             </div>
                         </div>
 
@@ -126,7 +136,7 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Nama Toko Rental</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-store text-xs"></i></span>
-                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="">
+                                <input type="text" name="vendor_name" value="{{ old('vendor_name') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="Contoh: Rentify Rental">
                             </div>
                         </div>
 
@@ -135,8 +145,11 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Email Aktif (Utama)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-sky-500 transition"><i class="fa-solid fa-envelope text-xs"></i></span>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="vendor@email.com">
+                                <input type="email" name="email" value="{{ old('email', Auth::check() ? Auth::user()->email : '') }}" {{ Auth::check() ? 'readonly' : 'required' }} class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold {{ Auth::check() ? 'opacity-80 cursor-not-allowed bg-white/60' : '' }}" placeholder="vendor@email.com">
                             </div>
+                            @guest
+                            <p class="text-[9px] text-slate-500 mt-1 ml-1 leading-tight font-medium">Sudah punya akun Customer? Masukkan email yang sama untuk menghubungkan toko.</p>
+                            @endguest
                         </div>
 
                         <!-- WhatsApp -->
@@ -144,10 +157,11 @@
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">No. WhatsApp Toko</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-green-600 transition"><i class="fa-brands fa-whatsapp text-xs"></i></span>
-                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="081234567xxx">
+                                <input type="text" name="whatsapp_vendor" value="{{ old('whatsapp_vendor', Auth::check() ? (Auth::user()->whatsapp_vendor ?: Auth::user()->whatsapp) : '') }}" required class="input-glass rentify-input w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold" placeholder="081234567xxx">
                             </div>
                         </div>
 
+                        @guest
                         <!-- Password -->
                         <div class="relative group">
                             <label class="block text-[10px] font-bold text-[#475569] mb-1.5 ml-1">Kata Sandi</label>
@@ -167,6 +181,7 @@
                                 <button type="button" onclick="togglePass('passConfirmInput', 'eye2')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-sky-500 transition"><i id="eye2" class="fa-regular fa-eye-slash text-xs"></i></button>
                             </div>
                         </div>
+                        @endguest
                     </div>
 
                     <!-- Bagian Syarat & Ketentuan -->

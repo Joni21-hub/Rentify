@@ -74,6 +74,13 @@ Route::get('/logout', function () {
     return redirect('/');
 });
 
+// ─── DUAL ROLE SELECTION & SWITCHING ──────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/select-role', [AuthController::class, 'showSelectRole'])->name('role.select');
+    Route::post('/select-role', [AuthController::class, 'selectRole'])->name('role.select.post');
+    Route::get('/switch-role/{role}', [AuthController::class, 'switchRole'])->name('role.switch');
+});
+
 
 // ─── 3. ADMIN ROUTES (TERKUNCI) ──────────────────────────────────────────────
 Route::get('/admin/vendors-validation', [AdminVendorController::class, 'validasiVendor'])->name('admin.vendors.validation');

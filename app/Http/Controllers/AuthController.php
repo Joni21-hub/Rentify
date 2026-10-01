@@ -71,15 +71,109 @@ class AuthController extends Controller
             return redirect('/login');
         }
 
-        if ($user->role == 'admin') {
+        // Admin selalu ke dashboard admin
+        if ($user->role === 'admin') {
+            session(['active_role' => 'admin']);
             return redirect()->intended('/admin/dashboard');
-        } elseif ($user->role == 'vendor') {
-            return redirect()->intended('/vendor/dashboard');
-        } elseif ($user->role == 'customer') {
-            return redirect()->intended('/customer'); 
         }
-        
-        return redirect('/login');
+
+        // Jika akun memiliki peran ganda (Customer + Toko Vendor)
+        if ($user->hasDualRole()) {
+            // Jika dalam sesi ini sudah pernah memilih role secara eksplisit
+            if (session()->has('active_role')) {
+                $role = session('active_role');
+                if ($role === 'vendor') {
+                    return redirect()->intended('/vendor/dashboard');
+                }
+                return redirect()->intended('/customer');
+            }
+
+            // Belum memilih -> arahkan ke halaman pemilihan peran
+            return redirect()->route('role.select');
+        }
+
+        // Jika hanya Vendor
+        if ($user->role === 'vendor') {
+            session(['active_role' => 'vendor']);
+            return redirect()->intended('/vendor/dashboard');
+        }
+
+        // Default Customer
+        session(['active_role' => 'customer']);
+        return redirect()->intended('/customer'); 
+    }
+
+    // 3b. Tampilkan Halaman Pemilihan Peran (Customer vs Vendor)
+    public function showSelectRole()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if ($user->role === 'admin') {
+            return redirect('/admin/dashboard');
+        }
+
+        // Jika tidak punya peran ganda, arahkan langsung
+        if (!$user->hasDualRole()) {
+            return $this->redirectByRole();
+        }
+
+        return view('auth.select-role', compact('user'));
+    }
+
+    // 3c. Proses Pilihan Peran Masuk
+    public function selectRole(Request $request)
+    {
+        $request->validate([
+            'role' => 'required|in:customer,vendor',
+        ]);
+
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        $chosenRole = $request->role;
+
+        if ($chosenRole === 'vendor' && !$user->isVendor()) {
+            return redirect()->route('customer.dashboard')->with('error', 'Anda belum memiliki toko terdaftar.');
+        }
+
+        session(['active_role' => $chosenRole]);
+
+        if ($chosenRole === 'vendor') {
+            return redirect()->intended('/vendor/dashboard')->with('success', "Selamat datang di Toko {$user->vendor_name}!");
+        }
+
+        return redirect()->intended('/customer')->with('success', 'Selamat datang di katalog Customer!');
+    }
+
+    // 3d. Beralih Peran (Role Switching Cepat)
+    public function switchRole(string $role)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if ($user->role === 'admin') {
+            return redirect('/admin/dashboard');
+        }
+
+        if ($role === 'vendor') {
+            if (!$user->isVendor()) {
+                return redirect()->route('vendor.register')->with('info', 'Silakan daftarkan toko Anda terlebih dahulu.');
+            }
+            session(['active_role' => 'vendor']);
+            return redirect('/vendor/dashboard')->with('success', "Beralih ke Toko {$user->vendor_name}.");
+        }
+
+        // Beralih ke customer
+        session(['active_role' => 'customer']);
+        return redirect('/customer')->with('success', 'Beralih ke Mode Customer.');
     }
 
     // 4. Proses Logout

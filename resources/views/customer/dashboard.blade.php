@@ -145,8 +145,35 @@
                     </div>
                 </div>
                 <i class="fa-solid fa-arrow-right text-emerald-500 text-xs"></i>
+            <!-- MODE VENDOR / BUKA TOKO (MOBILE) -->
+            @if(Auth::user()->isVendor())
+            <a href="{{ route('role.switch', 'vendor') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition bg-gradient-to-r from-sky-50 to-emerald-50 border border-emerald-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-store text-base"></i>
+                    </div>
+                    <div>
+                        <span class="block font-black text-slate-800 text-xs">Beralih ke Toko Saya</span>
+                        <span class="block text-[10px] font-semibold text-emerald-700 truncate max-w-[180px]">{{ Auth::user()->vendor_name }} &bull; Masuk Mode Toko</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right text-emerald-600 text-xs"></i>
             </a>
-
+            @else
+            <a href="{{ route('vendor.register') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition bg-gradient-to-r from-white to-sky-50 border border-sky-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sky-500 text-white rounded-xl flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-shop text-base"></i>
+                    </div>
+                    <div>
+                        <span class="block font-black text-slate-800 text-xs">Buka Toko Rental</span>
+                        <span class="block text-[10px] font-semibold text-sky-700">Daftar sebagai Mitra & sewakan barang</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right text-sky-600 text-xs"></i>
+            </a>
+            @endif
+        </div>
 
         <!-- BOTTOM NAV MOBILE -->
         <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
@@ -201,6 +228,15 @@
                     <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
                         <i class="fa-solid fa-location-dot w-5 text-center"></i> Titik Lokasi
                     </a>
+                    @if(Auth::user()->isVendor())
+                    <a href="{{ route('role.switch', 'vendor') }}" class="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 font-extrabold text-sm transition border-b border-emerald-200">
+                        <i class="fa-solid fa-store w-5 text-center text-emerald-600"></i> Mode Toko Vendor
+                    </a>
+                    @else
+                    <a href="{{ route('vendor.register') }}" class="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-sky-50 to-blue-50 hover:from-sky-100 hover:to-blue-100 text-sky-800 font-extrabold text-sm transition border-b border-sky-200">
+                        <i class="fa-solid fa-shop w-5 text-center text-sky-600"></i> Buka Toko Rental
+                    </a>
+                    @endif
                     <a href="{{ route('customer.settings') }}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-sky-50 text-slate-600 hover:text-sky-600 font-semibold text-sm transition border-b border-slate-100">
                         <i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan Akun
                     </a>

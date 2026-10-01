@@ -91,4 +91,48 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasRealEmail() ? $this->email : null;
     }
+
+    /**
+     * Cek apakah user memiliki profil toko / terdaftar sebagai Vendor
+     */
+    public function isVendor(): bool
+    {
+        if ($this->role === 'admin') {
+            return false;
+        }
+
+        return !empty($this->vendor_name) || $this->role === 'vendor';
+    }
+
+    /**
+     * Cek apakah user berhak berbelanja sebagai Customer (semua akun non-admin)
+     */
+    public function isCustomer(): bool
+    {
+        return $this->role !== 'admin';
+    }
+
+    /**
+     * Cek apakah user memiliki hak akses ganda (Customer + Vendor)
+     */
+    public function hasDualRole(): bool
+    {
+        return $this->role !== 'admin' && !empty($this->vendor_name);
+    }
+
+    /**
+     * Mendapatkan role aktif yang sedang digunakan saat ini
+     */
+    public function getActiveRoleAttribute(): string
+    {
+        if (session()->has('active_role')) {
+            return session('active_role');
+        }
+
+        if ($this->role === 'admin') {
+            return 'admin';
+        }
+
+        return $this->role;
+    }
 }

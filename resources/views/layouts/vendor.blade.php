@@ -48,8 +48,7 @@
         <aside class="w-72 fixed inset-y-0 left-0 z-50 bg-navydark shadow-2xl flex flex-col transition-all duration-300">
             <div class="h-24 flex items-center px-8 border-b border-white/10">
                 <a href="{{ url('/') }}" class="flex items-center gap-3">
-                    <!-- MASUKKAN KODE INI -->
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo Rentify" class="h-10 w-auto object-contain">
+                    <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo Rentify" class="h-10 w-auto object-contain">
                     <span class="text-2xl font-extrabold text-white tracking-tight">Rentify<span class="text-sky-500">.</span></span>
                 </a>
             </div>
@@ -74,15 +73,15 @@
                 </a>
 
                 <a href="{{ route('vendor.voucher.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.voucher.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
-                <i class="fa-solid fa-ticket w-5 text-center text-lg"></i> <span>Voucher Toko</span>
+                    <i class="fa-solid fa-ticket w-5 text-center text-lg"></i> <span>Voucher Toko</span>
                 </a>
 
                 <div class="my-6 border-t border-white/5"></div>
                 <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Toko</p>
 
-               <a href="{{ route('vendor.pengaturan.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.pengaturan.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
-                <i class="fa-solid fa-store-gear w-5 text-center text-lg"></i> <span>Pengaturan Toko</span>
-            </a>
+                <a href="{{ route('vendor.pengaturan.index') }}" class="flex items-center gap-4 px-4 py-3.5 font-medium transition-all duration-300 {{ request()->routeIs('vendor.pengaturan.*') ? 'rentify-btn text-white /20' : 'text-slate-400 hover:rentify-card/5 hover:text-white' }}">
+                    <i class="fa-solid fa-store-gear w-5 text-center text-lg"></i> <span>Pengaturan Toko</span>
+                </a>
             </div>
 
             <div class="p-5 border-t border-white/10">
@@ -95,10 +94,15 @@
                         <p class="text-xs text-sky-500 truncate">Mitra Vendor</p>
                     </div>
                 </div>
+
+                <!-- Tombol Beralih ke Mode Customer -->
+                <a href="{{ route('role.switch', 'customer') }}" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 mt-3 text-xs font-bold text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/20 rounded-xl transition-all">
+                    <i class="fa-solid fa-cart-shopping"></i> Beralih ke Mode Customer
+                </a>
                 
-                <form method="POST" action="{{ route('logout') }}" class="mt-3">
+                <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
-                    <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 rounded-xl transition-colors">
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 rounded-xl transition-colors cursor-pointer">
                         <i class="fa-solid fa-power-off"></i> Keluar
                     </button>
                 </form>
