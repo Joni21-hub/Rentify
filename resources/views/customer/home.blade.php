@@ -98,14 +98,14 @@
     <!-- ===== MAIN CONTENT AREA ===== -->
     <main class="pb-16 md:pb-8 md:max-w-7xl md:mx-auto md:px-6 pt-2 sm:pt-3 md:pt-3">
 
-        <!-- BANNER PROMO (SEPERTI SEBELUMNYA, DENGAN ASPEK RASIO PAS TANPA TERPOTONG) -->
-        <section class="mb-3.5 px-3 sm:px-4 md:px-0">
+        <!-- BANNER PROMO (SPACING DIPERBAIKI, TIDAK MELEKAT PADA PENCARIAN) -->
+        <section class="mb-4 px-3 sm:px-4 md:px-0">
             @if(isset($banners) && $banners->count() > 0)
                 <div class="relative group">
                     <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl">
                         @foreach($banners as $banner)
-                            <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 aspect-[2.7/1] bg-slate-100 border border-slate-200/60">
-                                <img src="{{ asset($banner->gambar_url) }}" alt="{{ $banner->judul_promo ?? 'Promo Rentify' }}" class="w-full h-full object-cover object-center">
+                            <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60">
+                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover">
                             </div>
                         @endforeach
                     </div>
