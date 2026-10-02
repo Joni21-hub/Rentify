@@ -15,7 +15,7 @@ class Barang extends Model
     'vendor_id', 'kategori_id', 'nama', 'slug', 'deskripsi', 
     'harga_sewa_harian', 'deposit', 'denda_per_hari', 'kondisi', 
     'stok_total', 'status', 'is_approved', 'cover_photo',
-    'is_delivery_supported', 'alamat', 'latitude', 'longitude' 
+    'is_delivery_supported', 'alamat', 'latitude', 'longitude', 'spesifikasi'
     ];
 
     protected $casts = [
@@ -36,6 +36,60 @@ class Barang extends Model
     public function getHargaSewaCustomerAttribute()
     {
         return $this->harga_sewa_harian + ($this->harga_sewa_harian * 0.05);
+    }
+
+    /**
+     * Accessor untuk Tarif Bulanan (Khusus Kos / Kamar)
+     */
+    public function getHargaBulananAttribute()
+    {
+        return !empty($this->spesifikasi['harga_bulanan']) ? (float)$this->spesifikasi['harga_bulanan'] : null;
+    }
+
+    /**
+     * Accessor untuk Tarif Bulanan Markup Customer (ditambah 5%)
+     */
+    public function getHargaBulananCustomerAttribute()
+    {
+        $harga = $this->harga_bulanan;
+        return $harga ? ($harga + ($harga * 0.05)) : null;
+    }
+
+    /**
+     * Helper Cek Kategori
+     */
+    public function getIsKosAttribute(): bool
+    {
+        $namaKat = strtolower($this->kategori->nama ?? '');
+        return str_contains($namaKat, 'kos') || str_contains($namaKat, 'kamar');
+    }
+
+    public function getIsKendaraanAttribute(): bool
+    {
+        return str_contains(strtolower($this->kategori->nama ?? ''), 'kendaraan');
+    }
+
+    public function getIsElektronikAttribute(): bool
+    {
+        return str_contains(strtolower($this->kategori->nama ?? ''), 'elektronik');
+    }
+
+    public function getIsOutdoorAttribute(): bool
+    {
+        return str_contains(strtolower($this->kategori->nama ?? ''), 'outdoor');
+    }
+
+    public function getIsHaveFunAttribute(): bool
+    {
+        return str_contains(strtolower($this->kategori->nama ?? ''), 'have fun');
+    }
+
+    /**
+     * Helper Ambil Fasilitas Kos / Kamar
+     */
+    public function getFasilitasKosAttribute(): array
+    {
+        return (array) ($this->spesifikasi['fasilitas'] ?? []);
     }
 
     // ─── Relationships ────────────────────────────────

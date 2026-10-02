@@ -111,6 +111,97 @@
             @endif
         </section>
 
+        <!-- ===== ETALASE KATEGORI UTAMA (ALA TRAVELOKA / AIRBNB) ===== -->
+        <section class="mb-5 px-2 md:px-0">
+            <div class="flex items-center justify-between mb-3 px-1">
+                <div>
+                    <h3 class="font-black text-slate-800 text-[14px] md:text-base tracking-tight flex items-center gap-1.5">
+                        <i class="fa-solid fa-shapes text-sky-500"></i> Kategori Pilihan Sewa
+                    </h3>
+                    <p class="text-[11px] text-slate-400 font-medium">Temukan perlengkapan & akomodasi terbaik sesuai kebutuhanmu</p>
+                </div>
+                <a href="{{ route('customer.search') }}" class="text-xs font-bold text-sky-600 hover:text-sky-700 transition flex items-center gap-1">
+                    Semua <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </a>
+            </div>
+
+            @php
+                $categoryMeta = [
+                    'kos' => [
+                        'icon' => 'fa-solid fa-house-chimney-window',
+                        'gradient' => 'from-sky-500 to-blue-600',
+                        'shadow' => 'shadow-sky-500/25',
+                        'tag' => 'Bisa Bulanan',
+                        'tag_color' => 'bg-sky-50 text-sky-700 border-sky-100',
+                    ],
+                    'kendaraan' => [
+                        'icon' => 'fa-solid fa-car-side',
+                        'gradient' => 'from-cyan-500 to-sky-600',
+                        'shadow' => 'shadow-cyan-500/25',
+                        'tag' => 'Mobil & Motor',
+                        'tag_color' => 'bg-cyan-50 text-cyan-700 border-cyan-100',
+                    ],
+                    'elektronik' => [
+                        'icon' => 'fa-solid fa-camera',
+                        'gradient' => 'from-blue-500 to-indigo-600',
+                        'shadow' => 'shadow-blue-500/25',
+                        'tag' => 'Kamera & Gadget',
+                        'tag_color' => 'bg-blue-50 text-blue-700 border-blue-100',
+                    ],
+                    'outdoor' => [
+                        'icon' => 'fa-solid fa-campground',
+                        'gradient' => 'from-teal-500 to-emerald-600',
+                        'shadow' => 'shadow-teal-500/25',
+                        'tag' => 'Camping & Tenda',
+                        'tag_color' => 'bg-teal-50 text-teal-700 border-teal-100',
+                    ],
+                    'have fun' => [
+                        'icon' => 'fa-solid fa-gamepad',
+                        'gradient' => 'from-indigo-500 to-purple-600',
+                        'shadow' => 'shadow-indigo-500/25',
+                        'tag' => 'Pesta & Game',
+                        'tag_color' => 'bg-indigo-50 text-indigo-700 border-indigo-100',
+                    ],
+                ];
+
+                $kategorisList = isset($kategoris) && $kategoris->count() > 0 
+                    ? $kategoris 
+                    : \App\Models\Kategori::where('is_active', 1)->get();
+            @endphp
+
+            <!-- 5 Kategori Grid Row (1 baris simetris dan rapi di HP & Laptop) -->
+            <div class="grid grid-cols-5 gap-2 sm:gap-3.5">
+                @foreach($kategorisList as $cat)
+                    @php
+                        $namaLow = strtolower($cat->nama);
+                        $metaKey = 'have fun';
+                        foreach (['kos', 'kendaraan', 'elektronik', 'outdoor', 'have fun'] as $kKey) {
+                            if (str_contains($namaLow, $kKey)) { $metaKey = $kKey; break; }
+                        }
+                        $meta = $categoryMeta[$metaKey] ?? $categoryMeta['have fun'];
+                    @endphp
+                    <a href="{{ route('customer.search', ['kategori' => $cat->id]) }}" 
+                       class="group relative flex flex-col items-center p-2 sm:p-3.5 rounded-2xl bg-white border border-slate-200/80 hover:border-sky-300 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 text-center">
+                        
+                        <!-- Lingkaran Ikon Bergradasi Lembut & Elegan -->
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br {{ $meta['gradient'] }} text-white flex items-center justify-center text-base sm:text-2xl shadow-sm {{ $meta['shadow'] }} group-hover:scale-110 transition-all duration-300 mb-1.5 sm:mb-2">
+                            <i class="{{ $meta['icon'] }}"></i>
+                        </div>
+
+                        <!-- Nama Kategori -->
+                        <span class="text-[10px] sm:text-xs font-black text-slate-700 group-hover:text-sky-600 transition-colors leading-tight line-clamp-1">
+                            {{ $cat->nama }}
+                        </span>
+
+                        <!-- Badge Subtitle Mini (Muncul di Tablet/Desktop) -->
+                        <span class="hidden sm:inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full border {{ $meta['tag_color'] }}">
+                            {{ $meta['tag'] }}
+                        </span>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+
         <!-- KONDISI JIKA USER BELUM ATUR LOKASI -->
         @if(isset($butuhLokasi) && $butuhLokasi)
             <section class="px-3 mt-6 md:px-0">
@@ -176,7 +267,11 @@
                             <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="p-2.5 flex flex-col flex-1 justify-between border-t border-slate-50">
                                 <h4 class="text-[12.5px] font-medium text-slate-700 leading-snug line-clamp-2 mb-1.5">{{ $barang->nama }}</h4>
                                 <div class="text-sky-600 font-black text-[14.5px]">
-                                    Rp{{ number_format($barang->harga_sewa_customer, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/hari</span>
+                                    @if($barang->is_kos && $barang->harga_bulanan)
+                                        Rp{{ number_format($barang->harga_bulanan_customer ?? $barang->harga_bulanan, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/bulan</span>
+                                    @else
+                                        Rp{{ number_format($barang->harga_sewa_customer, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/hari</span>
+                                    @endif
                                 </div>
                             </a>
                         </div>

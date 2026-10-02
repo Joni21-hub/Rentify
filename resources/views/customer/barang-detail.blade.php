@@ -69,9 +69,24 @@
         
         <h1 class="text-[15px] font-medium text-slate-800 leading-snug mb-2">{{ $barang->nama }}</h1>
         
-        <div class="text-sky-500 font-bold text-xl">
-            Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[12px] font-normal text-slate-400">/hari</span>
-        </div>
+        @if($barang->is_kos && $barang->harga_bulanan)
+            <div class="space-y-1.5">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-sky-600 font-black text-2xl">
+                        Rp{{ number_format($barang->harga_bulanan_customer ?? $barang->harga_bulanan, 0, ',', '.') }}
+                    </span>
+                    <span class="text-xs font-bold text-slate-400">/ bulan</span>
+                </div>
+                <div class="inline-flex items-center gap-1.5 bg-sky-50 text-sky-700 px-3 py-1 rounded-xl text-xs font-bold border border-sky-100">
+                    <i class="fa-solid fa-moon text-sky-500"></i>
+                    <span>Tersedia Harian: <strong>Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}</strong> / hari</span>
+                </div>
+            </div>
+        @else
+            <div class="text-sky-500 font-bold text-xl">
+                Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[12px] font-normal text-slate-400">/hari</span>
+            </div>
+        @endif
 
         @if($stokNyata <= 0)
             <div class="mt-3 bg-rose-50 border border-rose-200 text-rose-600 px-3 py-2 rounded-lg text-[11.5px] font-bold flex items-center gap-2">
@@ -80,6 +95,278 @@
             </div>
         @endif
     </div>
+
+    @if($barang->is_kos)
+    <!-- ============================================== -->
+    <!-- SPESIFIKASI KHUSUS KOS / KAMAR (ALA MAMIKOS / OYO) -->
+    <!-- ============================================== -->
+    <div class="p-4 border-b border-slate-100 bg-white space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-door-open text-sky-500"></i> Spesifikasi Kamar & Fasilitas Kos
+            </h3>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-600 border border-sky-200">
+                {{ $barang->spesifikasi['tipe_kos'] ?? 'Kos' }}
+            </span>
+        </div>
+
+        <!-- 3 Highlight Badges -->
+        <div class="grid grid-cols-3 gap-2">
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                <span class="block text-[10px] text-slate-400 font-medium">Tipe Kos</span>
+                <span class="text-xs font-bold text-slate-700">{{ $barang->spesifikasi['tipe_kos'] ?? 'Campur' }}</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                <span class="block text-[10px] text-slate-400 font-medium">Kamar Mandi</span>
+                <span class="text-xs font-bold text-slate-700">{{ ($barang->spesifikasi['tipe_kamar_mandi'] ?? 'Dalam') == 'Dalam' ? 'KM Dalam' : 'KM Luar' }}</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                <span class="block text-[10px] text-slate-400 font-medium">Ukuran Kamar</span>
+                <span class="text-xs font-bold text-slate-700">{{ $barang->spesifikasi['ukuran_kamar'] ?? '3 x 4 m' }}</span>
+            </div>
+        </div>
+
+        @if(!empty($barang->spesifikasi['fasilitas']))
+        <div>
+            <span class="block text-xs font-bold text-slate-700 mb-2">Fasilitas Kamar & Bersama</span>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                @php
+                    $iconMapKos = [
+                        'AC' => 'fa-snowflake',
+                        'WiFi Cepat' => 'fa-wifi',
+                        'Kamar Mandi Dalam' => 'fa-bath',
+                        'Kasur & Springbed' => 'fa-bed',
+                        'Lemari Pakaian' => 'fa-door-closed',
+                        'Meja & Kursi Belajar' => 'fa-chair',
+                        'Water Heater' => 'fa-temperature-arrow-up',
+                        'Dapur Bersama' => 'fa-utensils',
+                        'Parkir Motor Aman' => 'fa-motorcycle',
+                        'Parkir Mobil' => 'fa-car',
+                        'CCTV 24 Jam' => 'fa-video',
+                        'Listrik Termasuk' => 'fa-bolt',
+                    ];
+                @endphp
+                @foreach((array)$barang->spesifikasi['fasilitas'] as $fas)
+                <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-700">
+                    <i class="fa-solid {{ $iconMapKos[$fas] ?? 'fa-circle-check' }} text-sky-500 text-xs"></i>
+                    <span class="text-[11.5px] font-semibold">{{ $fas }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if(!empty($barang->spesifikasi['aturan']))
+        <div>
+            <span class="block text-xs font-bold text-slate-700 mb-2">Aturan & Ketentuan Kos</span>
+            <div class="space-y-1.5">
+                @foreach((array)$barang->spesifikasi['aturan'] as $atr)
+                <div class="flex items-center gap-2 text-xs text-slate-600">
+                    <i class="fa-regular fa-circle-check text-sky-500 text-xs flex-shrink-0"></i>
+                    <span class="text-[11.5px]">{{ $atr }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
+    @if($barang->is_kendaraan)
+    <!-- ============================================== -->
+    <!-- SPESIFIKASI KHUSUS KENDARAAN (ALA TRAVELOKA / TURO) -->
+    <!-- ============================================== -->
+    <div class="p-4 border-b border-slate-100 bg-white space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-car-side text-cyan-500"></i> Spesifikasi Rental Kendaraan
+            </h3>
+            @if(!empty($barang->spesifikasi['tahun_kendaraan']))
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-600 border border-cyan-200">
+                Tahun {{ $barang->spesifikasi['tahun_kendaraan'] }}
+            </span>
+            @endif
+        </div>
+
+        <!-- 4 Metric Cards -->
+        <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center text-xs flex-shrink-0">
+                    <i class="fa-solid fa-gears"></i>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-medium">Transmisi</span>
+                    <span class="text-xs font-bold text-slate-800">{{ $barang->spesifikasi['transmisi'] ?? 'Automatic' }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center text-xs flex-shrink-0">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-medium">Kapasitas</span>
+                    <span class="text-xs font-bold text-slate-800">{{ $barang->spesifikasi['kapasitas_penumpang'] ?? '4-5 Kursi' }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center text-xs flex-shrink-0">
+                    <i class="fa-solid fa-gas-pump"></i>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-medium">Bahan Bakar</span>
+                    <span class="text-xs font-bold text-slate-800">{{ $barang->spesifikasi['bahan_bakar'] ?? 'Bensin' }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center text-xs flex-shrink-0">
+                    <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                    <span class="block text-[10px] text-slate-400 font-medium">Layanan</span>
+                    <span class="text-xs font-bold text-slate-800 line-clamp-1">{{ $barang->spesifikasi['opsi_driver'] ?? 'Lepas Kunci' }}</span>
+                </div>
+            </div>
+        </div>
+
+        @if(!empty($barang->spesifikasi['fasilitas_kendaraan']))
+        <div>
+            <span class="block text-xs font-bold text-slate-700 mb-2">Fasilitas Kendaraan</span>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                @php
+                    $iconMapVehicle = [
+                        'AC Double Blower Dingin' => 'fa-snowflake',
+                        'Audio Bluetooth & USB' => 'fa-music',
+                        'Kamera Parkir Mundur' => 'fa-camera',
+                        'Charger HP Mobil' => 'fa-charging-station',
+                        'E-Toll Card Tersedia' => 'fa-credit-card',
+                        '2 Helm SNI + Jas Hujan (Motor)' => 'fa-helmet-safety',
+                        'Kunci Pengaman Tambahan' => 'fa-lock',
+                    ];
+                @endphp
+                @foreach((array)$barang->spesifikasi['fasilitas_kendaraan'] as $fV)
+                <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-700">
+                    <i class="fa-solid {{ $iconMapVehicle[$fV] ?? 'fa-circle-check' }} text-cyan-500 text-xs"></i>
+                    <span class="text-[11.5px] font-semibold">{{ $fV }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
+    @if($barang->is_elektronik && !empty($barang->spesifikasi))
+    <!-- ============================================== -->
+    <!-- SPESIFIKASI KHUSUS ELEKTRONIK & GADGET -->
+    <!-- ============================================== -->
+    <div class="p-4 border-b border-slate-100 bg-white space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-camera text-blue-500"></i> Spesifikasi Alat & Kelengkapan
+            </h3>
+            @if(!empty($barang->spesifikasi['merek']))
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                Brand: {{ $barang->spesifikasi['merek'] }}
+            </span>
+            @endif
+        </div>
+
+        @if(!empty($barang->spesifikasi['kondisi_detail']))
+        <div class="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100 text-xs flex items-center gap-2 text-slate-700">
+            <i class="fa-solid fa-circle-check text-blue-500"></i>
+            <span>{{ $barang->spesifikasi['kondisi_detail'] }}</span>
+        </div>
+        @endif
+
+        @if(!empty($barang->spesifikasi['kelengkapan_elektronik']))
+        <div>
+            <span class="block text-xs font-bold text-slate-700 mb-2">Kelengkapan Paket Rental</span>
+            <div class="flex flex-wrap gap-1.5">
+                @foreach((array)$barang->spesifikasi['kelengkapan_elektronik'] as $item)
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold">
+                    <i class="fa-solid fa-check text-blue-500 text-[10px]"></i>
+                    {{ $item }}
+                </span>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
+    @if($barang->is_outdoor && !empty($barang->spesifikasi))
+    <!-- ============================================== -->
+    <!-- SPESIFIKASI KHUSUS OUTDOOR & CAMPING -->
+    <!-- ============================================== -->
+    <div class="p-4 border-b border-slate-100 bg-white space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-campground text-teal-500"></i> Spesifikasi Tenda & Outdoor
+            </h3>
+            @if(!empty($barang->spesifikasi['kapasitas_outdoor']))
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200">
+                {{ $barang->spesifikasi['kapasitas_outdoor'] }}
+            </span>
+            @endif
+        </div>
+
+        @if(!empty($barang->spesifikasi['fitur_outdoor']))
+        <div class="p-2.5 rounded-xl bg-teal-50/50 border border-teal-100 text-xs flex items-center gap-2 text-slate-700">
+            <i class="fa-solid fa-shield-halved text-teal-500"></i>
+            <span>{{ $barang->spesifikasi['fitur_outdoor'] }}</span>
+        </div>
+        @endif
+
+        @if(!empty($barang->spesifikasi['kelengkapan_outdoor']))
+        <div>
+            <span class="block text-xs font-bold text-slate-700 mb-2">Kelengkapan Camping</span>
+            <div class="flex flex-wrap gap-1.5">
+                @foreach((array)$barang->spesifikasi['kelengkapan_outdoor'] as $item)
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold">
+                    <i class="fa-solid fa-check text-teal-500 text-[10px]"></i>
+                    {{ $item }}
+                </span>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
+    @if($barang->is_have_fun && !empty($barang->spesifikasi))
+    <!-- ============================================== -->
+    <!-- SPESIFIKASI KHUSUS PERALATAN HAVE FUN -->
+    <!-- ============================================== -->
+    <div class="p-4 border-b border-slate-100 bg-white space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-gamepad text-indigo-500"></i> Paket Have Fun & Hiburan
+            </h3>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200">
+                Party & Game
+            </span>
+        </div>
+
+        @if(!empty($barang->spesifikasi['jenis_hiburan']))
+        <div class="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100 text-xs flex items-center gap-2 text-slate-700 font-semibold">
+            <i class="fa-solid fa-dice text-indigo-500"></i>
+            <span>{{ $barang->spesifikasi['jenis_hiburan'] }}</span>
+        </div>
+        @endif
+
+        @if(!empty($barang->spesifikasi['kelengkapan_have_fun']))
+        <div>
+            <span class="block text-xs font-bold text-slate-700 mb-1.5">Kelengkapan & Aksesoris</span>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium">
+                {{ $barang->spesifikasi['kelengkapan_have_fun'] }}
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
 
     <div class="p-4 border-b border-slate-100 bg-white">
         <h3 class="text-[13px] font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-list text-slate-400"></i> Rincian Barang</h3>
@@ -211,9 +498,21 @@
             </select>
 
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Durasi Sewa <span class="text-rose-500">*</span></label>
-            <div class="flex items-center border-2 border-slate-200 rounded-xl px-4 py-2 mb-6 focus-within:border-sky-500 transition">
+            <div class="flex items-center border-2 border-slate-200 rounded-xl px-4 py-2 mb-2 focus-within:border-sky-500 transition">
                 <input type="number" id="modal-durasi" value="1" min="1" required class="rentify-input w-full text-sm font-black text-sky-700 p-0 outline-none">
                 <span class="text-xs font-bold text-slate-400">Hari</span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 mb-6">
+                <button type="button" onclick="document.getElementById('modal-durasi').value=1" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-50 text-[11px] font-bold text-slate-600 hover:text-sky-600 transition">1 Hari</button>
+                <button type="button" onclick="document.getElementById('modal-durasi').value=3" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-50 text-[11px] font-bold text-slate-600 hover:text-sky-600 transition">3 Hari</button>
+                <button type="button" onclick="document.getElementById('modal-durasi').value=7" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-50 text-[11px] font-bold text-slate-600 hover:text-sky-600 transition">7 Hari (1 Mgg)</button>
+                @if($barang->is_kos)
+                <button type="button" onclick="document.getElementById('modal-durasi').value=30" class="px-2.5 py-1 rounded-lg bg-sky-100 hover:bg-sky-200 text-[11px] font-black text-sky-700 border border-sky-200 transition">30 Hari (1 Bulan)</button>
+                @else
+                <button type="button" onclick="document.getElementById('modal-durasi').value=14" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-50 text-[11px] font-bold text-slate-600 hover:text-sky-600 transition">14 Hari</button>
+                <button type="button" onclick="document.getElementById('modal-durasi').value=30" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-50 text-[11px] font-bold text-slate-600 hover:text-sky-600 transition">30 Hari</button>
+                @endif
             </div>
 
             <div class="flex gap-3">

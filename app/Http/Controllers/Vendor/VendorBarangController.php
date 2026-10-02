@@ -34,8 +34,15 @@ class VendorBarangController extends Controller
         return view('vendor.barang.create', compact('kategoris'));
     }
 
-   public function store(Request $request)
+    public function store(Request $request)
     {
+        // Cek Fallback Harga: Jika kategori Kos/Kamar hanya isi harga bulanan
+        if (empty($request->harga_sewa_harian) && !empty($request->input('spesifikasi.harga_bulanan'))) {
+            $request->merge([
+                'harga_sewa_harian' => round(((float)$request->input('spesifikasi.harga_bulanan')) / 30)
+            ]);
+        }
+
         $request->validate([
             'kategori_id' => 'required|exists:kategoris,id',
             'nama' => 'required|string|max:255',
@@ -84,6 +91,7 @@ class VendorBarangController extends Controller
             'alamat' => $request->alamat,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'spesifikasi' => $request->input('spesifikasi', []),
         ]);
 
         // UPLOAD FOTO GALERI TAMBAHAN KE CLOUDINARY
@@ -116,6 +124,76 @@ class VendorBarangController extends Controller
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
         $kategoris = Kategori::where('is_active', 1)->get();
         return view('vendor.barang.edit', compact('barang', 'kategoris'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
+
+        if (empty($request->harga_sewa_harian) && !empty($request->input('spesifikasi.harga_bulanan'))) {
+            $request->merge([
+                'harga_sewa_harian' => round(((float)$request->input('spesifikasi.harga_bulanan')) / 30)
+            ]);
+        }
+
+        $request->validate([
+            'kategori_id' => 'required|exists:kategoris,id',
+            'nama' => 'required|string|max:255',
+            'deskripsi' => 'required|string',
+            'harga_sewa_harian' => 'required|numeric|min:0',
+            'deposit' => 'required|numeric|min:0',
+            'denda_per_hari' => 'required|numeric|min:0',
+            'kondisi' => 'required|string',
+            'stok_total' => 'required|integer|min:1',
+            'alamat' => 'required|string',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'fotos' => 'nullable|array',
+            'fotos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $updateData = [
+            'kategori_id' => $request->kategori_id,
+            'nama' => $request->nama,
+            'deskripsi' => $request->deskripsi,
+            'harga_sewa_harian' => $request->harga_sewa_harian,
+            'deposit' => $request->deposit,
+            'denda_per_hari' => $request->denda_per_hari,
+            'kondisi' => $request->kondisi,
+            'stok_total' => $request->stok_total,
+            'is_delivery_supported' => $request->is_delivery_supported ? 1 : 0,
+            'alamat' => $request->alamat,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'spesifikasi' => $request->input('spesifikasi', []),
+        ];
+
+        if ($request->hasFile('fotos') && count($request->file('fotos')) > 0) {
+            $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+            $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
+            $fotos = $request->file('fotos');
+            $fileCover = $fotos[0];
+            $uploadCover = $cloudinary->uploadApi()->upload($fileCover->getRealPath(), [
+                'folder' => 'rentify/barang'
+            ]);
+            $updateData['cover_photo'] = $uploadCover['secure_url'];
+
+            if (count($fotos) > 1) {
+                for ($i = 1; $i < count($fotos); $i++) {
+                    $uploadGaleri = $cloudinary->uploadApi()->upload($fotos[$i]->getRealPath(), [
+                        'folder' => 'rentify/barang/galeri'
+                    ]);
+                    FotoBarang::create([
+                        'barang_id' => $barang->id,
+                        'foto_path' => $uploadGaleri['secure_url']
+                    ]);
+                }
+            }
+        }
+
+        $barang->update($updateData);
+
+        return redirect()->route('vendor.barang.index')->with('success', 'Barang berhasil diperbarui!');
     }
 
     public function destroy($id)

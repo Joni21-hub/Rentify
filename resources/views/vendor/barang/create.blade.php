@@ -108,10 +108,10 @@
                             <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
                                 Kategori <span class="text-rose-500">*</span>
                             </label>
-                            <select name="kategori_id" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition bg-white">
+                            <select name="kategori_id" id="kategori_id" required onchange="handleKategoriChange()" class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition bg-white">
                                 <option value="">-- Pilih Kategori --</option>
                                 @foreach($kategoris as $k)
-                                    <option value="{{ $k->id }}" {{ old('kategori_id') == $k->id ? 'selected' : '' }}>
+                                    <option value="{{ $k->id }}" data-nama="{{ strtolower($k->nama) }}" {{ old('kategori_id') == $k->id ? 'selected' : '' }}>
                                         {{ $k->nama }}
                                     </option>
                                 @endforeach
@@ -136,6 +136,386 @@
                             Deskripsi & Kelengkapan Unit <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="deskripsi" rows="4" required placeholder="Tuliskan spesifikasi, kelengkapan (tas, charger, baterai tambahan), aturan sewa, atau peringatan penggunaan..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition leading-relaxed">{{ old('deskripsi') }}</textarea>
+                    </div>
+                </div>
+
+                <!-- ============================================== -->
+                <!-- 2.5 SPESIFIKASI KHUSUS KATEGORI (DINAMIS) -->
+                <!-- ============================================== -->
+
+                <!-- PANEL 1: KOS / KAMAR (ALA MAMIKOS / OYO / AIRBNB) -->
+                <div id="panel-kos-kamar" class="hidden bg-white p-5 sm:p-6 rounded-3xl border-2 border-sky-300 shadow-sm space-y-5 transition-all">
+                    <div class="border-b border-sky-100 pb-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-house-chimney-window"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800">Spesifikasi Kos & Kamar</h3>
+                                <p class="text-[11px] text-slate-400">Atur skema sewa bulanan/harian & fasilitas kamar kos</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 bg-sky-50 text-sky-600 rounded-full text-[10px] font-black border border-sky-200">
+                            Fitur Kos Profesional
+                        </span>
+                    </div>
+
+                    <!-- Skema Sewa -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                            Skema Periode Sewa Kos <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="spesifikasi[tipe_sewa]" value="keduanya" {{ old('spesifikasi.tipe_sewa', 'keduanya') == 'keduanya' ? 'checked' : '' }} onchange="toggleKosPricing()" class="peer sr-only">
+                                <div class="p-3 rounded-2xl border-2 border-slate-200 peer-checked:border-sky-500 peer-checked:bg-sky-50/50 text-center transition">
+                                    <div class="text-xs font-black text-slate-800"><i class="fa-solid fa-calendar-check text-sky-500 mr-1"></i> Harian & Bulanan</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">Bisa harian dan bulanan</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="spesifikasi[tipe_sewa]" value="bulanan" {{ old('spesifikasi.tipe_sewa') == 'bulanan' ? 'checked' : '' }} onchange="toggleKosPricing()" class="peer sr-only">
+                                <div class="p-3 rounded-2xl border-2 border-slate-200 peer-checked:border-sky-500 peer-checked:bg-sky-50/50 text-center transition">
+                                    <div class="text-xs font-black text-slate-800"><i class="fa-solid fa-calendar-days text-sky-500 mr-1"></i> Khusus Bulanan</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">Sistem kos per bulan</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="spesifikasi[tipe_sewa]" value="harian" {{ old('spesifikasi.tipe_sewa') == 'harian' ? 'checked' : '' }} onchange="toggleKosPricing()" class="peer sr-only">
+                                <div class="p-3 rounded-2xl border-2 border-slate-200 peer-checked:border-sky-500 peer-checked:bg-sky-50/50 text-center transition">
+                                    <div class="text-xs font-black text-slate-800"><i class="fa-solid fa-clock text-sky-500 mr-1"></i> Khusus Per Malam</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">Penginapan harian</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Input Tarif Bulanan Kos -->
+                    <div id="wrapper_harga_bulanan" class="p-4 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-1.5">
+                        <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                            Tarif Sewa Per Bulan (Rp) <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-xs font-bold text-slate-400">Rp</span>
+                            <input type="number" name="spesifikasi[harga_bulanan]" id="input_harga_bulanan" value="{{ old('spesifikasi.harga_bulanan') }}" min="0" placeholder="Contoh: 1500000" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-800 text-sm font-black focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                        </div>
+                        <p class="text-[11px] text-sky-700 font-medium">
+                            <i class="fa-solid fa-circle-info mr-1"></i> Tarif per bulan akan tampil mencolok di pencarian & halaman detail untuk calon penyewa kos.
+                        </p>
+                    </div>
+
+                    <!-- Tipe Kos, Kamar Mandi, Ukuran Kamar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Jenis Kos</label>
+                            <select name="spesifikasi[tipe_kos]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-sky-500 bg-white">
+                                <option value="Campur" {{ old('spesifikasi.tipe_kos') == 'Campur' ? 'selected' : '' }}>Kos Campur</option>
+                                <option value="Putri" {{ old('spesifikasi.tipe_kos') == 'Putri' ? 'selected' : '' }}>Khusus Putri</option>
+                                <option value="Putra" {{ old('spesifikasi.tipe_kos') == 'Putra' ? 'selected' : '' }}>Khusus Putra</option>
+                                <option value="Pasutri" {{ old('spesifikasi.tipe_kos') == 'Pasutri' ? 'selected' : '' }}>Boleh Pasutri</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kamar Mandi</label>
+                            <select name="spesifikasi[tipe_kamar_mandi]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-sky-500 bg-white">
+                                <option value="Dalam" {{ old('spesifikasi.tipe_kamar_mandi') == 'Dalam' ? 'selected' : '' }}>Kamar Mandi Dalam</option>
+                                <option value="Luar" {{ old('spesifikasi.tipe_kamar_mandi') == 'Luar' ? 'selected' : '' }}>Kamar Mandi Luar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Ukuran Kamar</label>
+                            <input type="text" name="spesifikasi[ukuran_kamar]" value="{{ old('spesifikasi.ukuran_kamar', '3 x 4 m') }}" placeholder="Contoh: 3 x 4 m" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+
+                    <!-- Fasilitas Kamar & Bersama -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                            Fasilitas Kamar & Kos (Pilih yang Tersedia)
+                        </label>
+                        @php
+                            $fasilitasKosList = [
+                                ['AC', 'fa-snowflake'],
+                                ['WiFi Cepat', 'fa-wifi'],
+                                ['Kamar Mandi Dalam', 'fa-bath'],
+                                ['Kasur & Springbed', 'fa-bed'],
+                                ['Lemari Pakaian', 'fa-door-closed'],
+                                ['Meja & Kursi Belajar', 'fa-chair'],
+                                ['Water Heater', 'fa-temperature-arrow-up'],
+                                ['Dapur Bersama', 'fa-utensils'],
+                                ['Parkir Motor Aman', 'fa-motorcycle'],
+                                ['Parkir Mobil', 'fa-car'],
+                                ['CCTV 24 Jam', 'fa-video'],
+                                ['Listrik Termasuk', 'fa-bolt'],
+                            ];
+                            $oldFasKos = old('spesifikasi.fasilitas', []);
+                        @endphp
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @foreach($fasilitasKosList as [$fas, $icon])
+                            <label class="cursor-pointer relative flex items-center p-2.5 rounded-xl border border-slate-200 hover:border-sky-300 has-[:checked]:border-sky-500 has-[:checked]:bg-sky-50/70 transition">
+                                <input type="checkbox" name="spesifikasi[fasilitas][]" value="{{ $fas }}" {{ in_array($fas, (array)$oldFasKos) ? 'checked' : '' }} class="mr-2 rounded text-sky-500 focus:ring-sky-400">
+                                <i class="fa-solid {{ $icon }} text-sky-500 mr-2 text-xs"></i>
+                                <span class="text-xs font-semibold text-slate-700">{{ $fas }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Aturan Kos -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                            Aturan & Ketentuan Kos
+                        </label>
+                        @php
+                            $aturanKosList = [
+                                'Akses 24 Jam (Bebas Jam Malam)',
+                                'Boleh Bawa Tamu Menginap',
+                                'Khusus Pasutri Wajib Surat Nikah',
+                                'Dilarang Merokok di Dalam Kamar',
+                                'Dilarang Membawa Hewan Peliharaan',
+                                'Maksimal 2 Orang Per Kamar',
+                            ];
+                            $oldAturan = old('spesifikasi.aturan', []);
+                        @endphp
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            @foreach($aturanKosList as $atr)
+                            <label class="cursor-pointer relative flex items-center p-2 rounded-xl border border-slate-200 hover:border-sky-300 has-[:checked]:border-sky-500 has-[:checked]:bg-sky-50/70 transition">
+                                <input type="checkbox" name="spesifikasi[aturan][]" value="{{ $atr }}" {{ in_array($atr, (array)$oldAturan) ? 'checked' : '' }} class="mr-2 rounded text-sky-500 focus:ring-sky-400">
+                                <span class="text-[11px] font-medium text-slate-700">{{ $atr }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: KENDARAAN (ALA TRAVELOKA / TURO) -->
+                <div id="panel-kendaraan" class="hidden bg-white p-5 sm:p-6 rounded-3xl border-2 border-cyan-300 shadow-sm space-y-5 transition-all">
+                    <div class="border-b border-cyan-100 pb-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-600 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-car-side"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800">Spesifikasi Rental Kendaraan</h3>
+                                <p class="text-[11px] text-slate-400">Standar profesional rental mobil, motor, dan transportasi</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-black border border-cyan-200">
+                            Rental Kendaraan
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Jenis Kendaraan</label>
+                            <select name="spesifikasi[tipe_kendaraan]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-cyan-500 bg-white">
+                                <option value="Mobil" {{ old('spesifikasi.tipe_kendaraan') == 'Mobil' ? 'selected' : '' }}>Mobil Penumpang</option>
+                                <option value="Motor" {{ old('spesifikasi.tipe_kendaraan') == 'Motor' ? 'selected' : '' }}>Sepeda Motor</option>
+                                <option value="Pickup / Box" {{ old('spesifikasi.tipe_kendaraan') == 'Pickup / Box' ? 'selected' : '' }}>Mobil Pickup / Box Niaga</option>
+                                <option value="Sepeda" {{ old('spesifikasi.tipe_kendaraan') == 'Sepeda' ? 'selected' : '' }}>Sepeda Gowes / Listrik</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Transmisi</label>
+                            <select name="spesifikasi[transmisi]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-cyan-500 bg-white">
+                                <option value="Automatic" {{ old('spesifikasi.transmisi') == 'Automatic' ? 'selected' : '' }}>Automatic (Matic)</option>
+                                <option value="Manual" {{ old('spesifikasi.transmisi') == 'Manual' ? 'selected' : '' }}>Manual</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Bahan Bakar</label>
+                            <select name="spesifikasi[bahan_bakar]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-cyan-500 bg-white">
+                                <option value="Bensin" {{ old('spesifikasi.bahan_bakar') == 'Bensin' ? 'selected' : '' }}>Bensin (Pertalite / Pertamax)</option>
+                                <option value="Solar / Diesel" {{ old('spesifikasi.bahan_bakar') == 'Solar / Diesel' ? 'selected' : '' }}>Solar / Diesel</option>
+                                <option value="Listrik (EV)" {{ old('spesifikasi.bahan_bakar') == 'Listrik (EV)' ? 'selected' : '' }}>Listrik (EV)</option>
+                                <option value="Hybrid" {{ old('spesifikasi.bahan_bakar') == 'Hybrid' ? 'selected' : '' }}>Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kapasitas Kursi</label>
+                            <select name="spesifikasi[kapasitas_penumpang]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-cyan-500 bg-white">
+                                <option value="2 Orang" {{ old('spesifikasi.kapasitas_penumpang') == '2 Orang' ? 'selected' : '' }}>2 Orang (Motor/City Car)</option>
+                                <option value="4-5 Kursi" {{ old('spesifikasi.kapasitas_penumpang', '4-5 Kursi') == '4-5 Kursi' ? 'selected' : '' }}>4 - 5 Kursi (Sedan/Hatchback)</option>
+                                <option value="7-8 Kursi" {{ old('spesifikasi.kapasitas_penumpang') == '7-8 Kursi' ? 'selected' : '' }}>7 - 8 Kursi (MPV/SUV)</option>
+                                <option value="12+ Kursi" {{ old('spesifikasi.kapasitas_penumpang') == '12+ Kursi' ? 'selected' : '' }}>12+ Kursi (HiAce / Elf)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Opsi Layanan Driver</label>
+                            <select name="spesifikasi[opsi_driver]" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-cyan-500 bg-white">
+                                <option value="Lepas Kunci Saja" {{ old('spesifikasi.opsi_driver') == 'Lepas Kunci Saja' ? 'selected' : '' }}>Lepas Kunci Saja</option>
+                                <option value="Dengan Driver / Supir" {{ old('spesifikasi.opsi_driver') == 'Dengan Driver / Supir' ? 'selected' : '' }}>Dengan Driver / Supir</option>
+                                <option value="Bisa Keduanya (Lepas Kunci / Driver)" {{ old('spesifikasi.opsi_driver') == 'Bisa Keduanya (Lepas Kunci / Driver)' ? 'selected' : '' }}>Bisa Lepas Kunci / Dengan Driver</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Tahun Kendaraan</label>
+                            <input type="number" name="spesifikasi[tahun_kendaraan]" value="{{ old('spesifikasi.tahun_kendaraan', '2023') }}" placeholder="2023" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-cyan-500">
+                        </div>
+                    </div>
+
+                    <!-- Fasilitas Kendaraan -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Fasilitas & Kelengkapan Kendaraan</label>
+                        @php
+                            $fasilitasVehicleList = [
+                                ['AC Double Blower Dingin', 'fa-snowflake'],
+                                ['Audio Bluetooth & USB', 'fa-music'],
+                                ['Kamera Parkir Mundur', 'fa-camera'],
+                                ['Charger HP Mobil', 'fa-charging-station'],
+                                ['E-Toll Card Tersedia', 'fa-credit-card'],
+                                ['2 Helm SNI + Jas Hujan (Motor)', 'fa-helmet-safety'],
+                                ['Kunci Pengaman Tambahan', 'fa-lock'],
+                            ];
+                            $oldFasVehicle = old('spesifikasi.fasilitas_kendaraan', []);
+                        @endphp
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @foreach($fasilitasVehicleList as [$fV, $icV])
+                            <label class="cursor-pointer relative flex items-center p-2 rounded-xl border border-slate-200 hover:border-cyan-300 has-[:checked]:border-cyan-500 has-[:checked]:bg-cyan-50/70 transition">
+                                <input type="checkbox" name="spesifikasi[fasilitas_kendaraan][]" value="{{ $fV }}" {{ in_array($fV, (array)$oldFasVehicle) ? 'checked' : '' }} class="mr-2 rounded text-cyan-600 focus:ring-cyan-400">
+                                <i class="fa-solid {{ $icV }} text-cyan-600 mr-2 text-xs"></i>
+                                <span class="text-[11px] font-semibold text-slate-700">{{ $fV }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: ELEKTRONIK & GEAR -->
+                <div id="panel-elektronik" class="hidden bg-white p-5 sm:p-6 rounded-3xl border-2 border-blue-300 shadow-sm space-y-4 transition-all">
+                    <div class="border-b border-blue-100 pb-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800">Spesifikasi Elektronik & Gear</h3>
+                                <p class="text-[11px] text-slate-400">Kamera, laptop, gadget, drone, dan lighting studio</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black border border-blue-200">
+                            Gear Elektronik
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Merek / Brand</label>
+                            <input type="text" name="spesifikasi[merek]" value="{{ old('spesifikasi.merek') }}" placeholder="Contoh: Sony, Canon, Apple, DJI" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kondisi Fungsi & Lensa</label>
+                            <input type="text" name="spesifikasi[kondisi_detail]" value="{{ old('spesifikasi.kondisi_detail', 'Fungsi Normal 100%, Sensor Bersih Bebas Jamur') }}" placeholder="Normal 100%, Sensor Bersih" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Kelengkapan Paket yang Didapat Penyewa</label>
+                        @php
+                            $kelengkapanElecList = [
+                                ['Unit Utama', 'fa-cube'],
+                                ['Baterai Cadangan (2x)', 'fa-battery-full'],
+                                ['Charger & Adapter Original', 'fa-plug'],
+                                ['Memory Card High Speed', 'fa-sd-card'],
+                                ['Tas / Hardcase Pelindung', 'fa-suitcase'],
+                                ['Kabel HDMI / USB Data', 'fa-network-wired'],
+                                ['Tripod / Monopod Kokoh', 'fa-arrows-to-dot'],
+                            ];
+                            $oldKelElec = old('spesifikasi.kelengkapan_elektronik', []);
+                        @endphp
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @foreach($kelengkapanElecList as [$kE, $icE])
+                            <label class="cursor-pointer relative flex items-center p-2 rounded-xl border border-slate-200 hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/70 transition">
+                                <input type="checkbox" name="spesifikasi[kelengkapan_elektronik][]" value="{{ $kE }}" {{ in_array($kE, (array)$oldKelElec) ? 'checked' : '' }} class="mr-2 rounded text-blue-600 focus:ring-blue-400">
+                                <i class="fa-solid {{ $icE }} text-blue-600 mr-2 text-xs"></i>
+                                <span class="text-[11px] font-semibold text-slate-700">{{ $kE }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 4: OUTDOOR & CAMPING -->
+                <div id="panel-outdoor" class="hidden bg-white p-5 sm:p-6 rounded-3xl border-2 border-teal-300 shadow-sm space-y-4 transition-all">
+                    <div class="border-b border-teal-100 pb-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 to-emerald-600 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-campground"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800">Spesifikasi Outdoor & Camping</h3>
+                                <p class="text-[11px] text-slate-400">Tenda, sleeping bag, carrier, dan perlengkapan mendaki</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 bg-teal-50 text-teal-600 rounded-full text-[10px] font-black border border-teal-200">
+                            Outdoor Gear
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kapasitas / Ukuran</label>
+                            <input type="text" name="spesifikasi[kapasitas_outdoor]" value="{{ old('spesifikasi.kapasitas_outdoor', '4 Orang (Dome Tent)') }}" placeholder="Contoh: 4 Orang / 60 Liter" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Ketahanan Cuaca & Material</label>
+                            <input type="text" name="spesifikasi[fitur_outdoor]" value="{{ old('spesifikasi.fitur_outdoor', 'Waterproof PU 3000mm, Double Layer') }}" placeholder="Waterproof PU 3000mm, Double Layer" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-teal-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Kelengkapan Camping</label>
+                        @php
+                            $kelengkapanOutdoorList = [
+                                ['Pasak Tenda Lengkap', 'fa-location-pin'],
+                                ['Tali Guyline Reflektif', 'fa-link'],
+                                ['Footprint / Alas Terpal Tenda', 'fa-layer-group'],
+                                ['Tas Tenda Original', 'fa-bag-shopping'],
+                                ['Frame Cadangan', 'fa-circle-nodes'],
+                            ];
+                            $oldKelOut = old('spesifikasi.kelengkapan_outdoor', []);
+                        @endphp
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @foreach($kelengkapanOutdoorList as [$kO, $icO])
+                            <label class="cursor-pointer relative flex items-center p-2 rounded-xl border border-slate-200 hover:border-teal-300 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50/70 transition">
+                                <input type="checkbox" name="spesifikasi[kelengkapan_outdoor][]" value="{{ $kO }}" {{ in_array($kO, (array)$oldKelOut) ? 'checked' : '' }} class="mr-2 rounded text-teal-600 focus:ring-teal-400">
+                                <i class="fa-solid {{ $icO }} text-teal-600 mr-2 text-xs"></i>
+                                <span class="text-[11px] font-semibold text-slate-700">{{ $kO }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 5: PERALATAN HAVE FUN -->
+                <div id="panel-have-fun" class="hidden bg-white p-5 sm:p-6 rounded-3xl border-2 border-indigo-300 shadow-sm space-y-4 transition-all">
+                    <div class="border-b border-indigo-100 pb-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-600 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800">Spesifikasi Peralatan Have Fun</h3>
+                                <p class="text-[11px] text-slate-400">PlayStation, karaoke set, sound system pesta, nobar gear</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black border border-indigo-200">
+                            Have Fun & Party
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Jenis Paket Hiburan</label>
+                            <input type="text" name="spesifikasi[jenis_hiburan]" value="{{ old('spesifikasi.jenis_hiburan', 'Paket PS5 + 2 Stik + Game Lengkap') }}" placeholder="Contoh: Paket Karaoke Portable, PS5" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kelengkapan Game / Aksesoris</label>
+                            <input type="text" name="spesifikasi[kelengkapan_have_fun]" value="{{ old('spesifikasi.kelengkapan_have_fun', '2 Stik DualSense, 2 Mic Wireless, Kabel HDMI') }}" placeholder="2 Stik, 2 Mic Wireless, Kabel HDMI" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                        </div>
                     </div>
                 </div>
 
@@ -228,13 +608,14 @@
 
                     <!-- Harga Sewa / Hari -->
                     <div>
-                        <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                        <label id="label_harga_harian" class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
                             Tarif Sewa / Hari <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-xs font-bold text-slate-400">Rp</span>
-                            <input type="number" name="harga_sewa_harian" value="{{ old('harga_sewa_harian') }}" required min="0" placeholder="150000" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-black focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
+                            <input type="number" name="harga_sewa_harian" id="harga_sewa_harian" value="{{ old('harga_sewa_harian') }}" required min="0" placeholder="150000" class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 text-slate-800 text-sm font-black focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition">
                         </div>
+                        <p id="hint_harga_harian" class="text-[10px] text-slate-400 mt-1">Tarif dasar harian untuk sewa barang.</p>
                     </div>
 
                     <!-- Stok Unit Fisik -->
@@ -404,6 +785,87 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-base mr-2"></i> Mengunggah ke Cloud...';
         btn.classList.add('opacity-75', 'cursor-not-allowed');
+    });
+
+    // ==========================================
+    // 3. LOGIKA KATEGORI DINAMIS (KOS, KENDARAAN, DLL)
+    // ==========================================
+    function handleKategoriChange() {
+        const select = document.getElementById('kategori_id');
+        if (!select) return;
+        const selectedOption = select.options[select.selectedIndex];
+        const katNama = (selectedOption ? (selectedOption.getAttribute('data-nama') || selectedOption.text) : '').toLowerCase();
+
+        // Sembunyikan semua panel spesifikasi
+        const panels = ['panel-kos-kamar', 'panel-kendaraan', 'panel-elektronik', 'panel-outdoor', 'panel-have-fun'];
+        panels.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+
+        const labelHarian = document.getElementById('label_harga_harian');
+        const hintHarian = document.getElementById('hint_harga_harian');
+        const inputHarian = document.getElementById('harga_sewa_harian');
+
+        if (katNama.includes('kos') || katNama.includes('kamar')) {
+            document.getElementById('panel-kos-kamar')?.classList.remove('hidden');
+            if (labelHarian) labelHarian.innerHTML = 'Tarif Sewa / Malam (Harian) <span class="text-rose-500">*</span>';
+            if (hintHarian) hintHarian.innerText = 'Tarif per malam untuk penyewa harian. Jika khusus bulanan, sistem akan menghitung estimasi otomatis.';
+            toggleKosPricing();
+        } else if (katNama.includes('kendaraan')) {
+            document.getElementById('panel-kendaraan')?.classList.remove('hidden');
+            if (labelHarian) labelHarian.innerHTML = 'Tarif Sewa Kendaraan / Hari <span class="text-rose-500">*</span>';
+            if (hintHarian) hintHarian.innerText = 'Tarif sewa per 24 jam (sesuai opsi lepas kunci / supir).';
+        } else if (katNama.includes('elektronik')) {
+            document.getElementById('panel-elektronik')?.classList.remove('hidden');
+            if (labelHarian) labelHarian.innerHTML = 'Tarif Sewa Gear / Hari <span class="text-rose-500">*</span>';
+            if (hintHarian) hintHarian.innerText = 'Tarif sewa per hari untuk 1 paket kelengkapan unit.';
+        } else if (katNama.includes('outdoor')) {
+            document.getElementById('panel-outdoor')?.classList.remove('hidden');
+            if (labelHarian) labelHarian.innerHTML = 'Tarif Sewa Alat Camping / Hari <span class="text-rose-500">*</span>';
+            if (hintHarian) hintHarian.innerText = 'Tarif per hari (biasanya dihitung per 24 jam pendakian).';
+        } else if (katNama.includes('have fun')) {
+            document.getElementById('panel-have-fun')?.classList.remove('hidden');
+            if (labelHarian) labelHarian.innerHTML = 'Tarif Sewa Paket Fun / Hari <span class="text-rose-500">*</span>';
+            if (hintHarian) hintHarian.innerText = 'Tarif sewa per hari untuk paket pesta & hiburan.';
+        } else {
+            if (labelHarian) labelHarian.innerHTML = 'Tarif Sewa / Hari <span class="text-rose-500">*</span>';
+            if (hintHarian) hintHarian.innerText = 'Tarif dasar harian untuk sewa barang.';
+        }
+    }
+
+    function toggleKosPricing() {
+        const radios = document.getElementsByName('spesifikasi[tipe_sewa]');
+        let selected = 'keduanya';
+        for (let r of radios) {
+            if (r.checked) { selected = r.value; break; }
+        }
+
+        const wrapperBulanan = document.getElementById('wrapper_harga_bulanan');
+        const inputBulanan = document.getElementById('input_harga_bulanan');
+        const inputHarian = document.getElementById('harga_sewa_harian');
+
+        if (selected === 'bulanan') {
+            if (wrapperBulanan) wrapperBulanan.style.display = 'block';
+            if (inputBulanan) inputBulanan.required = true;
+            // Jika khusus bulanan dan harian kosong, isi estimasi per malam
+            if (inputHarian && (!inputHarian.value || inputHarian.value == 0)) {
+                if (inputBulanan && inputBulanan.value > 0) {
+                    inputHarian.value = Math.round(inputBulanan.value / 30);
+                }
+            }
+        } else if (selected === 'harian') {
+            if (wrapperBulanan) wrapperBulanan.style.display = 'none';
+            if (inputBulanan) { inputBulanan.required = false; }
+        } else {
+            if (wrapperBulanan) wrapperBulanan.style.display = 'block';
+            if (inputBulanan) inputBulanan.required = true;
+        }
+    }
+
+    // Auto-trigger on page load (mendukung Old Value)
+    document.addEventListener('DOMContentLoaded', function() {
+        handleKategoriChange();
     });
 </script>
 @endpush

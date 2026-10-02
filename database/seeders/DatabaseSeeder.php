@@ -22,23 +22,30 @@ class DatabaseSeeder extends Seeder
         );
 
         // Akun Vendor
-        User::create([
-            'name' => 'Vendor Sewa Kamera',
-            'email' => 'vendor@rentify.com',
-            'password' => Hash::make('password123'),
-            'role' => 'vendor',
-            'vendor_name' => 'Sewa Kamera Jakarta',
-            'vendor_status' => 'approved',
-            'email_verified_at' => now(),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'vendor@rentify.com'],
+            [
+                'name' => 'Vendor Sewa Kamera',
+                'password' => Hash::make('password123'),
+                'role' => 'vendor',
+                'vendor_name' => 'Sewa Kamera Jakarta',
+                'vendor_status' => 'approved',
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Akun Customer
-        User::create([
-            'name' => 'Customer Budi',
-            'email' => 'customer@rentify.com',
-            'password' => Hash::make('password123'),
-            'role' => 'customer',
-            'email_verified_at' => now(),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'customer@rentify.com'],
+            [
+                'name' => 'Customer Budi',
+                'password' => Hash::make('password123'),
+                'role' => 'customer',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Seed Kategori Pilihan
+        $this->call(KategoriSeeder::class);
     }
 }

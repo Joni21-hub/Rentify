@@ -35,12 +35,29 @@
     <div class="bg-white px-4 py-3 mb-2 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
         <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             <a href="{{ route('customer.search', ['q' => $keyword]) }}" 
-               class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold border transition {{ empty($kategoriId) ? 'bg-sky-50 border-sky-500 text-sky-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}">
+               class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 {{ empty($kategoriId) ? 'bg-sky-50 border-sky-500 text-sky-700 shadow-sm font-bold' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-layer-group text-[11px] {{ empty($kategoriId) ? 'text-sky-500' : 'text-slate-400' }}"></i>
                 Semua Kategori
             </a>
             @foreach($kategoris as $kat)
+                @php
+                    $namaLower = strtolower($kat->nama);
+                    $iconClass = 'fa-tag';
+                    if (str_contains($namaLower, 'have fun')) {
+                        $iconClass = 'fa-gamepad';
+                    } elseif (str_contains($namaLower, 'outdoor')) {
+                        $iconClass = 'fa-campground';
+                    } elseif (str_contains($namaLower, 'elektronik')) {
+                        $iconClass = 'fa-camera';
+                    } elseif (str_contains($namaLower, 'kendaraan')) {
+                        $iconClass = 'fa-car';
+                    } elseif (str_contains($namaLower, 'kos') || str_contains($namaLower, 'kamar')) {
+                        $iconClass = 'fa-door-open';
+                    }
+                @endphp
                 <a href="{{ route('customer.search', ['q' => $keyword, 'kategori' => $kat->id]) }}" 
-                   class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold border transition {{ $kategoriId == $kat->id ? 'bg-sky-50 border-sky-500 text-sky-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}">
+                   class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 {{ $kategoriId == $kat->id ? 'bg-sky-50 border-sky-500 text-sky-700 shadow-sm font-bold' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}">
+                    <i class="fa-solid {{ $iconClass }} text-[11px] {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}"></i>
                     {{ $kat->nama }}
                 </a>
             @endforeach
@@ -112,9 +129,18 @@
                             
                             <!-- Harga & Info Vendor -->
                             <div class="mt-1">
-                                <div class="text-sky-600 font-bold text-[15px]">
-                                    Rp{{ number_format($hargaTampil, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-normal">/hari</span>
-                                </div>
+                                @if($barang->is_kos && $barang->harga_bulanan)
+                                    <div class="text-sky-600 font-bold text-[14px]">
+                                        Rp{{ number_format($barang->harga_bulanan_customer ?? $barang->harga_bulanan, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-normal">/bulan</span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 font-medium">
+                                        (Rp{{ number_format($hargaTampil, 0, ',', '.') }}/hari)
+                                    </div>
+                                @else
+                                    <div class="text-sky-600 font-bold text-[15px]">
+                                        Rp{{ number_format($hargaTampil, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-normal">/hari</span>
+                                    </div>
+                                @endif
                                 <div class="flex items-center gap-1.5 mt-1.5 text-[10px] font-medium text-slate-500">
                                     <i class="fa-solid fa-shop text-slate-400"></i>
                                     <span class="truncate">{{ $barang->vendor->vendor_name ?? 'Vendor' }}</span>

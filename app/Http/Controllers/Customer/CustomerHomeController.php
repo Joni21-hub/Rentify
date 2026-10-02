@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Barang; 
 use App\Models\Banner; 
+use App\Models\Kategori;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerHomeController extends Controller
@@ -13,6 +14,7 @@ class CustomerHomeController extends Controller
     public function index()
     {
         $banners = Banner::all();
+        $kategoris = Kategori::where('is_active', 1)->get();
         $daftarBarang = collect(); 
         $butuhLokasi = false;
 
@@ -68,7 +70,7 @@ class CustomerHomeController extends Controller
             $butuhLokasi = true;
         }
 
-        return view('customer.home', compact('daftarBarang', 'banners', 'butuhLokasi'));
+        return view('customer.home', compact('daftarBarang', 'banners', 'butuhLokasi', 'kategoris'));
     }
 
     // PERBAIKAN: Fungsi show kini mendukung SLUG, memblokir toko Banned, dan memakai logika lokasi Tamu/Member Anda
