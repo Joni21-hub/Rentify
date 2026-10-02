@@ -25,9 +25,9 @@
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50 ">
         <div class="max-w-7xl mx-auto w-full px-6 py-3 flex items-center gap-4">
             <!-- Logo -->
-            <a href="{{ route('customer.home') }}" class="flex items-center gap-2.5 flex-shrink-0 group">
-                <img src="{{ asset('images/rentify-icon.svg') }}" class="h-8 w-8 rounded-xl shadow-xs group-hover:scale-105 transition" alt="Rentify Logo">
-                <span class="text-xl font-black text-sky-600 tracking-tight flex items-center">Rentify<span class="text-amber-500">.</span></span>
+            <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
+                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
+                <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
 
             <!-- Search Bar (Desktop) -->
@@ -75,10 +75,10 @@
     </header>
 
     <!-- ===== TOP NAVBAR (MOBILE ONLY) ===== -->
-    <header class="rentify-navbar md:hidden sticky top-0 z-50 px-3.5 py-2.5 flex gap-2.5 items-center">
-        <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-2">
-            <img src="{{ asset('images/rentify-icon.svg') }}" class="h-7 w-7 rounded-lg shadow-xs" alt="Rentify Logo">
-            <span class="text-lg font-black text-sky-600 tracking-tight flex items-center">Rentify<span class="text-amber-500">.</span></span>
+    <header class="rentify-navbar md:hidden sticky top-0 z-50 px-3 py-2.5 flex gap-3 items-center">
+        <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-1.5">
+            <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-6 object-contain" alt="Logo">
+            <span class="text-lg font-black text-sky-500 tracking-tighter">Rentify</span>
         </a>
         <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-slate-50/90 rounded-full px-3.5 py-2 text-slate-400 text-[13px] border border-sky-100 hover:border-sky-300 transition shadow-2xs">
             <i class="fa-solid fa-magnifying-glass mr-2 text-sky-500"></i>
@@ -124,17 +124,6 @@
         <!-- ===== ETALASE KATEGORI UTAMA (STANDAR PROFESIONAL SHOPEE / TRAVELOKA) ===== -->
         <section class="mb-5 px-3 sm:px-4 md:px-0">
             <div class="rentify-card rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-100/90">
-                <div class="flex items-center justify-between mb-3 px-0.5">
-                    <div>
-                        <h3 class="font-extrabold text-slate-800 text-[13.5px] sm:text-base tracking-tight flex items-center gap-1.5">
-                            <i class="fa-solid fa-shapes text-sky-500"></i> Kategori Pilihan Sewa
-                        </h3>
-                        <p class="text-[11px] text-slate-400 font-medium">Temukan perlengkapan & akomodasi terbaik sesuai kebutuhanmu</p>
-                    </div>
-                    <a href="{{ route('customer.search') }}" class="text-[11px] font-bold text-sky-600 hover:text-sky-700 transition flex items-center gap-1 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-full border border-sky-100">
-                        Semua <i class="fa-solid fa-chevron-right text-[9px]"></i>
-                    </a>
-                </div>
 
                 @php
                     $categoryMeta = [
