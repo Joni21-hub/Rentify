@@ -257,7 +257,7 @@
 
         @elseif($daftarBarang->isEmpty())
             <section class="px-3 mt-6 md:px-0">
-                <div class="rentify-card p-8 text-center -sky-100 max-w-md mx-auto">
+                <div class="rentify-card p-8 text-center border border-sky-100 max-w-md mx-auto">
                     <div class="w-20 h-20 bg-sky-50 text-sky-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                         <i class="fa-solid fa-face-frown-open"></i>
                     </div>

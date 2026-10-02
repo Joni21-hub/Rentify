@@ -410,7 +410,7 @@
             </div>
 
             @if(isset($barang->jarak))
-            <div class="rentify-card -slate-200 text-slate-600 px-2.5 py-1 text-right flex-shrink-0">
+            <div class="rentify-card border border-slate-200 text-slate-600 px-2.5 py-1 text-right flex-shrink-0">
                 <span class="block text-[8px] text-slate-400 uppercase font-black tracking-wider">Jarak Ke Titikmu</span>
                 <span class="font-black text-xs flex items-center justify-end gap-1 text-sky-500"><i class="fa-solid fa-location-dot"></i> {{ number_format($barang->jarak, 1, ',', '') }} KM</span>
             </div>

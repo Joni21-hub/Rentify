@@ -13,7 +13,7 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 font-sans">
 
-    <div class="rentify-card p-8 max-w-lg w-full text-center -slate-100">
+    <div class="rentify-card p-8 max-w-lg w-full text-center border border-slate-100">
         <div class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
             ✓
         </div>

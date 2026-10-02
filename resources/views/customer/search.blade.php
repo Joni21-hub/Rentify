@@ -96,12 +96,12 @@
                     @php 
                         $hargaTampil = $barang->harga_sewa_customer ?? $barang->harga_sewa_harian; 
                     @endphp
-                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="rentify-card -slate-100 overflow-hidden hover: hover:-sky-200 transition duration-200 flex flex-col group relative">
+                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="rentify-card border border-slate-100/80 overflow-hidden hover:border-sky-300 hover:shadow-md transition duration-200 flex flex-col group relative">
                         
                         <!-- Area Foto -->
                         <div class="relative w-full aspect-square bg-white flex items-center justify-center p-2 border-b border-slate-50">
                             @if($barang->cover_photo)
-                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain mix-blend-multiply group-transform hover:-translate-y-1 active:translate-y-0 transition duration-300">
+                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition duration-300">
                             @else
                                 <i class="fa-solid fa-image text-slate-200 text-3xl"></i>
                             @endif

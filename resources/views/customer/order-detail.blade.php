@@ -10,7 +10,7 @@
 </head>
 <body class="font-sans text-slate-800 p-4 md:p-10">
 
-    <div class="max-w-3xl mx-auto rentify-card overflow-hidden -slate-200" id="printable-struk">
+    <div class="max-w-3xl mx-auto rentify-card overflow-hidden border border-slate-200" id="printable-struk">
         
         <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-8 text-center relative">
             <h1 class="text-3xl font-black tracking-widest">RENTIFY INVOICE</h1>

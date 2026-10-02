@@ -28,7 +28,7 @@
     @endif
 
     @if($keranjangs->isEmpty())
-        <div class="rentify-card m-4 p-10 text-center -slate-100">
+        <div class="rentify-card m-4 p-10 text-center border border-slate-100">
             <div class="w-20 h-20 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-[0_0_15px_rgba(14,165,233,0.3)]">
                 <i class="fa-solid fa-cart-shopping"></i>
             </div>
@@ -109,7 +109,7 @@
                         
                         <div id="voucher-input-area" class="hidden px-5 pb-4 pt-1 bg-white">
                             <div class="flex gap-3">
-                                <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="rentify-input flex-1 px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus: focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
+                                <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="rentify-input flex-1 px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
                                 <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 shadow-[0_0_10px_rgba(14,165,233,0.3)] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition">Pakai</button>
                             </div>
                         </div>
