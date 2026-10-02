@@ -495,11 +495,11 @@
                     <div class="border-b border-indigo-100 pb-3 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-600 text-white flex items-center justify-center text-lg shadow-sm">
-                                <i class="fa-solid fa-gamepad"></i>
+                                <i class="fa-solid fa-guitar"></i>
                             </div>
                             <div>
                                 <h3 class="text-sm font-black text-slate-800">Spesifikasi Peralatan Have Fun</h3>
-                                <p class="text-[11px] text-slate-400">PlayStation, karaoke set, sound system pesta, nobar gear</p>
+                                <p class="text-[11px] text-slate-400">Gitar/alat musik, olahraga, sound system, hiburan & rekreasi</p>
                             </div>
                         </div>
                         <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black border border-indigo-200">

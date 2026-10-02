@@ -128,7 +128,7 @@
                 @php
                     $categoryMeta = [
                         'have fun' => [
-                            'icon' => 'fa-solid fa-gamepad',
+                            'icon' => 'fa-solid fa-guitar',
                             'bg' => 'bg-gradient-to-br from-indigo-50 to-purple-100/70',
                             'border' => 'border-indigo-200/60',
                             'text' => 'text-indigo-600',

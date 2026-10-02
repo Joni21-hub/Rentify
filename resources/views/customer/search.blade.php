@@ -44,7 +44,7 @@
                     $namaLower = strtolower($kat->nama);
                     $iconClass = 'fa-tag';
                     if (str_contains($namaLower, 'have fun')) {
-                        $iconClass = 'fa-gamepad';
+                        $iconClass = 'fa-guitar';
                     } elseif (str_contains($namaLower, 'outdoor')) {
                         $iconClass = 'fa-campground';
                     } elseif (str_contains($namaLower, 'elektronik')) {

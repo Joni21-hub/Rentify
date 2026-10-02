@@ -343,7 +343,7 @@
     <div class="p-4 border-b border-slate-100 bg-white space-y-3">
         <div class="flex items-center justify-between">
             <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-gamepad text-indigo-500"></i> Paket Have Fun & Hiburan
+                <i class="fa-solid fa-guitar text-indigo-500"></i> Paket Have Fun & Hiburan
             </h3>
             <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200">
                 Party & Game
