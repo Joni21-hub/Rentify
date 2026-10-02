@@ -29,6 +29,13 @@ class KeranjangController extends Controller
     public function add(Request $request)
     {
         if (!Auth::check()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => 'unauthenticated',
+                    'message' => 'Silakan login terlebih dahulu.',
+                    'redirect' => route('login')
+                ], 401);
+            }
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk menambah keranjang.');
         }
 
@@ -49,6 +56,15 @@ class KeranjangController extends Controller
                 'barang_id'   => $barang_id,
                 'jumlah'      => 1,
                 'durasi_sewa' => 1
+            ]);
+        }
+
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            $totalKeranjang = Keranjang::where('user_id', $userId)->count();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Yey! ' . $barang->nama . ' berhasil masuk keranjang.',
+                'cart_count' => $totalKeranjang
             ]);
         }
 

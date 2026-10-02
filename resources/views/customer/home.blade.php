@@ -172,7 +172,7 @@
                             'bg' => 'bg-gradient-to-br from-rose-50 to-pink-100/70',
                             'border' => 'border-rose-200/60',
                             'text' => 'text-rose-600',
-                            'badge' => 'BULANAN',
+                            'badge' => 'PENGINAPAN',
                             'badge_grad' => 'from-rose-500 to-pink-600',
                             'line1' => 'Kos &',
                             'line2' => 'Kamar',
@@ -214,7 +214,7 @@
                                 </div>
                                 <!-- Micro Badge -->
                                 @if(!empty($meta['badge']))
-                                    <span class="absolute -bottom-0.5 px-1 py-0.2 bg-gradient-to-r {{ $meta['badge_grad'] }} text-white text-[6.5px] sm:text-[7px] font-black rounded-full uppercase tracking-wider shadow-2xs scale-90 sm:scale-100 whitespace-nowrap">
+                                    <span class="absolute -bottom-0.5 px-1 py-0.2 bg-gradient-to-r {{ $meta['badge_grad'] }} text-white text-[5.5px] sm:text-[6.5px] font-black rounded-full uppercase tracking-wider shadow-2xs scale-90 sm:scale-100 whitespace-nowrap">
                                         {{ $meta['badge'] }}
                                     </span>
                                 @endif

@@ -59,7 +59,7 @@
             buttonsStyling: false
         });
 
-        @if(session('success'))
+        @if(session('success') && !str_contains(strtolower(session('success')), 'masuk keranjang'))
             swalRentify.fire({
                 icon: 'success',
                 title: 'Berhasil!',

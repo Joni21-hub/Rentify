@@ -20,6 +20,14 @@
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
 
+    <!-- TOMBOL KERANJANG HEADER DENGAN BADGE -->
+    <a href="{{ route('customer.keranjang') }}" id="btn-header-cart" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition relative">
+        <i class="fa-solid fa-cart-shopping text-xs"></i>
+        <span id="header-cart-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs {{ ($keranjangCount ?? 0) > 0 ? '' : 'hidden' }}">
+            {{ $keranjangCount ?? 0 }}
+        </span>
+    </a>
+
     <div class="swiper productSwiper w-full aspect-square bg-white border-b border-slate-100">
         <div class="swiper-wrapper">
             
@@ -436,12 +444,13 @@
         <div class="w-full max-w-md flex gap-2">
             
             @if($stokNyata > 0)
-                <form action="{{ route('customer.keranjang.add') }}" method="POST" class="w-1/2">
+                <form action="{{ route('customer.keranjang.add') }}" method="POST" id="form-add-to-cart" class="w-1/2">
                     @csrf
                     <input type="hidden" name="barang_id" value="{{ $barang->id }}">
                     <input type="hidden" name="jumlah" value="1">
-                    <button type="submit" class="w-full bg-sky-50 text-sky-600 border border-sky-400 font-bold text-[13px] py-2.5 rounded-md flex items-center justify-center gap-2 hover:bg-sky-100 transition">
-                        <i class="fa-solid fa-cart-plus"></i> Masukkan
+                    <button type="submit" id="btn-add-to-cart" class="w-full bg-sky-50 text-sky-600 border border-sky-400 font-bold text-[13px] py-2.5 rounded-md flex items-center justify-center gap-2 hover:bg-sky-100 transition active:scale-95">
+                        <i class="fa-solid fa-cart-plus" id="btn-add-icon"></i>
+                        <span id="btn-add-text">Masukkan</span>
                     </button>
                 </form>
 
@@ -463,6 +472,17 @@
             @endif
 
         </div>
+    </div>
+
+    <!-- FLOATING TOAST UNTUK NOTIFIKASI MASUK KERANJANG -->
+    <div id="cart-toast" class="hidden pointer-events-none fixed bottom-16 left-1/2 -translate-x-1/2 z-[90] bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full shadow-2xl border border-white/20 flex items-center gap-2.5 transition-all duration-300 opacity-0 translate-y-3">
+        <div class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] flex-shrink-0">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <span class="text-xs font-semibold text-slate-100" id="cart-toast-text">Berhasil masuk keranjang</span>
+        <a href="{{ route('customer.keranjang') }}" class="pointer-events-auto text-xs font-black text-sky-400 hover:text-sky-300 underline underline-offset-2 ml-1 flex-shrink-0">
+            Lihat
+        </a>
     </div>
 
 </div>
@@ -564,6 +584,166 @@
                 document.getElementById('direct-durasi').value = durasi;
                 
                 formSewaSekarang.submit();
+            });
+        }
+
+        // LOGIKA ANIMASI MASUK KERANJANG & AJAX
+        const formAddToCart = document.getElementById('form-add-to-cart');
+        const btnAddToCart = document.getElementById('btn-add-to-cart');
+        const btnAddText = document.getElementById('btn-add-text');
+        const btnAddIcon = document.getElementById('btn-add-icon');
+        const headerCartBtn = document.getElementById('btn-header-cart');
+        const headerCartBadge = document.getElementById('header-cart-badge');
+        const cartToast = document.getElementById('cart-toast');
+        const cartToastText = document.getElementById('cart-toast-text');
+        let toastTimer = null;
+
+        function showCartToast(msg) {
+            if (!cartToast) return;
+            if (toastTimer) clearTimeout(toastTimer);
+            if (cartToastText) cartToastText.textContent = msg;
+
+            cartToast.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                cartToast.classList.remove('opacity-0', 'translate-y-3');
+                cartToast.classList.add('opacity-100', 'translate-y-0');
+            });
+
+            toastTimer = setTimeout(() => {
+                cartToast.classList.remove('opacity-100', 'translate-y-0');
+                cartToast.classList.add('opacity-0', 'translate-y-3');
+                setTimeout(() => {
+                    cartToast.classList.add('hidden');
+                }, 300);
+            }, 2600);
+        }
+
+        function triggerFlyAnimation() {
+            if (!headerCartBtn || !btnAddToCart) return;
+
+            const startRect = btnAddToCart.getBoundingClientRect();
+            const endRect = headerCartBtn.getBoundingClientRect();
+
+            // Ambil gambar produk yang sedang aktif
+            const activeSlideImg = document.querySelector('.productSwiper .swiper-slide-active img') || document.querySelector('.productSwiper img');
+            const imgSrc = activeSlideImg ? activeSlideImg.src : null;
+
+            // Buat elemen terbang
+            const flyer = document.createElement('div');
+            flyer.style.position = 'fixed';
+            flyer.style.zIndex = '99999';
+            flyer.style.left = (startRect.left + startRect.width / 2 - 20) + 'px';
+            flyer.style.top = (startRect.top + startRect.height / 2 - 20) + 'px';
+            flyer.style.width = '42px';
+            flyer.style.height = '42px';
+            flyer.style.borderRadius = '50%';
+            flyer.style.overflow = 'hidden';
+            flyer.style.border = '2px solid #0ea5e9';
+            flyer.style.boxShadow = '0 10px 25px rgba(14, 165, 233, 0.5)';
+            flyer.style.pointerEvents = 'none';
+            flyer.style.transition = 'all 0.65s cubic-bezier(0.2, 0.8, 0.25, 1)';
+            flyer.style.background = '#ffffff';
+
+            if (imgSrc) {
+                flyer.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;">`;
+            } else {
+                flyer.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:white;"><i class="fa-solid fa-cart-shopping text-sm"></i></div>`;
+            }
+
+            document.body.appendChild(flyer);
+
+            // Frame selanjutnya: melayang parabolik ke ikon keranjang
+            requestAnimationFrame(() => {
+                flyer.style.left = (endRect.left + endRect.width / 2 - 12) + 'px';
+                flyer.style.top = (endRect.top + endRect.height / 2 - 12) + 'px';
+                flyer.style.width = '24px';
+                flyer.style.height = '24px';
+                flyer.style.transform = 'scale(0.4) rotate(360deg)';
+                flyer.style.opacity = '0.7';
+            });
+
+            // Setelah mendarat di keranjang
+            setTimeout(() => {
+                if (flyer.parentNode) flyer.parentNode.removeChild(flyer);
+
+                // Animasi getar/bounce di ikon keranjang
+                headerCartBtn.style.transition = 'transform 0.15s ease-out';
+                headerCartBtn.style.transform = 'scale(1.35) rotate(-12deg)';
+
+                setTimeout(() => {
+                    headerCartBtn.style.transform = 'scale(0.9) rotate(6deg)';
+                    setTimeout(() => {
+                        headerCartBtn.style.transform = 'scale(1) rotate(0deg)';
+                    }, 120);
+                }, 120);
+
+                // Animasi pop pada badge angka
+                if (headerCartBadge) {
+                    headerCartBadge.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    headerCartBadge.style.transform = 'scale(1.4)';
+                    setTimeout(() => {
+                        headerCartBadge.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            }, 650);
+        }
+
+        if (formAddToCart && btnAddToCart) {
+            formAddToCart.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // 1. Jalankan animasi terbang ke keranjang
+                triggerFlyAnimation();
+
+                // 2. Efek haptic pada tombol
+                btnAddToCart.disabled = true;
+                const originalText = btnAddText ? btnAddText.textContent : 'Masukkan';
+                if (btnAddText) btnAddText.textContent = 'Memasukkan...';
+                if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-spinner fa-spin';
+
+                // 3. Request AJAX
+                const formData = new FormData(formAddToCart);
+                fetch(formAddToCart.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => {
+                    if (res.status === 401) {
+                        window.location.href = "{{ route('login') }}";
+                        return;
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data && data.status === 'success') {
+                        if (btnAddText) btnAddText.textContent = 'Tersimpan ✓';
+                        if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-check text-emerald-500';
+
+                        // Update angka badge keranjang
+                        if (headerCartBadge) {
+                            headerCartBadge.textContent = data.cart_count;
+                            headerCartBadge.classList.remove('hidden');
+                        }
+
+                        // Tampilkan toast notifikasi elegan
+                        showCartToast(data.message || 'Barang berhasil masuk keranjang');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error add to cart:', err);
+                    if (btnAddText) btnAddText.textContent = 'Gagal';
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        btnAddToCart.disabled = false;
+                        if (btnAddText) btnAddText.textContent = originalText;
+                        if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-cart-plus';
+                    }, 1600);
+                });
             });
         }
     });
