@@ -9,6 +9,10 @@
     
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#38bdf8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260498/ukuran_satu_g4ihwu.png">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -131,6 +135,16 @@
         </div>
     </div>
 
+    <!-- TOMBOL DOWNLOAD / INSTALL APLIKASI PWA -->
+    <div id="installPwaContainer" style="display: none;" class="fixed bottom-5 right-5 z-50">
+        <button id="installPwaBtn" type="button" class="group bg-white/95 hover:bg-white text-slate-700 hover:text-sky-600 font-bold py-2.5 px-4 sm:px-5 rounded-full shadow-[0_8px_25px_rgba(14,165,233,0.28)] border border-sky-100 hover:border-sky-300 backdrop-blur-md flex items-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-xs sm:text-sm cursor-pointer">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-sky-500 to-sky-400 text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-download text-xs"></i>
+            </div>
+            <span class="tracking-wide">Download Aplikasi</span>
+        </button>
+    </div>
+
     <script>
         function togglePassword() {
             const passwordField = document.getElementById('passwordField');
@@ -143,6 +157,51 @@
                 eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
             }
         }
+
+        // 1. Registrasi Service Worker PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(() => console.log('Rentify PWA: Service Worker terdaftar'))
+                    .catch(err => console.error('Rentify PWA Error:', err));
+            });
+        }
+
+        // 2. Logika Download / Install Aplikasi
+        let deferredPrompt = null;
+        const installContainer = document.getElementById('installPwaContainer');
+        const installBtn = document.getElementById('installPwaBtn');
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if (!isStandalone && installContainer) {
+            installContainer.style.display = 'block';
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installContainer) installContainer.style.display = 'block';
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        if (installContainer) installContainer.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                } else {
+                    alert('Untuk memasang aplikasi Rentify ke layar utama:\n\n1. Klik menu browser (ikon titik tiga di kanan atas)\n2. Pilih "Install Rentify" atau "Tambahkan ke Layar Utama"');
+                }
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (installContainer) installContainer.style.display = 'none';
+            deferredPrompt = null;
+        });
     </script>
 </body>
 </html>
