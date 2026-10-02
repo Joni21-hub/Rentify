@@ -75,19 +75,16 @@
         </main>
         
         <!-- BOTTOM NAV MOBILE -->
-        <div class="md:hidden fixed bottom-2.5 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full max-w-[280px] px-3">
-            <nav class="pointer-events-auto bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md px-2 py-1 rounded-full flex items-center justify-between">
-                <a href="{{ route('customer.home') }}" class="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-sky-500 rounded-full font-medium text-[11px] transition-colors">
-                    <i class="fa-solid fa-house text-[13px]"></i>
-                    <span class="text-[10.5px]">Beranda</span>
+        <div class="fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
+            <nav class="rentify-card backdrop-blur-xl border border-white/80 pointer-events-auto px-6 py-2.5 w-full max-w-xs flex justify-around items-center shadow-lg rounded-2xl">
+                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-600 transition-colors">
+                    <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Beranda</span>
                 </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-600 rounded-full font-bold text-[11px] border border-sky-100 shadow-2xs">
-                    <i class="fa-solid fa-heart text-[12px]"></i>
-                    <span>Favorit</span>
+                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-sky-600">
+                    <i class="fa-solid fa-heart text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Favorit</span>
                 </a>
-                <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-sky-500 rounded-full font-medium text-[11px] transition-colors">
-                    <i class="fa-solid fa-user text-[13px]"></i>
-                    <span class="text-[10.5px]">Akun</span>
+                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-600 transition-colors">
+                    <i class="fa-solid fa-user text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Akun</span>
                 </a>
             </nav>
         </div>

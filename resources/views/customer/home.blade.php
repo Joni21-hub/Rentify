@@ -99,13 +99,13 @@
     <main class="pb-20 md:pb-8 md:max-w-7xl md:mx-auto md:px-6 pt-3.5 sm:pt-4 md:pt-4">
 
         <!-- BANNER PROMO (SPACING DIPERBAIKI, TIDAK MELEKAT PADA PENCARIAN) -->
-        <section class="mb-3.5 px-3 sm:px-4 md:px-0">
+        <section class="mb-4 px-3 sm:px-4 md:px-0">
             @if(isset($banners) && $banners->count() > 0)
                 <div class="relative group">
                     <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl">
                         @foreach($banners as $banner)
-                            <div class="min-w-full snap-center rounded-2xl shadow-xs relative overflow-hidden flex-shrink-0 aspect-[21/9] sm:aspect-[24/9] md:aspect-[3/1] max-h-48 md:max-h-56 bg-slate-100 border border-slate-200/60">
-                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover object-center" alt="Promo Banner">
+                            <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60">
+                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover">
                             </div>
                         @endforeach
                     </div>
@@ -121,33 +121,59 @@
             @endif
         </section>
 
-        <!-- ===== ETALASE KATEGORI UTAMA (IDENTITAS VISUAL RENTIFY SERAGAM) ===== -->
-        <section class="mb-4 px-3 sm:px-4 md:px-0">
-            <div class="bg-white rounded-2xl p-2.5 sm:p-3.5 shadow-2xs border border-slate-200/80">
+        <!-- ===== ETALASE KATEGORI UTAMA (STANDAR PROFESIONAL SHOPEE / TRAVELOKA) ===== -->
+        <section class="mb-5 px-3 sm:px-4 md:px-0">
+            <div class="rentify-card rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-100/90">
+
                 @php
                     $categoryMeta = [
                         'have fun' => [
                             'icon' => 'fa-solid fa-guitar',
+                            'bg' => 'bg-gradient-to-br from-indigo-50 to-purple-100/70',
+                            'border' => 'border-indigo-200/60',
+                            'text' => 'text-indigo-600',
+                            'badge' => 'HOT',
+                            'badge_grad' => 'from-indigo-500 to-purple-600',
                             'line1' => 'Peralatan',
                             'line2' => 'Have Fun',
                         ],
                         'outdoor' => [
                             'icon' => 'fa-solid fa-campground',
+                            'bg' => 'bg-gradient-to-br from-emerald-50 to-teal-100/70',
+                            'border' => 'border-emerald-200/60',
+                            'text' => 'text-emerald-600',
+                            'badge' => 'CAMP',
+                            'badge_grad' => 'from-emerald-500 to-teal-600',
                             'line1' => 'Outdoor &',
                             'line2' => 'Camping',
                         ],
                         'elektronik' => [
                             'icon' => 'fa-solid fa-camera',
+                            'bg' => 'bg-gradient-to-br from-sky-50 to-blue-100/70',
+                            'border' => 'border-sky-200/60',
+                            'text' => 'text-sky-600',
+                            'badge' => 'GADGET',
+                            'badge_grad' => 'from-sky-500 to-blue-600',
                             'line1' => 'Kamera &',
                             'line2' => 'Elektronik',
                         ],
                         'kendaraan' => [
                             'icon' => 'fa-solid fa-car-side',
+                            'bg' => 'bg-gradient-to-br from-amber-50 to-orange-100/70',
+                            'border' => 'border-amber-200/60',
+                            'text' => 'text-amber-600',
+                            'badge' => 'RENTAL',
+                            'badge_grad' => 'from-amber-500 to-orange-500',
                             'line1' => 'Rental',
                             'line2' => 'Kendaraan',
                         ],
                         'kos' => [
                             'icon' => 'fa-solid fa-house-chimney-window',
+                            'bg' => 'bg-gradient-to-br from-rose-50 to-pink-100/70',
+                            'border' => 'border-rose-200/60',
+                            'text' => 'text-rose-600',
+                            'badge' => 'BULANAN',
+                            'badge_grad' => 'from-rose-500 to-pink-600',
                             'line1' => 'Kos &',
                             'line2' => 'Kamar',
                         ],
@@ -158,8 +184,8 @@
                         : \App\Models\Kategori::where('is_active', 1)->get();
                 @endphp
 
-                <!-- 5 Kategori Simetris, Unified Visual Style -->
-                <div class="grid grid-cols-5 gap-1 sm:gap-2">
+                <!-- 5 Kategori Row Simetris, Pas & Proporsional ala Shopee -->
+                <div class="grid grid-cols-5 gap-1 sm:gap-3">
                     @foreach($kategorisList as $cat)
                         @php
                             $namaLow = strtolower($cat->nama);
@@ -169,6 +195,7 @@
                             }
                             $meta = $categoryMeta[$metaKey] ?? $categoryMeta['have fun'];
 
+                            // Format teks 2 baris agar TIDAK terpotong (misal "Peralata..." menjadi rapi)
                             $line1 = $meta['line1'];
                             $line2 = $meta['line2'];
                             if (!isset($categoryMeta[$metaKey])) {
@@ -178,26 +205,39 @@
                             }
                         @endphp
                         <a href="{{ route('customer.search', ['kategori' => $cat->id]) }}" 
-                           class="group flex flex-col items-center text-center p-1 sm:p-1.5 rounded-xl hover:bg-slate-50 transition-all duration-200">
+                           class="group flex flex-col items-center text-center p-1 sm:p-2 rounded-xl hover:bg-slate-50/80 transition-all duration-200">
                             
-                            <!-- Ikon Seragam Satu Gaya + Warna Utama Rentify (text-sky-600, bg-sky-50) -->
-                            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-sky-50/90 border border-sky-100/80 text-sky-600 flex items-center justify-center text-base sm:text-lg shadow-2xs group-hover:bg-sky-100 group-hover:border-sky-200 group-hover:text-sky-700 group-hover:scale-105 transition-all duration-200">
-                                <i class="{{ $meta['icon'] }}"></i>
+                            <!-- Ikon Squircle Modern Proporsional (Shopee Style) -->
+                            <div class="relative mb-1 sm:mb-1.5 flex items-center justify-center">
+                                <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl {{ $meta['bg'] }} border {{ $meta['border'] }} {{ $meta['text'] }} flex items-center justify-center text-lg sm:text-xl shadow-xs group-hover:scale-105 group-hover:shadow-sm transition-all duration-200">
+                                    <i class="{{ $meta['icon'] }}"></i>
+                                </div>
+                                <!-- Micro Badge Ala Shopee -->
+                                @if(!empty($meta['badge']))
+                                    <span class="absolute -bottom-1 px-1.5 py-0.2 bg-gradient-to-r {{ $meta['badge_grad'] }} text-white text-[7px] sm:text-[7.5px] font-black rounded-full uppercase tracking-wider shadow-xs scale-90 sm:scale-100 whitespace-nowrap">
+                                        {{ $meta['badge'] }}
+                                    </span>
+                                @endif
                             </div>
 
-                            <!-- Label Kategori 2 Baris Bersih & Rapi -->
-                            <div class="w-full min-h-[26px] sm:min-h-[28px] flex flex-col justify-center items-center mt-1.5">
-                                <span class="text-[10px] sm:text-[11px] font-semibold text-slate-700 group-hover:text-sky-600 transition-colors leading-[1.2] block">
+                            <!-- Label Kategori 2 Baris Bersih & Terbaca Utuh -->
+                            <div class="w-full min-h-[26px] sm:min-h-[28px] flex flex-col justify-center items-center mt-1">
+                                <span class="text-[10px] sm:text-[11.5px] font-semibold text-slate-700 group-hover:text-sky-600 transition-colors leading-[1.15] block">
                                     {{ $line1 }}
                                 </span>
                                 @if($line2)
-                                    <span class="text-[9.5px] sm:text-[10.5px] font-medium text-slate-500 group-hover:text-sky-600 transition-colors leading-[1.2] block">
+                                    <span class="text-[9.5px] sm:text-[11px] font-medium text-slate-500 group-hover:text-sky-600 transition-colors leading-[1.15] block">
                                         {{ $line2 }}
                                     </span>
                                 @endif
                             </div>
                         </a>
                     @endforeach
+                </div>
+
+                <!-- Shopee Scroll Indicator Bar -->
+                <div class="w-8 h-1 bg-slate-200/70 rounded-full mx-auto mt-2.5 overflow-hidden flex">
+                    <div class="w-4 h-full bg-sky-500 rounded-full"></div>
                 </div>
             </div>
         </section>
@@ -213,7 +253,7 @@
                         </div>
                         <h3 class="text-white font-black text-lg mb-2">Tentukan Lokasimu Dulu Yuk!</h3>
                         <p class="text-sky-100 text-[13px] font-medium leading-relaxed mb-6">Biar kami bisa mencarikan barang sewaan terdekat (maksimal 50 KM) dari tempatmu.</p>
-                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 bg-white text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 rounded-xl transition-all shadow-sm">
+                        <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-2 rentify-card text-sky-600 hover:bg-sky-50 font-black text-sm px-6 py-3 transition-all transform hover:-translate-y-1 active:translate-y-0">
                             <i class="fa-solid fa-map-pin"></i> Atur Titik Lokasi
                         </a>
                     </div>
@@ -222,7 +262,7 @@
 
         @elseif($daftarBarang->isEmpty())
             <section class="px-3 mt-6 md:px-0">
-                <div class="bg-white rounded-2xl border border-slate-200/80 p-8 text-center max-w-md mx-auto shadow-2xs">
+                <div class="rentify-card p-8 text-center -sky-100 max-w-md mx-auto">
                     <div class="w-20 h-20 bg-sky-50 text-sky-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                         <i class="fa-solid fa-face-frown-open"></i>
                     </div>
@@ -235,36 +275,23 @@
             </section>
 
         @else
-            <section class="px-3 md:px-0 mt-3">
-                <div class="flex items-center justify-between mb-3 px-0.5">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-sky-50 border border-sky-100/80 flex items-center justify-center text-sky-600 text-xs">
-                            <i class="fa-solid fa-location-dot"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-[13.5px] sm:text-[15px] leading-tight">Barang di Sekitarmu</h3>
-                            <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium">Radius &le; 50 KM dari posisimu</p>
-                        </div>
-                    </div>
-                    <a href="{{ route('customer.lokasi') }}" class="text-[11px] font-semibold text-sky-600 hover:text-sky-700 bg-sky-50/80 hover:bg-sky-100 border border-sky-100 px-2.5 py-1 rounded-full flex items-center gap-1 transition">
-                        <i class="fa-solid fa-location-crosshairs text-[10px]"></i>
-                        <span>Ubah</span>
-                    </a>
+            <section class="px-3 md:px-0 mt-2">
+                <div class="flex items-center justify-between mb-3 px-1 md:px-0">
+                    <h3 class="font-black text-sky-600 text-[14px] uppercase tracking-wide">Di Sekitar Anda</h3>
                 </div>
                 <!-- GRID: 2 kolom HP, 3 kolom tablet, 5 kolom Desktop -->
                 <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
                     @foreach($daftarBarang as $barang)
-                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-sky-200 transition-all duration-200 overflow-hidden relative flex flex-col group">
-                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-slate-50 overflow-hidden">
+                        <div class="rentify-card -slate-100 overflow-hidden relative flex flex-col transition">
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
                                 @if($barang->cover_photo)
-                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="{{ $barang->nama }}">
+                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fa-solid fa-image text-3xl"></i></div>
+                                    <div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
                                 @endif
                                 @if(isset($barang->jarak))
-                                <div class="absolute bottom-2 left-2 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-md text-[10px] font-bold text-sky-600 shadow-2xs border border-slate-200/70 flex items-center gap-1">
-                                    <i class="fa-solid fa-location-dot text-[9px]"></i>
-                                    <span>{{ number_format($barang->jarak, 1, ',', '') }} KM</span>
+                                <div class="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-sky-600 shadow-sm border border-sky-100">
+                                    <i class="fa-solid fa-location-dot mr-1"></i>{{ number_format($barang->jarak, 1, ',', '') }} KM
                                 </div>
                                 @endif
                             </a>
@@ -273,20 +300,18 @@
                             @endphp
                             <form action="{{ route('customer.wishlist.toggle', $barang->id) }}" method="POST" class="absolute top-2 right-2 z-10">
                                 @csrf
-                                <button type="submit" class="w-7 h-7 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-400 hover:text-rose-400' }} shadow-2xs border border-slate-200/60 transition hover:scale-105">
+                                <button type="submit" class="w-7 h-7 rentify-card/90 backdrop-blur-md flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} -slate-100">
                                     <i class="fa-solid fa-heart text-[11px]"></i>
                                 </button>
                             </form>
-                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="p-2.5 sm:p-3 flex flex-col flex-1 justify-between bg-white">
-                                <h4 class="text-[12px] sm:text-[13px] font-semibold text-slate-800 leading-snug line-clamp-2 mb-2 group-hover:text-sky-600 transition-colors">{{ $barang->nama }}</h4>
-                                <div class="mt-auto">
-                                    <div class="text-sky-600 font-extrabold text-[13.5px] sm:text-[15px]">
-                                        @if($barang->is_kos && $barang->harga_bulanan)
-                                            Rp{{ number_format($barang->harga_bulanan_customer ?? $barang->harga_bulanan, 0, ',', '.') }}<span class="text-[9.5px] text-slate-400 font-normal">/bln</span>
-                                        @else
-                                            Rp{{ number_format($barang->harga_sewa_customer, 0, ',', '.') }}<span class="text-[9.5px] text-slate-400 font-normal">/hari</span>
-                                        @endif
-                                    </div>
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="p-2.5 flex flex-col flex-1 justify-between border-t border-slate-50">
+                                <h4 class="text-[12.5px] font-medium text-slate-700 leading-snug line-clamp-2 mb-1.5">{{ $barang->nama }}</h4>
+                                <div class="text-sky-600 font-black text-[14.5px]">
+                                    @if($barang->is_kos && $barang->harga_bulanan)
+                                        Rp{{ number_format($barang->harga_bulanan_customer ?? $barang->harga_bulanan, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/bulan</span>
+                                    @else
+                                        Rp{{ number_format($barang->harga_sewa_customer, 0, ',', '.') }}<span class="text-[9px] text-slate-400 font-medium">/hari</span>
+                                    @endif
                                 </div>
                             </a>
                         </div>
@@ -297,19 +322,16 @@
     </main>
 
     <!-- BOTTOM NAV (MOBILE ONLY) -->
-    <div class="md:hidden fixed bottom-2.5 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full max-w-[280px] px-3">
-        <nav class="pointer-events-auto bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md px-2 py-1 rounded-full flex items-center justify-between">
-            <a href="{{ route('customer.home') }}" class="flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-600 rounded-full font-bold text-[11px] border border-sky-100 shadow-2xs">
-                <i class="fa-solid fa-house text-[12px]"></i>
-                <span>Beranda</span>
+    <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none">
+        <nav class="rentify-card backdrop-blur-xl border border-white/50 pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
+            <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600">
+                <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Beranda</span>
             </a>
-            <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-sky-500 rounded-full font-medium text-[11px] transition-colors">
-                <i class="fa-solid fa-heart text-[13px]"></i>
-                <span class="text-[10.5px]">Favorit</span>
+            <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
+                <i class="fa-solid fa-heart text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Favorit</span>
             </a>
-            <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-sky-500 rounded-full font-medium text-[11px] transition-colors">
-                <i class="fa-solid fa-user text-[13px]"></i>
-                <span class="text-[10.5px]">Akun</span>
+            <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
+                <i class="fa-solid fa-user text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Akun</span>
             </a>
         </nav>
     </div>
