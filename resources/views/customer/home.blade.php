@@ -21,8 +21,8 @@
 </head>
 <body class="text-slate-800 antialiased">
 
-    <!-- ===== TOP NAVBAR (DESKTOP ONLY - HIDDEN ON MOBILE) ===== -->
-    <header class="hidden md:flex sticky top-0 z-50 bg-white/75 backdrop-blur-md border-b border-white/60 shadow-xs">
+    <!-- ===== TOP NAVBAR (DESKTOP ONLY - MENYATU DENGAN BACKGROUND, TANPA CARD/BINGKAI) ===== -->
+    <header class="hidden md:flex sticky top-0 z-50 bg-transparent">
         <div class="max-w-7xl mx-auto w-full px-6 py-3 flex items-center gap-4">
             <!-- Logo -->
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0 hover:opacity-95 transition">
@@ -31,8 +31,8 @@
             </a>
 
             <!-- Search Bar (Desktop) -->
-            <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-slate-50 border border-slate-200 hover:border-sky-400 rounded-full px-4 py-2.5 text-slate-400 text-sm transition">
-                <i class="fa-solid fa-magnifying-glass mr-2 text-sky-500"></i>
+            <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-white/90 hover:bg-white rounded-full px-4 py-2.5 text-slate-400 text-sm transition shadow-xs border-0">
+                <i class="fa-solid fa-magnifying-glass mr-2.5 text-sky-500"></i>
                 Cari barang sewa...
             </a>
 
@@ -74,13 +74,13 @@
         </div>
     </header>
 
-    <!-- ===== TOP NAVBAR (MOBILE ONLY - TANPA CARD, LOGO LEBIH BESAR & PROPORSIONAL) ===== -->
-    <header class="md:hidden sticky top-0 z-50 px-3.5 py-2.5 flex gap-2.5 items-center bg-white/75 backdrop-blur-md border-b border-white/40 shadow-xs">
-        <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-2 hover:opacity-95 transition">
+    <!-- ===== TOP NAVBAR (MOBILE ONLY - MENYATU DENGAN BACKGROUND, TANPA CARD/BINGKAI) ===== -->
+    <header class="md:hidden sticky top-0 z-50 px-3.5 pt-3 pb-1.5 flex gap-2.5 items-center bg-transparent">
+        <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-1.5 hover:opacity-90 transition">
             <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
             <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
         </a>
-        <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-white/95 hover:bg-white rounded-full px-3.5 py-2 text-slate-400 text-[12.5px] border border-slate-200/80 hover:border-sky-300 transition shadow-2xs">
+        <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-white/90 hover:bg-white rounded-full px-3.5 py-2 text-slate-400 text-[13px] border-0 shadow-xs transition">
             <i class="fa-solid fa-magnifying-glass mr-2 text-sky-500 text-xs"></i>
             <span class="truncate">Cari barang sewa...</span>
         </a>
@@ -89,23 +89,23 @@
             @auth
                 @php $jumlahKeranjang = \App\Models\Keranjang::where('user_id', auth()->id())->count(); @endphp
                 @if($jumlahKeranjang > 0)
-                    <span class="absolute 0 -top-0.5 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ $jumlahKeranjang }}</span>
+                    <span class="absolute -top-0.5 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ $jumlahKeranjang }}</span>
                 @endif
             @endauth
         </a>
     </header>
 
     <!-- ===== MAIN CONTENT AREA ===== -->
-    <main class="pb-16 md:pb-8 md:max-w-7xl md:mx-auto md:px-6 pt-3.5 sm:pt-4 md:pt-4">
+    <main class="pb-16 md:pb-8 md:max-w-7xl md:mx-auto md:px-6 pt-2 sm:pt-3 md:pt-3">
 
-        <!-- BANNER PROMO (DISESUAIKAN DENGAN GAMBAR ASLI TANPA TERPOTONG) -->
+        <!-- BANNER PROMO (SEPERTI SEBELUMNYA, DENGAN ASPEK RASIO PAS TANPA TERPOTONG) -->
         <section class="mb-3.5 px-3 sm:px-4 md:px-0">
             @if(isset($banners) && $banners->count() > 0)
                 <div class="relative group">
-                    <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl items-center">
+                    <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl">
                         @foreach($banners as $banner)
-                            <div class="min-w-full snap-center rounded-2xl shadow-xs relative overflow-hidden flex-shrink-0 flex items-center justify-center bg-slate-100/60 border border-slate-200/50">
-                                <img src="{{ asset($banner->gambar_url) }}" alt="{{ $banner->judul_promo ?? 'Promo Rentify' }}" class="w-full h-auto max-h-72 sm:max-h-80 md:max-h-96 object-contain rounded-2xl block mx-auto">
+                            <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 aspect-[2.7/1] bg-slate-100 border border-slate-200/60">
+                                <img src="{{ asset($banner->gambar_url) }}" alt="{{ $banner->judul_promo ?? 'Promo Rentify' }}" class="w-full h-full object-cover object-center">
                             </div>
                         @endforeach
                     </div>
@@ -330,16 +330,16 @@
         @endif
     </main>
 
-    <!-- BOTTOM NAV (MOBILE ONLY - PILL RAMPING & TIDAK TERLALU MENGAMBANG) -->
+    <!-- BOTTOM NAV (MOBILE ONLY - WARNA KHAS RENTIFY, RAMPING & DEKAT SISI BAWAH) -->
     <div class="md:hidden fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
-        <nav class="bg-white/90 backdrop-blur-xl border border-white/80 pointer-events-auto px-5 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-950/10">
-            <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600 px-2 py-0.5">
+        <nav class="rentify-card backdrop-blur-xl border border-white/60 pointer-events-auto px-6 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-900/10">
+            <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600 px-1 py-0.5">
                 <i class="fa-solid fa-house text-[16px] mb-0.5"></i><span class="text-[8.5px] font-black tracking-tight">Beranda</span>
             </a>
-            <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+            <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-1 py-0.5">
                 <i class="fa-solid fa-heart text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Favorit</span>
             </a>
-            <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+            <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-1 py-0.5">
                 <i class="fa-solid fa-user text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Akun</span>
             </a>
         </nav>

@@ -32,16 +32,16 @@
             </div>
         </div>
         
-        <!-- BOTTOM NAV MOBILE (PILL RAMPING & TIDAK TERLALU MENGAMBANG) -->
+        <!-- BOTTOM NAV MOBILE (WARNA KHAS RENTIFY, RAMPING & DEKAT SISI BAWAH) -->
         <div class="fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
-            <nav class="bg-white/90 backdrop-blur-xl border border-white/80 pointer-events-auto px-5 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-950/10">
-                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+            <nav class="rentify-card backdrop-blur-xl border border-white/60 pointer-events-auto px-6 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-900/10">
+                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-1 py-0.5">
                     <i class="fa-solid fa-house text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Beranda</span>
                 </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-1 py-0.5">
                     <i class="fa-solid fa-heart text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Favorit</span>
                 </a>
-                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-sky-600 px-2 py-0.5">
+                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-sky-600 px-1 py-0.5">
                     <i class="fa-solid fa-user text-[16px] mb-0.5"></i><span class="text-[8.5px] font-black tracking-tight">Akun</span>
                 </a>
             </nav>
