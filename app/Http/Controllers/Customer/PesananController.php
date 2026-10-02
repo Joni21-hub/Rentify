@@ -19,7 +19,7 @@ class PesananController extends Controller
             ->where('orders.user_id', $userId);
 
         $countSemua = (clone $baseQuery)->count();
-        $countMenunggu = (clone $baseQuery)->whereIn('orders.status', ['Menunggu Konfirmasi', 'pending'])->count();
+        $countMenunggu = (clone $baseQuery)->whereIn('orders.status', ['Menunggu Konfirmasi', 'Menunggu Pembayaran', 'pending'])->count();
         $countBerjalan = (clone $baseQuery)->whereIn('orders.status', ['Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar'])->count();
         $countSelesai = (clone $baseQuery)->where('orders.status', 'Selesai')->count();
 
@@ -27,7 +27,7 @@ class PesananController extends Controller
         $query = clone $baseQuery;
 
         if ($statusFilter === 'menunggu') {
-            $query->whereIn('orders.status', ['Menunggu Konfirmasi', 'pending']);
+            $query->whereIn('orders.status', ['Menunggu Konfirmasi', 'Menunggu Pembayaran', 'pending']);
         } elseif ($statusFilter === 'berjalan') {
             $query->whereIn('orders.status', ['Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar']);
         } elseif ($statusFilter === 'selesai') {

@@ -40,12 +40,16 @@
             <div style="width: 50px; height: 50px; background: #dcfce7; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px auto; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);">✓</div>
             <div style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">STRUK PESANAN</div>
             <div style="font-size: 13px; font-weight: 600; color: #64748b; margin-top: 4px;">ID Transaksi: <span style="color: #0f172a;">{{ $id }}</span></div>
-            <div style="color: #10b981; font-weight: 800; margin-top: 10px; font-size: 14px; background: #f0fdf4; display: inline-block; padding: 4px 12px; border-radius: 20px; border: 1px solid #bbf7d0;">BERHASIL</div>
+            @if($metode === 'COD')
+                <div style="color: #0284c7; font-weight: 800; margin-top: 10px; font-size: 13px; background: #f0f9ff; display: inline-block; padding: 4px 12px; border-radius: 20px; border: 1px solid #bae6fd;">COD - BAYAR DI TEMPAT</div>
+            @else
+                <div style="color: #10b981; font-weight: 800; margin-top: 10px; font-size: 13px; background: #f0fdf4; display: inline-block; padding: 4px 12px; border-radius: 20px; border: 1px solid #bbf7d0;">LUNAS (MIDTRANS VERIFIED)</div>
+            @endif
         </div>
         
         <div class="info-row"><span style="font-weight: 600;">Pembeli</span> <span style="font-weight:800; color:#0f172a;">{{ auth()->user()->name ?? 'Customer' }}</span></div>
         <div class="info-row"><span style="font-weight: 600;">WhatsApp</span> <span style="font-weight:800; color:#0f172a;">{{ $no_hp }}</span></div>
-        <div class="info-row"><span style="font-weight: 600;">Metode Pembayaran</span> <span style="font-weight:800; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; font-size: 13px;">{{ $metode }}</span></div>
+        <div class="info-row"><span style="font-weight: 600;">Metode Pembayaran</span> <span style="font-weight:800; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; font-size: 13px;">{{ $metode === 'COD' ? 'COD (Cash on Delivery)' : 'Midtrans Payment Gateway' }}</span></div>
         
         <div style="margin: 25px 0; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
             <div style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;">RINCIAN BARANG SEWA:</div>

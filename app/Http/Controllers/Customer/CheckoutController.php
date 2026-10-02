@@ -110,7 +110,7 @@ class CheckoutController extends Controller
     {
         $request->validate([
             'no_hp' => 'required|string', 
-            'metode_pembayaran' => 'required|in:COD,QRIS',
+            'metode_pembayaran' => 'required|in:COD,QRIS,MIDTRANS',
             'durasi_sewa' => 'required|array', 
             'opsi_pengiriman' => 'required|array', 
             'ongkir_vendor' => 'required|array',
@@ -268,7 +268,7 @@ class CheckoutController extends Controller
                 'voucher_id' => $voucherIdDipakai,
                 'potongan_voucher' => $potonganVoucher,
 
-                'status' => 'Menunggu Konfirmasi',
+                'status' => $request->metode_pembayaran === 'COD' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran',
                 'created_at' => $waktuSekarang,
                 'updated_at' => $waktuSekarang
             ]);
@@ -323,15 +323,77 @@ class CheckoutController extends Controller
 
     public function qris($id) 
     { 
-        $total = session('total_bayar_semua', 0);
-        if ($total == 0) {
-            $orderIds = [];
-            foreach (explode('_', $id) as $part) {
-                if (str_starts_with($part, 'INV-')) $orderIds[] = (int) str_replace('INV-', '', $part);
+        $orderIds = [];
+        foreach (explode('_', $id) as $part) {
+            if (str_starts_with($part, 'INV-')) {
+                $orderIds[] = (int) str_replace('INV-', '', $part);
+            } elseif (is_numeric($part)) {
+                $orderIds[] = (int) $part;
             }
-            $total = DB::table('orders')->whereIn('id', $orderIds)->sum('total_price');
         }
-        return view('customer.checkout.qris', ['id' => $id, 'total' => $total]); 
+
+        $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
+        if ($orders->isEmpty()) {
+            return redirect()->route('customer.home')->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        // Cek jika seluruh pesanan sudah lunas / terkonfirmasi
+        $isPaid = $orders->every(function($o) {
+            return in_array($o->status, ['Menunggu Konfirmasi', 'Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar', 'Selesai']);
+        });
+
+        if ($isPaid) {
+            return redirect()->route('customer.struk', ['id' => $id]);
+        }
+
+        $total = $orders->sum('total_biaya') ?: $orders->sum('total_price');
+        $firstOrder = $orders->first();
+        $midtransOrderId = count($orders) === 1 ? $firstOrder->kode_booking : ('RNT-COMBO-' . implode('-', $orderIds));
+
+        // Generate Midtrans Snap Token
+        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+        \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized', true);
+        \Midtrans\Config::$is3ds = config('midtrans.is_3ds', true);
+
+        $snapToken = null;
+        $snapError = null;
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $midtransOrderId,
+                'gross_amount' => (int) round($total),
+            ],
+            'customer_details' => [
+                'first_name' => auth()->user()->name ?? 'Customer',
+                'email' => auth()->user()->email ?? 'customer@rentify.test',
+                'phone' => $firstOrder->customer_whatsapp ?? (auth()->user()->no_hp ?? '08123456789'),
+            ],
+            'item_details' => [
+                [
+                    'id' => $id,
+                    'price' => (int) round($total),
+                    'quantity' => 1,
+                    'name' => 'Sewa Barang Rentify ' . (count($orders) === 1 ? $firstOrder->kode_booking : $id),
+                ]
+            ]
+        ];
+
+        try {
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Midtrans Snap Generation Error: ' . $e->getMessage());
+            $snapError = $e->getMessage();
+        }
+
+        return view('customer.checkout.qris', [
+            'id' => $id, 
+            'total' => $total,
+            'orders' => $orders,
+            'snapToken' => $snapToken,
+            'snapError' => $snapError,
+            'midtransOrderId' => $midtransOrderId
+        ]); 
     }
 
     public function struk($id)

@@ -224,6 +224,7 @@ Route::prefix('customer')->name('customer.')
     
     // Rute untuk mendapatkan token Midtrans dan memproses pop-up
     Route::get('/pembayaran/{id}/pay', [PembayaranController::class, 'pay'])->name('pembayaran.pay');
+    Route::get('/pembayaran/check-status/{id}', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check_status');
     
     // AJAX Voucher Toko
     Route::post('/checkout/cek-voucher', [CheckoutController::class, 'cekVoucher'])->name('checkout.cek_voucher');
