@@ -33,8 +33,8 @@
     <div class="w-full max-w-2xl relative z-10 my-auto">
         <!-- Header Logo -->
         <div class="text-center mb-8">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-2 mb-3">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-10 object-contain" alt="Rentify">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5 mb-3 group">
+                <img src="{{ asset('images/rentify-icon.svg') }}" class="h-10 w-10 rounded-2xl shadow-xs group-hover:scale-105 transition" alt="Rentify">
                 <span class="text-3xl font-black text-sky-600 tracking-tight">Rentify<span class="text-amber-500">.</span></span>
             </a>
             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Halo, {{ $user->name }}! 👋</h1>

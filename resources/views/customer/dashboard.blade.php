@@ -24,9 +24,9 @@
     <!-- ===== DESKTOP TOP NAVBAR (HIDDEN ON MOBILE) ===== -->
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50">
         <div class="max-w-6xl mx-auto w-full px-6 py-3 flex items-center justify-between gap-4">
-            <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
-                <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
+            <a href="{{ route('customer.home') }}" class="flex items-center gap-2.5 flex-shrink-0 group">
+                <img src="{{ asset('images/rentify-icon.svg') }}" class="h-8 w-8 rounded-xl shadow-xs group-hover:scale-105 transition" alt="Logo">
+                <span class="text-xl font-black text-sky-600 tracking-tight flex items-center">Rentify<span class="text-amber-500">.</span></span>
             </a>
             <nav class="flex items-center gap-1">
                 <a href="{{ route('customer.home') }}" class="flex flex-col items-center px-4 py-2 text-slate-400 hover:text-sky-500 rounded-xl transition">

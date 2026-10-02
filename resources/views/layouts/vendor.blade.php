@@ -56,7 +56,7 @@
                 <i class="fa-solid fa-bars-staggered text-sm"></i>
             </button>
             <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-2">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo" class="h-7 w-auto object-contain">
+                <img src="{{ asset('images/rentify-icon.svg') }}" alt="Logo" class="h-7 w-7 rounded-lg">
                 <span class="text-base font-black tracking-tight text-white">Rentify<span class="text-sky-400">.</span></span>
             </a>
         </div>
@@ -81,7 +81,7 @@
         <!-- Drawer Header -->
         <div class="h-20 flex items-center justify-between px-6 border-b border-white/10">
             <a href="{{ url('/') }}" class="flex items-center gap-3">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo Rentify" class="h-9 w-auto object-contain">
+                <img src="{{ asset('images/rentify-icon.svg') }}" alt="Logo Rentify" class="h-8 w-8 rounded-xl">
                 <span class="text-2xl font-black text-white tracking-tight">Rentify<span class="text-sky-500">.</span></span>
             </a>
             <button type="button" onclick="toggleDrawer()" class="lg:hidden text-slate-400 hover:text-white p-2">
