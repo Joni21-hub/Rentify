@@ -93,7 +93,7 @@
             </div>
             @endif
 
-            <div class="rentify-card -slate-200/60 overflow-hidden">
+            <div class="rentify-card border-slate-200/60 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                     <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Daftar Antrean Permohonan</h3>
                     <span class="text-[10px] font-bold bg-brandBlue/10 text-brandBlue px-2.5 py-1 rounded-full border border-brandBlue/20">
@@ -235,7 +235,7 @@
             </div>
             @endif
 
-            <div class="rentify-card -slate-200/60 overflow-hidden">
+            <div class="rentify-card border-slate-200/60 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                     <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Daftar Antrean Permohonan</h3>
                     <span class="text-[10px] font-bold bg-brandBlue/10 text-brandBlue px-2.5 py-1 rounded-full border border-brandBlue/20">

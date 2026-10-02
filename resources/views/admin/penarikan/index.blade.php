@@ -91,7 +91,7 @@
                 </div>
             @endif
 
-            <section class="rentify-card -slate-200/80 overflow-hidden">
+            <section class="rentify-card border-slate-200/80 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                     <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center">
                         <span class="w-1.5 h-3.5 bg-emerald-500 rounded-full mr-2"></span>Antrean Permintaan Withdraw

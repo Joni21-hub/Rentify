@@ -578,7 +578,7 @@
     </main>
 
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="rentify-card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto -t-4 -[#0369a1]">
+        <div class="rentify-card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto border-t-4 border-[#0369a1]">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Detail Formulir Pengajuan Produk</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition">&times;</button>
@@ -608,7 +608,7 @@
     </div>
 
     <div id="vendorModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="rentify-card max-w-md w-full p-6 -t-4 -purple-500">
+        <div class="rentify-card max-w-md w-full p-6 border-t-4 border-purple-500">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="font-black text-lg text-slate-800 uppercase tracking-wider">Identitas Pengaju Vendor</h3>
                 <button onclick="closeVendorModal()" class="text-slate-400 hover:text-rose-500 text-2xl transition">&times;</button>

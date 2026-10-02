@@ -64,7 +64,7 @@
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <button type="button" onclick="confirmDelete('{{ route('customer.keranjang.remove', $item->id) }}')" class="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition">
+                            <button type="button" data-url="{{ route('customer.keranjang.remove', $item->id) }}" onclick="confirmDelete(this.dataset.url)" class="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition">
                                 <i class="fa-solid fa-trash-can text-sm"></i>
                             </button>
 
@@ -94,7 +94,7 @@
             </div>
 
             <!-- BLOK BAWAH TERKUNCI -->
-            <div class="rentify-navbar fixed bottom-0 left-0 w-full z-40 -[0_-8px_25px_rgba(0,0,0,0.06)]">
+            <div class="rentify-navbar fixed bottom-0 left-0 w-full z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.06)]">
                 <div class="max-w-[600px] mx-auto bg-white border-t border-slate-200 flex flex-col rounded-t-2xl overflow-hidden">
                     
                     <div id="voucher-container" class="w-full border-b border-slate-100 bg-white transition-all duration-300">
