@@ -22,12 +22,12 @@
 <body class="text-slate-800 antialiased">
 
     <!-- ===== TOP NAVBAR (DESKTOP ONLY - HIDDEN ON MOBILE) ===== -->
-    <header class="rentify-navbar hidden md:flex sticky top-0 z-50 ">
+    <header class="hidden md:flex sticky top-0 z-50 bg-white/75 backdrop-blur-md border-b border-white/60 shadow-xs">
         <div class="max-w-7xl mx-auto w-full px-6 py-3 flex items-center gap-4">
             <!-- Logo -->
-            <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
-                <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
+            <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0 hover:opacity-95 transition">
+                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-9 object-contain" alt="Logo">
+                <span class="text-2xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
 
             <!-- Search Bar (Desktop) -->
@@ -74,38 +74,38 @@
         </div>
     </header>
 
-    <!-- ===== TOP NAVBAR (MOBILE ONLY) ===== -->
-    <header class="rentify-navbar md:hidden sticky top-0 z-50 px-3 py-2.5 flex gap-3 items-center">
-        <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-1.5">
-            <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-6 object-contain" alt="Logo">
-            <span class="text-lg font-black text-sky-500 tracking-tighter">Rentify</span>
+    <!-- ===== TOP NAVBAR (MOBILE ONLY - TANPA CARD, LOGO LEBIH BESAR & PROPORSIONAL) ===== -->
+    <header class="md:hidden sticky top-0 z-50 px-3.5 py-2.5 flex gap-2.5 items-center bg-white/75 backdrop-blur-md border-b border-white/40 shadow-xs">
+        <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-2 hover:opacity-95 transition">
+            <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
+            <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
         </a>
-        <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-slate-50/90 rounded-full px-3.5 py-2 text-slate-400 text-[13px] border border-sky-100 hover:border-sky-300 transition shadow-2xs">
-            <i class="fa-solid fa-magnifying-glass mr-2 text-sky-500"></i>
-            Cari barang sewa...
+        <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-white/95 hover:bg-white rounded-full px-3.5 py-2 text-slate-400 text-[12.5px] border border-slate-200/80 hover:border-sky-300 transition shadow-2xs">
+            <i class="fa-solid fa-magnifying-glass mr-2 text-sky-500 text-xs"></i>
+            <span class="truncate">Cari barang sewa...</span>
         </a>
-        <a href="{{ route('customer.keranjang') }}" class="relative text-sky-500 text-xl flex-shrink-0 ml-1 hover:text-sky-600 transition">
+        <a href="{{ route('customer.keranjang') }}" class="relative text-sky-500 text-2xl flex-shrink-0 ml-0.5 hover:text-sky-600 transition flex items-center justify-center p-1">
             <i class="fa-solid fa-cart-shopping"></i>
             @auth
                 @php $jumlahKeranjang = \App\Models\Keranjang::where('user_id', auth()->id())->count(); @endphp
                 @if($jumlahKeranjang > 0)
-                    <span class="absolute -top-1 -right-1.5 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ $jumlahKeranjang }}</span>
+                    <span class="absolute 0 -top-0.5 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ $jumlahKeranjang }}</span>
                 @endif
             @endauth
         </a>
     </header>
 
     <!-- ===== MAIN CONTENT AREA ===== -->
-    <main class="pb-20 md:pb-8 md:max-w-7xl md:mx-auto md:px-6 pt-3.5 sm:pt-4 md:pt-4">
+    <main class="pb-16 md:pb-8 md:max-w-7xl md:mx-auto md:px-6 pt-3.5 sm:pt-4 md:pt-4">
 
-        <!-- BANNER PROMO (SPACING DIPERBAIKI, TIDAK MELEKAT PADA PENCARIAN) -->
-        <section class="mb-4 px-3 sm:px-4 md:px-0">
+        <!-- BANNER PROMO (DISESUAIKAN DENGAN GAMBAR ASLI TANPA TERPOTONG) -->
+        <section class="mb-3.5 px-3 sm:px-4 md:px-0">
             @if(isset($banners) && $banners->count() > 0)
                 <div class="relative group">
-                    <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl">
+                    <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl items-center">
                         @foreach($banners as $banner)
-                            <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60">
-                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover">
+                            <div class="min-w-full snap-center rounded-2xl shadow-xs relative overflow-hidden flex-shrink-0 flex items-center justify-center bg-slate-100/60 border border-slate-200/50">
+                                <img src="{{ asset($banner->gambar_url) }}" alt="{{ $banner->judul_promo ?? 'Promo Rentify' }}" class="w-full h-auto max-h-72 sm:max-h-80 md:max-h-96 object-contain rounded-2xl block mx-auto">
                             </div>
                         @endforeach
                     </div>
@@ -121,9 +121,9 @@
             @endif
         </section>
 
-        <!-- ===== ETALASE KATEGORI UTAMA (STANDAR PROFESIONAL SHOPEE / TRAVELOKA) ===== -->
-        <section class="mb-5 px-3 sm:px-4 md:px-0">
-            <div class="rentify-card rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-100/90">
+        <!-- ===== ETALASE KATEGORI UTAMA (RINGKAS & PROPORSIONAL) ===== -->
+        <section class="mb-3.5 px-3 sm:px-4 md:px-0">
+            <div class="rentify-card rounded-2xl p-2.5 sm:p-3 shadow-xs border border-slate-100/90">
 
                 @php
                     $categoryMeta = [
@@ -184,8 +184,8 @@
                         : \App\Models\Kategori::where('is_active', 1)->get();
                 @endphp
 
-                <!-- 5 Kategori Row Simetris, Pas & Proporsional ala Shopee -->
-                <div class="grid grid-cols-5 gap-1 sm:gap-3">
+                <!-- 5 Kategori Row Simetris, Ringkas & Proporsional -->
+                <div class="grid grid-cols-5 gap-1 sm:gap-2">
                     @foreach($kategorisList as $cat)
                         @php
                             $namaLow = strtolower($cat->nama);
@@ -195,7 +195,7 @@
                             }
                             $meta = $categoryMeta[$metaKey] ?? $categoryMeta['have fun'];
 
-                            // Format teks 2 baris agar TIDAK terpotong (misal "Peralata..." menjadi rapi)
+                            // Format teks 2 baris agar TIDAK terpotong
                             $line1 = $meta['line1'];
                             $line2 = $meta['line2'];
                             if (!isset($categoryMeta[$metaKey])) {
@@ -205,39 +205,34 @@
                             }
                         @endphp
                         <a href="{{ route('customer.search', ['kategori' => $cat->id]) }}" 
-                           class="group flex flex-col items-center text-center p-1 sm:p-2 rounded-xl hover:bg-slate-50/80 transition-all duration-200">
+                           class="group flex flex-col items-center text-center p-0.5 sm:p-1 rounded-xl hover:bg-slate-50/80 transition-all duration-200">
                             
-                            <!-- Ikon Squircle Modern Proporsional (Shopee Style) -->
-                            <div class="relative mb-1 sm:mb-1.5 flex items-center justify-center">
-                                <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl {{ $meta['bg'] }} border {{ $meta['border'] }} {{ $meta['text'] }} flex items-center justify-center text-lg sm:text-xl shadow-xs group-hover:scale-105 group-hover:shadow-sm transition-all duration-200">
+                            <!-- Ikon Squircle Ringkas & Proporsional -->
+                            <div class="relative mb-1 flex items-center justify-center">
+                                <div class="w-9.5 h-9.5 sm:w-11 sm:h-11 rounded-xl {{ $meta['bg'] }} border {{ $meta['border'] }} {{ $meta['text'] }} flex items-center justify-center text-[15px] sm:text-lg shadow-2xs group-hover:scale-105 transition-all duration-200">
                                     <i class="{{ $meta['icon'] }}"></i>
                                 </div>
-                                <!-- Micro Badge Ala Shopee -->
+                                <!-- Micro Badge -->
                                 @if(!empty($meta['badge']))
-                                    <span class="absolute -bottom-1 px-1.5 py-0.2 bg-gradient-to-r {{ $meta['badge_grad'] }} text-white text-[7px] sm:text-[7.5px] font-black rounded-full uppercase tracking-wider shadow-xs scale-90 sm:scale-100 whitespace-nowrap">
+                                    <span class="absolute -bottom-0.5 px-1 py-0.2 bg-gradient-to-r {{ $meta['badge_grad'] }} text-white text-[6.5px] sm:text-[7px] font-black rounded-full uppercase tracking-wider shadow-2xs scale-90 sm:scale-100 whitespace-nowrap">
                                         {{ $meta['badge'] }}
                                     </span>
                                 @endif
                             </div>
 
-                            <!-- Label Kategori 2 Baris Bersih & Terbaca Utuh -->
-                            <div class="w-full min-h-[26px] sm:min-h-[28px] flex flex-col justify-center items-center mt-1">
-                                <span class="text-[10px] sm:text-[11.5px] font-semibold text-slate-700 group-hover:text-sky-600 transition-colors leading-[1.15] block">
+                            <!-- Label Kategori Bersih & Rapi -->
+                            <div class="w-full flex flex-col justify-center items-center mt-0.5">
+                                <span class="text-[9.5px] sm:text-[10.5px] font-semibold text-slate-700 group-hover:text-sky-600 transition-colors leading-[1.15] block">
                                     {{ $line1 }}
                                 </span>
                                 @if($line2)
-                                    <span class="text-[9.5px] sm:text-[11px] font-medium text-slate-500 group-hover:text-sky-600 transition-colors leading-[1.15] block">
+                                    <span class="text-[8.5px] sm:text-[9.5px] font-medium text-slate-500 group-hover:text-sky-600 transition-colors leading-[1.15] block">
                                         {{ $line2 }}
                                     </span>
                                 @endif
                             </div>
                         </a>
                     @endforeach
-                </div>
-
-                <!-- Shopee Scroll Indicator Bar -->
-                <div class="w-8 h-1 bg-slate-200/70 rounded-full mx-auto mt-2.5 overflow-hidden flex">
-                    <div class="w-4 h-full bg-sky-500 rounded-full"></div>
                 </div>
             </div>
         </section>
@@ -275,14 +270,28 @@
             </section>
 
         @else
-            <section class="px-3 md:px-0 mt-2">
-                <div class="flex items-center justify-between mb-3 px-1 md:px-0">
-                    <h3 class="font-black text-sky-600 text-[14px] uppercase tracking-wide">Di Sekitar Anda</h3>
+            <section class="px-3 md:px-0 mt-1">
+                <!-- Header Di Sekitarmu: Tipis, Tanpa Bingkai/Card Sesuai Referensi Foto -->
+                <div class="flex items-center justify-between py-1 px-1 mb-2.5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-sky-100/80 text-sky-600 flex items-center justify-center text-sm flex-shrink-0 shadow-2xs">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-[13.5px] sm:text-[14.5px] leading-tight tracking-tight">Barang di Sekitarmu</h3>
+                            <p class="text-[10.5px] sm:text-[11.5px] text-slate-400 font-medium leading-tight">Radius &le; 50 KM dari posisimu</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('customer.lokasi') }}" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-100/80 text-[11px] font-bold transition flex-shrink-0 shadow-2xs">
+                        <i class="fa-solid fa-location-crosshairs text-[10.5px]"></i>
+                        <span>Ubah</span>
+                    </a>
                 </div>
+
                 <!-- GRID: 2 kolom HP, 3 kolom tablet, 5 kolom Desktop -->
                 <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
                     @foreach($daftarBarang as $barang)
-                        <div class="rentify-card -slate-100 overflow-hidden relative flex flex-col transition">
+                        <div class="rentify-card border border-slate-100/80 overflow-hidden relative flex flex-col transition hover:shadow-md">
                             <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
                                 @if($barang->cover_photo)
                                     <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
@@ -300,7 +309,7 @@
                             @endphp
                             <form action="{{ route('customer.wishlist.toggle', $barang->id) }}" method="POST" class="absolute top-2 right-2 z-10">
                                 @csrf
-                                <button type="submit" class="w-7 h-7 rentify-card/90 backdrop-blur-md flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} -slate-100">
+                                <button type="submit" class="w-7 h-7 bg-white/90 backdrop-blur-md rounded-full shadow-xs flex items-center justify-center {{ $isFavorit ? 'text-rose-500' : 'text-slate-300' }} border border-slate-100">
                                     <i class="fa-solid fa-heart text-[11px]"></i>
                                 </button>
                             </form>
@@ -321,17 +330,17 @@
         @endif
     </main>
 
-    <!-- BOTTOM NAV (MOBILE ONLY) -->
-    <div class="md:hidden fixed bottom-4 left-0 w-full z-50 flex justify-center pointer-events-none">
-        <nav class="rentify-card backdrop-blur-xl border border-white/50 pointer-events-auto px-6 py-2.5 mx-4 flex justify-around items-center gap-8">
-            <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600">
-                <i class="fa-solid fa-house text-[18px] mb-0.5"></i><span class="text-[9px] font-black">Beranda</span>
+    <!-- BOTTOM NAV (MOBILE ONLY - PILL RAMPING & TIDAK TERLALU MENGAMBANG) -->
+    <div class="md:hidden fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
+        <nav class="bg-white/90 backdrop-blur-xl border border-white/80 pointer-events-auto px-5 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-950/10">
+            <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600 px-2 py-0.5">
+                <i class="fa-solid fa-house text-[16px] mb-0.5"></i><span class="text-[8.5px] font-black tracking-tight">Beranda</span>
             </a>
-            <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
-                <i class="fa-solid fa-heart text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Favorit</span>
+            <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+                <i class="fa-solid fa-heart text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Favorit</span>
             </a>
-            <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors">
-                <i class="fa-solid fa-user text-[18px] mb-0.5"></i><span class="text-[9px] font-bold">Akun</span>
+            <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+                <i class="fa-solid fa-user text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Akun</span>
             </a>
         </nav>
     </div>

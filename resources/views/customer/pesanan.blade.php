@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="min-h-screen pb-24 text-slate-700">
+<body class="min-h-screen pb-20 text-slate-700">
 
     <div class="max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-md">
         
@@ -32,22 +32,20 @@
             </div>
         </div>
         
-        <nav class="rentify-navbar fixed bottom-0 left-0 w-full -[0_-4px_10px_rgba(0,0,0,0.05)] rounded-t-2xl z-50">
-            <div class="max-w-md mx-auto flex justify-between items-center px-8 py-3">
-                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-ocean-dark transition">
-                    <i class="fa-solid fa-house text-xl mb-1"></i>
-                    <span class="text-[10px] font-semibold">Beranda</span>
+        <!-- BOTTOM NAV MOBILE (PILL RAMPING & TIDAK TERLALU MENGAMBANG) -->
+        <div class="fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
+            <nav class="bg-white/90 backdrop-blur-xl border border-white/80 pointer-events-auto px-5 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-950/10">
+                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+                    <i class="fa-solid fa-house text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Beranda</span>
                 </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-pink-500 transition">
-                    <i class="fa-solid fa-heart text-xl mb-1"></i>
-                    <span class="text-[10px] font-semibold">Favorit</span>
+                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-2 py-0.5">
+                    <i class="fa-solid fa-heart text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Favorit</span>
                 </a>
-                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-[#0369a1]">
-                    <i class="fa-solid fa-user text-xl mb-1"></i>
-                    <span class="text-[10px] font-bold">Akun</span>
+                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-sky-600 px-2 py-0.5">
+                    <i class="fa-solid fa-user text-[16px] mb-0.5"></i><span class="text-[8.5px] font-black tracking-tight">Akun</span>
                 </a>
-            </div>
-        </nav>
+            </nav>
+        </div>
 
     </div>
 
