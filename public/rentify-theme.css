@@ -22,20 +22,18 @@
     --rentify-primary-pale:   #e0f2fe;   /* sky-100 — latar aksen ringan */
 
     /* ─── BACKGROUND ────────────────────────────────────── */
-    /* Sumber: .bg-flowing { background: radial-gradient(...) } di login.blade.php */
-    --rentify-bg-gradient: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%);
-    --rentify-bg-start:    #fff9ef;      /* warm cream — pusat radial gradient */
-    --rentify-bg-end:      #bad6eb;      /* light steel blue — tepi gradient */
-    --rentify-theme-color: #38bdf8;      /* meta theme-color */
+    --rentify-bg-gradient: #f8fafc;
+    --rentify-bg-start:    #ffffff;
+    --rentify-bg-end:      #f8fafc;
+    --rentify-theme-color: #38bdf8;
 
     /* ─── CARD / GLASS PANEL ────────────────────────────── */
-    /* Sumber: .glass-panel { background: linear-gradient(...) } di login.blade.php */
-    --rentify-card-gradient: linear-gradient(to right, #FFFDF5 0%, #CBE0F5 100%);
-    --rentify-card-start:    #FFFDF5;    /* warm white */
-    --rentify-card-end:      #CBE0F5;    /* soft blue */
-    --rentify-card-border:   rgba(255, 255, 255, 0.8);
-    --rentify-card-shadow:   0 25px 45px rgba(0, 0, 0, 0.1);
-    --rentify-card-radius:   2rem;
+    --rentify-card-gradient: #ffffff;
+    --rentify-card-start:    #ffffff;
+    --rentify-card-end:      #ffffff;
+    --rentify-card-border:   rgba(226, 232, 240, 0.8);
+    --rentify-card-shadow:   0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+    --rentify-card-radius:   1rem;
 
     /* ─── INPUT ─────────────────────────────────────────── */
     /* Sumber: .input-glass di login.blade.php */
@@ -95,11 +93,8 @@
 /* Pastikan font dan background seragam di semua halaman */
 body {
     font-family: var(--rentify-font) !important;
-    background: var(--rentify-bg-gradient) !important;
-    background-attachment: fixed !important;
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
-    background-position: center center !important;
+    background-color: var(--rentify-bg-gradient) !important;
+    background-image: none !important;
     min-height: 100vh;
 }
 
@@ -219,20 +214,20 @@ body {
 /* --- INPUT MASTER THEME ------------------------------------- */
 /* Diterapkan dari .input-glass halaman login */
 .rentify-input, .input-glass {
-    background: rgba(255, 255, 255, 0.4) !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
     color: #0f172a !important;
     border-radius: 1rem !important; /* rounded-2xl */
     transition: all 0.2s ease !important;
     outline: none !important;
 }
 .rentify-input:focus, .input-glass:focus {
-    background: rgba(255, 255, 255, 0.7) !important;
-    border-color: #ffffff !important;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5) !important;
+    background: #ffffff !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15) !important;
 }
 .rentify-input::placeholder, .input-glass::placeholder {
-    color: rgba(15, 23, 42, 0.5) !important;
+    color: rgba(15, 23, 42, 0.45) !important;
     font-weight: 500 !important;
 }
 /* For select elements to look good with glass */
@@ -242,12 +237,11 @@ select.rentify-input option {
 }
 
 /* --- NAVBAR & FOOTER MASTER THEME -------------------------- */
-/* Menerapkan prinsip Glass Panel dari Login ke bar navigasi */
+/* Permukaan putih bersih profesional, gradient hanya untuk tombol aksen */
 .rentify-navbar {
-    background: linear-gradient(to right, rgba(255, 253, 245, 0.95) 0%, rgba(203, 224, 245, 0.95) 100%) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04) !important;
 }
