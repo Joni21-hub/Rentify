@@ -321,7 +321,10 @@ class CheckoutController extends Controller
         ]);
 
         $gabunganInvoice = implode('_', $invoiceIds); 
-        return redirect()->route($metodeInput === 'COD' ? 'customer.struk' : 'customer.qris', ['id' => $gabunganInvoice]);
+        return redirect()->route($metodeInput === 'COD' ? 'customer.struk' : 'customer.qris', [
+            'id' => $gabunganInvoice,
+            'method' => $metodeInput
+        ]);
     }
 
     public function setCod(Request $request, $id)
@@ -351,7 +354,7 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function qris($id) 
+    public function qris(Request $request, $id) 
     { 
         $orderIds = [];
         foreach (explode('_', $id) as $part) {
@@ -364,7 +367,7 @@ class CheckoutController extends Controller
 
         $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
         if ($orders->isEmpty()) {
-            return redirect()->route('customer.home')->with('error', 'Pesanan tidak ditemukan.');
+            return redirect()->route('customer.pesanan')->with('error', 'Pesanan tidak ditemukan.');
         }
 
         // Cek jika seluruh pesanan sudah lunas / terkonfirmasi
@@ -378,16 +381,22 @@ class CheckoutController extends Controller
 
         $total = $orders->sum('total_biaya') ?: $orders->sum('total_price');
         $firstOrder = $orders->first();
+        
+        $metodeTerpilih = $request->input('method') ?: ($firstOrder->payment_method ?? session('metode_pembayaran', 'BANK_MANDIRI'));
+        $channelCode = strtoupper($metodeTerpilih);
+
+        // Jika user memilih COD di checkout tapi sampai ke sini, langsung redirect ke struk
+        if ($channelCode === 'COD') {
+            return redirect()->route('customer.struk', ['id' => $id]);
+        }
+
         $midtransOrderId = count($orders) === 1 ? $firstOrder->kode_booking : ('RNT-COMBO-' . implode('-', $orderIds));
 
-        // Generate Midtrans Snap Token
+        // Generate Midtrans Snap Token dengan enabled_payments yang terkunci khusus untuk metode yang dipilih
         \Midtrans\Config::$serverKey = config('midtrans.server_key');
         \Midtrans\Config::$isProduction = config('midtrans.is_production');
         \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized', true);
         \Midtrans\Config::$is3ds = config('midtrans.is_3ds', true);
-
-        $snapToken = null;
-        $snapError = null;
 
         $params = [
             'transaction_details' => [
@@ -409,6 +418,29 @@ class CheckoutController extends Controller
             ]
         ];
 
+        // Kunci payment channel ke bank yang dipilih customer
+        if (str_contains($channelCode, 'MANDIRI')) {
+            $params['enabled_payments'] = ['echannel', 'mandiri_va'];
+        } elseif (str_contains($channelCode, 'BCA')) {
+            $params['enabled_payments'] = ['bca_va'];
+        } elseif (str_contains($channelCode, 'BNI')) {
+            $params['enabled_payments'] = ['bni_va'];
+        } elseif (str_contains($channelCode, 'BRI')) {
+            $params['enabled_payments'] = ['bri_va'];
+        } elseif (str_contains($channelCode, 'PERMATA')) {
+            $params['enabled_payments'] = ['permata_va'];
+        } elseif (str_contains($channelCode, 'LAINNYA')) {
+            $params['enabled_payments'] = ['other_va'];
+        } elseif ($channelCode === 'QRIS') {
+            $params['enabled_payments'] = ['qris', 'gopay'];
+        } elseif ($channelCode === 'GOPAY') {
+            $params['enabled_payments'] = ['gopay', 'qris'];
+        } elseif ($channelCode === 'SHOPEEPAY') {
+            $params['enabled_payments'] = ['shopeepay'];
+        }
+
+        $snapToken = null;
+        $snapError = null;
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($params);
         } catch (\Exception $e) {
@@ -416,13 +448,80 @@ class CheckoutController extends Controller
             $snapError = $e->getMessage();
         }
 
+        // Tentukan Kode Pembayaran / Nomor Virtual Account untuk bank yang dipilih
+        $phoneDigits = preg_replace('/[^0-9]/', '', $firstOrder->customer_whatsapp ?? (auth()->user()->no_hp ?? '08123456789'));
+        if (str_starts_with($phoneDigits, '62')) {
+            $phoneSuffix = substr($phoneDigits, 2);
+        } elseif (str_starts_with($phoneDigits, '0')) {
+            $phoneSuffix = substr($phoneDigits, 1);
+        } else {
+            $phoneSuffix = $phoneDigits;
+        }
+        $phoneSuffix = substr($phoneSuffix, 0, 10);
+
+        $bankPrefix = '89508'; // Default Mandiri
+        $bankName = 'Bank Mandiri';
+        $bankLogo = 'MANDIRI';
+        $bankColor = '#002d62';
+
+        if (str_contains($channelCode, 'MANDIRI')) {
+            $bankPrefix = '89508';
+            $bankName = 'Bank Mandiri';
+            $bankLogo = 'MANDIRI';
+            $bankColor = '#002d62';
+        } elseif (str_contains($channelCode, 'BCA')) {
+            $bankPrefix = '12628';
+            $bankName = 'Bank BCA';
+            $bankLogo = 'BCA';
+            $bankColor = '#005baa';
+        } elseif (str_contains($channelCode, 'BNI')) {
+            $bankPrefix = '8808';
+            $bankName = 'Bank BNI';
+            $bankLogo = 'BNI';
+            $bankColor = '#f15a24';
+        } elseif (str_contains($channelCode, 'BRI')) {
+            $bankPrefix = '10248';
+            $bankName = 'Bank BRI (BRIVA)';
+            $bankLogo = 'BRI';
+            $bankColor = '#00529c';
+        } elseif (str_contains($channelCode, 'PERMATA')) {
+            $bankPrefix = '8528';
+            $bankName = 'Bank Permata';
+            $bankLogo = 'PERMATA';
+            $bankColor = '#008852';
+        } elseif (str_contains($channelCode, 'LAINNYA')) {
+            $bankPrefix = '988';
+            $bankName = 'Bank Lainnya (Virtual Account)';
+            $bankLogo = 'ATM';
+            $bankColor = '#475569';
+        } elseif ($channelCode === 'QRIS') {
+            $bankName = 'QRIS';
+            $bankLogo = 'QRIS';
+            $bankColor = '#0284c7';
+        } elseif ($channelCode === 'GOPAY') {
+            $bankName = 'GoPay';
+            $bankLogo = 'GOPAY';
+            $bankColor = '#00a5cf';
+        } elseif ($channelCode === 'SHOPEEPAY') {
+            $bankName = 'ShopeePay';
+            $bankLogo = 'SHOPEEPAY';
+            $bankColor = '#ee4d2d';
+        }
+
+        $kodePembayaran = $bankPrefix . $phoneSuffix;
+
         return view('customer.checkout.qris', [
             'id' => $id, 
             'total' => $total,
             'orders' => $orders,
             'snapToken' => $snapToken,
             'snapError' => $snapError,
-            'midtransOrderId' => $midtransOrderId
+            'midtransOrderId' => $midtransOrderId,
+            'channelCode' => $channelCode,
+            'bankName' => $bankName,
+            'bankLogo' => $bankLogo,
+            'bankColor' => $bankColor,
+            'kodePembayaran' => $kodePembayaran
         ]); 
     }
 

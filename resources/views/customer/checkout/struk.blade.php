@@ -212,12 +212,24 @@
                 <span style="font-size: 11.5px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; border: 1px solid #bae6fd;">
                     @if(strtoupper($metode) === 'COD')
                         COD (Bayar di Tempat)
+                    @elseif(str_contains(strtoupper($metode), 'MANDIRI'))
+                        Bank Mandiri (Virtual Account)
+                    @elseif(str_contains(strtoupper($metode), 'BCA'))
+                        Bank BCA (Virtual Account)
+                    @elseif(str_contains(strtoupper($metode), 'BNI'))
+                        Bank BNI (Virtual Account)
+                    @elseif(str_contains(strtoupper($metode), 'BRI'))
+                        Bank BRI (BRIVA)
+                    @elseif(str_contains(strtoupper($metode), 'PERMATA'))
+                        Bank Permata (Virtual Account)
                     @elseif(str_contains(strtoupper($metode), 'QRIS'))
                         QRIS
+                    @elseif(str_contains(strtoupper($metode), 'GOPAY'))
+                        GoPay
+                    @elseif(str_contains(strtoupper($metode), 'SHOPEEPAY'))
+                        ShopeePay
                     @elseif(str_contains(strtoupper($metode), 'BANK') || str_contains(strtoupper($metode), 'VA'))
                         Transfer Bank (Virtual Account)
-                    @elseif(str_contains(strtoupper($metode), 'EWALLET') || str_contains(strtoupper($metode), 'WALLET'))
-                        E-Wallet
                     @else
                         Pembayaran Online Otomatis
                     @endif
