@@ -13,13 +13,12 @@ class MarketplaceController extends Controller
 {
     public function search(Request $request)
     {
-        $keyword = $request->input('q');
+        $keyword = trim($request->input('q', ''));
         $kategoriId = $request->input('kategori');
 
-        // 1. FILTER KETAT: Hanya ambil barang disetujui, stok > 0, dan vendor TIDAK suspended
+        // 1. FILTER: Ambil barang disetujui dan vendor TIDAK suspended (konsisten dengan CustomerHomeController)
         $query = Barang::with(['vendor', 'kategori'])
             ->where('status_barang', 'disetujui') 
-            ->where('stok_total', '>', 0)
             ->whereHas('vendor', function ($q) {
                 $q->where('vendor_status', '!=', 'suspended')
                   ->orWhereNull('vendor_status');
@@ -43,14 +42,25 @@ class MarketplaceController extends Controller
         $semuaBarang = $query->latest()->get();
         $filteredBarangs = collect();
 
-        // 2. FILTER HYPERLOCAL 50 KM (Rumus Haversine)
-        if (Auth::check() && Auth::user()->latitude && Auth::user()->longitude) {
-            $lat1 = (float) Auth::user()->latitude;
-            $lon1 = (float) Auth::user()->longitude;
+        // 2. FILTER HYPERLOCAL 50 KM (Rumus Haversine) - Sinkron penuh dengan session & profil Auth
+        $lat1 = session('user_latitude');
+        $lon1 = session('user_longitude');
+
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->latitude && $user->longitude) {
+                $lat1 = $user->latitude;
+                $lon1 = $user->longitude;
+            }
+        }
+
+        if ($lat1 && $lon1) {
+            $lat1 = (float) $lat1;
+            $lon1 = (float) $lon1;
 
             foreach ($semuaBarang as $barang) {
-                $lat2 = (float) ($barang->latitude ?? $barang->vendor->latitude ?? 0);
-                $lon2 = (float) ($barang->longitude ?? $barang->vendor->longitude ?? 0);
+                $lat2 = (float) ($barang->latitude ?: ($barang->vendor->latitude ?? 0));
+                $lon2 = (float) ($barang->longitude ?: ($barang->vendor->longitude ?? 0));
 
                 // Lewati jika toko tidak punya koordinat
                 if (!$lat2 || !$lon2 || ($lat2 == 0 && $lon2 == 0)) {
@@ -65,9 +75,25 @@ class MarketplaceController extends Controller
                 $c = 2 * asin(sqrt($a));
                 $jarak = $earthRadius * $c;
 
-                // Hanya masukkan barang yang jaraknya <= 50 KM dari customer
+                // Masukkan barang yang jaraknya <= 50 KM dari customer
                 if ($jarak <= 50) {
-                    $barang->jarak = $jarak; // Simpan info jarak untuk ditampilkan di layar
+                    $barang->jarak = $jarak; 
+                    $filteredBarangs->push($barang);
+                }
+            }
+
+            // Fallback: Jika pencarian spesifik (ada keyword) tidak ada dalam 50km,
+            // tetapi ada barang yang cocok di luar 50km, tetap tampilkan agar customer tidak buntu
+            if ($filteredBarangs->isEmpty() && !empty($keyword) && $semuaBarang->isNotEmpty()) {
+                foreach ($semuaBarang as $barang) {
+                    $lat2 = (float) ($barang->latitude ?: ($barang->vendor->latitude ?? 0));
+                    $lon2 = (float) ($barang->longitude ?: ($barang->vendor->longitude ?? 0));
+                    if ($lat2 && $lon2) {
+                        $dLat = deg2rad($lat2 - $lat1);
+                        $dLon = deg2rad($lon2 - $lon1);
+                        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+                        $barang->jarak = $earthRadius * (2 * asin(sqrt($a)));
+                    }
                     $filteredBarangs->push($barang);
                 }
             }

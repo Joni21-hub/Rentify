@@ -6,10 +6,11 @@
     body { background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, sans-serif; padding-top: 20px; padding-bottom: 50px;}
     .struk-container { max-width: 520px; margin: 0 auto; padding: 0 15px; }
     
-    .receipt-card { background: white; padding: 30px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
+    .receipt-card { background: white; padding: 28px 22px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; position: relative; overflow: hidden; line-height: 1.35; -webkit-font-smoothing: antialiased; }
+    .receipt-card, .receipt-card * { box-sizing: border-box; }
     .receipt-card::top { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #0284c7, #38bdf8, #10b981); }
     
-    .info-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #475569; }
+    .info-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #475569; line-height: 1.4; }
     
     .action-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 8px 12px; border-radius: 8px; text-decoration: none; transition: all 0.2s; border: 1px solid #bae6fd; margin-top: 8px; word-break: break-word; }
     .action-link:hover { background: #0284c7; color: white; border-color: #0284c7; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2); }
@@ -103,9 +104,14 @@
                 
                 <div style="background: #f8fafc; padding: 18px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     
-                    <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="display: flex; align-items: center; gap: 6px;">{{ $vendor->vendor_name ?? 'Vendor' }} <span style="font-size: 12px; font-weight: 600; color: #64748b;">({{ $durasi }} Hari)</span></span>
-                        <span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 3px 8px; border-radius: 6px; font-weight: 800; border: 1px solid #bae6fd;">Jaminan: {{ $jaminanToko }}</span>
+                    <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center; gap: 8px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span>{{ $vendor->vendor_name ?? 'Vendor' }}</span>
+                            <span style="font-size: 11px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                <i class="fa-regular fa-clock" style="font-size: 10px;"></i> {{ $durasi }} Hari
+                            </span>
+                        </div>
+                        <span style="font-size: 11px; background: #f1f5f9; color: #334155; padding: 3px 8px; border-radius: 6px; font-weight: 800; border: 1px solid #cbd5e1; white-space: nowrap;">Jaminan: {{ $jaminanToko }}</span>
                     </div>
                     
                     @foreach($items as $item)
@@ -207,7 +213,18 @@
             scale: 2,
             backgroundColor: '#ffffff',
             useCORS: true,
-            logging: false
+            logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: cardElement.scrollWidth,
+            onclone: (clonedDoc) => {
+                const card = clonedDoc.getElementById('card-struk-download');
+                if (card) {
+                    card.style.transform = 'none';
+                    card.style.boxShadow = 'none';
+                    card.style.margin = '0 auto';
+                }
+            }
         }).then(canvas => {
             const imageURI = canvas.toDataURL("image/png");
 

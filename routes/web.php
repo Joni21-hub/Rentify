@@ -40,6 +40,8 @@ Route::name('customer.')->group(function () {
     
     Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
+    Route::get('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index']);
+    Route::post('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store']);
 });
 
 
@@ -242,6 +244,9 @@ Route::prefix('customer')->name('customer.')
     // Wishlist
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist');
     Route::post('/wishlist/{barang}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
+    // Voucher & Promo Customer
+    Route::get('/voucher', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'index'])->name('voucher');
 
     // Chat & Reviews
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');

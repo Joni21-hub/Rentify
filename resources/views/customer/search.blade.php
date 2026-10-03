@@ -19,9 +19,6 @@
         
         <!-- Form Search Bar -->
         <form action="{{ route('customer.search') }}" method="GET" class="flex-1 flex items-center border-2 border-sky-500 rounded-full bg-white px-4 py-1.5 overflow-hidden transition focus-within:ring-2 focus-within:ring-sky-200">
-            @if($kategoriId)
-                <input type="hidden" name="kategori" value="{{ $kategoriId }}">
-            @endif
             <input type="text" name="q" value="{{ $keyword ?? '' }}" placeholder="Cari di Rentify..." class="rentify-input flex-1 outline-none text-sm text-slate-700 w-full" autofocus>
             
             <!-- Ikon Kaca Pembesar -->

@@ -126,7 +126,7 @@
             </div>
 
             <!-- VOUCHER & PROMO (TANPA KATA SAYA) -->
-            <a href="{{ route('customer.wishlist') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
+            <a href="{{ route('customer.voucher') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center shadow-sm">
                         <i class="fa-solid fa-ticket text-base"></i>
@@ -140,7 +140,7 @@
             </a>
 
             <!-- TITIK LOKASI -->
-            <a href="{{ url('/customer/lokasi') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
+            <a href="{{ route('customer.lokasi') }}" class="rentify-card p-3.5 rounded-2xl flex items-center justify-between group hover:translate-y-[-2px] transition">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center shadow-sm">
                         <i class="fa-solid fa-location-dot text-base"></i>
@@ -294,7 +294,7 @@
                 <div class="rentify-card p-6 rounded-3xl">
                     <h3 class="font-black text-slate-800 text-base mb-4">Aksi Cepat</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <a href="{{ url('/customer/lokasi') }}" class="flex items-center gap-3 p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/60 hover:border-sky-300 transition shadow-sm">
+                        <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-3 p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/60 hover:border-sky-300 transition shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
                                 <i class="fa-solid fa-location-dot"></i>
                             </div>
