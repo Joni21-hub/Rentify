@@ -12,6 +12,19 @@
     .swiper-pagination-bullet-active { background: #0ea5e9; width: 16px; border-radius: 8px; }
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    @keyframes bounceCart {
+        0% { transform: scale(1); }
+        40% { transform: scale(1.3) rotate(-10deg); }
+        70% { transform: scale(0.9) rotate(5deg); }
+        100% { transform: scale(1) rotate(0deg); }
+    }
+    .animate-bounce-cart { animation: bounceCart 0.35s ease-out; }
+    @keyframes popBadge {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.45); }
+        100% { transform: scale(1); }
+    }
+    .animate-pop-badge { animation: popBadge 0.3s ease-out; }
 </style>
 
 <div class="detail-container shadow-sm relative">
@@ -624,68 +637,66 @@
             const startRect = btnAddToCart.getBoundingClientRect();
             const endRect = headerCartBtn.getBoundingClientRect();
 
+            const startX = startRect.left + startRect.width / 2 - 18;
+            const startY = startRect.top + startRect.height / 2 - 18;
+            const endX = endRect.left + endRect.width / 2 - 18;
+            const endY = endRect.top + endRect.height / 2 - 18;
+            const dx = endX - startX;
+            const dy = endY - startY;
+
             // Ambil gambar produk yang sedang aktif
             const activeSlideImg = document.querySelector('.productSwiper .swiper-slide-active img') || document.querySelector('.productSwiper img');
             const imgSrc = activeSlideImg ? activeSlideImg.src : null;
 
-            // Buat elemen terbang
+            // Buat elemen terbang - Ringan dan hardware-accelerated
             const flyer = document.createElement('div');
             flyer.style.position = 'fixed';
             flyer.style.zIndex = '99999';
-            flyer.style.left = (startRect.left + startRect.width / 2 - 20) + 'px';
-            flyer.style.top = (startRect.top + startRect.height / 2 - 20) + 'px';
-            flyer.style.width = '42px';
-            flyer.style.height = '42px';
+            flyer.style.left = startX + 'px';
+            flyer.style.top = startY + 'px';
+            flyer.style.width = '36px';
+            flyer.style.height = '36px';
             flyer.style.borderRadius = '50%';
             flyer.style.overflow = 'hidden';
             flyer.style.border = '2px solid #0ea5e9';
-            flyer.style.boxShadow = '0 10px 25px rgba(14, 165, 233, 0.5)';
+            flyer.style.boxShadow = '0 6px 16px rgba(14, 165, 233, 0.4)';
             flyer.style.pointerEvents = 'none';
-            flyer.style.transition = 'all 0.65s cubic-bezier(0.2, 0.8, 0.25, 1)';
             flyer.style.background = '#ffffff';
+            flyer.style.willChange = 'transform, opacity';
+            flyer.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            flyer.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.5s ease';
 
             if (imgSrc) {
                 flyer.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;">`;
             } else {
-                flyer.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:white;"><i class="fa-solid fa-cart-shopping text-sm"></i></div>`;
+                flyer.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:white;"><i class="fa-solid fa-cart-shopping text-xs"></i></div>`;
             }
 
             document.body.appendChild(flyer);
 
-            // Frame selanjutnya: melayang parabolik ke ikon keranjang
+            // Frame berikutnya: melayang dengan transform GPU (bebas lag layout)
             requestAnimationFrame(() => {
-                flyer.style.left = (endRect.left + endRect.width / 2 - 12) + 'px';
-                flyer.style.top = (endRect.top + endRect.height / 2 - 12) + 'px';
-                flyer.style.width = '24px';
-                flyer.style.height = '24px';
-                flyer.style.transform = 'scale(0.4) rotate(360deg)';
-                flyer.style.opacity = '0.7';
+                requestAnimationFrame(() => {
+                    flyer.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(0.35) rotate(360deg)`;
+                    flyer.style.opacity = '0.3';
+                });
             });
 
-            // Setelah mendarat di keranjang
+            // Setelah mendarat di keranjang (500ms)
             setTimeout(() => {
                 if (flyer.parentNode) flyer.parentNode.removeChild(flyer);
 
-                // Animasi getar/bounce di ikon keranjang
-                headerCartBtn.style.transition = 'transform 0.15s ease-out';
-                headerCartBtn.style.transform = 'scale(1.35) rotate(-12deg)';
+                // Animasi getar/bounce hardware-accelerated CSS
+                headerCartBtn.classList.remove('animate-bounce-cart');
+                void headerCartBtn.offsetWidth;
+                headerCartBtn.classList.add('animate-bounce-cart');
 
-                setTimeout(() => {
-                    headerCartBtn.style.transform = 'scale(0.9) rotate(6deg)';
-                    setTimeout(() => {
-                        headerCartBtn.style.transform = 'scale(1) rotate(0deg)';
-                    }, 120);
-                }, 120);
-
-                // Animasi pop pada badge angka
                 if (headerCartBadge) {
-                    headerCartBadge.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                    headerCartBadge.style.transform = 'scale(1.4)';
-                    setTimeout(() => {
-                        headerCartBadge.style.transform = 'scale(1)';
-                    }, 200);
+                    headerCartBadge.classList.remove('animate-pop-badge');
+                    void headerCartBadge.offsetWidth;
+                    headerCartBadge.classList.add('animate-pop-badge');
                 }
-            }, 650);
+            }, 500);
         }
 
         if (formAddToCart && btnAddToCart) {

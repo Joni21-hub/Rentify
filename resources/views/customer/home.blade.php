@@ -50,7 +50,7 @@
                     <i class="fa-solid fa-cart-shopping text-lg"></i>
                     <span class="text-[10px] font-bold mt-0.5">Keranjang</span>
                     @auth
-                        @php $jumlahKeranjang = \App\Models\Keranjang::where('user_id', auth()->id())->count(); @endphp
+                        @php $jumlahKeranjang = $keranjangCount ?? 0; @endphp
                         @if($jumlahKeranjang > 0)
                             <span class="absolute top-1 right-2 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ $jumlahKeranjang }}</span>
                         @endif
@@ -87,7 +87,7 @@
         <a href="{{ route('customer.keranjang') }}" class="relative text-sky-500 text-2xl flex-shrink-0 ml-0.5 hover:text-sky-600 transition flex items-center justify-center p-1">
             <i class="fa-solid fa-cart-shopping"></i>
             @auth
-                @php $jumlahKeranjang = \App\Models\Keranjang::where('user_id', auth()->id())->count(); @endphp
+                @php $jumlahKeranjang = $keranjangCount ?? 0; @endphp
                 @if($jumlahKeranjang > 0)
                     <span class="absolute -top-0.5 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ $jumlahKeranjang }}</span>
                 @endif
@@ -105,7 +105,7 @@
                     <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl">
                         @foreach($banners as $banner)
                             <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60">
-                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover">
+                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
                             </div>
                         @endforeach
                     </div>
@@ -179,9 +179,7 @@
                         ],
                     ];
 
-                    $kategorisList = isset($kategoris) && $kategoris->count() > 0 
-                        ? $kategoris 
-                        : \App\Models\Kategori::where('is_active', 1)->get();
+                    $kategorisList = $kategoris ?? collect();
                 @endphp
 
                 <!-- 5 Kategori Row Simetris, Ringkas & Proporsional -->
@@ -294,7 +292,7 @@
                         <div class="rentify-card border border-slate-100/80 overflow-hidden relative flex flex-col transition hover:shadow-md">
                             <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
                                 @if($barang->cover_photo)
-                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain">
+                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain" loading="lazy" decoding="async">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
                                 @endif
@@ -305,7 +303,7 @@
                                 @endif
                             </a>
                             @php
-                                $isFavorit = Auth::check() ? \App\Models\Wishlist::where('user_id', Auth::id())->where('barang_id', $barang->id)->exists() : false;
+                                $isFavorit = isset($wishlistIds[$barang->id]);
                             @endphp
                             <form action="{{ route('customer.wishlist.toggle', $barang->id) }}" method="POST" class="absolute top-2 right-2 z-10">
                                 @csrf

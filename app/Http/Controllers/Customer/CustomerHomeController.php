@@ -33,7 +33,8 @@ class CustomerHomeController extends Controller
 
         // 2. Jika koordinat DITEMUKAN (baik dari tamu maupun member), proses pencarian barang
         if ($lat1 && $lon1) {
-            $semuaBarang = Barang::where('status_barang', 'disetujui')
+            $semuaBarang = Barang::with(['vendor', 'kategori'])
+                ->where('status_barang', 'disetujui')
                 ->whereHas('vendor', function ($query) {
                     $query->where('vendor_status', '!=', 'suspended')
                           ->orWhereNull('vendor_status'); 
@@ -70,7 +71,11 @@ class CustomerHomeController extends Controller
             $butuhLokasi = true;
         }
 
-        return view('customer.home', compact('daftarBarang', 'banners', 'butuhLokasi', 'kategoris'));
+        $wishlistIds = Auth::check() 
+            ? \App\Models\Wishlist::where('user_id', Auth::id())->pluck('barang_id')->flip()->toArray() 
+            : [];
+
+        return view('customer.home', compact('daftarBarang', 'banners', 'butuhLokasi', 'kategoris', 'wishlistIds'));
     }
 
     // PERBAIKAN: Fungsi show kini mendukung SLUG, memblokir toko Banned, dan memakai logika lokasi Tamu/Member Anda
