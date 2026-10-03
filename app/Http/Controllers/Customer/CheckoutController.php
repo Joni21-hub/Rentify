@@ -110,7 +110,7 @@ class CheckoutController extends Controller
     {
         $request->validate([
             'no_hp' => 'required|string', 
-            'metode_pembayaran' => 'required|in:COD,QRIS,MIDTRANS',
+            'metode_pembayaran' => 'nullable|string',
             'durasi_sewa' => 'required|array', 
             'opsi_pengiriman' => 'required|array', 
             'ongkir_vendor' => 'required|array',
@@ -185,6 +185,7 @@ class CheckoutController extends Controller
         $invoiceIds = [];
         $totalBayarSemua = 0; 
         $nomorWaAman = $request->no_hp;
+        $metodeInput = $request->input('metode_pembayaran', 'ONLINE');
         
         // PERUBAHAN: Menangkap array data voucher jika ada
         $voucherDataStr = $request->input('voucher_data_json');
@@ -260,7 +261,7 @@ class CheckoutController extends Controller
                 'end_rent' => $waktuKembali,      
                 'duration_days' => $durasi,
                 'jaminan' => $jaminanTerpilih, 
-                'payment_method' => $request->metode_pembayaran,
+                'payment_method' => $metodeInput,
                 'total_biaya' => $totalHargaVendor,
                 'total_price' => $totalHargaVendor,
                 
@@ -268,7 +269,7 @@ class CheckoutController extends Controller
                 'voucher_id' => $voucherIdDipakai,
                 'potongan_voucher' => $potonganVoucher,
 
-                'status' => $request->metode_pembayaran === 'COD' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran',
+                'status' => $metodeInput === 'COD' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran',
                 'created_at' => $waktuSekarang,
                 'updated_at' => $waktuSekarang
             ]);
@@ -306,8 +307,10 @@ class CheckoutController extends Controller
             session()->forget('checkout_direct_id');
         }
 
+        $metodeInput = $request->input('metode_pembayaran', 'ONLINE');
+
         session([
-            'metode_pembayaran' => $request->metode_pembayaran,
+            'metode_pembayaran' => $metodeInput,
             'total_bayar_semua' => $totalBayarSemua,
             'no_hp' => $nomorWaAman,
             'waktu_pesan' => $waktuSekarang->format('Y-m-d H:i:s'),
@@ -318,7 +321,34 @@ class CheckoutController extends Controller
         ]);
 
         $gabunganInvoice = implode('_', $invoiceIds); 
-        return redirect()->route($request->metode_pembayaran === 'COD' ? 'customer.struk' : 'customer.qris', ['id' => $gabunganInvoice]);
+        return redirect()->route($metodeInput === 'COD' ? 'customer.struk' : 'customer.qris', ['id' => $gabunganInvoice]);
+    }
+
+    public function setCod(Request $request, $id)
+    {
+        $orderIds = [];
+        foreach (explode('_', $id) as $part) {
+            if (str_starts_with($part, 'INV-')) {
+                $orderIds[] = (int) str_replace('INV-', '', $part);
+            } elseif (is_numeric($part)) {
+                $orderIds[] = (int) $part;
+            }
+        }
+
+        DB::table('orders')->whereIn('id', $orderIds)->update([
+            'payment_method' => 'COD',
+            'status' => 'Menunggu Konfirmasi',
+            'updated_at' => Carbon::now('Asia/Jakarta')
+        ]);
+
+        session([
+            'metode_pembayaran' => 'COD'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'redirect_url' => route('customer.struk', ['id' => $id])
+        ]);
     }
 
     public function qris($id) 

@@ -233,6 +233,7 @@ Route::prefix('customer')->name('customer.')
 
     // QRIS & Struk
     Route::get('/qris/{id}', [CheckoutController::class, 'qris'])->name('qris');
+    Route::post('/checkout/{id}/set-cod', [CheckoutController::class, 'setCod'])->name('checkout.set_cod');
     Route::get('/struk/{id}', [CheckoutController::class, 'struk'])->name('struk');
 
     // Orders, Tracking, & Invoices

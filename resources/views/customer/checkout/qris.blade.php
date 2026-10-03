@@ -243,7 +243,7 @@
 
         <div class="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 text-center font-medium">
             <i class="fa-solid fa-shield-halved text-sky-500"></i>
-            <span>Transaksi aman & terenkripsi oleh Midtrans Payment Gateway</span>
+            <span>Transaksi aman & terenkripsi otomatis</span>
         </div>
     </div>
 
@@ -268,6 +268,8 @@
     const snapToken = "{{ $snapToken ?? '' }}";
     const invoiceId = "{{ $id }}";
     const checkStatusUrl = "{{ route('customer.pembayaran.check_status', $id) }}";
+    const setCodUrl = "{{ route('customer.checkout.set_cod', $id) }}";
+    const csrfToken = "{{ csrf_token() }}";
     const receiptUrl = "{{ route('customer.struk', $id) }}";
 
     function pilihMetode(metode) {
@@ -343,7 +345,33 @@
         // Eksekusi ketika tombol Konfirmasi diklik
         btnKonfirmasi.addEventListener('click', function () {
             if (selectedMetode === 'cod') {
-                window.location.href = receiptUrl;
+                btnKonfirmasi.disabled = true;
+                btnKonfirmasi.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> <span>Menyimpan Metode COD...</span>';
+                
+                fetch(setCodUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage('success', 'Metode Bayar di Tempat (COD) dikonfirmasi! Mengalihkan ke struk...');
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url || receiptUrl;
+                        }, 500);
+                    } else {
+                        window.location.href = receiptUrl;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    window.location.href = receiptUrl;
+                });
                 return;
             }
 
@@ -353,7 +381,7 @@
             }
 
             if (typeof window.snap === 'undefined') {
-                alert("Midtrans Snap belum siap. Mohon periksa koneksi internet Anda.");
+                alert("Sistem pembayaran belum siap. Mohon periksa koneksi internet Anda.");
                 return;
             }
 

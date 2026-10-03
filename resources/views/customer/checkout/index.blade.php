@@ -204,38 +204,29 @@
         </div>
 
         <div class="section-title mt-4">Metode Pembayaran</div>
-        <div class="radio-list-group mb-6">
-            <label class="radio-list-item" style="padding: 14px 16px; cursor: pointer; transition: all 0.2s;">
-                <div style="flex: 1;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="background:#0284c7; color:white; padding:2px 7px; border-radius:6px; font-size:11px; font-weight:800;">COD</span>
-                        <span style="font-size:13.5px; font-weight:800; color:#0f172a;">Cash on Delivery (Bayar di Tempat)</span>
+        <div class="clean-card mb-6" style="padding: 16px; border: 1.5px solid #bae6fd; background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 32px; height: 32px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                        <i class="fa-solid fa-credit-card"></i>
                     </div>
-                    <div style="font-size:11.5px; color:#64748b; margin-top:3px; font-weight:500;">
-                        Bayar tunai langsung saat mengambil atau menerima barang sewaan.
-                    </div>
+                    <span style="font-size: 14px; font-weight: 800; color: #0f172a;">Pilih Metode Pembayaran Anda</span>
                 </div>
-                <input type="radio" name="metode_pembayaran" value="COD" checked style="width:18px; height:18px; accent-color:#0284c7;">
-            </label>
+                <span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 6px; font-weight: 800;">Langkah Berikutnya</span>
+            </div>
             
-            <label class="radio-list-item" style="padding: 14px 16px; border-top: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s;">
-                <div style="flex: 1;">
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap: wrap;">
-                        <span style="background:linear-gradient(135deg, #0ea5e9, #0284c7); color:white; padding:2px 7px; border-radius:6px; font-size:11px; font-weight:800;">ONLINE</span>
-                        <span style="font-size:13.5px; font-weight:800; color:#0f172a;">Midtrans Payment Gateway</span>
-                        <span style="background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:700;">Verifikasi Otomatis</span>
-                    </div>
-                    <div style="font-size:11.5px; color:#64748b; margin-top:4px; font-weight:500;">
-                        QRIS (GoPay, ShopeePay, DANA, BCA), Virtual Account (BCA, Mandiri, BNI, BRI), & Kartu Kredit.
-                    </div>
-                    <div style="display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap: wrap;">
-                        <span style="font-size:10px; font-weight:800; color:#0284c7; background:#e0f2fe; padding:2px 6px; border-radius:4px;"><i class="fa-solid fa-qrcode mr-1"></i>QRIS</span>
-                        <span style="font-size:10px; font-weight:800; color:#0369a1; background:#f0f9ff; padding:2px 6px; border-radius:4px;"><i class="fa-solid fa-building-columns mr-1"></i>VA Bank</span>
-                        <span style="font-size:10px; font-weight:800; color:#0369a1; background:#f0f9ff; padding:2px 6px; border-radius:4px;"><i class="fa-solid fa-wallet mr-1"></i>GoPay / E-Wallet</span>
-                    </div>
-                </div>
-                <input type="radio" name="metode_pembayaran" value="QRIS" style="width:18px; height:18px; accent-color:#0284c7;">
-            </label>
+            <p style="font-size: 12px; color: #64748b; margin-top: 4px; margin-bottom: 10px; line-height: 1.4;">
+                Tersedia opsi pembayaran lengkap: QRIS, Transfer Bank (Virtual Account), E-Wallet, atau Bayar di Tempat (COD) saat konfirmasi pesanan.
+            </p>
+
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <span style="font-size: 10.5px; font-weight: 800; color: #0284c7; background: white; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-qrcode mr-1"></i>QRIS</span>
+                <span style="font-size: 10.5px; font-weight: 800; color: #0369a1; background: white; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-building-columns mr-1"></i>VA Bank</span>
+                <span style="font-size: 10.5px; font-weight: 800; color: #0369a1; background: white; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-wallet mr-1"></i>E-Wallet</span>
+                <span style="font-size: 10.5px; font-weight: 800; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-handshake mr-1"></i>Bayar di Tempat (COD)</span>
+            </div>
+
+            <input type="hidden" name="metode_pembayaran" value="ONLINE">
         </div>
 
         <!-- PERUBAHAN: Panel Voucher Toko Dinamis dengan AJAX -->

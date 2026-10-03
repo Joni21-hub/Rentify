@@ -116,7 +116,7 @@ class PembayaranController extends Controller
                 // Update status pesanan ke Menunggu Konfirmasi agar vendor langsung memproses
                 DB::table('orders')->whereIn('id', $orders->pluck('id'))->update([
                     'status' => 'Menunggu Konfirmasi',
-                    'payment_method' => strtoupper($paymentType) . ' (Midtrans)',
+                    'payment_method' => $paymentType === 'qris' ? 'QRIS' : ($paymentType === 'bank_transfer' ? 'Transfer Bank' : strtoupper($paymentType)),
                     'updated_at' => now(),
                 ]);
 
@@ -172,7 +172,7 @@ class PembayaranController extends Controller
                 'success' => true,
                 'paid' => false,
                 'status' => 'not_found',
-                'message' => 'Transaksi belum diproses di Midtrans.'
+                'message' => 'Transaksi belum diproses.'
             ]);
         }
     }
@@ -223,7 +223,7 @@ class PembayaranController extends Controller
         if ($isSettled) {
             DB::table('orders')->whereIn('id', $orders->pluck('id'))->update([
                 'status' => 'Menunggu Konfirmasi',
-                'payment_method' => strtoupper($paymentType) . ' (Midtrans)',
+                'payment_method' => $paymentType === 'qris' ? 'QRIS' : ($paymentType === 'bank_transfer' ? 'Transfer Bank' : strtoupper($paymentType)),
                 'updated_at' => now(),
             ]);
 

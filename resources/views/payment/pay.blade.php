@@ -26,7 +26,7 @@
         </div>
 
         <button id="pay-button" class="w-full bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition duration-200">
-            Bayar Sekarang (Midtrans)
+            Bayar Sekarang
         </button>
 
         <a href="{{ route('customer.pesanan') }}" class="block mt-4 text-xs font-semibold text-slate-400 hover:text-slate-600">

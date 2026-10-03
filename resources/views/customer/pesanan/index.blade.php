@@ -171,7 +171,7 @@
 
                 @if($order->status === 'Menunggu Pembayaran')
                     <a href="{{ route('customer.qris', 'INV-' . $order->id) }}" class="btn-selesai" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; color: white;">
-                        <i class="fa-solid fa-credit-card"></i> Bayar Sekarang (Midtrans)
+                        <i class="fa-solid fa-credit-card"></i> Bayar Sekarang
                     </a>
                 @elseif($order->status !== 'Selesai' && $order->status !== 'Dibatalkan')
                     <form action="{{ route('customer.pesanan.selesai', $order->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang sudah diterima dengan baik dan ingin menyelesaikan pesanan ini?');">
