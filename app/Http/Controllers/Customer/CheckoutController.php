@@ -153,6 +153,22 @@ class CheckoutController extends Controller
 
         $keranjangPerVendor = $keranjangs->groupBy(fn($item) => $item->barang->vendor_id);
 
+        $userId = auth()->id();
+
+        // Batalkan pesanan 'Menunggu Pembayaran' milik user yang sama agar tidak mengunci stoknya sendiri
+        if ($userId) {
+            DB::table('orders')
+                ->where('user_id', $userId)
+                ->where('status', 'Menunggu Pembayaran')
+                ->update(['status' => 'Dibatalkan', 'updated_at' => now()]);
+        }
+
+        // Batalkan pesanan 'Menunggu Pembayaran' yang sudah lewat 2 jam tanpa pembayaran
+        DB::table('orders')
+            ->where('status', 'Menunggu Pembayaran')
+            ->where('created_at', '<', now()->subHours(2))
+            ->update(['status' => 'Dibatalkan', 'updated_at' => now()]);
+
         foreach ($keranjangPerVendor as $vendorId => $items) {
             $durasiCek = (int) ($request->durasi_sewa[$vendorId] ?? 1);
             $waktuKembaliCek = $waktuMulai->copy()->addDays($durasiCek);

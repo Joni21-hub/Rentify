@@ -85,30 +85,35 @@
     <div class="p-4 bg-slate-50 border-b border-slate-200/60">
         
         @if($channelCode === 'QRIS')
-            <!-- TAMPILAN KHUSUS QRIS -->
-            <div class="bg-white rounded-2xl border-2 border-sky-100 p-5 shadow-sm text-center">
-                <div class="flex items-center justify-center gap-2 mb-2">
-                    <span class="text-red-500 font-black text-lg">QRIS</span>
-                    <span class="text-xs font-bold text-slate-500">• Pembayaran Cepat</span>
+            <!-- TAMPILAN KHUSUS QRIS RESMI -->
+            <div class="bg-white rounded-2xl border-2 border-red-100 p-5 shadow-sm text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-red-100">
+                    <i class="fa-solid fa-qrcode"></i>
                 </div>
+                
+                <div class="flex items-center justify-center gap-1.5 mb-1">
+                    <span class="text-red-600 font-black text-xl tracking-tight">QRIS</span>
+                    <span class="text-xs font-bold text-slate-500">• Standar Pembayaran Nasional</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">Satu QR Code resmi untuk semua aplikasi e-wallet dan mobile banking di Indonesia.</p>
 
-                <!-- Gambar QR Code -->
-                <div class="w-56 h-56 mx-auto my-3 p-3 bg-white border-2 border-slate-200 rounded-2xl shadow-inner flex items-center justify-center">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=RENTIFY-{{ $id }}-{{ $total }}" 
-                         alt="QRIS Rentify" 
-                         class="w-full h-full object-contain">
-                </div>
+                <!-- Tombol Tampilkan QRIS Resmi -->
+                <button type="button" onclick="bukaGateway()" class="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-4">
+                    <i class="fa-solid fa-qrcode text-lg"></i>
+                    <span class="text-sm">Tampilkan Kode QRIS Resmi (Scan Sekarang)</span>
+                </button>
 
-                <div class="text-xs font-bold text-slate-700 mt-2">
-                    Pindai QR dengan Aplikasi Pembayaran
-                </div>
-                <div class="flex items-center justify-center gap-1.5 flex-wrap mt-2">
-                    <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-extrabold border border-blue-100">DANA</span>
-                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-extrabold border border-emerald-100">GoPay</span>
-                    <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold border border-amber-100">ShopeePay</span>
-                    <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-100">OVO</span>
-                    <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold border border-sky-100">BCA Mobile</span>
-                    <span class="px-2 py-0.5 rounded bg-blue-900 text-yellow-300 text-[10px] font-extrabold">Livin'</span>
+                <div class="border-t border-slate-100 pt-3">
+                    <div class="text-[11px] font-bold text-slate-500 mb-2">Bisa di-scan dari aplikasi apapun:</div>
+                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                        <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-extrabold border border-blue-100">DANA</span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-extrabold border border-emerald-100">GoPay</span>
+                        <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold border border-amber-100">ShopeePay</span>
+                        <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-100">OVO</span>
+                        <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold border border-sky-100">BCA Mobile</span>
+                        <span class="px-2 py-0.5 rounded bg-blue-900 text-yellow-300 text-[10px] font-extrabold">Livin' Mandiri</span>
+                        <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-extrabold">BRImo</span>
+                    </div>
                 </div>
             </div>
 
@@ -177,8 +182,69 @@
         </h2>
 
         <div class="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-sm">
-            
-            @if(str_contains($channelCode, 'MANDIRI'))
+            @if($channelCode === 'QRIS')
+                <!-- PETUNJUK PEMBAYARAN QRIS -->
+                <div>
+                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('qris-ewallet')">
+                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
+                            <i class="fa-solid fa-wallet text-red-500"></i>
+                            <span>Lewat E-Wallet (GoPay, DANA, OVO, ShopeePay)</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-up text-slate-400 text-xs transition-transform" id="chevron-qris-ewallet"></i>
+                    </div>
+                    <div id="panel-qris-ewallet" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">1</span>
+                            <span>Tekan tombol <b>Tampilkan Kode QRIS Resmi</b> di atas.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">2</span>
+                            <span>Buka aplikasi e-wallet pilihan Anda (GoPay, DANA, OVO, ShopeePay, dll).</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">3</span>
+                            <span>Pilih menu <b>Scan / Bayar QRIS</b>.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">4</span>
+                            <span>Arahkan kamera smartphone Anda ke kode QRIS resmi yang tampil di layar.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">5</span>
+                            <span>Periksa nama merchant (<b>Rentify</b>) dan nominal <b>Rp {{ number_format($total ?? 0, 0, ',', '.') }}</b>, lalu selesaikan pembayaran dengan PIN.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('qris-mbanking')">
+                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
+                            <i class="fa-solid fa-mobile-screen text-red-500"></i>
+                            <span>Lewat Mobile Banking (BCA, Mandiri, BRI, BNI, dll)</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-qris-mbanking"></i>
+                    </div>
+                    <div id="panel-qris-mbanking" class="hidden p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">1</span>
+                            <span>Buka aplikasi Mobile Banking bank Anda (Livin' by Mandiri, BCA Mobile, BRImo, BNI Mobile, dll).</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">2</span>
+                            <span>Pilih menu fitur <b>QR / QRIS / Scan</b> di aplikasi perbankan Anda.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">3</span>
+                            <span>Scan Kode QRIS resmi yang tampil di layar Rentify.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="step-badge">4</span>
+                            <span>Konfirmasi detail pembayaran dan masukkan <b>PIN Transaksi</b> Anda.</span>
+                        </div>
+                    </div>
+                </div>
+
+            @elseif(str_contains($channelCode, 'MANDIRI'))
                 <!-- PETUNJUK MANDIRI LIVIN -->
                 <div>
                     <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('mandiri-livin')">
@@ -349,9 +415,14 @@
     <!-- 6. FIXED BOTTOM ACTION BAR (ALA SHOPEE) -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div class="max-w-[500px] mx-auto flex items-center gap-2.5">
-            <button type="button" onclick="bukaGateway()" class="flex-1 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-black text-[14px] py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-credit-card text-xs"></i>
-                <span>Bayar Lewat Gateway</span>
+            <button type="button" onclick="bukaGateway()" class="flex-1 {{ $channelCode === 'QRIS' ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700' : 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700' }} text-white font-black text-[14px] py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                @if($channelCode === 'QRIS')
+                    <i class="fa-solid fa-qrcode text-base"></i>
+                    <span>Tampilkan Kode QRIS</span>
+                @else
+                    <i class="fa-solid fa-credit-card text-xs"></i>
+                    <span>Bayar Sekarang</span>
+                @endif
             </button>
             
             <button type="button" onclick="checkStatusLive()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5" title="Cek Status Pembayaran">
@@ -486,6 +557,17 @@
 
     // Polling background tiap 4 detik
     setInterval(checkStatusLive, 4000);
+
+    // Otomatis buka QRIS saat halaman dimuat
+    @if($channelCode === 'QRIS')
+    window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            if (typeof window.snap !== 'undefined' && snapToken) {
+                bukaGateway();
+            }
+        }, 500);
+    });
+    @endif
 </script>
 
 @endsection

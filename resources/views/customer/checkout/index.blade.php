@@ -709,6 +709,14 @@
             return;
         }
 
+        const btnSubmit = document.querySelector('.btn-buat-pesanan');
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memproses Pesanan...';
+            btnSubmit.style.opacity = '0.7';
+            btnSubmit.style.cursor = 'not-allowed';
+        }
+
         syncData(); 
         document.getElementById('form-checkout').submit();
     }

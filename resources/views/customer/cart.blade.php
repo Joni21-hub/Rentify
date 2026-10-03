@@ -94,7 +94,9 @@
                         
                         <div id="qris-box" class="hidden mt-4 p-3 bg-slate-50 border rounded-xl text-center">
                             <p class="text-xs text-slate-500 mb-2 font-semibold">Silakan scan kode QRIS Rentify berikut:</p>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RentifyDummyQRIS" alt="QRIS Rentify" class="mx-auto w-36 h-36 border p-2 bg-white">
+                            <div class="w-16 h-16 mx-auto my-2 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl border border-red-100">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
