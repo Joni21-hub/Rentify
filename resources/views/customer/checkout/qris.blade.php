@@ -342,6 +342,39 @@
         // Polling background tiap 4 detik
         setInterval(checkStatusLive, 4000);
 
+        function bukaSnapPopup() {
+            if (!snapToken) {
+                alert("Sesi pembayaran sedang disiapkan. Silakan refresh halaman.");
+                return;
+            }
+
+            if (typeof window.snap === 'undefined') {
+                setTimeout(bukaSnapPopup, 300);
+                return;
+            }
+
+            // Buka Popup Pembayaran
+            snap.pay(snapToken, {
+                onSuccess: function (result) {
+                    showMessage('success', 'Pembayaran berhasil! Mengalihkan ke struk pesanan...');
+                    setTimeout(() => { window.location.href = receiptUrl; }, 1200);
+                },
+                onPending: function (result) {
+                    showMessage('pending', 'Menunggu penyelesaian pembayaran di m-banking / e-wallet...');
+                    checkStatusLive();
+                },
+                onError: function (result) {
+                    showMessage('error', 'Pembayaran gagal atau dibatalkan.');
+                },
+                onClose: function () {
+                    checkStatusLive();
+                }
+            });
+        }
+
+        // Otomatis langsung munculkan popup pembayaran saat halaman dimuat ala Shopee
+        setTimeout(bukaSnapPopup, 400);
+
         // Eksekusi ketika tombol Konfirmasi diklik
         btnKonfirmasi.addEventListener('click', function () {
             if (selectedMetode === 'cod') {
@@ -375,33 +408,7 @@
                 return;
             }
 
-            if (!snapToken) {
-                alert("Sesi pembayaran sedang disiapkan. Silakan refresh halaman.");
-                return;
-            }
-
-            if (typeof window.snap === 'undefined') {
-                alert("Sistem pembayaran belum siap. Mohon periksa koneksi internet Anda.");
-                return;
-            }
-
-            // Buka Midtrans Snap Popup
-            snap.pay(snapToken, {
-                onSuccess: function (result) {
-                    showMessage('success', 'Pembayaran berhasil! Mengalihkan ke struk pesanan...');
-                    setTimeout(() => { window.location.href = receiptUrl; }, 1200);
-                },
-                onPending: function (result) {
-                    showMessage('pending', 'Menunggu penyelesaian pembayaran di m-banking / e-wallet...');
-                    checkStatusLive();
-                },
-                onError: function (result) {
-                    showMessage('error', 'Pembayaran gagal atau dibatalkan.');
-                },
-                onClose: function () {
-                    checkStatusLive();
-                }
-            });
+            bukaSnapPopup();
         });
     });
 </script>

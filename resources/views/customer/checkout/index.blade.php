@@ -31,6 +31,11 @@
     .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 1000; padding-left: 20px;}
     .btn-buat-pesanan { background: #0284c7; color: white; border: none; padding: 16px 30px; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; }
     .btn-buat-pesanan:hover { background: #0369a1; box-shadow: 0 0 15px rgba(2, 132, 199, 0.4); }
+
+    @keyframes slideUpSheet {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
 </style>
 
 <div class="checkout-container">
@@ -204,29 +209,24 @@
         </div>
 
         <div class="section-title mt-4">Metode Pembayaran</div>
-        <div class="clean-card mb-6" style="padding: 16px; border: 1.5px solid #bae6fd; background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 32px; height: 32px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 14px;">
-                        <i class="fa-solid fa-credit-card"></i>
+        <div class="clean-card mb-6" onclick="bukaModalMetodePembayaran()" style="padding: 14px 16px; border: 1.5px solid #bae6fd; background: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.05);" onmouseover="this.style.borderColor='#0284c7'" onmouseout="this.style.borderColor='#bae6fd'">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="display-metode-icon" style="width: 38px; height: 38px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                        <i class="fa-solid fa-handshake"></i>
                     </div>
-                    <span style="font-size: 14px; font-weight: 800; color: #0f172a;">Pilih Metode Pembayaran Anda</span>
+                    <div>
+                        <div id="display-metode-nama" style="font-size: 14px; font-weight: 800; color: #0f172a;">COD (Bayar di Tempat)</div>
+                        <div id="display-metode-sub" style="font-size: 11.5px; color: #64748b; font-weight: 500;">Bayar tunai langsung saat serah terima barang</div>
+                    </div>
                 </div>
-                <span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 6px; font-weight: 800;">Langkah Berikutnya</span>
-            </div>
-            
-            <p style="font-size: 12px; color: #64748b; margin-top: 4px; margin-bottom: 10px; line-height: 1.4;">
-                Tersedia opsi pembayaran lengkap: QRIS, Transfer Bank (Virtual Account), E-Wallet, atau Bayar di Tempat (COD) saat konfirmasi pesanan.
-            </p>
-
-            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                <span style="font-size: 10.5px; font-weight: 800; color: #0284c7; background: white; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-qrcode mr-1"></i>QRIS</span>
-                <span style="font-size: 10.5px; font-weight: 800; color: #0369a1; background: white; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-building-columns mr-1"></i>VA Bank</span>
-                <span style="font-size: 10.5px; font-weight: 800; color: #0369a1; background: white; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-wallet mr-1"></i>E-Wallet</span>
-                <span style="font-size: 10.5px; font-weight: 800; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-handshake mr-1"></i>Bayar di Tempat (COD)</span>
+                <div style="display: flex; align-items: center; gap: 6px; color: #0284c7; font-size: 12.5px; font-weight: 800;">
+                    <span>Ubah</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i>
+                </div>
             </div>
 
-            <input type="hidden" name="metode_pembayaran" value="ONLINE">
+            <input type="hidden" name="metode_pembayaran" id="input_metode_pembayaran" value="COD">
         </div>
 
         <!-- PERUBAHAN: Panel Voucher Toko Dinamis dengan AJAX -->
@@ -274,6 +274,98 @@
                 <div style="font-size: 20px; font-weight: 900; color: #0284c7;" id="bar-total">Rp 0</div>
             </div>
             <button type="button" class="btn-buat-pesanan" onclick="validasiSubmit()">Buat Pesanan</button>
+        </div>
+
+        <!-- BOTTOM SHEET MODAL PILIH METODE PEMBAYARAN (ALA SHOPEE) -->
+        <div id="modalMetodePembayaran" style="display: none; position: fixed; inset: 0; z-index: 99999;">
+            <!-- Backdrop Overlay -->
+            <div onclick="tutupModalMetodePembayaran()" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px);"></div>
+            
+            <!-- Modal Sheet -->
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; max-width: 550px; margin: 0 auto; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+                
+                <!-- Header Sheet -->
+                <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 16px; font-weight: 900; color: #0f172a;">Pilih Metode Pembayaran</div>
+                    <button type="button" onclick="tutupModalMetodePembayaran()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; color: #64748b; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body Options List -->
+                <div style="padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                    
+                    <!-- OPSI 1: COD -->
+                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('COD', 'COD (Bayar di Tempat)', 'Bayar tunai langsung saat serah terima barang', 'fa-solid fa-handshake', '#059669', '#ecfdf5')" style="padding: 14px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-COD">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                <i class="fa-solid fa-handshake"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 800; color: #0f172a;">COD (Bayar di Tempat)</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 1px;">Bayar tunai langsung saat serah terima barang</div>
+                            </div>
+                        </div>
+                        <div class="radio-indicator" id="radio-indicator-COD" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #0284c7; background: #0284c7; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 900;">✓</div>
+                    </div>
+
+                    <!-- OPSI 2: QRIS -->
+                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('QRIS', 'QRIS (Semua E-Wallet & Bank)', 'GoPay, DANA, ShopeePay, OVO, BCA, Livin, dll', 'fa-solid fa-qrcode', '#0284c7', '#e0f2fe')" style="padding: 14px; border: 1.5px solid #e2e8f0; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-QRIS">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 800; color: #0f172a;">QRIS (Instan & Semua E-Wallet)</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 1px;">GoPay, DANA, ShopeePay, OVO, BCA Mobile, dll</div>
+                                <div style="display: flex; gap: 4px; margin-top: 5px;">
+                                    <span style="font-size: 9px; font-weight: 800; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px;">DANA</span>
+                                    <span style="font-size: 9px; font-weight: 800; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px;">GoPay</span>
+                                    <span style="font-size: 9px; font-weight: 800; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px;">ShopeePay</span>
+                                    <span style="font-size: 9px; font-weight: 800; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px;">BCA Mobile</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="radio-indicator" id="radio-indicator-QRIS" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 900;"></div>
+                    </div>
+
+                    <!-- OPSI 3: TRANSFER BANK (VA) -->
+                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('BANK', 'Transfer Bank (Virtual Account)', 'BCA, Mandiri, BNI, BRI, Permata & Bank Lain', 'fa-solid fa-building-columns', '#2563eb', '#eff6ff')" style="padding: 14px; border: 1.5px solid #e2e8f0; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-BANK">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 800; color: #0f172a;">Transfer Bank (Virtual Account)</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 1px;">BCA, Mandiri, BNI, BRI, Permata & Bank Lain</div>
+                            </div>
+                        </div>
+                        <div class="radio-indicator" id="radio-indicator-BANK" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 900;"></div>
+                    </div>
+
+                    <!-- OPSI 4: E-WALLET INSTAN -->
+                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('EWALLET', 'E-Wallet (Bayar Instan)', 'Langsung buka aplikasi GoPay / ShopeePay', 'fa-solid fa-wallet', '#4f46e5', '#eef2ff')" style="padding: 14px; border: 1.5px solid #e2e8f0; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-EWALLET">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: #eef2ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 800; color: #0f172a;">E-Wallet (Bayar Instan)</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 1px;">Langsung buka aplikasi GoPay / ShopeePay</div>
+                            </div>
+                        </div>
+                        <div class="radio-indicator" id="radio-indicator-EWALLET" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 900;"></div>
+                    </div>
+
+                </div>
+
+                <!-- Tombol Konfirmasi Sheet -->
+                <div style="padding: 12px 16px; border-top: 1px solid #f1f5f9; background: #fafafa;">
+                    <button type="button" onclick="tutupModalMetodePembayaran()" style="width: 100%; padding: 13px; background: #0284c7; color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.15s;">
+                        Konfirmasi Pilihan
+                    </button>
+                </div>
+            </div>
         </div>
     </form>
 </div>
@@ -534,6 +626,55 @@
 
         syncData(); 
         document.getElementById('form-checkout').submit();
+    }
+
+    let currentMetode = 'COD';
+
+    function bukaModalMetodePembayaran() {
+        document.getElementById('modalMetodePembayaran').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function tutupModalMetodePembayaran() {
+        document.getElementById('modalMetodePembayaran').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function pilihOpsiPembayaran(kode, nama, sub, ikon, textCol, bgCol) {
+        currentMetode = kode;
+        document.getElementById('input_metode_pembayaran').value = kode;
+        
+        // Update tampilan di kartu checkout
+        document.getElementById('display-metode-nama').innerText = nama;
+        document.getElementById('display-metode-sub').innerText = sub;
+        const iconContainer = document.getElementById('display-metode-icon');
+        iconContainer.innerHTML = `<i class="${ikon}"></i>`;
+        iconContainer.style.background = bgCol;
+        iconContainer.style.color = textCol;
+
+        // Update indikator radio di bottom sheet
+        ['COD', 'QRIS', 'BANK', 'EWALLET'].forEach(k => {
+            const rad = document.getElementById('radio-indicator-' + k);
+            const row = document.getElementById('opsi-row-' + k);
+            if (rad && row) {
+                if (k === kode) {
+                    rad.style.borderColor = '#0284c7';
+                    rad.style.background = '#0284c7';
+                    rad.innerText = '✓';
+                    row.style.borderColor = '#0284c7';
+                    row.style.background = '#f0f9ff';
+                } else {
+                    rad.style.borderColor = '#cbd5e1';
+                    rad.style.background = 'white';
+                    rad.innerText = '';
+                    row.style.borderColor = '#e2e8f0';
+                    row.style.background = 'white';
+                }
+            }
+        });
+
+        // Tutup modal secara mulus
+        setTimeout(tutupModalMetodePembayaran, 200);
     }
 
     window.onload = function() {

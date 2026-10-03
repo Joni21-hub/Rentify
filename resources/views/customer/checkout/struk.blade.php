@@ -216,6 +216,8 @@
                         QRIS
                     @elseif(str_contains(strtoupper($metode), 'BANK') || str_contains(strtoupper($metode), 'VA'))
                         Transfer Bank (Virtual Account)
+                    @elseif(str_contains(strtoupper($metode), 'EWALLET') || str_contains(strtoupper($metode), 'WALLET'))
+                        E-Wallet
                     @else
                         Pembayaran Online Otomatis
                     @endif
