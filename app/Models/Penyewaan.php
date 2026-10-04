@@ -9,10 +9,13 @@ class Penyewaan extends Model
     protected $table = 'orders';
 
     protected $fillable = [
-        'user_id', 'vendor_id', 'customer_id', 'kode_booking', 
-        'payment_method', 'metode_pengambilan', 'alamat_pengiriman', 
-        'cabang_id', 'total_biaya', 'total_deposit', 'total_denda', 
+        'user_id', 'vendor_id', 'customer_id', 'kode_booking',
+        'payment_method', 'metode_pengambilan', 'alamat_pengiriman',
+        'cabang_id', 'total_biaya', 'total_deposit', 'total_denda',
         'status', 'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
+        // Kolom DOKU Checkout
+        'doku_invoice_number', 'doku_payment_url', 'doku_payment_id',
+        'payment_expired_at', 'paid_at',
     ];
 
     protected $casts = [
@@ -22,6 +25,8 @@ class Penyewaan extends Model
         'total_biaya'            => 'decimal:2',
         'total_deposit'          => 'decimal:2',
         'total_denda'            => 'decimal:2',
+        'payment_expired_at'     => 'datetime',
+        'paid_at'                => 'datetime',
     ];
 
     public static function generateKodeBooking(): string

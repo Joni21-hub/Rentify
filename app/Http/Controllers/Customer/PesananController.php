@@ -18,18 +18,26 @@ class PesananController extends Controller
             ->select('orders.*', 'vendors.vendor_name', 'vendors.name as owner_name', 'vendors.whatsapp_vendor')
             ->where('orders.user_id', $userId);
 
-        $countSemua = (clone $baseQuery)->count();
-        $countMenunggu = (clone $baseQuery)->whereIn('orders.status', ['Menunggu Konfirmasi', 'Menunggu Pembayaran', 'pending'])->count();
-        $countBerjalan = (clone $baseQuery)->whereIn('orders.status', ['Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar'])->count();
-        $countSelesai = (clone $baseQuery)->where('orders.status', 'Selesai')->count();
+        $countSemua    = (clone $baseQuery)->count();
+        $countMenunggu = (clone $baseQuery)->whereIn('orders.status', [
+            'Menunggu Konfirmasi', 'Menunggu Pembayaran', 'PENDING_PAYMENT', 'pending'
+        ])->count();
+        $countBerjalan = (clone $baseQuery)->whereIn('orders.status', [
+            'PAID', 'Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar'
+        ])->count();
+        $countSelesai  = (clone $baseQuery)->where('orders.status', 'Selesai')->count();
 
         $statusFilter = $request->query('status', 'semua');
         $query = clone $baseQuery;
 
         if ($statusFilter === 'menunggu') {
-            $query->whereIn('orders.status', ['Menunggu Konfirmasi', 'Menunggu Pembayaran', 'pending']);
+            $query->whereIn('orders.status', [
+                'Menunggu Konfirmasi', 'Menunggu Pembayaran', 'PENDING_PAYMENT', 'pending'
+            ]);
         } elseif ($statusFilter === 'berjalan') {
-            $query->whereIn('orders.status', ['Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar']);
+            $query->whereIn('orders.status', [
+                'PAID', 'Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar'
+            ]);
         } elseif ($statusFilter === 'selesai') {
             $query->where('orders.status', 'Selesai');
         }
