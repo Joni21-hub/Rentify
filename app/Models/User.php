@@ -121,6 +121,43 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * URL Foto Profil / Avatar Toko
+     */
+    public function getFotoProfilUrlAttribute(): ?string
+    {
+        if (empty($this->foto_profil)) {
+            return null;
+        }
+
+        if (str_starts_with($this->foto_profil, 'http://') || str_starts_with($this->foto_profil, 'https://')) {
+            return $this->foto_profil;
+        }
+
+        $cleanPath = str_replace('public/', '', $this->foto_profil);
+        if (file_exists(public_path($cleanPath))) {
+            return asset($cleanPath);
+        }
+
+        return asset('storage/' . $cleanPath);
+    }
+
+    /**
+     * Relasi ke Barang Vendor
+     */
+    public function barangs()
+    {
+        return $this->hasMany(Barang::class, 'vendor_id');
+    }
+
+    /**
+     * Relasi ke Voucher Vendor
+     */
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class, 'vendor_id');
+    }
+
+    /**
      * Mendapatkan role aktif yang sedang digunakan saat ini
      */
     public function getActiveRoleAttribute(): string
@@ -136,3 +173,4 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role;
     }
 }
+

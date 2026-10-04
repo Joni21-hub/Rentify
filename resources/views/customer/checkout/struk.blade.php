@@ -103,14 +103,14 @@
         text-decoration: none;
     }
     .btn-download-img {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: linear-gradient(135deg, #0284c7, #0369a1);
         color: #ffffff;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.28);
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.28);
         margin-top: 20px;
     }
     .btn-download-img:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.35);
     }
     .btn-back-home {
         background: #ffffff;
@@ -239,12 +239,14 @@
 
         <!-- RINCIAN BARANG SEWA -->
         <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-box-open text-sky-500"></i>
-                <span>Rincian Barang Sewa</span>
+            <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                Rincian Barang Sewa
             </div>
 
-            @php $grandSewa = 0; @endphp
+            @php 
+                $grandSewa = 0; 
+                $grandDeposit = 0;
+            @endphp
 
             @foreach($keranjangPerVendor as $vendorId => $items)
                 @php 
@@ -292,11 +294,17 @@
                 
                 <div style="background: #ffffff; padding: 14px; border-radius: 14px; margin-bottom: 12px; border: 1.5px solid #e2e8f0;">
                     
-                    <!-- Vendor Header -->
+                    <!-- Vendor Header dengan Foto Profil Toko -->
                     <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; gap: 8px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-store text-sky-500 text-xs"></i>
-                            <span>{{ $vendor->vendor_name ?? 'Vendor' }}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border: 1px solid #bae6fd; flex-shrink: 0;">
+                                @if(!empty($vendor->foto_profil_url))
+                                    <img src="{{ $vendor->foto_profil_url }}" class="w-full h-full object-cover">
+                                @else
+                                    {{ strtoupper(substr($vendor->vendor_name ?? 'V', 0, 1)) }}
+                                @endif
+                            </div>
+                            <span style="font-size: 13.5px; font-weight: 800;">{{ $vendor->vendor_name ?? 'Vendor' }}</span>
                             <span style="font-size: 11px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 2px 7px; border-radius: 6px; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;">
                                 <i class="fa-regular fa-clock" style="font-size: 9.5px;"></i> {{ $durasi }} Hari
                             </span>
@@ -311,7 +319,9 @@
                         @php 
                             $hargaMarkup = $item->barang->harga_sewa_harian * 1.05;
                             $sewa = $hargaMarkup * $item->jumlah * $durasi;
-                            $grandSewa += $sewa; 
+                            $grandSewa += $sewa;
+                            $itemDeposit = ($item->barang->deposit ?? 0) * $item->jumlah;
+                            $grandDeposit += $itemDeposit;
                         @endphp
                         
                         <div style="margin-bottom: 8px; border-bottom: 1px dashed #f1f5f9; padding-bottom: 8px;">
@@ -332,8 +342,8 @@
                             @endif
                             
                             @if($item->barang->deposit > 0)
-                            <div style="font-size: 10.5px; font-weight: 600; color: #b45309; margin-top: 2px;">
-                                *Deposit fisik di tempat: Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
+                            <div style="font-size: 10.5px; font-weight: 700; color: #b45309; margin-top: 2px;">
+                                Deposit jaminan: Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
                             </div>
                             @endif
                         </div>
@@ -354,19 +364,28 @@
                         </div>
                     </div>
 
-                    <!-- LOKASI & WHATSAPP TOKO (TAMPAK RAPI BAIK DI LAYAR MAUPUN SAAT DI-DOWNLOAD) -->
-                    <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;">
+                    <!-- LOKASI & WHATSAPP TOKO (BERSIH TANPA WARNA MENCOLOK) -->
+                    <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
                         @if($opsiToko === 'ambil')
                             <a href="{{ $linkMaps }}" target="_blank" class="action-btn-pill maps-pill" title="Klik untuk membuka titik lokasi toko di Google Maps">
                                 <i class="fa-solid fa-location-dot" style="font-size: 12px; flex-shrink: 0;"></i>
-                                <span style="flex: 1;">Lokasi Toko: {{ $alamat }} (Buka Maps ↗)</span>
+                                <span style="flex: 1;">Lokasi Toko: {{ \App\Helpers\RentifyHelper::formatAreaDesa($alamat) }} (Buka Maps ↗)</span>
                             </a>
                         @endif
 
-                        <a href="{{ $linkWa }}" target="_blank" class="action-btn-pill wa-pill" title="Klik untuk chat WhatsApp ke vendor toko">
-                            <i class="fa-brands fa-whatsapp" style="font-size: 13px; flex-shrink: 0;"></i>
-                            <span>Chat WhatsApp Toko: {{ $waRaw }} (Kirim Pesan ↗)</span>
-                        </a>
+                        <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 12px; background: #ffffff;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 12px; font-weight: 700; color: #334155;">
+                                    WhatsApp: <span style="font-family: monospace; font-size: 12.5px; font-weight: 800; color: #0f172a;">{{ $waRaw }}</span>
+                                </div>
+                                <a href="{{ $linkWa }}" target="_blank" style="color: #0284c7; font-size: 11px; font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                                    Chat <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 9px;"></i>
+                                </a>
+                            </div>
+                            <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                                Hubungi toko via WhatsApp untuk konfirmasi serah terima unit
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -384,15 +403,24 @@
                 <span style="font-weight: 600; color: #64748b;">Total Ongkos Kirim</span> 
                 <span style="font-weight: 800; color: #0f172a;">Rp {{ number_format($total - $grandSewa, 0, ',', '.') }}</span>
             </div>
+
+            @if($grandDeposit > 0)
+            <div class="info-row" style="background: #fffbeb; padding: 6px 10px; border-radius: 8px; border: 1px solid #fef3c7; margin-bottom: 8px;">
+                <span style="font-weight: 700; color: #b45309;">Deposit Jaminan Fisik</span> 
+                <span style="font-weight: 800; color: #b45309;">Rp {{ number_format($grandDeposit, 0, ',', '.') }}</span>
+            </div>
+            @endif
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
                 <span style="font-size: 14px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">TOTAL PEMBAYARAN</span>
                 <span style="font-size: 20px; font-weight: 900; color: #0284c7;">Rp {{ number_format($total, 0, ',', '.') }}</span>
             </div>
             
-            <div style="font-size: 10px; color: #94a3b8; text-align: right; margin-top: 4px;">
-                *Belum termasuk deposit fisik di tempat (jika ada)
+            @if($grandDeposit > 0)
+            <div style="font-size: 10px; color: #b45309; text-align: right; margin-top: 4px; font-weight: 600;">
+                *Deposit fisik Rp {{ number_format($grandDeposit, 0, ',', '.') }} diserahkan langsung saat serah terima barang
             </div>
+            @endif
         </div>
 
         <!-- FOOTER RESMI STRUK -->
@@ -406,7 +434,7 @@
     <!-- TOMBOL AKSI DI BAWAH (HANYA DITAMPILKAN DI LAYAR, TIDAK MASUK FILE GAMBAR STRUK) -->
     <button type="button" id="btn-download-struk" onclick="downloadStrukAsImage()" class="btn-action-main btn-download-img">
         <i class="fa-solid fa-download text-base"></i>
-        <span>Download Struk Gambar (PNG)</span>
+        <span>Download Struk</span>
     </button>
 
     <a href="{{ route('customer.home') }}" class="btn-action-main btn-back-home">

@@ -3,33 +3,33 @@
 @section('content')
 <style>
     nav, header, footer { display: none !important; }
-    body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 15px; padding-bottom: 90px;}
-    .checkout-container { max-width: 600px; margin: 0 auto; padding: 0 15px;}
+    body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 10px; padding-bottom: 85px;}
+    .checkout-container { max-width: 600px; margin: 0 auto; padding: 0 12px;}
     
-    .header-title { font-size: 18px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-    .clean-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
-    .section-title { font-size: 14px; font-weight: 800; color: #0284c7; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .header-title { font-size: 17px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .clean-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
+    .section-title { font-size: 13.5px; font-weight: 800; color: #0284c7; margin-bottom: 8px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
     
-    .radio-list-group { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
-    .radio-list-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: white; cursor: pointer; transition: 0.2s; }
+    .radio-list-group { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+    .radio-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: white; cursor: pointer; transition: 0.2s; }
     .radio-list-item:not(:last-child) { border-bottom: 1px solid #e2e8f0; }
     .radio-list-item:hover { background: #f8fafc; }
-    .radio-label { font-size: 14px; font-weight: 600; color: #0284c7; }
-    .radio-price { font-size: 14px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 10px; }
+    .radio-label { font-size: 13.5px; font-weight: 700; color: #0284c7; }
+    .radio-price { font-size: 13px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 8px; }
     
-    .panel-lokasi { display: none; background: #f0f9ff; padding: 14px 16px; border-top: 1px dashed #bae6fd; font-size: 13px; animation: slideDown 0.3s ease-out; }
+    .panel-lokasi { display: none; background: #f0f9ff; padding: 10px 14px; border-top: 1px dashed #bae6fd; font-size: 12px; animation: slideDown 0.3s ease-out; }
     .panel-lokasi.active { display: block; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .jaminan-box { display: flex; gap: 10px; margin-top: 5px; }
-    .jaminan-item { flex: 1; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; background: white; }
+    .jaminan-box { display: flex; gap: 8px; margin-top: 4px; margin-bottom: 10px; }
+    .jaminan-item { flex: 1; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; background: white; }
     .jaminan-item:hover { border-color: #0284c7; background: #f0f9ff; }
     .radio-jaminan:checked + span { font-weight: 800; color: #0284c7; }
     .jaminan-item:has(.radio-jaminan:checked) { border-color: #0ea5e9; background: #f0f9ff; box-shadow: 0 0 12px rgba(14, 165, 233, 0.25); }
     .jaminan-item.disabled-jaminan { opacity: 0.4; cursor: not-allowed; background: #f1f5f9; border-color: #e2e8f0; }
 
-    .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 1000; padding-left: 20px;}
-    .btn-buat-pesanan { background: #0284c7; color: white; border: none; padding: 16px 30px; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+    .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 1000; padding-left: 16px;}
+    .btn-buat-pesanan { background: #0284c7; color: white; border: none; padding: 14px 26px; font-size: 14.5px; font-weight: 800; cursor: pointer; transition: 0.2s; }
     .btn-buat-pesanan:hover { background: #0369a1; box-shadow: 0 0 15px rgba(2, 132, 199, 0.4); }
 
     @keyframes slideUpSheet {
@@ -75,22 +75,22 @@
         
         <div class="vendor-block" data-vendor="{{ $vendorId }}" data-lat="{{ $latProduk }}" data-lon="{{ $lonProduk }}">
             
-            <div class="section-title" style="color: #0f172a; margin-top: 20px; justify-content: flex-start; gap: 10px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; overflow: hidden; border: 2px solid #e0f2fe; flex-shrink: 0;">
-                    @if(isset($vendor->avatar) && $vendor->avatar)
-                        <img src="{{ asset('storage/' . $vendor->avatar) }}" class="w-full h-full object-cover">
+            <div class="section-title" style="color: #0f172a; margin-top: 10px; margin-bottom: 8px; justify-content: flex-start; gap: 8px;">
+                <div style="width: 30px; height: 30px; border-radius: 50%; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; overflow: hidden; border: 2px solid #e0f2fe; flex-shrink: 0;">
+                    @if(!empty($vendor->foto_profil_url))
+                        <img src="{{ $vendor->foto_profil_url }}" class="w-full h-full object-cover">
                     @else
                         {{ strtoupper(substr($namaTokoAsli, 0, 1)) }}
                     @endif
                 </div>
-                <span>Toko: {{ $namaTokoAsli }}</span>
+                <span style="font-size: 14.5px; font-weight: 800; color: #0f172a;">{{ $namaTokoAsli }}</span>
             </div>
             
-            <div class="section-title">Pesanan Anda</div>
+            <div class="section-title" style="margin-top: 6px; margin-bottom: 6px;">Pesanan Anda</div>
             @foreach($items as $item)
                 @php $hargaTampil = $item->barang->harga_sewa_harian * 1.05; @endphp
-                <div style="display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0;">
-                    <div style="width: 70px; height: 70px; border-radius: 8px; border: 1px solid #e2e8f0; overflow:hidden;">
+                <div style="display: flex; gap: 12px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0;">
+                    <div style="width: 60px; height: 60px; border-radius: 8px; border: 1px solid #e2e8f0; overflow:hidden; flex-shrink: 0;">
                         @if($item->barang->cover_photo)
                             <img src="{{ asset(str_replace('public/', '', $item->barang->cover_photo)) }}" class="w-full h-full object-cover">
                         @else
@@ -98,61 +98,66 @@
                         @endif
                     </div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 700; font-size: 14px; color: #1e293b;">{{ $item->barang->nama }}</div>
-                        <div style="font-weight: 800; font-size: 14px; color: #0284c7; margin-top: 4px;">
+                        <div style="font-weight: 700; font-size: 13.5px; color: #1e293b;">{{ $item->barang->nama }}</div>
+                        <div style="font-weight: 800; font-size: 13.5px; color: #0284c7; margin-top: 2px;">
                             Rp {{ number_format($hargaTampil, 0, ',', '.') }} <span style="font-size: 11px; font-weight: normal; color:#64748b;">/hari</span>
                         </div>
                         @if($item->barang->deposit > 0)
-                            <div style="font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; display: inline-block; padding: 2px 8px; border-radius: 4px; margin-top: 6px; border: 1px solid #bae6fd;">
+                            <div style="font-size: 10.5px; font-weight: 700; color: #0369a1; background: #e0f2fe; display: inline-block; padding: 2px 7px; border-radius: 4px; margin-top: 4px; border: 1px solid #bae6fd;">
                                 Deposit: Rp {{ number_format($item->barang->deposit * $item->jumlah, 0, ',', '.') }}
                             </div>
                         @endif
                         <input type="hidden" class="harga-sewa-item" value="{{ $hargaTampil * $item->jumlah }}">
                     </div>
-                    <div style="background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 20px; height: fit-content;">
+                    <div style="background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 11.5px; padding: 3px 9px; border-radius: 20px; height: fit-content;">
                         x{{ $item->jumlah }}
                     </div>
                 </div>
             @endforeach
 
-            <div class="section-title mt-4"><i class="fa-regular fa-calendar-check mr-1"></i> Jadwal Sewa (WIB)</div>
-            <div class="clean-card" style="padding: 14px 16px; background: #f0f9ff; border-color: #bae6fd; box-shadow: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; font-weight: 700; color: #475569;">Tanggal Mulai</span>
-                    <span style="font-size: 13px; font-weight: 800; color: #0284c7;">
+            <div class="section-title mt-2" style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fa-regular fa-calendar-check mr-1"></i> Jadwal Sewa (WIB)</span>
+                <button type="button" onclick="bukaModalJadwal('{{ $vendorId }}')" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-pen-to-square"></i> Ubah Jadwal
+                </button>
+            </div>
+            <div class="clean-card" onclick="bukaModalJadwal('{{ $vendorId }}')" style="padding: 10px 14px; background: #f0f9ff; border-color: #bae6fd; box-shadow: none; margin-bottom: 8px; cursor: pointer;" title="Klik untuk mengubah jadwal sewa">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-size: 12.5px; font-weight: 600; color: #475569;">Tanggal Mulai</span>
+                    <span id="display_tgl_mulai_{{ $vendorId }}" style="font-size: 13px; font-weight: 800; color: #0284c7;">
                         {{ request('start_date') ? date('d M Y', strtotime(request('start_date'))) : date('d M Y') }}
                     </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 700; color: #475569;">Jam Ambil/Antar</span>
-                    <span style="font-size: 13px; font-weight: 800; color: #0284c7;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-size: 12.5px; font-weight: 600; color: #475569;">Jam Ambil/Antar</span>
+                    <span id="display_jam_mulai_{{ $vendorId }}" style="font-size: 13px; font-weight: 800; color: #0284c7;">
                         {{ request('start_time', '09:00') }} WIB
                     </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-                    <span style="font-size: 13px; font-weight: 700; color: #475569;">Durasi Pemakaian</span>
-                    <span style="font-size: 14px; font-weight: 900; color: #0ea5e9;">{{ $durasiDefault }} Hari</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #cbd5e1; padding-top: 6px;">
+                    <span style="font-size: 12.5px; font-weight: 600; color: #475569;">Durasi Pemakaian</span>
+                    <span id="display_durasi_{{ $vendorId }}" style="font-size: 13.5px; font-weight: 900; color: #0ea5e9;">{{ $durasiDefault }} Hari</span>
                 </div>
             </div>
 
             <input type="hidden" name="durasi_sewa[{{ $vendorId }}]" class="input-durasi" value="{{ $durasiDefault }}">
 
-            <div class="section-title mt-4">Jaminan Dokumen</div>
-            <p style="font-size: 11px; color: #64748b; margin-top: -6px; margin-bottom: 8px;">*Pilih 1 dokumen fisik untuk Jaminan.</p>
-            <div class="jaminan-box mb-4">
+            <div class="section-title mt-2">Jaminan Dokumen</div>
+            <p style="font-size: 11px; color: #64748b; margin-top: -4px; margin-bottom: 6px;">*Pilih 1 dokumen fisik untuk Jaminan.</p>
+            <div class="jaminan-box mb-3">
                 <label class="jaminan-item label-jaminan-{{ $vendorId }}">
                     <input type="radio" name="jaminan[{{ $vendorId }}]" value="KTP" class="radio-jaminan hidden" data-vendor="{{ $vendorId }}" onchange="updateJaminanExclusive()">
-                    <span style="font-size: 13px;">Kartu Tanda Penduduk (KTP)</span>
+                    <span style="font-size: 12.5px;">Kartu Tanda Penduduk (KTP)</span>
                     <i class="fa-solid fa-check text-sky-600 opacity-0 check-icon"></i>
                 </label>
                 <label class="jaminan-item label-jaminan-{{ $vendorId }}">
                     <input type="radio" name="jaminan[{{ $vendorId }}]" value="SIM" class="radio-jaminan hidden" data-vendor="{{ $vendorId }}" onchange="updateJaminanExclusive()">
-                    <span style="font-size: 13px;">Surat Izin Mengemudi (SIM)</span>
+                    <span style="font-size: 12.5px;">Surat Izin Mengemudi (SIM)</span>
                     <i class="fa-solid fa-check text-sky-600 opacity-0 check-icon"></i>
                 </label>
             </div>
 
-            <div class="section-title mt-4">Opsi Pengiriman</div>
+            <div class="section-title mt-2">Opsi Pengiriman</div>
             <div class="radio-list-group">
                 <label class="radio-list-item" onclick="bukaPanel('ambil', '{{ $vendorId }}')">
                     <span class="radio-label">Ambil di Tempat</span>
@@ -160,20 +165,19 @@
                 </label>
                 
                 <div id="panel_ambil_{{ $vendorId }}" class="panel-lokasi active">
-                    <div style="font-weight: 800; color: #0369a1; margin-bottom: 5px;">📍 Lokasi Toko Pengambilan:</div>
-                    <div style="color: #334155; font-weight: 700;">{{ $namaTokoAsli }}</div>
+                    <div style="font-weight: 800; color: #0369a1; margin-bottom: 3px;">📍 Lokasi Toko Pengambilan:</div>
+                    <div style="color: #334155; font-weight: 700; font-size: 13px;">{{ $namaTokoAsli }}</div>
                     
                     @php
-                        $alamatFull = $barangPertama->alamat ?? 'Area belum diatur';
-                        $pecahAlamat = explode(',', $alamatFull);
-                        $areaSaja = count($pecahAlamat) > 1 ? trim(implode(',', array_slice($pecahAlamat, 1))) : $alamatFull;
+                        $areaSaja = \App\Helpers\RentifyHelper::formatAreaDesa($barangPertama->alamat ?? $vendor->alamat_lengkap);
                     @endphp
                     <div style="color: #64748b; font-size: 12px; font-weight: 600; margin-top: 2px;">
                         <i class="fa-solid fa-map-pin text-[10px] mr-1"></i> Area: {{ $areaSaja }}
                     </div>
                     
-                    <div style="margin-top: 8px; font-size: 11.5px; color: #0284c7; background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #bae6fd; font-weight: 600; line-height: 1.4; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                        <i class="fa-solid fa-lock mr-1"></i> Alamat lengkap & Titik Maps Google disembunyikan demi keamanan. Akan otomatis terbuka di <strong>Riwayat Transaksi</strong> setelah Anda membuat pesanan.
+                    <div style="margin-top: 6px; font-size: 11px; color: #0284c7; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #bae6fd; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-lock text-[10px] flex-shrink-0"></i>
+                        <span>Alamat lengkap & Maps terbuka di Riwayat setelah sewa.</span>
                     </div>
                 </div>
 
@@ -183,9 +187,9 @@
                     <div class="radio-price"><span class="teks-ongkir-vendor text-slate-400" style="font-size: 12px;">Pilih Lokasi</span> <input type="radio" name="opsi_pengiriman[{{ $vendorId }}]" value="diantar" class="radio-opsi" onchange="hitungSemuaTotal()" style="width:16px; height:16px;"></div>
                 </label>
                 <div id="panel_antar_{{ $vendorId }}" class="panel-lokasi bg-white border-t border-slate-200">
-                    <div style="font-weight: 800; color: #0f172a; margin-bottom: 8px;">📍 Masukkan Alamat Pengiriman Anda:</div>
-                    <textarea class="rentify-input sync-alamat w-full p-3 text-sm mb-3 focus:outline-none" rows="2" placeholder="Cth: Jl. Merdeka No. 10 (Gunakan tombol GPS di bawah agar otomatis)" onchange="syncData()"></textarea>
-                    <button type="button" onclick="dapatkanLokasi()" style="width: 100%; background: #0284c7; color: white; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px;">📍 Sinkronisasi Titik GPS Saya</button>
+                    <div style="font-weight: 800; color: #0f172a; margin-bottom: 6px;">📍 Masukkan Alamat Pengiriman Anda:</div>
+                    <textarea class="rentify-input sync-alamat w-full p-2.5 text-xs mb-2 focus:outline-none" rows="2" placeholder="Cth: Jl. Merdeka No. 10 (Gunakan tombol GPS di bawah agar otomatis)" onchange="syncData()"></textarea>
+                    <button type="button" onclick="dapatkanLokasi()" style="width: 100%; background: #0284c7; color: white; padding: 9px; border-radius: 8px; font-weight: bold; font-size: 12px;">📍 Sinkronisasi Titik GPS Saya</button>
                     <div class="status-gps mt-2 text-xs font-bold text-sky-600 text-center"></div>
                 </div>
                 @endif
@@ -193,87 +197,137 @@
             </div>
             
             @if(!$bisaDiantar)
-            <div style="margin-top: 8px; font-size: 11.5px; color: #64748b; font-style: italic; line-height: 1.4; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #94a3b8;">
+            <div style="margin-top: 6px; font-size: 11px; color: #64748b; font-style: italic; line-height: 1.4; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #94a3b8;">
                 ℹ Mohon maaf, vendor ini belum menyediakan layanan pengantaran.
             </div>
             @endif
             
-            <div style="height: 1px; background: #e2e8f0; margin: 30px 0;"></div> 
+            <div style="height: 1px; background: #e2e8f0; margin: 14px 0;"></div> 
         </div>
         @endforeach
 
         <div class="section-title">Informasi Kontak Anda</div>
-        <div class="clean-card p-4" style="border-left: 4px solid #0284c7;">
-            <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">No WhatsApp <span style="color: #0284c7;">*</span></label>
-            <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()->user()->no_hp ?? '' }}" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+        <div class="clean-card p-3" style="border-left: 4px solid #0284c7;">
+            <label style="display: block; font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">No WhatsApp <span style="color: #0284c7;">*</span></label>
+            <input type="text" name="no_hp" id="input_wa_wajib" value="{{ auth()->user()->no_hp ?? '' }}" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 700; color: #0f172a; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
         </div>
 
-        <div class="section-title mt-4">Metode Pembayaran</div>
-        <div class="clean-card mb-6" onclick="bukaModalMetodePembayaran()" style="padding: 14px 16px; border: 1.5px solid #bae6fd; background: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.05);" onmouseover="this.style.borderColor='#0284c7'" onmouseout="this.style.borderColor='#bae6fd'">
+        <div class="section-title mt-2">Metode Pembayaran</div>
+        <div class="clean-card mb-3" onclick="bukaModalMetodePembayaran()" style="padding: 12px 14px; border: 1.5px solid #bae6fd; background: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.05);" onmouseover="this.style.borderColor='#0284c7'" onmouseout="this.style.borderColor='#bae6fd'">
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div id="display-metode-icon" style="width: 38px; height: 38px; border-radius: 10px; background: #002d62; color: #ffb700; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; font-weight: 900;">
-                        <i class="fa-solid fa-building-columns"></i>
+                    <div id="display-metode-icon" style="width: 38px; height: 38px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; font-weight: 900;">
+                        <i class="fa-solid fa-handshake"></i>
                     </div>
                     <div>
-                        <div id="display-metode-nama" style="font-size: 14px; font-weight: 800; color: #0f172a;">Bank Mandiri (Virtual Account)</div>
-                        <div id="display-metode-sub" style="font-size: 11.5px; color: #64748b; font-weight: 500;">Transfer Livin' by Mandiri & ATM (Verifikasi Otomatis)</div>
+                        <div id="display-metode-nama" style="font-size: 13.5px; font-weight: 800; color: #0f172a;">COD (Bayar di Tempat)</div>
+                        <div id="display-metode-sub" style="font-size: 11px; color: #64748b; font-weight: 500;">Bayar tunai langsung saat serah terima barang</div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px; color: #0284c7; font-size: 12.5px; font-weight: 800;">
+                <div style="display: flex; align-items: center; gap: 5px; color: #0284c7; font-size: 12px; font-weight: 800;">
                     <span>Ubah</span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
                 </div>
             </div>
 
-            <input type="hidden" name="metode_pembayaran" id="input_metode_pembayaran" value="BANK_MANDIRI">
+            <input type="hidden" name="metode_pembayaran" id="input_metode_pembayaran" value="COD">
         </div>
 
         <!-- PERUBAHAN: Panel Voucher Toko Dinamis dengan AJAX -->
-        <div class="section-title">Voucher Promo Toko</div>
-        <div class="clean-card" id="card-voucher" style="padding: 0; overflow: hidden; transition: all 0.3s; margin-bottom: 20px;">
-            <div onclick="toggleVoucher()" style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white;">
-                <span style="font-size: 13.5px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 8px;">
+        <div class="section-title mt-2">Voucher Promo Toko</div>
+        <div class="clean-card" id="card-voucher" style="padding: 0; overflow: hidden; transition: all 0.3s; margin-bottom: 12px;">
+            <div onclick="toggleVoucher()" style="padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white;">
+                <span style="font-size: 13px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-ticket"></i> Gunakan Voucher Toko
                 </span>
-                <span id="voucher-status-label" style="font-size: 12px; font-weight: 700; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                <span id="voucher-status-label" style="font-size: 11.5px; font-weight: 700; color: #64748b; display: flex; align-items: center; gap: 6px;">
                     Punya kode? <span style="font-size: 10px;">▼</span>
                 </span>
             </div>
-            <div id="voucher-panel" style="display: none; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
+            <div id="voucher-panel" style="display: none; padding: 10px 14px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik kode voucher toko" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" class="rentify-input">
+                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik kode voucher toko" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" class="rentify-input">
                     <button type="button" onclick="terapkanVoucher()" id="btn-terapkan-voucher" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s;">Pakai</button>
                 </div>
-                <div id="voucher-message" style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #ef4444; display: none;"></div>
+                <div id="voucher-message" style="margin-top: 6px; font-size: 11px; font-weight: 600; color: #ef4444; display: none;"></div>
             </div>
         </div>
 
-        <div class="section-title">Rincian Pembayaran</div>
-        <div class="clean-card">
-            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #475569;">
+        <div class="section-title mt-2">Rincian Pembayaran</div>
+        <div class="clean-card mb-4">
+            <div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: #475569;">
                 <span>Subtotal Produk</span><span id="grand-sewa" style="font-weight: 700; color: #1e293b;">Rp 0</span>
             </div>
             
-            <div id="row-diskon" style="display: none; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #0284c7; font-weight: 800;">
+            <div id="row-diskon" style="display: none; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: #0284c7; font-weight: 800;">
                 <span>Diskon Voucher Toko</span><span id="grand-diskon">- Rp 0</span>
             </div>
 
-            <div style="display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; color: #475569;">
+            <div style="display: flex; justify-content: space-between; font-size: 13.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 10px; color: #475569;">
                 <span>Subtotal Pengiriman</span><span id="grand-ongkir" style="font-weight: 700; color: #1e293b;">Rp 0</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: #0f172a;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; color: #0f172a;">
                 <span>Total Pembayaran</span><span id="grand-total" style="color:#0284c7; font-size: 18px;">Rp 0</span>
             </div>
-            <div style="font-size: 11px; color: #94a3b8; text-align: right; margin-top: 6px;">*Tidak termasuk uang jaminan deposit vendor</div>
+            <div style="font-size: 10.5px; color: #94a3b8; text-align: right; margin-top: 4px;">*Tidak termasuk uang jaminan deposit vendor</div>
         </div>
 
         <div class="bottom-bar">
             <div>
-                <div style="font-size: 12px; font-weight: 600; color: #64748b;">Total Pembayaran</div>
-                <div style="font-size: 20px; font-weight: 900; color: #0284c7;" id="bar-total">Rp 0</div>
+                <div style="font-size: 11.5px; font-weight: 600; color: #64748b;">Total Pembayaran</div>
+                <div style="font-size: 19px; font-weight: 900; color: #0284c7;" id="bar-total">Rp 0</div>
             </div>
             <button type="button" class="btn-buat-pesanan" onclick="validasiSubmit()">Buat Pesanan</button>
+        </div>
+
+        <!-- BOTTOM SHEET MODAL UBAH JADWAL SEWA -->
+        <div id="modalUbahJadwal" style="display: none; position: fixed; inset: 0; z-index: 99999;">
+            <div onclick="tutupModalJadwal()" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px);"></div>
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; max-width: 550px; margin: 0 auto; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 15px; font-weight: 900; color: #0f172a;">Ubah Jadwal Sewa (WIB)</div>
+                    <button type="button" onclick="tutupModalJadwal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; color: #64748b; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div style="padding: 18px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                            <i class="fa-regular fa-calendar text-sky-500 mr-1"></i> Tanggal Mulai Sewa
+                        </label>
+                        <input type="date" id="modal_input_date" value="{{ request('start_date', date('Y-m-d')) }}" min="{{ date('Y-m-d') }}" style="width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 13.5px; font-weight: 700; color: #0f172a; outline: none;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                            <i class="fa-regular fa-clock text-sky-500 mr-1"></i> Jam Pengambilan / Pengantaran
+                        </label>
+                        <select id="modal_input_time" style="width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 13.5px; font-weight: 700; color: #0f172a; outline: none; background: white;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                            @php
+                                $jamOptions = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+                                $curTime = request('start_time', '09:00');
+                            @endphp
+                            @foreach($jamOptions as $jam)
+                                <option value="{{ $jam }}" {{ substr($curTime, 0, 5) == $jam ? 'selected' : '' }}>{{ $jam }} WIB</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                            <i class="fa-solid fa-hourglass-half text-sky-500 mr-1"></i> Durasi Pemakaian (Hari)
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" onclick="ubahDurasiModal(-1)" style="width: 42px; height: 42px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #f8fafc; font-size: 18px; font-weight: 900; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center;">-</button>
+                            <input type="number" id="modal_input_durasi" value="{{ $durasiDefault ?? 1 }}" min="1" max="90" style="flex: 1; text-align: center; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 15px; font-weight: 900; color: #0f172a; outline: none;" onchange="if(this.value < 1) this.value = 1;">
+                            <button type="button" onclick="ubahDurasiModal(1)" style="width: 42px; height: 42px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #f8fafc; font-size: 18px; font-weight: 900; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center;">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 14px 20px; border-top: 1px solid #f1f5f9; background: #fafafa;">
+                    <button type="button" onclick="simpanJadwalModal()" style="width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.15s;">
+                        Terapkan Jadwal Baru
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- BOTTOM SHEET MODAL PILIH METODE PEMBAYARAN (ALA SHOPEE) -->
@@ -295,9 +349,9 @@
                 <!-- Body Options List -->
                 <div style="padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
                     
-                    <!-- KATEGORI 1: COD -->
+                    <!-- KATEGORI 1: COD (DEFAULT ACTIVE) -->
                     <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 4px; margin-bottom: 2px;">Bayar di Tempat</div>
-                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('COD', 'COD (Bayar di Tempat)', 'Bayar tunai langsung saat serah terima barang', 'fa-solid fa-handshake', '#059669', '#ecfdf5')" style="padding: 12px 14px; border: 1.5px solid #e2e8f0; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-COD">
+                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('COD', 'COD (Bayar di Tempat)', 'Bayar tunai langsung saat serah terima barang', 'fa-solid fa-handshake', '#059669', '#ecfdf5')" style="padding: 12px 14px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-COD">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="width: 36px; height: 36px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;">
                                 <i class="fa-solid fa-handshake"></i>
@@ -307,14 +361,14 @@
                                 <div style="font-size: 11px; color: #64748b;">Bayar tunai saat serah terima barang</div>
                             </div>
                         </div>
-                        <div class="radio-indicator" id="radio-indicator-COD" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 900;"></div>
+                        <div class="radio-indicator" id="radio-indicator-COD" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #0284c7; background: #0284c7; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 900;">✓</div>
                     </div>
 
                     <!-- KATEGORI 2: TRANSFER BANK (VIRTUAL ACCOUNT) -->
                     <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 10px; margin-bottom: 2px;">Transfer Bank (Virtual Account)</div>
 
                     <!-- MANDIRI -->
-                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('BANK_MANDIRI', 'Bank Mandiri (Virtual Account)', 'Transfer Livin\' by Mandiri & ATM (Verifikasi Otomatis)', 'fa-solid fa-building-columns', '#002d62', '#eff6ff')" style="padding: 12px 14px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-BANK_MANDIRI">
+                    <div class="opsi-bayar-row" onclick="pilihOpsiPembayaran('BANK_MANDIRI', 'Bank Mandiri (Virtual Account)', 'Transfer Livin\' by Mandiri & ATM (Verifikasi Otomatis)', 'fa-solid fa-building-columns', '#002d62', '#eff6ff')" style="padding: 12px 14px; border: 1.5px solid #e2e8f0; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" id="opsi-row-BANK_MANDIRI">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="width: 36px; height: 36px; border-radius: 10px; background: #002d62; color: #ffb700; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; flex-shrink: 0;">
                                 MANDIRI
@@ -324,7 +378,7 @@
                                 <div style="font-size: 11px; color: #64748b;">Verifikasi Otomatis (Livin' by Mandiri & ATM)</div>
                             </div>
                         </div>
-                        <div class="radio-indicator" id="radio-indicator-BANK_MANDIRI" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #0284c7; background: #0284c7; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 900;">✓</div>
+                        <div class="radio-indicator" id="radio-indicator-BANK_MANDIRI" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 900;"></div>
                     </div>
 
                     <!-- BCA -->
@@ -721,7 +775,62 @@
         document.getElementById('form-checkout').submit();
     }
 
-    let currentMetode = 'BANK_MANDIRI';
+    let targetVendorJadwal = null;
+
+    function bukaModalJadwal(vendorId) {
+        targetVendorJadwal = vendorId;
+        const curDurasi = document.querySelector(`input[name="durasi_sewa[${vendorId}]"]`)?.value || 1;
+        document.getElementById('modal_input_durasi').value = curDurasi;
+        document.getElementById('modalUbahJadwal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function tutupModalJadwal() {
+        document.getElementById('modalUbahJadwal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function ubahDurasiModal(delta) {
+        const input = document.getElementById('modal_input_durasi');
+        let val = (parseInt(input.value) || 1) + delta;
+        if (val < 1) val = 1;
+        input.value = val;
+    }
+
+    function simpanJadwalModal() {
+        const newDate = document.getElementById('modal_input_date').value;
+        const newTime = document.getElementById('modal_input_time').value;
+        const newDurasi = parseInt(document.getElementById('modal_input_durasi').value) || 1;
+
+        const inputStartDate = document.querySelector('input[name="start_date"]');
+        if (inputStartDate) inputStartDate.value = newDate;
+        const inputStartTime = document.querySelector('input[name="start_time"]');
+        if (inputStartTime) inputStartTime.value = newTime;
+
+        document.querySelectorAll('.vendor-block').forEach(block => {
+            const vId = block.getAttribute('data-vendor');
+            const durInput = block.querySelector('.input-durasi');
+            if (durInput) durInput.value = newDurasi;
+
+            const dispTgl = document.getElementById(`display_tgl_mulai_${vId}`);
+            if (dispTgl && newDate) {
+                const d = new Date(newDate + 'T00:00:00');
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                dispTgl.innerText = String(d.getDate()).padStart(2, '0') + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+            }
+
+            const dispJam = document.getElementById(`display_jam_mulai_${vId}`);
+            if (dispJam) dispJam.innerText = newTime + ' WIB';
+
+            const dispDur = document.getElementById(`display_durasi_${vId}`);
+            if (dispDur) dispDur.innerText = newDurasi + ' Hari';
+        });
+
+        tutupModalJadwal();
+        hitungSemuaTotal();
+    }
+
+    let currentMetode = 'COD';
 
     function bukaModalMetodePembayaran() {
         document.getElementById('modalMetodePembayaran').style.display = 'block';

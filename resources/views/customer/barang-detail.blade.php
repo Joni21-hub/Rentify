@@ -34,7 +34,7 @@
     </a>
 
     <!-- TOMBOL KERANJANG HEADER DENGAN BADGE -->
-    <a href="{{ route('customer.keranjang') }}" id="btn-header-cart" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition relative">
+    <a href="{{ route('customer.keranjang') }}" id="btn-header-cart" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition">
         <i class="fa-solid fa-cart-shopping text-xs"></i>
         <span id="header-cart-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs {{ ($keranjangCount ?? 0) > 0 ? '' : 'hidden' }}">
             {{ $keranjangCount ?? 0 }}
@@ -415,42 +415,50 @@
     </div>
 
     <div class="p-4 bg-white mb-4 border-b border-slate-100">
-        <h3 class="text-[13px] font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-store text-slate-400"></i> Informasi Toko</h3>
-        <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-sky-100 text-sky-500 rounded-full flex items-center justify-center font-black text-lg shadow-sm border border-sky-200">
-                    {{ substr($barang->vendor->vendor_name ?? 'V', 0, 1) }}
-                </div>
-                <div>
-                    <div class="font-bold text-slate-700 text-[13px]">{{ $barang->vendor->vendor_name ?? 'Vendor Rentify' }}</div>
-                    
-                    <div class="text-[10px] text-sky-600 font-semibold mt-0.5 flex items-center gap-1 bg-sky-50 w-fit px-2 py-0.5 rounded border border-sky-100">
-                        <i class="fa-solid fa-lock text-[9px]"></i> Maps terbuka setelah sewa
+        <a href="{{ route('customer.toko.show', $barang->vendor_id) }}" class="block p-3 rounded-2xl border border-slate-200/90 hover:border-sky-300 hover:shadow-xs transition bg-slate-50/50">
+            <div class="flex items-center justify-between mb-2.5">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-full overflow-hidden bg-sky-100 border border-sky-200 flex items-center justify-center flex-shrink-0 shadow-xs">
+                        @if(!empty($barang->vendor->foto_profil_url))
+                            <img src="{{ $barang->vendor->foto_profil_url }}" alt="{{ $barang->vendor->vendor_name }}" class="w-full h-full object-cover">
+                        @else
+                            <span class="font-black text-sky-600 text-base">{{ strtoupper(substr($barang->vendor->vendor_name ?? 'V', 0, 1)) }}</span>
+                        @endif
+                    </div>
+                    <div>
+                        <div class="font-extrabold text-slate-800 text-[13px] flex items-center gap-1.5">
+                            <span>{{ $barang->vendor->vendor_name ?? 'Vendor Rentify' }}</span>
+                            <i class="fa-solid fa-chevron-right text-slate-400 text-[10px]"></i>
+                        </div>
+                        
+                        <div class="text-[10px] text-sky-600 font-semibold mt-0.5 flex items-center gap-1 bg-sky-50 w-fit px-2 py-0.5 rounded border border-sky-100">
+                            <i class="fa-solid fa-lock text-[9px]"></i> Maps terbuka setelah sewa
+                        </div>
                     </div>
                 </div>
+
+                @if(isset($barang->jarak))
+                <div class="border border-slate-200 bg-white rounded-xl px-2.5 py-1 text-right flex-shrink-0 shadow-2xs">
+                    <span class="block text-[8px] text-slate-400 uppercase font-black tracking-wider">Jarak Ke Titikmu</span>
+                    <span class="font-black text-xs flex items-center justify-end gap-1 text-sky-500"><i class="fa-solid fa-location-dot"></i> {{ number_format($barang->jarak, 1, ',', '') }} KM</span>
+                </div>
+                @endif
             </div>
 
-            @if(isset($barang->jarak))
-            <div class="rentify-card border border-slate-200 text-slate-600 px-2.5 py-1 text-right flex-shrink-0">
-                <span class="block text-[8px] text-slate-400 uppercase font-black tracking-wider">Jarak Ke Titikmu</span>
-                <span class="font-black text-xs flex items-center justify-end gap-1 text-sky-500"><i class="fa-solid fa-location-dot"></i> {{ number_format($barang->jarak, 1, ',', '') }} KM</span>
-            </div>
-            @endif
-        </div>
-
-        <div class="w-full bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[12px] py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 text-center shadow-sm">
-            <i class="fa-solid fa-map-location-dot text-sky-500 text-sm"></i> 
             @php
-                $alamatFullDetail = $barang->alamat ?? 'Area belum diatur';
-                $pecahAlamatDetail = explode(',', $alamatFullDetail);
-                $areaSajaDetail = count($pecahAlamatDetail) > 1 ? trim(implode(',', array_slice($pecahAlamatDetail, 1))) : $alamatFullDetail;
+                $areaSajaDetail = \App\Helpers\RentifyHelper::formatAreaDesa($barang->alamat ?? $barang->vendor->alamat_lengkap);
             @endphp
-            <span class="line-clamp-1 truncate">Area Toko: {{ $areaSajaDetail }}</span>
-            @if(isset($barang->jarak))
-                <span class="text-slate-400 font-normal">• ±{{ number_format($barang->jarak, 1, ',', '') }} KM</span>
-            @endif
-        </div>
-        <p class="text-[10px] text-slate-400 text-center mt-1.5 font-medium">*Titik Maps akurat & alamat lengkap akan diberikan di struk pesanan.</p>
+            <div class="w-full bg-white border border-slate-200 text-slate-700 font-bold text-[12px] py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-center shadow-2xs">
+                <i class="fa-solid fa-map-location-dot text-sky-500 text-sm"></i> 
+                <span>Area Toko: {{ $areaSajaDetail }}</span>
+            </div>
+            
+            <div class="flex items-center justify-between mt-2 pt-1 text-[10px] text-sky-600 font-bold">
+                <span>Lihat barang sewa & klaim voucher toko</span>
+                <span class="flex items-center gap-1">Kunjungi Toko <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
+            </div>
+        </a>
+        <p class="text-[10px] text-slate-400 text-center mt-2 font-medium">*Titik Maps akurat & alamat lengkap akan diberikan di struk pesanan.</p>
     </div>
 
     <div class="rentify-navbar fixed bottom-0 left-0 w-full px-3 py-2.5 flex items-center justify-center z-50">

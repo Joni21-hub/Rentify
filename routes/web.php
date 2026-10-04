@@ -38,6 +38,10 @@ Route::name('customer.')->group(function () {
     
     Route::get('/customer/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
     
+    // Rute Profil Toko Publik (Katalog Barang Toko & Voucher)
+    Route::get('/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show'])->name('toko.show');
+    Route::get('/customer/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show']);
+    
     Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
     Route::get('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index']);
