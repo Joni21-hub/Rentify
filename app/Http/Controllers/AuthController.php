@@ -232,19 +232,33 @@ class AuthController extends Controller
     }
 
     // ─── SOCIALITE: GOOGLE LOGIN ──────────────────────────────────────────
+    private function getGoogleRedirectUri(): string
+    {
+        $configured = config('services.google.redirect');
+        if ($configured && str_starts_with($configured, 'http')) {
+            return $configured;
+        }
+        // Gunakan URL callback dinamis sesuai domain & HTTPS yang sedang diakses
+        return url('/auth/google/callback');
+    }
+
     public function redirectToGoogle(Request $request)
     {
         // Menyimpan status persetujuan S&K jika mereka mendaftar via tombol Google di halaman Register
         if ($request->has('agreed')) {
             session(['google_agreed_terms' => true]);
         }
-        return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
+        return \Laravel\Socialite\Facades\Socialite::driver('google')
+            ->redirectUrl($this->getGoogleRedirectUri())
+            ->redirect();
     }
 
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->user();
+            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')
+                ->redirectUrl($this->getGoogleRedirectUri())
+                ->user();
             
             // Cek apakah user sudah terdaftar menggunakan google_id ATAU email yang sama
             $user = User::where('google_id', $googleUser->id)->orWhere('email', $googleUser->email)->first();
