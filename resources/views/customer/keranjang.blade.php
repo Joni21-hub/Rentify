@@ -64,7 +64,7 @@
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <button type="button" onclick="confirmDelete('{{ route('customer.keranjang.remove', $item->id) }}')" class="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition">
+                            <button type="button" data-url="{{ route('customer.keranjang.remove', $item->id) }}" onclick="confirmDelete(this.dataset.url)" class="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition">
                                 <i class="fa-solid fa-trash-can text-sm"></i>
                             </button>
 
