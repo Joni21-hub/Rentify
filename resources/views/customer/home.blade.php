@@ -102,16 +102,16 @@
         <section class="mb-4 px-3 sm:px-4 md:px-0">
             @if(isset($banners) && $banners->count() > 0)
                 <div class="relative group">
-                    <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x rounded-2xl">
-                        @foreach($banners as $banner)
-                            <div class="min-w-full snap-center rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60">
-                                <img src="{{ asset($banner->gambar_url) }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
+                    <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x snap-mandatory rounded-2xl" style="-webkit-overflow-scrolling: touch;">
+                        @foreach($banners as $idx => $banner)
+                            <div class="w-full min-w-full snap-start rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60" style="-webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0);">
+                                <img src="{{ asset($banner->gambar_url) }}" alt="Banner Promo" class="absolute inset-0 w-full h-full object-cover object-center" {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }} decoding="async">
                             </div>
                         @endforeach
                     </div>
                     @if($banners->count() > 1)
                         <!-- Indikator Slide Halus Ala Shopee -->
-                        <div id="banner-dots" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 bg-black/25 backdrop-blur-xs px-2.5 py-1 rounded-full pointer-events-none">
+                        <div id="banner-dots" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full pointer-events-none" style="-webkit-backdrop-filter: blur(4px);">
                             @foreach($banners as $idx => $banner)
                                 <span class="banner-dot block h-1.5 rounded-full transition-all duration-300 {{ $idx === 0 ? 'w-4 bg-white' : 'w-1.5 bg-white/60' }}"></span>
                             @endforeach
@@ -329,8 +329,8 @@
     </main>
 
     <!-- BOTTOM NAV (MOBILE ONLY - WARNA KHAS RENTIFY, RAMPING & DEKAT SISI BAWAH) -->
-    <div class="md:hidden fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
-        <nav class="rentify-card backdrop-blur-xl border border-white/60 pointer-events-auto px-6 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-900/10">
+    <div class="md:hidden fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4" style="bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));">
+        <nav class="rentify-card backdrop-blur-xl border border-white/60 pointer-events-auto px-6 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-900/10" style="-webkit-backdrop-filter: blur(16px);">
             <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-sky-600 px-1 py-0.5">
                 <i class="fa-solid fa-house text-[16px] mb-0.5"></i><span class="text-[8.5px] font-black tracking-tight">Beranda</span>
             </a>
@@ -348,6 +348,12 @@
             const slider = document.getElementById('banner-slider');
             const dots = document.querySelectorAll('.banner-dot');
             if (slider && slider.children.length > 1) {
+                const slides = Array.from(slider.children);
+                const totalSlides = slides.length;
+                let currentSlide = 0;
+                let isUserInteracting = false;
+                let autoSlideTimer = null;
+
                 const updateDots = (activeIndex) => {
                     dots.forEach((dot, idx) => {
                         if (idx === activeIndex) {
@@ -360,22 +366,68 @@
                     });
                 };
 
-                let currentSlide = 0;
-                const totalSlides = slider.children.length;
+                const goToSlide = (index) => {
+                    if (index >= 0 && index < totalSlides) {
+                        currentSlide = index;
+                        const targetSlide = slides[currentSlide];
+                        if (targetSlide) {
+                            slider.scrollTo({
+                                left: targetSlide.offsetLeft,
+                                behavior: 'smooth'
+                            });
+                            updateDots(currentSlide);
+                        }
+                    }
+                };
 
-                setInterval(() => {
-                    currentSlide = (currentSlide + 1) % totalSlides;
-                    slider.scrollTo({
-                        left: currentSlide * slider.clientWidth,
-                        behavior: 'smooth'
-                    });
-                    updateDots(currentSlide);
-                }, 5000);
+                const startAutoSlide = () => {
+                    stopAutoSlide();
+                    autoSlideTimer = setInterval(() => {
+                        if (isUserInteracting) return;
+                        currentSlide = (currentSlide + 1) % totalSlides;
+                        goToSlide(currentSlide);
+                    }, 5000);
+                };
 
-                slider.addEventListener('scroll', () => {
-                    const activeIndex = Math.round(slider.scrollLeft / slider.clientWidth);
-                    updateDots(activeIndex);
+                const stopAutoSlide = () => {
+                    if (autoSlideTimer) {
+                        clearInterval(autoSlideTimer);
+                        autoSlideTimer = null;
+                    }
+                };
+
+                slider.addEventListener('touchstart', () => {
+                    isUserInteracting = true;
+                    stopAutoSlide();
                 }, { passive: true });
+
+                slider.addEventListener('touchend', () => {
+                    setTimeout(() => {
+                        isUserInteracting = false;
+                        startAutoSlide();
+                    }, 3000);
+                }, { passive: true });
+
+                let scrollTimeout;
+                slider.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        const scrollPos = slider.scrollLeft;
+                        let closestIdx = 0;
+                        let minDiff = Infinity;
+                        slides.forEach((slide, idx) => {
+                            const diff = Math.abs(slide.offsetLeft - scrollPos);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                closestIdx = idx;
+                            }
+                        });
+                        currentSlide = closestIdx;
+                        updateDots(closestIdx);
+                    }, 50);
+                }, { passive: true });
+
+                startAutoSlide();
             }
         });
     </script>
