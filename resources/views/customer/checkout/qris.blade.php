@@ -106,57 +106,83 @@
     </div>
     @endif
 
-    <!-- 4. KARTU KODE PEMBAYARAN UTAMA (ALA SHOPEE) -->
+    <!-- 4. KARTU KODE PEMBAYARAN UTAMA -->
     <div class="p-4 bg-slate-50 border-b border-slate-200/60">
         
         @if($channelCode === 'QRIS')
-            <!-- TAMPILAN KHUSUS QRIS RESMI -->
+            <!-- QRIS: Tampilkan QR langsung tanpa tombol tambahan -->
             <div class="bg-white rounded-2xl border-2 border-red-100 p-5 shadow-sm text-center">
-                <div class="w-16 h-16 mx-auto mb-3 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-red-100">
-                    <i class="fa-solid fa-qrcode"></i>
-                </div>
-                
-                <div class="flex items-center justify-center gap-1.5 mb-1">
+                <div class="flex items-center justify-center gap-1.5 mb-3">
                     <span class="text-red-600 font-black text-xl tracking-tight">QRIS</span>
                     <span class="text-xs font-bold text-slate-500">• Standar Pembayaran Nasional</span>
                 </div>
-                <p class="text-xs text-slate-500 mb-4">Satu QR Code resmi untuk semua aplikasi e-wallet dan mobile banking di Indonesia.</p>
 
-                <!-- Tombol Tampilkan QRIS Resmi -->
-                <button type="button" onclick="bukaGateway()" class="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-4">
-                    <i class="fa-solid fa-qrcode text-lg"></i>
-                    <span class="text-sm">Tampilkan Kode QRIS Resmi (Scan Sekarang)</span>
-                </button>
-
-                <div class="border-t border-slate-100 pt-3">
-                    <div class="text-[11px] font-bold text-slate-500 mb-2">Bisa di-scan dari aplikasi apapun:</div>
-                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                        <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-extrabold border border-blue-100">DANA</span>
-                        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-extrabold border border-emerald-100">GoPay</span>
-                        <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold border border-amber-100">ShopeePay</span>
-                        <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-100">OVO</span>
-                        <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold border border-sky-100">BCA Mobile</span>
-                        <span class="px-2 py-0.5 rounded bg-blue-900 text-yellow-300 text-[10px] font-extrabold">Livin' Mandiri</span>
-                        <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-extrabold">BRImo</span>
+                @if(!empty($qrisImageUrl))
+                    <!-- QR CODE LANGSUNG TAMPIL -->
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="p-3 bg-white rounded-2xl border-2 border-red-100 shadow-md inline-block">
+                            <img src="{{ $qrisImageUrl }}" alt="QRIS Code" class="w-52 h-52 object-contain" id="qris-img" />
+                        </div>
+                        <p class="text-xs text-slate-500">Scan kode QR di atas dengan aplikasi apapun</p>
+                        <div class="flex items-center justify-center gap-1.5 flex-wrap mt-1">
+                            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-extrabold border border-blue-100">DANA</span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-extrabold border border-emerald-100">GoPay</span>
+                            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold border border-amber-100">ShopeePay</span>
+                            <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-100">OVO</span>
+                            <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold border border-sky-100">BCA Mobile</span>
+                            <span class="px-2 py-0.5 rounded bg-blue-900 text-yellow-300 text-[10px] font-extrabold">Livin' Mandiri</span>
+                            <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-extrabold">BRImo</span>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <!-- Fallback jika QR belum siap: tombol buka Snap -->
+                    <div class="w-16 h-16 mx-auto mb-3 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-red-100">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Tekan tombol di bawah untuk menampilkan kode QRIS Anda.</p>
+                    <button type="button" onclick="bukaGateway()" class="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-qrcode text-lg"></i>
+                        <span class="text-sm">Tampilkan Kode QRIS</span>
+                    </button>
+                @endif
             </div>
 
-        @elseif($channelCode === 'GOPAY' || $channelCode === 'SHOPEEPAY')
-            <!-- TAMPILAN KHUSUS E-WALLET -->
+        @elseif($channelCode === 'GOPAY')
+            <!-- GOPAY: Deeplink langsung buka aplikasi -->
             <div class="bg-white rounded-2xl border-2 border-sky-100 p-5 shadow-sm text-center">
-                <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-2xl mb-3">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-[#00a5cf]/10 flex items-center justify-center text-2xl mb-3">
+                    <span class="text-[#00a5cf] font-black text-lg">GP</span>
+                </div>
+                <h3 class="text-base font-extrabold text-slate-800">Pembayaran GoPay</h3>
+                <p class="text-xs text-slate-500 mt-1 mb-4">Tekan tombol di bawah untuk langsung membuka aplikasi GoPay dan menyelesaikan pembayaran.</p>
+                @if(!empty($gopayDeeplink))
+                    <a href="{{ $gopayDeeplink }}" class="w-full bg-[#00a5cf] hover:bg-[#0090b5] text-white font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>Buka Aplikasi GoPay Sekarang</span>
+                    </a>
+                    <p class="text-[11px] text-slate-400">Setelah membayar di GoPay, halaman ini akan otomatis terupdate.</p>
+                @else
+                    <button type="button" onclick="bukaGateway()" class="w-full bg-[#00a5cf] text-white font-black py-3 rounded-xl hover:bg-[#0090b5] transition">
+                        Buka Aplikasi GoPay
+                    </button>
+                @endif
+            </div>
+
+        @elseif($channelCode === 'SHOPEEPAY')
+            <!-- SHOPEEPAY -->
+            <div class="bg-white rounded-2xl border-2 border-orange-100 p-5 shadow-sm text-center">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl mb-3">
                     <i class="fa-solid fa-wallet"></i>
                 </div>
-                <h3 class="text-base font-extrabold text-slate-800">{{ $bankName }}</h3>
-                <p class="text-xs text-slate-500 mt-1 mb-4">Tekan tombol bayar di bawah untuk membuka aplikasi {{ $bankName }} secara otomatis.</p>
-                <button type="button" onclick="bukaGateway()" class="w-full bg-sky-600 text-white font-black py-3 rounded-xl hover:bg-sky-700 transition">
-                    Buka Aplikasi {{ $bankName }}
+                <h3 class="text-base font-extrabold text-slate-800">ShopeePay</h3>
+                <p class="text-xs text-slate-500 mt-1 mb-4">Tekan tombol di bawah untuk membuka aplikasi Shopee dan menyelesaikan pembayaran.</p>
+                <button type="button" onclick="bukaGateway()" class="w-full bg-orange-500 text-white font-black py-3 rounded-xl hover:bg-orange-600 transition">
+                    Buka Aplikasi ShopeePay
                 </button>
             </div>
 
         @else
-            <!-- TAMPILAN VIRTUAL ACCOUNT BANK (MANDIRI, BCA, BNI, BRI, PERMATA, LAINNYA) -->
+            <!-- VIRTUAL ACCOUNT BANK (MANDIRI, BCA, BNI, BRI, PERMATA, LAINNYA) -->
             <div class="bg-white rounded-2xl border-2 border-sky-100 p-4 shadow-sm">
                 
                 <!-- Identitas Bank -->
@@ -170,16 +196,14 @@
                             <div class="text-[11px] text-slate-400 font-medium">Virtual Account Resmi</div>
                         </div>
                     </div>
-                    <span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
-                        Otomatis
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        ✓ Aktif
                     </span>
                 </div>
 
-                <!-- Bagian Nomor Virtual Account (Kode Pembayaran) -->
+                <!-- Nomor Virtual Account Asli dari Midtrans -->
                 <div class="pt-3 pb-2">
-                    <span class="text-xs font-semibold text-slate-500 block mb-1">
-                        No. Rekening / Virtual Account:
-                    </span>
+                    <span class="text-xs font-semibold text-slate-500 block mb-1">No. Virtual Account:</span>
                     <div class="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5">
                         <span id="text-va" class="text-lg md:text-xl font-black text-slate-800 font-mono tracking-wider">
                             {{ $kodePembayaran }}
@@ -193,7 +217,7 @@
 
                 <div class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
                     <i class="fa-solid fa-circle-info text-sky-500"></i>
-                    <span>Transfer sesuai nominal tepat hingga digit terakhir.</span>
+                    <span>Transfer tepat sesuai nominal hingga digit terakhir. Setelah transfer, struk otomatis tampil.</span>
                 </div>
             </div>
         @endif
@@ -437,25 +461,45 @@
         <div id="status-card" class="hidden p-3.5 rounded-xl text-xs font-bold mt-4 transition-all"></div>
     </div>
 
-    <!-- 6. FIXED BOTTOM ACTION BAR (ALA SHOPEE) -->
+    <!-- 6. FIXED BOTTOM ACTION BAR -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div class="max-w-[500px] mx-auto flex items-center gap-2">
             <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST" class="shrink-0">
                 @csrf
-                <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-[13px] py-3.5 px-3 rounded-xl transition-all active:scale-95 flex items-center gap-1.5" title="Alihkan pesanan ke Bayar di Tempat">
+                <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-[13px] py-3.5 px-3 rounded-xl transition-all active:scale-95 flex items-center gap-1.5" title="Alihkan ke Bayar di Tempat">
                     <i class="fa-solid fa-truck text-emerald-600"></i>
                     <span>COD</span>
                 </button>
             </form>
-            <button type="button" onclick="bukaGateway()" class="flex-1 {{ $channelCode === 'QRIS' ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700' : 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700' }} text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                @if($channelCode === 'QRIS')
-                    <i class="fa-solid fa-qrcode text-base"></i>
-                    <span>Tampilkan QRIS</span>
-                @else
+
+            @if($channelCode === 'QRIS' && !empty($qrisImageUrl))
+                {{-- QR sudah tampil langsung, tombol utama = cek status --}}
+                <button type="button" onclick="checkStatusLive()" class="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate text-base"></i>
+                    <span>Cek Status Pembayaran</span>
+                </button>
+
+            @elseif($channelCode === 'GOPAY' && !empty($gopayDeeplink))
+                {{-- GoPay: tombol langsung buka deeplink --}}
+                <a href="{{ $gopayDeeplink }}" class="flex-1 bg-[#00a5cf] text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>Buka GoPay</span>
+                </a>
+
+            @elseif(in_array($channelCode, ['BCA', 'BNI', 'BRI', 'PERMATA']) || str_contains($channelCode, 'MANDIRI') || str_contains($channelCode, 'LAINNYA'))
+                {{-- Bank VA: sudah tampil nomor VA, tombol cek status --}}
+                <button type="button" onclick="checkStatusLive()" class="flex-1 bg-gradient-to-r from-sky-500 to-sky-600 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate text-base"></i>
+                    <span>Konfirmasi Sudah Transfer</span>
+                </button>
+
+            @else
+                {{-- Fallback: buka Snap --}}
+                <button type="button" onclick="bukaGateway()" class="flex-1 bg-gradient-to-r from-sky-500 to-sky-600 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-credit-card text-xs"></i>
                     <span>Bayar Sekarang</span>
-                @endif
-            </button>
+                </button>
+            @endif
             
             <button type="button" onclick="checkStatusLive()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shrink-0" title="Cek Status Pembayaran">
                 <i class="fa-solid fa-rotate text-sky-600"></i>

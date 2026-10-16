@@ -179,7 +179,7 @@ class PembayaranController extends Controller
         $midtransOrderId = count($orders) === 1 ? $firstOrder->kode_booking : ('RNT-COMBO-' . implode('-', $orderIds));
         try {
             \Midtrans\Config::$serverKey = config('midtrans.server_key');
-            \Midtrans\Config::$isProduction = config('midtrans.is_production', true);
+            \Midtrans\Config::$isProduction = (bool) config('midtrans.is_production', false);
 
             $response = \Midtrans\Transaction::status($midtransOrderId);
             $trxStatus = $response->transaction_status ?? '';
