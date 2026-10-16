@@ -72,6 +72,32 @@
         </div>
     </div>
 
+    {{-- ─── ALERT PESAN / ERROR ────────────────────────────────────────── --}}
+    @if(session('error'))
+    <div class="px-4 pt-4">
+        <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-xs font-bold text-amber-900 mb-1">Pemberitahuan Gateway Pembayaran</h4>
+                    <p class="text-xs text-amber-800 leading-relaxed mb-3">
+                        {{ session('error') }}
+                    </p>
+                    <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition shadow flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-truck"></i>
+                            <span>Alihkan ke Bayar di Tempat (COD) Sekarang</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- ─── MAIN STATUS SECTION ──────────────────────────────────────────── --}}
     <div id="section-pending">
 
@@ -183,14 +209,21 @@
 
     {{-- ─── FIXED BOTTOM BAR ─────────────────────────────────────────────── --}}
     <div id="bottom-bar" class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        <div class="max-w-[500px] mx-auto flex items-center gap-2.5">
+        <div class="max-w-[500px] mx-auto flex items-center gap-2">
+            <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST" class="shrink-0">
+                @csrf
+                <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-[13px] py-3.5 px-3 rounded-xl transition-all active:scale-95 flex items-center gap-1.5" title="Alihkan pesanan ke Bayar di Tempat">
+                    <i class="fa-solid fa-truck text-emerald-600"></i>
+                    <span>COD</span>
+                </button>
+            </form>
             <a href="{{ $payUrl }}"
-               class="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-black text-[14px] py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+               class="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-credit-card text-xs"></i>
                 <span>Bayar di DOKU</span>
             </a>
             <button type="button" onclick="checkStatusManual()"
-                class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
                 title="Cek Status Sekarang">
                 <i class="fa-solid fa-rotate text-sky-600"></i>
                 <span>Cek</span>

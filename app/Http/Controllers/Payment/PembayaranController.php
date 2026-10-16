@@ -100,8 +100,18 @@ class PembayaranController extends Controller
 
         if (!$result['success']) {
             Log::error('[PembayaranController] DOKU checkout gagal', $result);
-            return redirect()->back()
-                ->with('error', 'Gagal menginisiasi pembayaran: ' . ($result['message'] ?? 'Error tidak diketahui.'));
+
+            $rawMsg = $result['message'] ?? 'Error tidak diketahui.';
+            if (stripos($rawMsg, 'merchant_inactive') !== false || stripos($rawMsg, 'MERCHANT INACTIVE') !== false) {
+                $friendlyMsg = 'Akun gateway pembayaran DOKU sedang dalam verifikasi aktivasi oleh pihak DOKU. Silakan gunakan metode COD agar pesanan Anda dapat langsung diproses.';
+            } elseif (stripos($rawMsg, 'invalid_client_id') !== false) {
+                $friendlyMsg = 'Koneksi ke gateway pembayaran DOKU belum siap (kredensial belum sesuai). Silakan gunakan metode COD.';
+            } else {
+                $friendlyMsg = 'Gagal menginisiasi pembayaran: ' . $rawMsg . '. Silakan pilih metode COD atau coba beberapa saat lagi.';
+            }
+
+            return redirect()->route('customer.doku.waiting', ['id' => $id])
+                ->with('error', $friendlyMsg);
         }
 
         $paymentUrl = $result['payment_url'];

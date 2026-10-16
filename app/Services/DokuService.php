@@ -143,7 +143,17 @@ class DokuService
             $body['order']['callback_url_cancel'] = $order['return_url'];
         }
 
-        $headers = $this->buildHeaders($endpoint, $body);
+        if (empty($this->clientId) || empty($this->secretKey)) {
+            Log::warning('[DOKU] Client-Id atau Secret-Key belum dikonfigurasi');
+            return [
+                'success' => false,
+                'message' => 'Konfigurasi DOKU belum lengkap. Silakan gunakan metode COD.',
+                'raw'     => [],
+            ];
+        }
+
+        $bodyJson = empty($body) ? '' : json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $headers  = $this->buildHeaders($endpoint, $body);
 
         Log::info('[DOKU] createCheckout request', [
             'invoice' => $invoiceNumber,
@@ -152,8 +162,9 @@ class DokuService
 
         try {
             $response = Http::withHeaders($headers)
+                ->withBody($bodyJson, 'application/json')
                 ->timeout(15)
-                ->post($this->baseUrl . $endpoint, $body);
+                ->post($this->baseUrl . $endpoint);
 
             $data = $response->json();
 

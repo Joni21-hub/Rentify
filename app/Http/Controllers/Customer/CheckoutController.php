@@ -368,10 +368,15 @@ class CheckoutController extends Controller
             'metode_pembayaran' => 'COD'
         ]);
 
-        return response()->json([
-            'success' => true,
-            'redirect_url' => route('customer.struk', ['id' => $id])
-        ]);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('customer.struk', ['id' => $id])
+            ]);
+        }
+
+        return redirect()->route('customer.struk', ['id' => $id])
+            ->with('success', 'Metode pembayaran berhasil dialihkan ke Bayar di Tempat (COD).');
     }
 
     public function qris(Request $request, $id)
@@ -434,7 +439,12 @@ class CheckoutController extends Controller
         if ($total == 0 || $keranjangPerVendor->isEmpty()) {
             $orderIds = [];
             foreach (explode('_', $id) as $part) {
-                if (str_starts_with($part, 'INV-')) $orderIds[] = (int) str_replace('INV-', '', $part);
+                $part = trim($part);
+                if (str_starts_with($part, 'INV-')) {
+                    $orderIds[] = (int) str_replace('INV-', '', $part);
+                } elseif (is_numeric($part)) {
+                    $orderIds[] = (int) $part;
+                }
             }
 
             $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
