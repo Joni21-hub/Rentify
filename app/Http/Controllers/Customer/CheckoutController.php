@@ -461,8 +461,14 @@ class CheckoutController extends Controller
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($params);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Midtrans Snap Generation Error: ' . $e->getMessage());
-            $snapError = $e->getMessage();
+            \Illuminate\Support\Facades\Log::warning('Midtrans Snap Specific Channel Error: ' . $e->getMessage() . '. Retrying with all active channels.');
+            try {
+                unset($params['enabled_payments']);
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
+            } catch (\Exception $e2) {
+                \Illuminate\Support\Facades\Log::error('Midtrans Snap Fallback Error: ' . $e2->getMessage());
+                $snapError = $e2->getMessage();
+            }
         }
 
         // Tentukan Kode Pembayaran / Nomor Virtual Account untuk bank yang dipilih

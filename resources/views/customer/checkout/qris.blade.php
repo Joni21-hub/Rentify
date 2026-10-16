@@ -528,7 +528,7 @@
     // Buka Gateway (Snap Midtrans) yang sudah terkunci ke bank ini
     function bukaGateway() {
         if (!snapToken) {
-            alert("Sesi pembayaran sedang disiapkan. Silakan refresh halaman.");
+            alert("Sesi pembayaran online belum dapat dimulai. Silakan beralih ke Bayar di Tempat (COD) atau coba lagi nanti.");
             return;
         }
 
