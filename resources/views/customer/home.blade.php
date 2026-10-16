@@ -104,7 +104,7 @@
                 <div class="relative group">
                     <div id="banner-slider" class="flex overflow-x-auto gap-3 scrollbar-hide snap-x snap-mandatory rounded-2xl" style="-webkit-overflow-scrolling: touch;">
                         @foreach($banners as $idx => $banner)
-                            <div class="w-full min-w-full snap-start rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 h-36 sm:h-52 md:h-64 bg-slate-100 border border-slate-200/60" style="-webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0);">
+                            <div class="w-full min-w-full snap-start rounded-2xl shadow-sm relative overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200/60 aspect-[1600/592]" style="aspect-ratio: 1600 / 592; -webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0);">
                                 <img src="{{ asset($banner->gambar_url) }}" alt="Banner Promo" class="absolute inset-0 w-full h-full object-cover object-center" {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }} decoding="async">
                             </div>
                         @endforeach
