@@ -330,7 +330,6 @@ class CheckoutController extends Controller
             'total_bayar_semua' => $totalBayarSemua,
             'no_hp' => $nomorWaAman,
             'waktu_pesan' => $waktuSekarang->format('Y-m-d H:i:s'),
-            'keranjang_per_vendor' => $keranjangPerVendor,
             'durasi_sewa_array' => $request->durasi_sewa,
             'jaminan_array' => $request->jaminan,
             'opsi_array' => $request->opsi_pengiriman 

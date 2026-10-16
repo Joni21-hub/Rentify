@@ -83,6 +83,10 @@ http {\n\
     access_log /dev/stdout;\n\
     sendfile on;\n\
     keepalive_timeout 65;\n\
+    fastcgi_buffer_size 128k;\n\
+    fastcgi_buffers 4 256k;\n\
+    fastcgi_busy_buffers_size 256k;\n\
+    fastcgi_temp_file_write_size 256k;\n\
     include /etc/nginx/http.d/*.conf;\n\
 }' > /etc/nginx/nginx.conf
 
