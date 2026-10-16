@@ -175,6 +175,55 @@ class PembayaranController extends Controller
             ]);
         }
 
+        // Cek live status ke Midtrans API
+        $midtransOrderId = count($orders) === 1 ? $firstOrder->kode_booking : ('RNT-COMBO-' . implode('-', $orderIds));
+        try {
+            \Midtrans\Config::$serverKey = config('midtrans.server_key');
+            \Midtrans\Config::$isProduction = config('midtrans.is_production', true);
+
+            $response = \Midtrans\Transaction::status($midtransOrderId);
+            $trxStatus = $response->transaction_status ?? '';
+            $fraudStatus = $response->fraud_status ?? 'accept';
+            $paymentType = $response->payment_type ?? 'midtrans';
+
+            $isSettled = false;
+            if ($trxStatus == 'capture') {
+                if ($fraudStatus == 'accept') $isSettled = true;
+            } elseif ($trxStatus == 'settlement') {
+                $isSettled = true;
+            }
+
+            if ($isSettled) {
+                DB::table('orders')->whereIn('id', $orderIds)->update([
+                    'status' => 'Menunggu Konfirmasi',
+                    'payment_method' => $paymentType === 'qris' ? 'QRIS' : ($paymentType === 'bank_transfer' ? 'Transfer Bank' : strtoupper($paymentType)),
+                    'updated_at' => now(),
+                ]);
+
+                foreach ($orders as $ord) {
+                    Pembayaran::updateOrCreate(
+                        ['order_id' => $ord->id],
+                        [
+                            'metode' => $paymentType,
+                            'jumlah' => $ord->total_biaya ?? $ord->total_price,
+                            'status' => 'Lunas',
+                            'paid_at' => now(),
+                        ]
+                    );
+                }
+
+                return response()->json([
+                    'success'      => true,
+                    'paid'         => true,
+                    'status'       => 'PAID',
+                    'message'      => '🎉 Pembayaran berhasil dikonfirmasi!',
+                    'redirect_url' => route('customer.struk', ['id' => $id]),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Silently continue jika order belum diproses di Midtrans
+        }
+
         // Cek EXPIRED
         $paymentExpiredAt = $firstOrder->payment_expired_at
             ? Carbon::parse($firstOrder->payment_expired_at)
@@ -384,6 +433,98 @@ class PembayaranController extends Controller
 
         // Belum terkonfirmasi, redirect ke halaman menunggu (polling aktif)
         return redirect()->route('customer.doku.waiting', ['id' => $id]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5.  MIDTRANS WEBHOOK CALLBACK
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Webhook Midtrans HTTP POST Callback
+     * Route: POST /midtrans/callback
+     */
+    public function callback(Request $request)
+    {
+        $serverKey = config('midtrans.server_key');
+        $orderId = $request->order_id ?? '';
+        $statusCode = $request->status_code ?? '';
+        $grossAmount = $request->gross_amount ?? '';
+        $signatureKey = $request->signature_key ?? '';
+
+        $hashed = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
+
+        if ($hashed !== $signatureKey) {
+            Log::warning('[Midtrans Callback] Invalid Signature', $request->all());
+            return response()->json(['message' => 'Invalid signature'], 403);
+        }
+
+        $trxStatus = $request->transaction_status;
+        $paymentType = $request->payment_type ?? 'midtrans';
+        $fraudStatus = $request->fraud_status ?? 'accept';
+
+        // Cari data pesanan
+        if (str_starts_with($orderId, 'RNT-COMBO-')) {
+            $idsPart = str_replace('RNT-COMBO-', '', $orderId);
+            $orderIds = array_filter(explode('-', $idsPart), 'is_numeric');
+            $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
+        } else {
+            $orders = DB::table('orders')->where('kode_booking', $orderId)->get();
+            if ($orders->isEmpty() && str_starts_with($orderId, 'INV-')) {
+                $rawId = (int) str_replace('INV-', '', $orderId);
+                $orders = DB::table('orders')->where('id', $rawId)->get();
+            }
+        }
+
+        if ($orders->isEmpty()) {
+            Log::warning('[Midtrans Callback] Orders not found for ' . $orderId);
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        $isSettled = false;
+        if ($trxStatus == 'capture') {
+            if ($fraudStatus == 'accept') $isSettled = true;
+        } elseif ($trxStatus == 'settlement') {
+            $isSettled = true;
+        }
+
+        if ($isSettled) {
+            DB::table('orders')->whereIn('id', $orders->pluck('id'))->update([
+                'status' => 'Menunggu Konfirmasi',
+                'payment_method' => $paymentType === 'qris' ? 'QRIS' : ($paymentType === 'bank_transfer' ? 'Transfer Bank' : strtoupper($paymentType)),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($orders as $ord) {
+                Pembayaran::updateOrCreate(
+                    ['order_id' => $ord->id],
+                    [
+                        'metode' => $paymentType,
+                        'jumlah' => $ord->total_biaya ?? $ord->total_price,
+                        'status' => 'Lunas',
+                        'paid_at' => now(),
+                    ]
+                );
+            }
+            Log::info("[Midtrans Callback] Order {$orderId} LUNAS via {$paymentType}");
+        } elseif (in_array($trxStatus, ['cancel', 'deny', 'expire'])) {
+            DB::table('orders')->whereIn('id', $orders->pluck('id'))->update([
+                'status' => 'Dibatalkan',
+                'updated_at' => now(),
+            ]);
+            foreach ($orders as $ord) {
+                Pembayaran::updateOrCreate(
+                    ['order_id' => $ord->id],
+                    [
+                        'metode' => $paymentType,
+                        'jumlah' => $ord->total_biaya ?? $ord->total_price,
+                        'status' => 'Gagal',
+                    ]
+                );
+            }
+            Log::info("[Midtrans Callback] Order {$orderId} BATAL/GAGAL");
+        }
+
+        return response()->json(['message' => 'Callback processed successfully']);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

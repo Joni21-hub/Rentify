@@ -338,19 +338,19 @@ class CheckoutController extends Controller
 
         $gabunganInvoice = implode('_', $invoiceIds);
 
-        // Jika COD, langsung ke struk. Jika DOKU, arahkan ke halaman generate payment URL
+        // Jika COD, langsung ke struk. Jika Transfer/QRIS/E-Wallet, arahkan ke halaman pembayaran (Snap Midtrans)
         if ($metodeInput === 'COD') {
             return redirect()->route('customer.struk', ['id' => $gabunganInvoice]);
         }
 
-        // Redirect ke route pay DOKU untuk generate payment URL dan redirect ke halaman DOKU
-        return redirect()->route('customer.pembayaran.pay', ['id' => $gabunganInvoice]);
+        return redirect()->route('customer.qris', ['id' => $gabunganInvoice]);
     }
 
     public function setCod(Request $request, $id)
     {
         $orderIds = [];
         foreach (explode('_', $id) as $part) {
+            $part = trim($part);
             if (str_starts_with($part, 'INV-')) {
                 $orderIds[] = (int) str_replace('INV-', '', $part);
             } elseif (is_numeric($part)) {
@@ -383,6 +383,7 @@ class CheckoutController extends Controller
     {
         $orderIds = [];
         foreach (explode('_', $id) as $part) {
+            $part = trim($part);
             if (str_starts_with($part, 'INV-')) {
                 $orderIds[] = (int) str_replace('INV-', '', $part);
             } elseif (is_numeric($part)) {
@@ -404,24 +405,141 @@ class CheckoutController extends Controller
             return redirect()->route('customer.struk', ['id' => $id]);
         }
 
-        $total      = $orders->sum('total_biaya') ?: $orders->sum('total_price');
+        $total = $orders->sum('total_biaya') ?: $orders->sum('total_price');
         $firstOrder = $orders->first();
+        $channelCode = strtoupper($firstOrder->payment_method ?? session('metode_pembayaran', 'QRIS'));
 
-        // Hitung sisa waktu bayar dari payment_expired_at di DB
-        $expiredAt = $firstOrder->payment_expired_at
-            ? \Carbon\Carbon::parse($firstOrder->payment_expired_at)
-            : null;
+        $midtransOrderId = count($orders) === 1 ? $firstOrder->kode_booking : ('RNT-COMBO-' . implode('-', $orderIds));
 
-        // Jika DOKU payment URL sudah ada dan belum expired, tampilkan halaman menunggu
-        $dokuPaymentUrl = $firstOrder->doku_payment_url ?? null;
+        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production', true);
+        \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized', true);
+        \Midtrans\Config::$is3ds = config('midtrans.is_3ds', true);
 
-        return view('customer.checkout.doku-waiting', [
-            'id'             => $id,
-            'total'          => $total,
-            'orders'         => $orders,
-            'firstOrder'     => $firstOrder,
-            'dokuPaymentUrl' => $dokuPaymentUrl,
-            'expiredAt'      => $expiredAt,
+        $params = [
+            'transaction_details' => [
+                'order_id' => $midtransOrderId,
+                'gross_amount' => (int) round($total),
+            ],
+            'customer_details' => [
+                'first_name' => auth()->user()->name ?? 'Customer',
+                'email' => auth()->user()->email ?? 'customer@rentify.test',
+                'phone' => $firstOrder->customer_whatsapp ?? (auth()->user()->no_hp ?? '08123456789'),
+            ],
+            'item_details' => [
+                [
+                    'id' => $id,
+                    'price' => (int) round($total),
+                    'quantity' => 1,
+                    'name' => 'Sewa Barang Rentify ' . (count($orders) === 1 ? $firstOrder->kode_booking : $id),
+                ]
+            ]
+        ];
+
+        // Kunci payment channel ke bank/metode yang dipilih customer
+        if (str_contains($channelCode, 'MANDIRI')) {
+            $params['enabled_payments'] = ['echannel', 'mandiri_va'];
+        } elseif (str_contains($channelCode, 'BCA')) {
+            $params['enabled_payments'] = ['bca_va'];
+        } elseif (str_contains($channelCode, 'BNI')) {
+            $params['enabled_payments'] = ['bni_va'];
+        } elseif (str_contains($channelCode, 'BRI')) {
+            $params['enabled_payments'] = ['bri_va'];
+        } elseif (str_contains($channelCode, 'PERMATA')) {
+            $params['enabled_payments'] = ['permata_va'];
+        } elseif (str_contains($channelCode, 'LAINNYA')) {
+            $params['enabled_payments'] = ['other_va'];
+        } elseif ($channelCode === 'QRIS') {
+            $params['enabled_payments'] = ['qris', 'gopay'];
+        } elseif ($channelCode === 'GOPAY') {
+            $params['enabled_payments'] = ['gopay', 'qris'];
+        } elseif ($channelCode === 'SHOPEEPAY') {
+            $params['enabled_payments'] = ['shopeepay'];
+        }
+
+        $snapToken = null;
+        $snapError = null;
+        try {
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Midtrans Snap Generation Error: ' . $e->getMessage());
+            $snapError = $e->getMessage();
+        }
+
+        // Tentukan Kode Pembayaran / Nomor Virtual Account untuk bank yang dipilih
+        $phoneDigits = preg_replace('/[^0-9]/', '', $firstOrder->customer_whatsapp ?? (auth()->user()->no_hp ?? '08123456789'));
+        if (str_starts_with($phoneDigits, '62')) {
+            $phoneSuffix = substr($phoneDigits, 2);
+        } elseif (str_starts_with($phoneDigits, '0')) {
+            $phoneSuffix = substr($phoneDigits, 1);
+        } else {
+            $phoneSuffix = $phoneDigits;
+        }
+        $phoneSuffix = substr($phoneSuffix, 0, 10);
+
+        $bankPrefix = '89508';
+        $bankName = 'Bank Mandiri';
+        $bankLogo = 'MANDIRI';
+        $bankColor = '#002d62';
+
+        if (str_contains($channelCode, 'MANDIRI')) {
+            $bankPrefix = '89508';
+            $bankName = 'Bank Mandiri';
+            $bankLogo = 'MANDIRI';
+            $bankColor = '#002d62';
+        } elseif (str_contains($channelCode, 'BCA')) {
+            $bankPrefix = '12628';
+            $bankName = 'Bank BCA';
+            $bankLogo = 'BCA';
+            $bankColor = '#005baa';
+        } elseif (str_contains($channelCode, 'BNI')) {
+            $bankPrefix = '8808';
+            $bankName = 'Bank BNI';
+            $bankLogo = 'BNI';
+            $bankColor = '#f15a24';
+        } elseif (str_contains($channelCode, 'BRI')) {
+            $bankPrefix = '10248';
+            $bankName = 'Bank BRI (BRIVA)';
+            $bankLogo = 'BRI';
+            $bankColor = '#00529c';
+        } elseif (str_contains($channelCode, 'PERMATA')) {
+            $bankPrefix = '8528';
+            $bankName = 'Bank Permata';
+            $bankLogo = 'PERMATA';
+            $bankColor = '#008852';
+        } elseif (str_contains($channelCode, 'LAINNYA')) {
+            $bankPrefix = '988';
+            $bankName = 'Bank Lainnya (Virtual Account)';
+            $bankLogo = 'ATM';
+            $bankColor = '#475569';
+        } elseif ($channelCode === 'QRIS') {
+            $bankName = 'QRIS';
+            $bankLogo = 'QRIS';
+            $bankColor = '#0284c7';
+        } elseif ($channelCode === 'GOPAY') {
+            $bankName = 'GoPay';
+            $bankLogo = 'GOPAY';
+            $bankColor = '#00a5cf';
+        } elseif ($channelCode === 'SHOPEEPAY') {
+            $bankName = 'ShopeePay';
+            $bankLogo = 'SHOPEEPAY';
+            $bankColor = '#ee4d2d';
+        }
+
+        $kodePembayaran = $bankPrefix . $phoneSuffix;
+
+        return view('customer.checkout.qris', [
+            'id' => $id, 
+            'total' => $total,
+            'orders' => $orders,
+            'snapToken' => $snapToken,
+            'snapError' => $snapError,
+            'midtransOrderId' => $midtransOrderId,
+            'channelCode' => $channelCode,
+            'bankName' => $bankName,
+            'bankLogo' => $bankLogo,
+            'bankColor' => $bankColor,
+            'kodePembayaran' => $kodePembayaran
         ]);
     }
 

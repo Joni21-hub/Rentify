@@ -228,17 +228,16 @@ Route::prefix('customer')->name('customer.')
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
-    // DOKU Pay: generate DOKU payment URL dan redirect customer ke halaman DOKU
-    Route::get('/pembayaran/{id}/pay', [PembayaranController::class, 'pay'])->name('pembayaran.pay');
+    // Pembayaran Midtrans Snap & QRIS
+    Route::get('/qris/{id}', [CheckoutController::class, 'qris'])->name('qris');
+    Route::get('/menunggu-pembayaran/{id}', [CheckoutController::class, 'qris'])->name('doku.waiting');
 
-    // DOKU Return: customer kembali dari halaman DOKU setelah bayar
+    // DOKU Pay & Return (kompatibilitas)
+    Route::get('/pembayaran/{id}/pay', [PembayaranController::class, 'pay'])->name('pembayaran.pay');
     Route::get('/pembayaran/{id}/return', [PembayaranController::class, 'return'])->name('pembayaran.return');
 
-    // AJAX Polling: cek status pembayaran dari DB (dipakai frontend setiap 4 detik)
+    // AJAX Polling: cek status pembayaran (Midtrans & DB)
     Route::get('/pembayaran/check-status/{id}', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check_status');
-
-    // Halaman Menunggu Pembayaran DOKU (dengan countdown + auto-polling)
-    Route::get('/menunggu-pembayaran/{id}', [CheckoutController::class, 'qris'])->name('doku.waiting');
 
     // Halaman Sukses setelah pembayaran dikonfirmasi
     Route::get('/pembayaran-sukses/{id}', function ($id) {
@@ -280,8 +279,8 @@ Route::prefix('customer')->name('customer.')
 });
 
 
-// ─── DOKU WEBHOOK (tanpa CSRF — gunakan ExceptFromCsrf) ──────────────────────
-// Endpoint ini dipanggil oleh server DOKU (bukan browser), tidak memerlukan CSRF.
+// ─── PAYMENT WEBHOOKS (tanpa CSRF — dihandle di bootstrap/app.php) ──────────────
+Route::post('/midtrans/callback', [\App\Http\Controllers\Payment\PembayaranController::class, 'callback'])->name('midtrans.callback');
 Route::post('/api/payments/doku/notify', [\App\Http\Controllers\Payment\PembayaranController::class, 'notify'])
     ->name('doku.notify')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);

@@ -81,6 +81,31 @@
         </div>
     </div>
 
+    @if(!empty($snapError))
+    <div class="px-4 pt-4">
+        <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-xs font-bold text-amber-900 mb-1">Status Sesi Pembayaran</h4>
+                    <p class="text-xs text-amber-800 leading-relaxed mb-3">
+                        Gagal memuat gateway Midtrans: {{ $snapError }}. Anda dapat beralih ke Bayar di Tempat (COD).
+                    </p>
+                    <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition shadow flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-truck"></i>
+                            <span>Alihkan ke Bayar di Tempat (COD) Sekarang</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- 4. KARTU KODE PEMBAYARAN UTAMA (ALA SHOPEE) -->
     <div class="p-4 bg-slate-50 border-b border-slate-200/60">
         
@@ -414,20 +439,27 @@
 
     <!-- 6. FIXED BOTTOM ACTION BAR (ALA SHOPEE) -->
     <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        <div class="max-w-[500px] mx-auto flex items-center gap-2.5">
-            <button type="button" onclick="bukaGateway()" class="flex-1 {{ $channelCode === 'QRIS' ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700' : 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700' }} text-white font-black text-[14px] py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+        <div class="max-w-[500px] mx-auto flex items-center gap-2">
+            <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST" class="shrink-0">
+                @csrf
+                <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-[13px] py-3.5 px-3 rounded-xl transition-all active:scale-95 flex items-center gap-1.5" title="Alihkan pesanan ke Bayar di Tempat">
+                    <i class="fa-solid fa-truck text-emerald-600"></i>
+                    <span>COD</span>
+                </button>
+            </form>
+            <button type="button" onclick="bukaGateway()" class="flex-1 {{ $channelCode === 'QRIS' ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700' : 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700' }} text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
                 @if($channelCode === 'QRIS')
                     <i class="fa-solid fa-qrcode text-base"></i>
-                    <span>Tampilkan Kode QRIS</span>
+                    <span>Tampilkan QRIS</span>
                 @else
                     <i class="fa-solid fa-credit-card text-xs"></i>
                     <span>Bayar Sekarang</span>
                 @endif
             </button>
             
-            <button type="button" onclick="checkStatusLive()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5" title="Cek Status Pembayaran">
+            <button type="button" onclick="checkStatusLive()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shrink-0" title="Cek Status Pembayaran">
                 <i class="fa-solid fa-rotate text-sky-600"></i>
-                <span>Cek Status</span>
+                <span>Cek</span>
             </button>
         </div>
     </div>
