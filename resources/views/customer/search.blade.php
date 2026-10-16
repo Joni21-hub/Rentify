@@ -87,20 +87,20 @@
                 </a>
             </div>
         @else
-            <!-- GRID PRODUK -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+            <!-- GRID PRODUK (MASONRY) -->
+            <div class="columns-2 md:columns-4 gap-2.5 [column-fill:_balance]">
                 @foreach($barangs as $barang)
                     @php 
                         $hargaTampil = $barang->harga_sewa_customer ?? $barang->harga_sewa_harian; 
                     @endphp
-                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="rentify-card border border-slate-100/80 overflow-hidden hover:border-sky-300 hover:shadow-md transition duration-200 flex flex-col group relative">
+                    <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="break-inside-avoid mb-2.5 rentify-card border border-slate-100/80 overflow-hidden hover:border-sky-300 hover:shadow-md transition duration-200 flex flex-col group relative">
                         
                         <!-- Area Foto -->
-                        <div class="relative w-full aspect-square bg-white flex items-center justify-center p-2 border-b border-slate-50">
+                        <div class="relative w-full overflow-hidden bg-slate-50 border-b border-slate-50">
                             @if($barang->cover_photo)
-                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition duration-300">
+                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-auto max-h-[420px] object-cover group-hover:scale-105 transition duration-300 block">
                             @else
-                                <i class="fa-solid fa-image text-slate-200 text-3xl"></i>
+                                <div class="w-full h-36 flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
                             @endif
                             
                             <!-- Badge Stok -->

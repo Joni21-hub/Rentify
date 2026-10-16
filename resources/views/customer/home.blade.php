@@ -286,15 +286,15 @@
                     </a>
                 </div>
 
-                <!-- GRID: 2 kolom HP, 3 kolom tablet, 5 kolom Desktop -->
-                <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
+                <!-- MASONRY GRID (WATERFALL ALA PINTEREST / SHOPEE): Yang panjang tetap panjang, yang pendek tetap pendek -->
+                <div class="columns-2 gap-2.5 md:columns-3 lg:columns-5 [column-fill:_balance]">
                     @foreach($daftarBarang as $barang)
-                        <div class="rentify-card border border-slate-100/80 overflow-hidden relative flex flex-col transition hover:shadow-md">
-                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square bg-white p-1">
+                        <div class="break-inside-avoid mb-2.5 rentify-card border border-slate-100/80 overflow-hidden relative flex flex-col transition hover:shadow-md">
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full overflow-hidden bg-slate-50">
                                 @if($barang->cover_photo)
-                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-full object-contain" loading="lazy" decoding="async">
+                                    <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-full h-auto max-h-[420px] object-cover block" loading="lazy" decoding="async" alt="{{ $barang->nama }}">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
+                                    <div class="w-full h-36 flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
                                 @endif
                                 @if(isset($barang->jarak))
                                 <div class="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-sky-600 shadow-sm border border-sky-100">
