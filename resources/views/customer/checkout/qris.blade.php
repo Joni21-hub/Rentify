@@ -2,20 +2,45 @@
 
 @section('content')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
-    /* Sembunyikan navbar dan footer bawaan agar tampilan full-screen ala Shopee */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+    
+    /* Sembunyikan navigasi global agar fokus ke pembayaran */
     nav, header, footer, .navbar, .header, .top-bar, .footer, #footer { display: none !important; }
-    body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding-bottom: 110px; margin: 0; }
     
-    .shopee-container { max-width: 500px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+    body {
+        background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%) fixed !important;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        color: #0f172a;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+    }
     
-    .accordion-header { cursor: pointer; transition: background-color 0.15s; }
-    .accordion-header:active { background-color: #f8fafc; }
+    .rentify-pay-wrapper {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 16px 14px 110px 14px;
+    }
+    
+    .rentify-card {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.06);
+    }
+    
+    .accordion-header {
+        cursor: pointer;
+        transition: background-color 0.15s;
+    }
+    .accordion-header:active {
+        background-color: #f8fafc;
+    }
     
     .step-badge {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
         background: #e0f2fe;
         color: #0284c7;
@@ -23,66 +48,78 @@
         align-items: center;
         justify-content: center;
         font-size: 11px;
-        font-weight: 900;
+        font-weight: 800;
         flex-shrink: 0;
+    }
+
+    .btn-rentify-gradient {
+        background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+        color: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .btn-rentify-gradient:hover {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+        box-shadow: 0 8px 20px rgba(2, 132, 199, 0.35);
     }
 </style>
 
 @php
-    $isProd = config('midtrans.is_production', true);
+    $isProd = (bool) config('midtrans.is_production', false);
     $snapJsUrl = $isProd 
         ? 'https://app.midtrans.com/snap/snap.js' 
         : 'https://app.sandbox.midtrans.com/snap/snap.js';
     $clientKey = config('midtrans.client_key');
 @endphp
 
-<!-- Payment Gateway Snap JS -->
+<!-- Midtrans Snap JS (Fallback) -->
 <script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
 
-<div class="shopee-container relative">
+<div class="rentify-pay-wrapper">
 
-    <!-- 1. HEADER HALAMAN PEMBAYARAN -->
-    <div class="sticky top-0 z-40 bg-white border-b border-slate-100 px-4 py-3.5 flex items-center justify-between">
+    <!-- 1. HEADER NAVIGASI RENTIFY -->
+    <div class="rentify-card p-3.5 mb-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center gap-3">
-            <a href="{{ route('customer.pesanan') }}" class="text-slate-700 hover:text-sky-600 transition text-lg flex items-center justify-center p-1">
-                <i class="fa-solid fa-arrow-left"></i>
+            <a href="{{ route('customer.pesanan') }}" class="w-9 h-9 rounded-xl bg-sky-50 text-[#0284c7] hover:bg-sky-100 flex items-center justify-center transition active:scale-95" title="Kembali ke Pesanan Saya">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
             </a>
             <div>
-                <h1 class="text-[16px] font-bold text-slate-800 leading-tight">Pembayaran {{ $bankName }}</h1>
-                <span class="text-[11px] text-slate-400 font-medium">No. Pesanan: {{ $id }}</span>
+                <h1 class="text-[15px] font-extrabold text-slate-800 leading-tight">Pembayaran {{ $bankName }}</h1>
+                <span class="text-[11px] font-medium text-slate-400">No. Pesanan: <b class="text-slate-600 font-mono">{{ $id }}</b></span>
             </div>
         </div>
-        <div class="text-[11px] font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100 flex items-center gap-1">
+        <div class="text-[11px] font-extrabold text-[#0284c7] bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100 flex items-center gap-1.5 shrink-0">
             <i class="fa-solid fa-shield-halved text-[10px]"></i> Resmi
         </div>
     </div>
 
-    <!-- 2. COUNTDOWN BANNER (WAKTU PEMBAYARAN ALA SHOPEE) -->
-    <div class="bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50 border-b border-amber-200/70 px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-clock text-amber-500 text-sm"></i>
-            <span class="text-xs font-semibold text-slate-700">Bayar sebelum:</span>
+    <!-- 2. KARTU TOTAL TAGIHAN & COUNTDOWN -->
+    <div class="rentify-card p-4 mb-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Total Tagihan</span>
+                <span class="text-2xl font-black text-[#0284c7]">Rp {{ number_format($total ?? 0, 0, ',', '.') }}</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check text-[10px] text-emerald-500"></i> Verifikasi Otomatis
+                </span>
+            </div>
         </div>
-        <div class="flex items-center gap-1.5 font-mono font-black text-amber-600 text-sm tracking-wider" id="countdown-timer">
-            23:59:59
-        </div>
-    </div>
 
-    <!-- 3. RINGKASAN TOTAL TAGIHAN -->
-    <div class="px-4 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
-        <div>
-            <span class="text-xs text-slate-500 block font-medium">Total Pembayaran</span>
-            <span class="text-xl font-black text-sky-600">Rp {{ number_format($total ?? 0, 0, ',', '.') }}</span>
-        </div>
-        <div class="text-right">
-            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-block">
-                Verifikasi Otomatis
+        <div class="border-t border-slate-100 my-3"></div>
+
+        <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-500 font-medium flex items-center gap-1.5">
+                <i class="fa-regular fa-clock text-[#0284c7]"></i> Batas waktu pembayaran:
+            </span>
+            <span id="countdown-timer" class="font-mono font-black text-[#0284c7] bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-100 text-xs tracking-wider">
+                23:59:59
             </span>
         </div>
     </div>
 
     @if(!empty($snapError))
-    <div class="px-4 pt-4">
+    <div class="mb-3">
         <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 shadow-sm">
             <div class="flex items-start gap-3">
                 <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
@@ -90,103 +127,89 @@
                 </div>
                 <div class="flex-1">
                     <h4 class="text-xs font-bold text-amber-900 mb-1">Status Sesi Pembayaran</h4>
-                    <p class="text-xs text-amber-800 leading-relaxed mb-3">
-                        Gagal memuat gateway Midtrans: {{ $snapError }}. Anda dapat beralih ke Bayar di Tempat (COD).
+                    <p class="text-xs text-amber-800 leading-relaxed">
+                        Sistem sedang menyiapkan jalur pembayaran: {{ $snapError }}. Silakan tekan tombol Cek Status Pembayaran di bawah.
                     </p>
-                    <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition shadow flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-truck"></i>
-                            <span>Alihkan ke Bayar di Tempat (COD) Sekarang</span>
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
     </div>
     @endif
 
-    <!-- 4. KARTU KODE PEMBAYARAN UTAMA -->
-    <div class="p-4 bg-slate-50 border-b border-slate-200/60">
-        
+    <!-- 3. KARTU PEMBAYARAN UTAMA -->
+    <div class="rentify-card p-5 mb-3 text-center relative overflow-hidden">
+        <!-- Stripe aksen atas khas Rentify -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#38bdf8] via-[#0284c7] to-[#10b981]"></div>
+
         @if($channelCode === 'QRIS')
-            <!-- QRIS: Tampilkan QR langsung tanpa tombol tambahan -->
-            <div class="bg-white rounded-2xl border-2 border-red-100 p-5 shadow-sm text-center">
-                <div class="flex items-center justify-center gap-1.5 mb-3">
-                    <span class="text-red-600 font-black text-xl tracking-tight">QRIS</span>
-                    <span class="text-xs font-bold text-slate-500">• Standar Pembayaran Nasional</span>
+            <!-- TAMPILAN RESMI QRIS -->
+            <div class="pt-1">
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <span class="bg-red-50 text-red-600 font-black text-xs px-2.5 py-0.5 rounded-lg border border-red-200 tracking-wider">QRIS</span>
+                    <span class="text-xs font-bold text-slate-700">Standar Pembayaran Nasional</span>
                 </div>
 
                 @if(!empty($qrisImageUrl))
-                    <!-- QR CODE LANGSUNG TAMPIL -->
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="p-3 bg-white rounded-2xl border-2 border-red-100 shadow-md inline-block">
-                            <img src="{{ $qrisImageUrl }}" alt="QRIS Code" class="w-52 h-52 object-contain" id="qris-img" />
-                        </div>
-                        <p class="text-xs text-slate-500">Scan kode QR di atas dengan aplikasi apapun</p>
-                        <div class="flex items-center justify-center gap-1.5 flex-wrap mt-1">
-                            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-extrabold border border-blue-100">DANA</span>
-                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-extrabold border border-emerald-100">GoPay</span>
-                            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold border border-amber-100">ShopeePay</span>
-                            <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-100">OVO</span>
-                            <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold border border-sky-100">BCA Mobile</span>
-                            <span class="px-2 py-0.5 rounded bg-blue-900 text-yellow-300 text-[10px] font-extrabold">Livin' Mandiri</span>
-                            <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-extrabold">BRImo</span>
-                        </div>
+                    <!-- GAMBAR QRIS LANGSUNG MUNCUL -->
+                    <div class="inline-block p-3.5 bg-white rounded-2xl border-2 border-slate-100 shadow-sm mb-3">
+                        <img src="{{ $qrisImageUrl }}" alt="QRIS Code Rentify" class="w-56 h-56 object-contain mx-auto" id="qris-img" />
                     </div>
+                    <p class="text-xs text-slate-500 font-medium mb-3">
+                        Buka aplikasi m-Banking atau E-Wallet apa saja, lalu scan kode QR di atas
+                    </p>
                 @else
-                    <!-- Fallback jika QR belum siap: tombol buka Snap -->
-                    <div class="w-16 h-16 mx-auto mb-3 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-red-100">
+                    <!-- Fallback tombol jika QR masih proses generate -->
+                    <div class="w-16 h-16 mx-auto mb-3 bg-sky-50 text-[#0284c7] rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-sky-100">
                         <i class="fa-solid fa-qrcode"></i>
                     </div>
                     <p class="text-xs text-slate-500 mb-4">Tekan tombol di bawah untuk menampilkan kode QRIS Anda.</p>
-                    <button type="button" onclick="bukaGateway()" class="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <button type="button" onclick="bukaGateway()" class="w-full btn-rentify-gradient font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
                         <i class="fa-solid fa-qrcode text-lg"></i>
                         <span class="text-sm">Tampilkan Kode QRIS</span>
                     </button>
                 @endif
+
+                <!-- Chip Aplikasi yang Didukung -->
+                <div class="pt-3 border-t border-slate-100">
+                    <div class="text-[11px] font-bold text-slate-400 mb-2">Bisa di-scan dari aplikasi apapun:</div>
+                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                        <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-extrabold border border-blue-100">DANA</span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-extrabold border border-emerald-100">GoPay</span>
+                        <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold border border-amber-100">ShopeePay</span>
+                        <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-100">OVO</span>
+                        <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold border border-sky-100">BCA Mobile</span>
+                        <span class="px-2 py-0.5 rounded bg-blue-900 text-yellow-300 text-[10px] font-extrabold">Livin' Mandiri</span>
+                        <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-extrabold">BRImo</span>
+                    </div>
+                </div>
             </div>
 
         @elseif($channelCode === 'GOPAY')
-            <!-- GOPAY: Deeplink langsung buka aplikasi -->
-            <div class="bg-white rounded-2xl border-2 border-sky-100 p-5 shadow-sm text-center">
-                <div class="w-14 h-14 mx-auto rounded-2xl bg-[#00a5cf]/10 flex items-center justify-center text-2xl mb-3">
+            <!-- TAMPILAN GOPAY -->
+            <div class="pt-1">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-[#00a5cf]/10 flex items-center justify-center text-2xl mb-3 border border-[#00a5cf]/20">
                     <span class="text-[#00a5cf] font-black text-lg">GP</span>
                 </div>
                 <h3 class="text-base font-extrabold text-slate-800">Pembayaran GoPay</h3>
-                <p class="text-xs text-slate-500 mt-1 mb-4">Tekan tombol di bawah untuk langsung membuka aplikasi GoPay dan menyelesaikan pembayaran.</p>
+                <p class="text-xs text-slate-500 mt-1 mb-4">Buka aplikasi GoPay untuk menyelesaikan pembayaran sewa secara otomatis.</p>
+                
                 @if(!empty($gopayDeeplink))
-                    <a href="{{ $gopayDeeplink }}" class="w-full bg-[#00a5cf] hover:bg-[#0090b5] text-white font-black py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
+                    <a href="{{ $gopayDeeplink }}" class="w-full bg-[#00a5cf] hover:bg-[#0090b5] text-white font-extrabold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-2">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                         <span>Buka Aplikasi GoPay Sekarang</span>
                     </a>
-                    <p class="text-[11px] text-slate-400">Setelah membayar di GoPay, halaman ini akan otomatis terupdate.</p>
                 @else
-                    <button type="button" onclick="bukaGateway()" class="w-full bg-[#00a5cf] text-white font-black py-3 rounded-xl hover:bg-[#0090b5] transition">
-                        Buka Aplikasi GoPay
+                    <button type="button" onclick="bukaGateway()" class="w-full bg-[#00a5cf] text-white font-extrabold py-3.5 px-4 rounded-xl hover:bg-[#0090b5] transition mb-2">
+                        <span>Buka Aplikasi GoPay</span>
                     </button>
                 @endif
-            </div>
-
-        @elseif($channelCode === 'SHOPEEPAY')
-            <!-- SHOPEEPAY -->
-            <div class="bg-white rounded-2xl border-2 border-orange-100 p-5 shadow-sm text-center">
-                <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl mb-3">
-                    <i class="fa-solid fa-wallet"></i>
-                </div>
-                <h3 class="text-base font-extrabold text-slate-800">ShopeePay</h3>
-                <p class="text-xs text-slate-500 mt-1 mb-4">Tekan tombol di bawah untuk membuka aplikasi Shopee dan menyelesaikan pembayaran.</p>
-                <button type="button" onclick="bukaGateway()" class="w-full bg-orange-500 text-white font-black py-3 rounded-xl hover:bg-orange-600 transition">
-                    Buka Aplikasi ShopeePay
-                </button>
+                <p class="text-[11px] text-slate-400 mt-2">Setelah membayar di GoPay, halaman ini otomatis mengalihkan ke struk.</p>
             </div>
 
         @else
-            <!-- VIRTUAL ACCOUNT BANK (MANDIRI, BCA, BNI, BRI, PERMATA, LAINNYA) -->
-            <div class="bg-white rounded-2xl border-2 border-sky-100 p-4 shadow-sm">
-                
-                <!-- Identitas Bank -->
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <!-- TAMPILAN VIRTUAL ACCOUNT BANK -->
+            <div class="pt-1">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 text-left">
                     <div class="flex items-center gap-2.5">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-sm" style="background-color: {{ $bankColor }};">
                             {{ $bankLogo }}
@@ -196,327 +219,162 @@
                             <div class="text-[11px] text-slate-400 font-medium">Virtual Account Resmi</div>
                         </div>
                     </div>
-                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <span class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         ✓ Aktif
                     </span>
                 </div>
 
-                <!-- Nomor Virtual Account Asli dari Midtrans -->
-                <div class="pt-3 pb-2">
-                    <span class="text-xs font-semibold text-slate-500 block mb-1">No. Virtual Account:</span>
+                <div class="pt-4 pb-2 text-left">
+                    <span class="text-xs font-semibold text-slate-500 block mb-1.5">No. Rekening / Virtual Account:</span>
                     <div class="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5">
                         <span id="text-va" class="text-lg md:text-xl font-black text-slate-800 font-mono tracking-wider">
                             {{ $kodePembayaran }}
                         </span>
-                        <button type="button" onclick="salinKodeVA()" class="bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 text-xs font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition flex items-center gap-1.5">
+                        <button type="button" onclick="salinKodeVA()" class="bg-sky-50 hover:bg-sky-100 text-[#0284c7] border border-sky-200 text-xs font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition flex items-center gap-1.5">
                             <i class="fa-regular fa-copy"></i>
                             <span id="label-salin">SALIN</span>
                         </button>
                     </div>
                 </div>
 
-                <div class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-info text-sky-500"></i>
-                    <span>Transfer tepat sesuai nominal hingga digit terakhir. Setelah transfer, struk otomatis tampil.</span>
+                <div class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5 text-left">
+                    <i class="fa-solid fa-circle-info text-[#0284c7]"></i>
+                    <span>Transfer sesuai nominal tepat hingga digit terakhir. Setelah transfer, sistem otomatis memverifikasi.</span>
                 </div>
             </div>
         @endif
 
+        <!-- 🧪 PANEL PENGUJIAN OTOMATIS (KHUSUS MODE SANDBOX) -->
+        @if(!config('midtrans.is_production', false))
+        <div class="mt-4 pt-3.5 border-t border-dashed border-sky-200 text-left">
+            <div class="p-3 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-xl">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[11px] font-extrabold text-sky-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-flask text-[#0284c7]"></i> Mode Sandbox (Pengujian)
+                    </span>
+                    <span class="text-[10px] bg-sky-200/60 text-sky-800 font-bold px-2 py-0.5 rounded-full">Test Mode</span>
+                </div>
+                <p class="text-[11px] text-slate-600 mb-2.5 leading-relaxed">
+                    Uji alur otomatisasi verifikasi ke struk tanpa transfer uang sungguhan:
+                </p>
+                <button type="button" onclick="simulasikanBayar()" id="btn-simulasi" class="w-full bg-white hover:bg-sky-50 text-[#0284c7] border border-sky-300 font-extrabold text-xs py-2.5 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-wand-magic-sparkles text-sky-500"></i>
+                    <span>⚡ Simulasikan Pembayaran Berhasil (Uji Otomatis)</span>
+                </button>
+            </div>
+        </div>
+        @endif
+
     </div>
 
-    <!-- 5. PETUNJUK CARA PEMBAYARAN (ACCORDION KHUSUS BANK INI) -->
-    <div class="p-4">
-        <h2 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
-            Petunjuk Pembayaran {{ $bankName }}
+    <!-- 4. PETUNJUK CARA PEMBAYARAN -->
+    <div class="rentify-card p-4 mb-3">
+        <h2 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-question text-[#0284c7]"></i>
+            <span>Petunjuk Pembayaran {{ $bankName }}</span>
         </h2>
 
-        <div class="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-sm">
+        <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
             @if($channelCode === 'QRIS')
-                <!-- PETUNJUK PEMBAYARAN QRIS -->
                 <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('qris-ewallet')">
+                    <div class="accordion-header p-3.5 flex items-center justify-between bg-slate-50/50" onclick="togglePetunjuk('qris-ewallet')">
                         <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-wallet text-red-500"></i>
+                            <i class="fa-solid fa-wallet text-[#0284c7]"></i>
                             <span>Lewat E-Wallet (GoPay, DANA, OVO, ShopeePay)</span>
                         </div>
                         <i class="fa-solid fa-chevron-up text-slate-400 text-xs transition-transform" id="chevron-qris-ewallet"></i>
                     </div>
-                    <div id="panel-qris-ewallet" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
+                    <div id="panel-qris-ewallet" class="p-3.5 bg-white text-xs text-slate-600 space-y-2.5">
                         <div class="flex items-start gap-2">
                             <span class="step-badge">1</span>
-                            <span>Tekan tombol <b>Tampilkan Kode QRIS Resmi</b> di atas.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">2</span>
                             <span>Buka aplikasi e-wallet pilihan Anda (GoPay, DANA, OVO, ShopeePay, dll).</span>
                         </div>
                         <div class="flex items-start gap-2">
+                            <span class="step-badge">2</span>
+                            <span>Pilih menu <b>Scan / Bayar QRIS</b> di aplikasi Anda.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
                             <span class="step-badge">3</span>
-                            <span>Pilih menu <b>Scan / Bayar QRIS</b>.</span>
+                            <span>Arahkan kamera smartphone ke kode QRIS di atas.</span>
                         </div>
                         <div class="flex items-start gap-2">
                             <span class="step-badge">4</span>
-                            <span>Arahkan kamera smartphone Anda ke kode QRIS resmi yang tampil di layar.</span>
+                            <span>Periksa nama merchant (<b>Rentify</b>) dan total tagihan <b>Rp {{ number_format($total ?? 0, 0, ',', '.') }}</b>.</span>
                         </div>
                         <div class="flex items-start gap-2">
                             <span class="step-badge">5</span>
-                            <span>Periksa nama merchant (<b>Rentify</b>) dan nominal <b>Rp {{ number_format($total ?? 0, 0, ',', '.') }}</b>, lalu selesaikan pembayaran dengan PIN.</span>
+                            <span>Selesaikan pembayaran. Layar Rentify otomatis beralih ke struk pesanan.</span>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('qris-mbanking')">
+                    <div class="accordion-header p-3.5 flex items-center justify-between bg-slate-50/50" onclick="togglePetunjuk('qris-bank')">
                         <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-mobile-screen text-red-500"></i>
+                            <i class="fa-solid fa-building-columns text-[#0284c7]"></i>
                             <span>Lewat Mobile Banking (BCA, Mandiri, BRI, BNI, dll)</span>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-qris-mbanking"></i>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-qris-bank"></i>
                     </div>
-                    <div id="panel-qris-mbanking" class="hidden p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
+                    <div id="panel-qris-bank" class="hidden p-3.5 bg-white text-xs text-slate-600 space-y-2.5">
                         <div class="flex items-start gap-2">
                             <span class="step-badge">1</span>
-                            <span>Buka aplikasi Mobile Banking bank Anda (Livin' by Mandiri, BCA Mobile, BRImo, BNI Mobile, dll).</span>
+                            <span>Buka aplikasi m-Banking Anda (BCA Mobile, Livin' Mandiri, BRImo, BNI Mobile, dll).</span>
                         </div>
                         <div class="flex items-start gap-2">
                             <span class="step-badge">2</span>
-                            <span>Pilih menu fitur <b>QR / QRIS / Scan</b> di aplikasi perbankan Anda.</span>
+                            <span>Pilih fitur <b>QRIS / Scan QR</b>.</span>
                         </div>
                         <div class="flex items-start gap-2">
                             <span class="step-badge">3</span>
-                            <span>Scan Kode QRIS resmi yang tampil di layar Rentify.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">4</span>
-                            <span>Konfirmasi detail pembayaran dan masukkan <b>PIN Transaksi</b> Anda.</span>
+                            <span>Scan kode QR di atas lalu konfirmasi pembayaran.</span>
                         </div>
                     </div>
                 </div>
-
-            @elseif(str_contains($channelCode, 'MANDIRI'))
-                <!-- PETUNJUK MANDIRI LIVIN -->
-                <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('mandiri-livin')">
-                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-mobile-screen text-sky-600"></i>
-                            <span>Livin' by Mandiri (Mobile Banking)</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-mandiri-livin"></i>
-                    </div>
-                    <div id="panel-mandiri-livin" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">1</span>
-                            <span>Buka aplikasi <b>Livin' by Mandiri</b> dan masuk dengan akun Anda.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">2</span>
-                            <span>Pilih menu <b>Bayar</b> lalu pilih <b>Virtual Account</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">3</span>
-                            <span>Masukkan Nomor Virtual Account: <b class="font-mono text-sky-700 font-black">{{ $kodePembayaran }}</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">4</span>
-                            <span>Periksa detail tagihan <b>Rp {{ number_format($total ?? 0, 0, ',', '.') }}</b>, lalu tekan <b>Lanjut</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">5</span>
-                            <span>Masukkan <b>PIN Livin'</b> Anda untuk menyelesaikan pembayaran.</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PETUNJUK MANDIRI ATM -->
-                <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('mandiri-atm')">
-                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-building-columns text-sky-600"></i>
-                            <span>ATM Bank Mandiri</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-mandiri-atm"></i>
-                    </div>
-                    <div id="panel-mandiri-atm" class="hidden p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">1</span>
-                            <span>Masukkan kartu ATM Mandiri dan PIN Anda.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">2</span>
-                            <span>Pilih menu <b>Bayar / Beli</b> &gt; <b>Lainnya</b> &gt; <b>Virtual Account</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">3</span>
-                            <span>Masukkan kode <b>{{ $kodePembayaran }}</b> lalu tekan Benar.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">4</span>
-                            <span>Konfirmasi detail pembayaran dan simpan struk transaksi.</span>
-                        </div>
-                    </div>
-                </div>
-
-            @elseif(str_contains($channelCode, 'BCA'))
-                <!-- PETUNJUK BCA MOBILE -->
-                <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('bca-m')">
-                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-mobile-screen text-sky-600"></i>
-                            <span>m-BCA (BCA mobile)</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-bca-m"></i>
-                    </div>
-                    <div id="panel-bca-m" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">1</span>
-                            <span>Buka aplikasi <b>BCA mobile</b> dan pilih menu <b>m-BCA</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">2</span>
-                            <span>Pilih menu <b>m-Transfer</b> &gt; <b>BCA Virtual Account</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">3</span>
-                            <span>Masukkan Nomor Virtual Account: <b class="font-mono text-sky-700 font-black">{{ $kodePembayaran }}</b>.</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="step-badge">4</span>
-                            <span>Periksa konfirmasi tagihan, lalu masukkan <b>PIN m-BCA</b> Anda.</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PETUNJUK ATM BCA -->
-                <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('bca-atm')">
-                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-building-columns text-sky-600"></i>
-                            <span>ATM BCA</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-bca-atm"></i>
-                    </div>
-                    <div id="panel-bca-atm" class="hidden p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2"><span class="step-badge">1</span><span>Masukkan kartu ATM BCA dan PIN.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">2</span><span>Pilih <b>Transaksi Lainnya</b> &gt; <b>Transfer</b> &gt; <b>ke Rek BCA Virtual Account</b>.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">3</span><span>Ketik nomor <b>{{ $kodePembayaran }}</b> dan tekan Benar.</span></div>
-                    </div>
-                </div>
-
-            @elseif(str_contains($channelCode, 'BRI'))
-                <!-- PETUNJUK BRIMO -->
-                <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('bri-mo')">
-                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-mobile-screen text-sky-600"></i>
-                            <span>BRImo (BRI Mobile)</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-bri-mo"></i>
-                    </div>
-                    <div id="panel-bri-mo" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2"><span class="step-badge">1</span><span>Buka aplikasi <b>BRImo</b> dan pilih menu <b>Tagihan</b> &gt; <b>BRIVA</b>.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">2</span><span>Masukkan Nomor BRIVA: <b class="font-mono text-sky-700 font-black">{{ $kodePembayaran }}</b>.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">3</span><span>Konfirmasi tagihan lalu masukkan <b>PIN BRImo</b> Anda.</span></div>
-                    </div>
-                </div>
-
-            @elseif(str_contains($channelCode, 'BNI'))
-                <!-- PETUNJUK BNI MOBILE -->
-                <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('bni-m')">
-                        <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-mobile-screen text-sky-600"></i>
-                            <span>BNI Mobile Banking</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-bni-m"></i>
-                    </div>
-                    <div id="panel-bni-m" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2"><span class="step-badge">1</span><span>Buka <b>BNI Mobile Banking</b>, pilih menu <b>Pembayaran</b> &gt; <b>Virtual Account Billing</b>.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">2</span><span>Masukkan Nomor VA: <b class="font-mono text-sky-700 font-black">{{ $kodePembayaran }}</b>.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">3</span><span>Masukkan <b>Password Transaksi</b> Anda.</span></div>
-                    </div>
-                </div>
-
             @else
-                <!-- PETUNJUK UMUM / BANK LAINNYA -->
                 <div>
-                    <div class="accordion-header p-3.5 flex items-center justify-between" onclick="togglePetunjuk('gen-m')">
+                    <div class="accordion-header p-3.5 flex items-center justify-between bg-slate-50/50" onclick="togglePetunjuk('va-guide')">
                         <div class="flex items-center gap-2 font-bold text-xs text-slate-800">
-                            <i class="fa-solid fa-mobile-screen text-sky-600"></i>
-                            <span>Mobile Banking (Semua Bank)</span>
+                            <i class="fa-solid fa-mobile-screen text-[#0284c7]"></i>
+                            <span>Cara Transfer Virtual Account</span>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="chevron-gen-m"></i>
+                        <i class="fa-solid fa-chevron-up text-slate-400 text-xs transition-transform" id="chevron-va-guide"></i>
                     </div>
-                    <div id="panel-gen-m" class="p-3.5 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <div class="flex items-start gap-2"><span class="step-badge">1</span><span>Buka aplikasi m-Banking dari bank apa saja.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">2</span><span>Pilih menu Transfer Antar Bank / Virtual Account.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">3</span><span>Ketik nomor: <b class="font-mono text-sky-700 font-black">{{ $kodePembayaran }}</b>.</span></div>
-                        <div class="flex items-start gap-2"><span class="step-badge">4</span><span>Konfirmasi pembayaran sesuai nominal Rp {{ number_format($total ?? 0, 0, ',', '.') }}.</span></div>
+                    <div id="panel-va-guide" class="p-3.5 bg-white text-xs text-slate-600 space-y-2.5">
+                        <div class="flex items-start gap-2"><span class="step-badge">1</span><span>Buka aplikasi m-Banking atau ATM dari bank pilihan Anda.</span></div>
+                        <div class="flex items-start gap-2"><span class="step-badge">2</span><span>Pilih menu <b>Transfer / Virtual Account</b>.</span></div>
+                        <div class="flex items-start gap-2"><span class="step-badge">3</span><span>Masukkan nomor: <b class="font-mono text-[#0284c7] font-black">{{ $kodePembayaran }}</b>.</span></div>
+                        <div class="flex items-start gap-2"><span class="step-badge">4</span><span>Konfirmasi pembayaran sesuai nominal <b>Rp {{ number_format($total ?? 0, 0, ',', '.') }}</b>.</span></div>
                     </div>
                 </div>
             @endif
-
         </div>
 
-        <!-- Kartu Live Status Feedback -->
-        <div id="status-card" class="hidden p-3.5 rounded-xl text-xs font-bold mt-4 transition-all"></div>
+        <!-- Kartu Feedback Live Status -->
+        <div id="status-card" class="hidden p-3.5 rounded-xl text-xs font-bold mt-3 transition-all text-center"></div>
     </div>
 
-    <!-- 6. FIXED BOTTOM ACTION BAR -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-4 py-3 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        <div class="max-w-[500px] mx-auto flex items-center gap-2">
-            <form action="{{ route('customer.checkout.set_cod', $id) }}" method="POST" class="shrink-0">
-                @csrf
-                <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-[13px] py-3.5 px-3 rounded-xl transition-all active:scale-95 flex items-center gap-1.5" title="Alihkan ke Bayar di Tempat">
-                    <i class="fa-solid fa-truck text-emerald-600"></i>
-                    <span>COD</span>
-                </button>
-            </form>
+</div>
 
-            @if($channelCode === 'QRIS' && !empty($qrisImageUrl))
-                {{-- QR sudah tampil langsung, tombol utama = cek status --}}
-                <button type="button" onclick="checkStatusLive()" class="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-rotate text-base"></i>
-                    <span>Cek Status Pembayaran</span>
-                </button>
-
-            @elseif($channelCode === 'GOPAY' && !empty($gopayDeeplink))
-                {{-- GoPay: tombol langsung buka deeplink --}}
-                <a href="{{ $gopayDeeplink }}" class="flex-1 bg-[#00a5cf] text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    <span>Buka GoPay</span>
-                </a>
-
-            @elseif(in_array($channelCode, ['BCA', 'BNI', 'BRI', 'PERMATA']) || str_contains($channelCode, 'MANDIRI') || str_contains($channelCode, 'LAINNYA'))
-                {{-- Bank VA: sudah tampil nomor VA, tombol cek status --}}
-                <button type="button" onclick="checkStatusLive()" class="flex-1 bg-gradient-to-r from-sky-500 to-sky-600 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-rotate text-base"></i>
-                    <span>Konfirmasi Sudah Transfer</span>
-                </button>
-
-            @else
-                {{-- Fallback: buka Snap --}}
-                <button type="button" onclick="bukaGateway()" class="flex-1 bg-gradient-to-r from-sky-500 to-sky-600 text-white font-black text-[14px] py-3.5 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-credit-card text-xs"></i>
-                    <span>Bayar Sekarang</span>
-                </button>
-            @endif
-            
-            <button type="button" onclick="checkStatusLive()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[13px] py-3.5 px-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shrink-0" title="Cek Status Pembayaran">
-                <i class="fa-solid fa-rotate text-sky-600"></i>
-                <span>Cek</span>
-            </button>
-        </div>
+<!-- 5. FIXED BOTTOM ACTION BAR KHAS RENTIFY (SATU TOMBOL TUNGGAL, TANPA COD, TANPA DOUBLE BUTTON) -->
+<div class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-3 z-50 shadow-[0_-4px_25px_rgba(2,132,199,0.08)]">
+    <div class="max-w-[480px] mx-auto">
+        <button type="button" onclick="checkStatusLive(true)" id="btn-cek-status" class="w-full btn-rentify-gradient font-extrabold text-[14px] py-3.5 px-4 rounded-2xl shadow-lg shadow-sky-500/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate text-sm" id="icon-btn-cek"></i>
+            <span id="label-btn-cek">Cek Status Pembayaran</span>
+        </button>
     </div>
-
 </div>
 
 <script>
     const snapToken = "{{ $snapToken ?? '' }}";
     const invoiceId = "{{ $id }}";
     const checkStatusUrl = "{{ route('customer.pembayaran.check_status', $id) }}";
+    const simulateUrl = "{{ route('customer.pembayaran.simulate', $id) }}";
     const receiptUrl = "{{ route('customer.struk', $id) }}";
+    const csrfToken = "{{ csrf_token() }}";
 
-    // Fungsi Salin Kode Virtual Account
+    // Salin Kode Virtual Account
     function salinKodeVA() {
         const vaEl = document.getElementById('text-va');
         if (!vaEl) return;
@@ -524,8 +382,10 @@
         
         navigator.clipboard.writeText(text).then(function() {
             const label = document.getElementById('label-salin');
-            label.innerText = 'TERSLIN! ✓';
-            setTimeout(function() { label.innerText = 'SALIN'; }, 2000);
+            if (label) {
+                label.innerText = 'TERSLIN! ✓';
+                setTimeout(function() { label.innerText = 'SALIN'; }, 2000);
+            }
         }).catch(function() {
             alert('Nomor disalin: ' + text);
         });
@@ -546,7 +406,7 @@
         }
     }
 
-    // Countdown 24 Jam Live
+    // Countdown 24 Jam
     let targetTime = new Date().getTime() + (24 * 60 * 60 * 1000);
     function updateCountdown() {
         let now = new Date().getTime();
@@ -569,18 +429,16 @@
     setInterval(updateCountdown, 1000);
     updateCountdown();
 
-    // Buka Gateway (Snap Midtrans) yang sudah terkunci ke bank ini
+    // Fallback Snap Popup jika diperlukan
     function bukaGateway() {
         if (!snapToken) {
-            alert("Sesi pembayaran online belum dapat dimulai. Silakan beralih ke Bayar di Tempat (COD) atau coba lagi nanti.");
+            alert("Sesi pembayaran online belum dapat dimulai. Silakan coba sesaat lagi.");
             return;
         }
-
         if (typeof window.snap === 'undefined') {
             alert("Gateway pembayaran sedang memuat, mohon periksa koneksi internet Anda.");
             return;
         }
-
         snap.pay(snapToken, {
             onSuccess: function (result) {
                 showMessage('success', 'Pembayaran berhasil! Mengalihkan ke struk pesanan...');
@@ -588,13 +446,13 @@
             },
             onPending: function (result) {
                 showMessage('pending', 'Menunggu penyelesaian transfer bank Anda...');
-                checkStatusLive();
+                checkStatusLive(true);
             },
             onError: function (result) {
                 showMessage('error', 'Pembayaran dibatalkan atau terjadi kendala.');
             },
             onClose: function () {
-                checkStatusLive();
+                checkStatusLive(true);
             }
         });
     }
@@ -608,16 +466,29 @@
             statusCard.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
             statusCard.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> ' + text;
         } else if (type === 'pending') {
-            statusCard.classList.add('bg-amber-50', 'text-amber-700', 'border', 'border-amber-200');
-            statusCard.innerHTML = '<i class="fa-solid fa-clock text-amber-500 mr-1.5"></i> ' + text;
+            statusCard.classList.add('bg-sky-50', 'text-[#0284c7]', 'border', 'border-sky-200');
+            statusCard.innerHTML = '<i class="fa-solid fa-clock text-[#0284c7] mr-1.5"></i> ' + text;
         } else {
             statusCard.classList.add('bg-rose-50', 'text-rose-700', 'border', 'border-rose-200');
             statusCard.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500 mr-1.5"></i> ' + text;
         }
     }
 
-    // Live status verification
-    function checkStatusLive() {
+    let isChecking = false;
+
+    // Live status polling (otomatis tiap 4 detik & manual saat tombol ditekan)
+    function checkStatusLive(isManual = false) {
+        if (isChecking) return;
+        isChecking = true;
+
+        const iconCek = document.getElementById('icon-btn-cek');
+        const labelCek = document.getElementById('label-btn-cek');
+
+        if (isManual && iconCek) {
+            iconCek.classList.add('fa-spin');
+            if (labelCek) labelCek.innerText = 'Memeriksa Pembayaran...';
+        }
+
         fetch(checkStatusUrl, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
@@ -625,25 +496,72 @@
         .then(function(data) {
             if (data.paid) {
                 showMessage('success', '🎉 Pembayaran lunas & terverifikasi! Mengalihkan ke struk...');
+                if (labelCek) labelCek.innerText = 'Lunas! Mengalihkan...';
                 setTimeout(function() { window.location.href = data.redirect_url || receiptUrl; }, 1200);
+            } else {
+                if (isManual) {
+                    showMessage('pending', 'Pembayaran belum terdeteksi. Silakan selesaikan scan / transfer terlebih dahulu.');
+                }
             }
         })
-        .catch(function(e) { console.error(e); });
+        .catch(function(e) { 
+            console.error(e); 
+        })
+        .finally(function() {
+            isChecking = false;
+            if (isManual && iconCek) {
+                setTimeout(function() {
+                    iconCek.classList.remove('fa-spin');
+                    if (labelCek) labelCek.innerText = 'Cek Status Pembayaran';
+                }, 800);
+            }
+        });
     }
 
-    // Polling background tiap 4 detik
-    setInterval(checkStatusLive, 4000);
+    // Polling background otomatis setiap 4 detik
+    setInterval(function() {
+        checkStatusLive(false);
+    }, 4000);
 
-    // Otomatis buka QRIS saat halaman dimuat
-    @if($channelCode === 'QRIS')
-    window.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            if (typeof window.snap !== 'undefined' && snapToken) {
-                bukaGateway();
+    // Fungsi Simulasi Bayar Berhasil (Khusus Mode Sandbox)
+    function simulasikanBayar() {
+        const btn = document.getElementById('btn-simulasi');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Menyimulasikan Pembayaran Lunas...';
+        }
+
+        fetch(simulateUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }, 500);
-    });
-    @endif
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                showMessage('success', data.message || 'Pembayaran berhasil dikonfirmasi! Mengalihkan ke struk...');
+                setTimeout(function() { window.location.href = data.redirect_url || receiptUrl; }, 1000);
+            } else {
+                alert(data.message || 'Gagal menyimulasikan pembayaran.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-sky-500"></i> <span>⚡ Simulasikan Pembayaran Berhasil (Uji Otomatis)</span>';
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            alert('Terjadi kesalahan saat simulasi.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-sky-500"></i> <span>⚡ Simulasikan Pembayaran Berhasil (Uji Otomatis)</span>';
+            }
+        });
+    }
 </script>
 
 @endsection

@@ -238,6 +238,7 @@ Route::prefix('customer')->name('customer.')
 
     // AJAX Polling: cek status pembayaran (Midtrans & DB)
     Route::get('/pembayaran/check-status/{id}', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check_status');
+    Route::post('/pembayaran/simulate/{id}', [PembayaranController::class, 'simulatePayment'])->name('pembayaran.simulate');
 
     // Halaman Sukses setelah pembayaran dikonfirmasi
     Route::get('/pembayaran-sukses/{id}', function ($id) {

@@ -257,6 +257,56 @@ class PembayaranController extends Controller
         ]);
     }
 
+    /**
+     * Endpoint simulasi pembayaran lunas (Khusus Mode Sandbox / Testing)
+     * Route: POST /customer/pembayaran/simulate/{id}
+     */
+    public function simulatePayment(Request $request, $id)
+    {
+        if (config('midtrans.is_production', false)) {
+            return response()->json(['success' => false, 'message' => 'Simulasi hanya dapat digunakan pada mode Sandbox.'], 403);
+        }
+
+        $orderIds = $this->parseOrderIds($id);
+        if (empty($orderIds)) {
+            return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
+        }
+
+        $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
+        if ($orders->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
+        }
+
+        $firstOrder = $orders->first();
+        $paymentType = strtolower($firstOrder->payment_method ?? 'qris');
+
+        DB::table('orders')->whereIn('id', $orderIds)->update([
+            'status'         => 'Menunggu Konfirmasi',
+            'payment_method' => strtoupper($firstOrder->payment_method ?? 'QRIS'),
+            'paid_at'        => now(),
+            'updated_at'     => now(),
+        ]);
+
+        foreach ($orders as $ord) {
+            Pembayaran::updateOrCreate(
+                ['order_id' => $ord->id],
+                [
+                    'metode'  => strtoupper($paymentType),
+                    'jumlah'  => $ord->total_biaya ?? $ord->total_price,
+                    'status'  => 'Lunas',
+                    'paid_at' => now(),
+                ]
+            );
+        }
+
+        return response()->json([
+            'success'      => true,
+            'paid'         => true,
+            'message'      => '🎉 Simulasi berhasil! Pembayaran otomatis terkonfirmasi lunas.',
+            'redirect_url' => route('customer.struk', ['id' => $id]),
+        ]);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // 3.  NOTIFY — Webhook POST dari DOKU (Idempotent)
     // ─────────────────────────────────────────────────────────────────────────
