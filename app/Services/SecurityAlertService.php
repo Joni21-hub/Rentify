@@ -28,7 +28,7 @@ class SecurityAlertService
         Log::warning("[RENTIFY-SECURITY-ALERT] {$threatType} | IP: {$ip} | URL: {$url} | Action: {$action} | Details: {$description}");
 
         // Cek target nomor WhatsApp admin
-        $adminPhone = config('security.admin_phone', env('ADMIN_SECURITY_PHONE', '081262364197'));
+        $adminPhone = config('security.admin_phone', env('ADMIN_SECURITY_PHONE', '083183494835'));
         if (empty($adminPhone)) {
             return false;
         }

@@ -12,7 +12,7 @@ return [
     */
 
     // Nomor WhatsApp Admin yang menerima alarm darurat keamanan via Fonnte
-    'admin_phone' => env('ADMIN_SECURITY_PHONE', '081262364197'),
+    'admin_phone' => env('ADMIN_SECURITY_PHONE', '083183494835'),
 
     'firewall' => [
         // Aktifkan atau nonaktifkan firewall middleware
