@@ -11,4 +11,9 @@ class FotoBarang extends Model
 
     protected $table = 'foto_barangs';
     protected $guarded = ['id'];
+
+    public function barang()
+    {
+        return $this->belongsTo(Barang::class, 'barang_id');
+    }
 }

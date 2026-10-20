@@ -43,4 +43,12 @@ class AdminVendorController extends Controller
 
         return redirect()->back()->with('error', 'Pendaftaran Vendor ' . $vendor->vendor_name . ' telah ditolak.');
     }
+
+    /**
+     * Verifikasi Vendor melalui route patch vendors.verify
+     */
+    public function verify($id)
+    {
+        return $this->approveVendor($id);
+    }
 }

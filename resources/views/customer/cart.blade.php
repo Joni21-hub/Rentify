@@ -84,15 +84,15 @@
                     <div class="rentify-card p-6 -ice">
                         <h4 class="font-bold text-slate-800 mb-3"><i class="fas fa-wallet text-brandBlue mr-1"></i> Metode Pembayaran</h4>
                         <label class="flex items-center space-x-3 p-3 border rounded-xl mb-2 cursor-pointer">
-                            <input type="radio" name="payment_method" value="COD" checked onclick="toggleQris(false)" class="text-brandBlue">
-                            <span class="text-sm">COD (Bayar di Tempat)</span>
+                            <input type="radio" name="payment_method" value="QRIS" checked onclick="toggleQris(true)" class="text-brandBlue">
+                            <span class="text-sm font-semibold">QRIS (Scan Barcode E-Wallet)</span>
                         </label>
                         <label class="flex items-center space-x-3 p-3 border rounded-xl cursor-pointer">
-                            <input type="radio" name="payment_method" value="QRIS" onclick="toggleQris(true)" class="text-brandBlue">
-                            <span class="text-sm">QRIS (Scan Barcode E-Wallet)</span>
+                            <input type="radio" name="payment_method" value="COD" onclick="toggleQris(false)" class="text-brandBlue">
+                            <span class="text-sm">COD (Bayar di Tempat)</span>
                         </label>
                         
-                        <div id="qris-box" class="hidden mt-4 p-3 bg-slate-50 border rounded-xl text-center">
+                        <div id="qris-box" class="mt-4 p-3 bg-slate-50 border rounded-xl text-center">
                             <p class="text-xs text-slate-500 mb-2 font-semibold">Silakan scan kode QRIS Rentify berikut:</p>
                             <div class="w-16 h-16 mx-auto my-2 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl border border-red-100">
                                 <i class="fas fa-qrcode"></i>

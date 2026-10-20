@@ -141,6 +141,15 @@ Route::prefix('admin')->name('admin.')
     // PERBAIKAN: Rute Kill-Switch Voucher Vendor
     Route::patch('/vouchers/{id}/suspend', [AdminDashboardController::class, 'suspendVoucher']);
     Route::patch('/vouchers/{id}/activate', [AdminDashboardController::class, 'activateVoucher']);
+
+    // --- AI MARKETING & KAMPANYE PLATFORM
+    Route::get('ai-marketing', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'index'])->name('ai-marketing.index');
+    Route::post('ai-marketing/generate-daily', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'generateDailyContent'])->name('ai-marketing.generate-daily');
+    Route::post('ai-marketing/publish-social/{id}', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'publishSocial'])->name('ai-marketing.publish-social');
+    Route::post('ai-marketing/save-visual/{id}', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'saveVisual'])->name('ai-marketing.save-visual');
+    Route::post('ai-marketing/save-settings', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'saveSettings'])->name('ai-marketing.save-settings');
+    Route::post('ai-marketing/generate-campaign', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'generateCampaign'])->name('ai-marketing.generate-campaign');
+    Route::post('ai-marketing/create-banner', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'createBannerFromAi'])->name('ai-marketing.create-banner');
 });
 
 
@@ -183,6 +192,11 @@ Route::prefix('vendor')->name('vendor.')
     Route::get('voucher', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'index'])->name('voucher.index');
     Route::post('voucher', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'store'])->name('voucher.store');
     Route::delete('voucher/{id}', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'destroy'])->name('voucher.destroy');
+
+    // --- AI AGENT MARKETING & AUTO-PROMOSI
+    Route::get('ai-marketing', [\App\Http\Controllers\Vendor\VendorAiMarketingController::class, 'index'])->name('ai-marketing.index');
+    Route::post('ai-marketing/generate-copy', [\App\Http\Controllers\Vendor\VendorAiMarketingController::class, 'generateCopy'])->name('ai-marketing.generate-copy');
+    Route::post('ai-marketing/auto-apply-voucher', [\App\Http\Controllers\Vendor\VendorAiMarketingController::class, 'autoApplyVoucher'])->name('ai-marketing.auto-apply-voucher');
 });
 
 

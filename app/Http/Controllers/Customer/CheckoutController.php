@@ -201,7 +201,7 @@ class CheckoutController extends Controller
         $invoiceIds = [];
         $totalBayarSemua = 0; 
         $nomorWaAman = $request->no_hp;
-        $metodeInput = $request->input('metode_pembayaran', 'COD');
+        $metodeInput = $request->input('metode_pembayaran', 'QRIS');
         
         // PERUBAHAN: Menangkap array data voucher jika ada
         $voucherDataStr = $request->input('voucher_data_json');
@@ -323,7 +323,7 @@ class CheckoutController extends Controller
             session()->forget('checkout_direct_id');
         }
 
-        $metodeInput = $request->input('metode_pembayaran', 'COD');
+        $metodeInput = $request->input('metode_pembayaran', 'QRIS');
 
         session([
             'metode_pembayaran' => $metodeInput,
@@ -537,16 +537,25 @@ class CheckoutController extends Controller
 
                 // Jika error 406 (sudah pernah dibuat), coba ambil status transaksinya
                 try {
-                    $trx = \Midtrans\Transaction::status($midtransOrderId);
-                    if ($channelCode === 'QRIS' && isset($trx->actions)) {
-                        foreach ($trx->actions as $a) {
-                            if (($a->name ?? '') === 'generate-qr-code') {
-                                $qrisImageUrl = $a->url;
+                    $trx = (object) \Midtrans\Transaction::status($midtransOrderId);
+                    $actions = is_object($trx) ? ($trx->actions ?? []) : (is_array($trx) ? ($trx['actions'] ?? []) : []);
+                    if ($channelCode === 'QRIS' && !empty($actions)) {
+                        foreach ($actions as $a) {
+                            $aName = is_object($a) ? ($a->name ?? '') : (is_array($a) ? ($a['name'] ?? '') : '');
+                            $aUrl = is_object($a) ? ($a->url ?? '') : (is_array($a) ? ($a['url'] ?? '') : '');
+                            if ($aName === 'generate-qr-code') {
+                                $qrisImageUrl = $aUrl;
                             }
                         }
                     }
-                    if (isset($trx->va_numbers[0]->va_number)) {
-                        $vaNumber = $trx->va_numbers[0]->va_number;
+                    $vaList = is_object($trx) ? ($trx->va_numbers ?? []) : (is_array($trx) ? ($trx['va_numbers'] ?? []) : []);
+                    if (!empty($vaList)) {
+                        $firstVa = $vaList[0] ?? null;
+                        if (is_object($firstVa) && !empty($firstVa->va_number)) {
+                            $vaNumber = $firstVa->va_number;
+                        } elseif (is_array($firstVa) && !empty($firstVa['va_number'])) {
+                            $vaNumber = $firstVa['va_number'];
+                        }
                     }
                 } catch (\Throwable $statusEx) {
                     // Fallback ke Snap token

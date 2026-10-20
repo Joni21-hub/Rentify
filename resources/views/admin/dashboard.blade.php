@@ -39,6 +39,14 @@
                     <i class="fas fa-money-bill-transfer text-slate-400 w-5"></i>
                     <span>Pencairan Dana</span>
                 </a>
+                <a href="{{ route('admin.pembayaran') }}" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <i class="fas fa-credit-card text-slate-400 w-5"></i>
+                    <span>Verifikasi Pembayaran</span>
+                </a>
+                <a href="{{ route('admin.laporan') }}" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <i class="fas fa-chart-line text-slate-400 w-5"></i>
+                    <span>Laporan Keuangan</span>
+                </a>
                 <button onclick="switchTab('tab-transaksi', 'Manajemen Transaksi Pesanan')" class="w-full flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200 focus:outline-none menu-btn" id="btn-tab-transaksi">
                     <i class="fas fa-file-invoice-dollar text-slate-400 w-5"></i>
                     <span>Data Transaksi</span>
@@ -48,7 +56,25 @@
                     <span>Monitor Voucher</span>
                 </button>
 
+                <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Pemasaran & Promosi</div>
+                <a href="{{ route('admin.ai-marketing.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-wand-magic-sparkles text-sky-500 w-5"></i>
+                        <span>AI Marketing</span>
+                    </div>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-sky-500 text-white">AI</span>
+                </a>
+
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Manajemen Master Data</div>
+                <a href="{{ route('admin.vendors.validation') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-user-shield text-slate-400 w-5"></i>
+                        <span>Validasi Vendor</span>
+                    </div>
+                    @if(($stats['total_pending_vendor'] ?? 0) > 0)
+                    <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{{ $stats['total_pending_vendor'] }}</span>
+                    @endif
+                </a>
                 <button onclick="switchTab('tab-produk', 'Master Data: Seluruh Produk')" class="w-full flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200 focus:outline-none menu-btn" id="btn-tab-produk">
                     <i class="fas fa-boxes text-slate-400 w-5"></i>
                     <span>Inventaris Produk</span>
@@ -156,7 +182,7 @@
                                     <td class="p-4 pl-6 font-bold text-slate-700">{{ $barang->nama }}</td>
                                     <td class="p-4 text-slate-500">{{ $barang->vendor?->vendor_name ?? 'Umum' }}</td>
                                     <td class="p-4 text-center">
-                                        <button onclick="openProductModal('{{ json_encode($barang) }}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition">
+                                        <button onclick="openProductModal('{{ json_encode($barang) ?: '{}' }}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition">
                                             <i class="fas fa-eye mr-1"></i> Review
                                         </button>
                                     </td>
@@ -200,7 +226,7 @@
                                             <p class="text-[10px] text-slate-400">{{ $vendor->name }}</p>
                                         </td>
                                         <td class="p-4 text-center space-x-1">
-                                            <button onclick="openVendorModal('{{ json_encode($vendor) }}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 p-2 rounded-lg transition" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                            <button onclick="openVendorModal('{{ json_encode($vendor) ?: '{}' }}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 p-2 rounded-lg transition" title="Lihat Detail"><i class="fas fa-eye"></i></button>
                                             <form action="/admin/vendors/{{ $vendor->id }}/approve-validation" method="POST" class="inline">
                                                 @csrf <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 p-2 rounded-lg transition" title="Setuju"><i class="fas fa-check"></i></button>
                                             </form>
@@ -350,11 +376,11 @@
                         <h3 class="text-base font-black text-slate-800">Database Transaksi Keseluruhan</h3>
                         <div class="relative">
                             <i class="fas fa-search absolute left-3 top-2.5 text-slate-300"></i>
-                            <input type="text" placeholder="Cari ID Pesanan..." class="rentify-input pl-9 pr-4 py-2 text-sm focus:outline-none focus:">
+                            <input type="text" id="searchTransaksi" onkeyup="filterTransaksiTable()" placeholder="Cari ID Pesanan / Pelanggan..." class="rentify-input pl-9 pr-4 py-2 text-sm focus:outline-none">
                         </div>
                     </div>
                     <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
+                        <table class="w-full text-left border-collapse text-xs" id="transaksiTable">
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
                                     <th class="p-4 pl-6">Invoice</th>
@@ -367,9 +393,9 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($allTransaksi ?? [] as $trx)
-                                <tr class="hover:bg-slate-50/60 transition">
-                                    <td class="p-4 pl-6 font-black text-slate-700">#INV-{{ $trx->id }}</td>
-                                    <td class="p-4 font-bold text-slate-600">{{ $trx->customer_name ?? 'User' }}</td>
+                                <tr class="hover:bg-slate-50/60 transition trx-row">
+                                    <td class="p-4 pl-6 font-black text-slate-700 trx-invoice">#INV-{{ $trx->id }}</td>
+                                    <td class="p-4 font-bold text-slate-600 trx-customer">{{ $trx->customer_name ?? 'User' }}</td>
                                     
                                    <td class="p-4">
                                         @php
@@ -405,7 +431,7 @@
                                         </span>
                                     </td>
                                     <td class="p-4 text-center">
-                                        <button onclick="openTransaksiModal('{{ json_encode($trx) }}')" class="bg-sky-50 hover:bg-sky-100 text-sky-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
+                                        <button onclick="openTransaksiModal('{{ json_encode($trx) ?: '{}' }}')" class="bg-sky-50 hover:bg-sky-100 text-sky-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
                                             <i class="fas fa-file-invoice mr-1"></i> Detail
                                         </button>
                                     </td>
@@ -421,11 +447,15 @@
 
             <div id="tab-produk" class="tab-content hidden">
                 <section class="rentify-card border border-slate-200/80 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-black text-slate-800">Master Data: Inventaris Barang</h3>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-300"></i>
+                            <input type="text" id="searchProduk" onkeyup="filterProdukTable()" placeholder="Cari nama produk / toko..." class="rentify-input pl-9 pr-4 py-2 text-sm focus:outline-none">
+                        </div>
                     </div>
                     <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
+                        <table class="w-full text-left border-collapse text-xs" id="produkTable">
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
                                     <th class="p-4 pl-6">Foto</th>
@@ -439,7 +469,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($allBarangs as $p)
-                                <tr class="hover:bg-slate-50/60 transition">
+                                <tr class="hover:bg-slate-50/60 transition produk-row">
                                     <td class="p-4 pl-6">
                                         <div class="w-12 h-12 border border-slate-200 overflow-hidden rentify-card">
                                             @php
@@ -451,8 +481,8 @@
                                             <img src="{{ $coverUrl }}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/50?text=No+Img'">
                                         </div>
                                     </td>
-                                    <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate">{{ $p->nama }}</td>
-                                    <td class="p-4 font-semibold text-[#0369a1]"><i class="fas fa-store text-slate-300 mr-1"></i> {{ $p->vendor?->vendor_name ?? 'Umum' }}</td>
+                                    <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate produk-nama">{{ $p->nama }}</td>
+                                    <td class="p-4 font-semibold text-[#0369a1] produk-vendor"><i class="fas fa-store text-slate-300 mr-1"></i> {{ $p->vendor?->vendor_name ?? 'Umum' }}</td>
                                     <td class="p-4 font-bold text-slate-700">Rp {{ number_format($p->harga_sewa_harian, 0, ',', '.') }}</td>
                                     <td class="p-4 font-bold text-slate-600">{{ $p->stok_total }}</td>
                                     <td class="p-4 text-center">
@@ -478,11 +508,15 @@
 
             <div id="tab-vendor" class="tab-content hidden">
                 <section class="rentify-card border border-slate-200/80 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-black text-slate-800">Master Data: Direktori Mitra Vendor</h3>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-300"></i>
+                            <input type="text" id="searchVendor" onkeyup="filterVendorTab()" placeholder="Cari nama toko / pemilik / email..." class="rentify-input pl-9 pr-4 py-2 text-sm focus:outline-none">
+                        </div>
                     </div>
                     <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
+                        <table class="w-full text-left border-collapse text-sm" id="vendorTabTable">
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider text-xs">
                                     <th class="p-4 pl-6">Profil Toko</th>
@@ -494,13 +528,13 @@
                             </thead>
                            <tbody class="divide-y divide-slate-100">
                                 @foreach($allVendors as $v)
-                                <tr class="hover:bg-slate-50/60 transition">
-                                    <td class="p-4 pl-6 font-black text-slate-800">
+                                <tr class="hover:bg-slate-50/60 transition tab-vendor-row">
+                                    <td class="p-4 pl-6 font-black text-slate-800 tab-vendor-shop">
                                         <i class="fas fa-store-alt text-[#0369a1] text-lg mr-2 align-middle"></i> {{ $v->vendor_name ?? '-' }}
                                     </td>
-                                    <td class="p-4 font-bold text-slate-600">{{ $v->name }}</td>
+                                    <td class="p-4 font-bold text-slate-600 tab-vendor-owner">{{ $v->name }}</td>
                                     <td class="p-4">
-                                        <p class="font-mono text-slate-500 text-xs">{{ $v->email }}</p>
+                                        <p class="font-mono text-slate-500 text-xs tab-vendor-email">{{ $v->email }}</p>
                                         <p class="text-emerald-600 font-bold text-xs mt-1"><i class="fab fa-whatsapp"></i> {{ $v->whatsapp_vendor ?? '-' }}</p>
                                     </td>
                                     <td class="p-4 text-center">
@@ -536,11 +570,17 @@
             <div id="tab-customer" class="tab-content hidden">
                 <section class="rentify-card border border-slate-200/80 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="text-base font-black text-slate-800">Master Data: Direktori Pelanggan</h3>
-                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full">{{ $allCustomers->count() }} Pengguna Terdaftar</span>
+                        <div class="flex items-center space-x-3">
+                            <h3 class="text-base font-black text-slate-800">Master Data: Direktori Pelanggan</h3>
+                            <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full">{{ $allCustomers->count() }} Pengguna Terdaftar</span>
+                        </div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-300"></i>
+                            <input type="text" id="searchCustomer" onkeyup="filterCustomerTab()" placeholder="Cari nama / email pelanggan..." class="rentify-input pl-9 pr-4 py-2 text-sm focus:outline-none">
+                        </div>
                     </div>
                     <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
+                        <table class="w-full text-left border-collapse text-sm" id="customerTabTable">
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider text-xs">
                                     <th class="p-4 pl-6">Profil Pelanggan</th>
@@ -551,12 +591,12 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($allCustomers as $c)
-                                <tr class="hover:bg-slate-50/60 transition">
+                                <tr class="hover:bg-slate-50/60 transition tab-customer-row">
                                     <td class="p-4 pl-6 flex items-center space-x-3">
                                         <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 font-bold text-lg"><i class="fas fa-user"></i></div>
-                                        <span class="font-bold text-slate-800">{{ $c->name }}</span>
+                                        <span class="font-bold text-slate-800 tab-customer-name">{{ $c->name }}</span>
                                     </td>
-                                    <td class="p-4 font-mono text-slate-500">{{ $c->email }}</td>
+                                    <td class="p-4 font-mono text-slate-500 tab-customer-email">{{ $c->email }}</td>
                                     <td class="p-4 font-medium text-slate-500">{{ $c->created_at?->format('d M Y') ?? '-' }}</td>
                                     <td class="p-4 text-center">
                                         <form action="/admin/user/{{ $c->id }}/delete" method="POST" onsubmit="return confirm('Hapus permanen akun pelanggan ini dari database?')">
@@ -788,6 +828,44 @@
             document.getElementById('transaksiModal').classList.remove('hidden');
         }
         function closeTransaksiModal() { document.getElementById('transaksiModal').classList.add('hidden'); }
+
+        // Live Search Filter Handlers
+        function filterTransaksiTable() {
+            const query = (document.getElementById('searchTransaksi')?.value || '').toLowerCase();
+            document.querySelectorAll('.trx-row').forEach(row => {
+                const inv = row.querySelector('.trx-invoice')?.innerText.toLowerCase() || '';
+                const cust = row.querySelector('.trx-customer')?.innerText.toLowerCase() || '';
+                row.style.display = (inv.includes(query) || cust.includes(query)) ? '' : 'none';
+            });
+        }
+
+        function filterProdukTable() {
+            const query = (document.getElementById('searchProduk')?.value || '').toLowerCase();
+            document.querySelectorAll('.produk-row').forEach(row => {
+                const nama = row.querySelector('.produk-nama')?.innerText.toLowerCase() || '';
+                const vendor = row.querySelector('.produk-vendor')?.innerText.toLowerCase() || '';
+                row.style.display = (nama.includes(query) || vendor.includes(query)) ? '' : 'none';
+            });
+        }
+
+        function filterVendorTab() {
+            const query = (document.getElementById('searchVendor')?.value || '').toLowerCase();
+            document.querySelectorAll('.tab-vendor-row').forEach(row => {
+                const shop = row.querySelector('.tab-vendor-shop')?.innerText.toLowerCase() || '';
+                const owner = row.querySelector('.tab-vendor-owner')?.innerText.toLowerCase() || '';
+                const email = row.querySelector('.tab-vendor-email')?.innerText.toLowerCase() || '';
+                row.style.display = (shop.includes(query) || owner.includes(query) || email.includes(query)) ? '' : 'none';
+            });
+        }
+
+        function filterCustomerTab() {
+            const query = (document.getElementById('searchCustomer')?.value || '').toLowerCase();
+            document.querySelectorAll('.tab-customer-row').forEach(row => {
+                const name = row.querySelector('.tab-customer-name')?.innerText.toLowerCase() || '';
+                const email = row.querySelector('.tab-customer-email')?.innerText.toLowerCase() || '';
+                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            });
+        }
     </script>
 </body>
 </html>

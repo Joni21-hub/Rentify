@@ -15,8 +15,11 @@ class PesananController extends Controller
         $vendorId = Auth::id();
 
         $baseQuery = Penyewaan::with(['customer', 'details.barang'])
-            ->whereHas('details.barang', function ($query) use ($vendorId) {
-                $query->where('vendor_id', $vendorId);
+            ->where(function ($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId)
+                  ->orWhereHas('details.barang', function ($query) use ($vendorId) {
+                      $query->where('vendor_id', $vendorId);
+                  });
             });
 
         // Hitung total untuk setiap tab status
@@ -24,7 +27,10 @@ class PesananController extends Controller
         $countMenunggu = (clone $baseQuery)->whereIn('status', ['Menunggu Konfirmasi', 'pending'])->count();
         $countDisewa = (clone $baseQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])->count();
         $countJatuhTempo = (clone $baseQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])
-            ->whereDate('tanggal_selesai', '<=', now()->toDateString())->count();
+            ->where(function($q) {
+                $q->whereDate('tanggal_selesai', '<=', now()->toDateString())
+                  ->orWhereDate('end_rent', '<=', now()->toDateString());
+            })->count();
         $countSelesai = (clone $baseQuery)->where('status', 'Selesai')->count();
         $countBatal = (clone $baseQuery)->whereIn('status', ['Dibatalkan', 'ditolak'])->count();
 
@@ -38,7 +44,10 @@ class PesananController extends Controller
             $query->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui']);
         } elseif ($statusFilter === 'jatuh_tempo') {
             $query->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])
-                  ->whereDate('tanggal_selesai', '<=', now()->toDateString());
+                  ->where(function($q) {
+                      $q->whereDate('tanggal_selesai', '<=', now()->toDateString())
+                        ->orWhereDate('end_rent', '<=', now()->toDateString());
+                  });
         } elseif ($statusFilter === 'selesai') {
             $query->where('status', 'Selesai');
         } elseif ($statusFilter === 'dibatalkan') {
@@ -73,7 +82,7 @@ class PesananController extends Controller
             return $detail->barang && $detail->barang->vendor_id == $vendorId;
         });
 
-        if ($details->isEmpty()) {
+        if ($details->isEmpty() && $pesanan->vendor_id != $vendorId) {
             abort(403, 'Anda tidak memiliki akses ke barang dalam pesanan ini.');
         }
 
@@ -90,14 +99,24 @@ class PesananController extends Controller
             'status' => 'required|in:Menunggu Konfirmasi,Disetujui,Sedang Disewa,Selesai,Dibatalkan'
         ]);
 
-        $pesanan = Penyewaan::findOrFail($id);
         $vendorId = Auth::id();
+        $pesanan = Penyewaan::with(['details.barang'])->findOrFail($id);
+
+        // Otorisasi: Pastikan pesanan adalah milik vendor yang login
+        $isOwner = ($pesanan->vendor_id == $vendorId) || $pesanan->details->contains(function ($detail) use ($vendorId) {
+            return $detail->barang && $detail->barang->vendor_id == $vendorId;
+        });
+
+        if (!$isOwner) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengubah status pesanan ini.');
+        }
 
         if ($request->status === 'Selesai' && $pesanan->status !== 'Selesai') {
             DB::beginTransaction();
             try {
-                $hargaAsli = $pesanan->total_price / 1.05;
-                $feePlatform = $pesanan->total_price - $hargaAsli;
+                $totalNilai = (float) ($pesanan->total_biaya ?: $pesanan->total_price);
+                $hargaAsli = round($totalNilai / 1.05);
+                $feePlatform = $totalNilai - $hargaAsli;
 
                 $saldoVendor = DB::table('saldos')->where('vendor_id', $vendorId)->first();
                 if (!$saldoVendor) {
@@ -111,11 +130,13 @@ class PesananController extends Controller
                     $saldoVendor = DB::table('saldos')->where('vendor_id', $vendorId)->first();
                 }
 
-                $saldoAktifBaru = $saldoVendor->saldo_aktif;
+                $saldoAktifBaru = (float) $saldoVendor->saldo_aktif;
 
-                if (strtoupper($pesanan->payment_method) === 'COD') {
+                // Jika COD: Vendor pegang tunai 100%, fee sistem 5% dipotong dari saldo vendor
+                // Jika Online/Midtrans: Uang sewa bersih (setelah fee 5%) dimasukkan ke saldo vendor
+                if (strtoupper($pesanan->payment_method ?? '') === 'COD') {
                     $saldoAktifBaru -= $feePlatform;
-                } elseif (strtoupper($pesanan->payment_method) === 'QRIS') {
+                } else {
                     $saldoAktifBaru += $hargaAsli;
                 }
 
@@ -127,10 +148,19 @@ class PesananController extends Controller
                 $pesanan->save();
 
                 DB::commit();
-                return back()->with('success', 'Pesanan Selesai! Saldo Anda otomatis disesuaikan.');
+                return back()->with('success', 'Pesanan Selesai! Saldo toko Anda otomatis diperbarui.');
             } catch (\Exception $e) {
                 DB::rollback();
-                return back()->with('error', 'Gagal memproses uang: ' . $e->getMessage());
+                return back()->with('error', 'Gagal memproses saldo: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->status === 'Dibatalkan' && $pesanan->status !== 'Dibatalkan') {
+            // Pulihkan kuota voucher jika transaksi dibatalkan
+            if ($pesanan->voucher_id) {
+                \App\Models\Voucher::where('id', $pesanan->voucher_id)
+                    ->where('kuota_terpakai', '>', 0)
+                    ->decrement('kuota_terpakai');
             }
         }
 

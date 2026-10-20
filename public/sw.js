@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rentify-pwa-v5-performance';
+const CACHE_NAME = 'rentify-pwa-v6-performance';
 
 // File statis ringan yang di-cache saat install
 const urlsToCache = [

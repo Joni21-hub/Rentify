@@ -47,21 +47,26 @@ class VendorSaldoController extends Controller
         }
 
         // B. Ambil Data Pendapatan dari Pesanan Selesai
-        $pesananSelesai = Penyewaan::whereHas('details.barang', function($query) use ($vendorId) {
-            $query->where('vendor_id', $vendorId);
+        $pesananSelesai = Penyewaan::where(function($q) use ($vendorId) {
+            $q->where('vendor_id', $vendorId)
+              ->orWhereHas('details.barang', function($query) use ($vendorId) {
+                  $query->where('vendor_id', $vendorId);
+              });
         })->where('status', 'Selesai')->get();
 
         foreach ($pesananSelesai as $p) {
-            $hargaAsli = $p->total_biaya / 1.05;
-            $feePlatform = $p->total_biaya - $hargaAsli;
+            $totalNilai = (float) ($p->total_biaya ?: $p->total_price);
+            $hargaAsli = round($totalNilai / 1.05);
+            $feePlatform = $totalNilai - $hargaAsli;
+            $kodeOrder = $p->kode_booking ?: ('#ORD-' . $p->id);
 
-            if (strtoupper($p->payment_method) !== 'COD') {
+            if (strtoupper($p->payment_method ?? '') !== 'COD') {
                 // Semua pembayaran via Midtrans (QRIS, VA, Transfer, E-Wallet) masuk ke saldo vendor (uang ditahan sistem dulu)
                 $mutasi->push((object)[
                     'tanggal' => $p->updated_at,
-                    'jenis' => 'Pendapatan Online (Midtrans)',
+                    'jenis' => 'Pendapatan Online (Rental Selesai)',
                     'nominal' => $hargaAsli,
-                    'keterangan' => 'Pemasukan uang sewa (potongan 5%) - Order ' . $p->kode_booking,
+                    'keterangan' => 'Pemasukan uang sewa (potongan 5%) - Order ' . $kodeOrder,
                     'status' => 'berhasil',
                     'icon' => 'fa-arrow-down-long',
                     'color' => 'text-emerald-500',
@@ -74,7 +79,7 @@ class VendorSaldoController extends Controller
                     'tanggal' => $p->updated_at,
                     'jenis' => 'Potongan Fee Platform',
                     'nominal' => $feePlatform,
-                    'keterangan' => 'Potongan fee 5% platform (Transaksi COD) - Order ' . $p->kode_booking,
+                    'keterangan' => 'Potongan fee 5% platform (Transaksi COD) - Order ' . $kodeOrder,
                     'status' => 'berhasil',
                     'icon' => 'fa-arrow-up-right-dots',
                     'color' => 'text-rose-500',
@@ -158,24 +163,29 @@ class VendorSaldoController extends Controller
         }
 
         // Ambil Data Pendapatan
-        $pesananSelesai = \App\Models\Penyewaan::whereHas('details.barang', function($query) use ($vendorId) {
-            $query->where('vendor_id', $vendorId);
+        $pesananSelesai = \App\Models\Penyewaan::where(function($q) use ($vendorId) {
+            $q->where('vendor_id', $vendorId)
+              ->orWhereHas('details.barang', function($query) use ($vendorId) {
+                  $query->where('vendor_id', $vendorId);
+              });
         })->where('status', 'Selesai')->get();
 
         foreach ($pesananSelesai as $p) {
-            $hargaAsli = $p->total_biaya / 1.05;
-            $feePlatform = $p->total_biaya - $hargaAsli;
+            $totalNilai = (float) ($p->total_biaya ?: $p->total_price);
+            $hargaAsli = round($totalNilai / 1.05);
+            $feePlatform = $totalNilai - $hargaAsli;
+            $kodeOrder = $p->kode_booking ?: ('#ORD-' . $p->id);
 
-            if (strtoupper($p->payment_method) !== 'COD') {
+            if (strtoupper($p->payment_method ?? '') !== 'COD') {
                 $mutasi->push((object)[
-                    'tanggal' => $p->updated_at, 'jenis' => 'Pendapatan Online (Midtrans)',
-                    'nominal' => $hargaAsli, 'keterangan' => 'Order ' . $p->kode_booking,
+                    'tanggal' => $p->updated_at, 'jenis' => 'Pendapatan Online',
+                    'nominal' => $hargaAsli, 'keterangan' => 'Order ' . $kodeOrder,
                     'status' => 'berhasil', 'operator' => '+'
                 ]);
             } else {
                 $mutasi->push((object)[
                     'tanggal' => $p->updated_at, 'jenis' => 'Potongan Fee Platform (COD)',
-                    'nominal' => $feePlatform, 'keterangan' => 'Order ' . $p->kode_booking,
+                    'nominal' => $feePlatform, 'keterangan' => 'Order ' . $kodeOrder,
                     'status' => 'berhasil', 'operator' => '-'
                 ]);
             }

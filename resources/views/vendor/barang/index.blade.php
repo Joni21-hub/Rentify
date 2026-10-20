@@ -93,6 +93,9 @@
                         <a href="{{ route('vendor.barang.show', $barang->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition">
                             Detail
                         </a>
+                        <a href="{{ route('vendor.barang.edit', $barang->id) }}" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-[11px] font-bold transition">
+                            Edit
+                        </a>
                         <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini secara permanen?');" class="inline">
                             @csrf
                             @method('DELETE')
@@ -170,6 +173,9 @@
                             <div class="flex items-center justify-end gap-1.5">
                                 <a href="{{ route('vendor.barang.show', $barang->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
                                     Detail
+                                </a>
+                                <a href="{{ route('vendor.barang.edit', $barang->id) }}" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-xs font-bold transition">
+                                    Edit
                                 </a>
                                 <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini?');" class="inline">
                                     @csrf

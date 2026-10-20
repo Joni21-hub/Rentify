@@ -126,6 +126,10 @@
                 <i class="fa-solid fa-box-open w-5 text-center text-sm"></i> <span>Kelola Produk</span>
             </a>
 
+            <a href="{{ route('vendor.stok') }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.stok*') ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
+                <i class="fa-solid fa-boxes-stacked w-5 text-center text-sm"></i> <span>Kelola Stok</span>
+            </a>
+
             <a href="{{ route('vendor.pesanan.index') }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.pesanan.*') ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
                 <i class="fa-solid fa-clipboard-list w-5 text-center text-sm"></i> <span>Pesanan Masuk</span>
             </a>
@@ -136,6 +140,14 @@
 
             <a href="{{ route('vendor.voucher.index') }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.voucher.*') ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
                 <i class="fa-solid fa-ticket w-5 text-center text-sm"></i> <span>Voucher Diskon Toko</span>
+            </a>
+
+            <a href="{{ route('vendor.ai-marketing.index') }}" class="flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.ai-marketing.*') ? 'bg-gradient-to-r from-sky-500/25 to-blue-500/20 text-sky-300 border border-sky-400/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
+                <div class="flex items-center gap-3.5">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-sm text-sky-400"></i>
+                    <span>AI Marketing & Promo</span>
+                </div>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-sky-400 to-cyan-400 text-slate-900 shadow-xs">AI</span>
             </a>
 
             <div class="my-4 border-t border-white/5"></div>
