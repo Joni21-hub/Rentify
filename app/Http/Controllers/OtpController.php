@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Services\WhatsAppService;
+use App\Services\SecurityAlertService;
 
 class OtpController extends Controller
 {
@@ -29,11 +31,37 @@ class OtpController extends Controller
             return redirect('/login')->with('error', 'Sesi OTP Anda telah kedaluwarsa. Silakan login ulang.');
         }
 
+        $userId = session('otp_user_id');
+        $ip = $request->ip() ?? 'UNKNOWN_IP';
+        $throttleKey = 'otp_verify_attempt:' . md5($userId . '|' . $ip);
+        $maxAttempts = (int) config('security.rate_limits.otp_verify_max_attempts', 5);
+        $decaySeconds = ((int) config('security.rate_limits.otp_verify_decay_minutes', 15)) * 60;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+
+            SecurityAlertService::notify(
+                'Brute Force Kode OTP Terdeteksi',
+                "Percobaan tebak OTP salah {$maxAttempts}x pada User ID {$userId}. Verifikasi dikunci {$minutes} menit.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => "User ID: {$userId} (WA: " . (session('otp_phone') ?? '-') . ")",
+                    'action' => "Verifikasi OTP dibekukan {$minutes} menit",
+                ]
+            );
+
+            return back()->withErrors(['otp' => "Terlalu banyak percobaan kode OTP yang salah. Silakan coba lagi dalam {$minutes} menit."]);
+        }
+
         // Cek kecocokan OTP
         if ($request->otp == session('otp_code')) {
-            $user = User::find(session('otp_user_id'));
+            RateLimiter::clear($throttleKey);
+
+            $user = User::find($userId);
             
-            if ($user) {
+            if ($user instanceof User) {
                 // Tandai WA terverifikasi
                 $user->update(['whatsapp_verified_at' => now()]);
                 
@@ -54,7 +82,29 @@ class OtpController extends Controller
             }
         }
 
-        return back()->withErrors(['otp' => 'Kode OTP yang Anda masukkan salah. Silakan coba lagi.']);
+        // Catat kegagalan
+        RateLimiter::hit($throttleKey, $decaySeconds);
+        $attemptsLeft = RateLimiter::retriesLeft($throttleKey, $maxAttempts);
+
+        if ($attemptsLeft <= 0) {
+            SecurityAlertService::notify(
+                'Brute Force Kode OTP Mencapai Batas',
+                "Upaya tebak OTP salah {$maxAttempts} kali berurutan pada User ID {$userId}. Sesi terkunci.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => "User ID: {$userId} (WA: " . (session('otp_phone') ?? '-') . ")",
+                    'action' => "Lockout OTP 15 menit",
+                ]
+            );
+        }
+
+        $msg = 'Kode OTP yang Anda masukkan salah. Silakan coba lagi.';
+        if ($attemptsLeft > 0 && $attemptsLeft <= 2) {
+            $msg .= " (Sisa {$attemptsLeft} kesempatan sebelum dibekukan sementara).";
+        }
+
+        return back()->withErrors(['otp' => $msg]);
     }
 
     public function resend(Request $request)
@@ -63,7 +113,33 @@ class OtpController extends Controller
             return redirect('/login')->with('error', 'Sesi telah habis.');
         }
 
-        $user = User::find(session('otp_user_id'));
+        $userId = session('otp_user_id');
+        $ip = $request->ip() ?? 'UNKNOWN_IP';
+        $resendKey = 'otp_resend_throttle:' . md5($userId . '|' . $ip);
+        $maxResends = (int) config('security.rate_limits.otp_resend_max_attempts', 3);
+        $decaySeconds = ((int) config('security.rate_limits.otp_resend_decay_minutes', 10)) * 60;
+
+        if (RateLimiter::tooManyAttempts($resendKey, $maxResends)) {
+            $seconds = RateLimiter::availableIn($resendKey);
+            $minutes = ceil($seconds / 60);
+
+            SecurityAlertService::notify(
+                'Spam / Bombing Permintaan Kirim OTP',
+                "Upaya spam pengiriman ulang OTP melebihi {$maxResends}x pada User ID {$userId}.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => "User ID: {$userId} (WA: " . (session('otp_phone') ?? '-') . ")",
+                    'action' => "Kirim ulang OTP dibatasi ({$minutes} menit)",
+                ]
+            );
+
+            return back()->with('error', "Terlalu sering meminta kode OTP. Mohon tunggu {$minutes} menit sebelum meminta kode baru.");
+        }
+
+        RateLimiter::hit($resendKey, $decaySeconds);
+
+        $user = User::find($userId);
         $nomor = session('otp_phone'); // Nomor WA yang dikirimkan OTP (bisa WA user atau WA vendor)
 
         if ($user && $nomor) {

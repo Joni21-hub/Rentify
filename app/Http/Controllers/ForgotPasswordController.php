@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Models\User;
+use App\Services\SecurityAlertService;
 
 class ForgotPasswordController extends Controller
 {
@@ -20,6 +22,32 @@ class ForgotPasswordController extends Controller
     {
         $request->validate(['identitas' => 'required|string']);
         $input = trim($request->identitas);
+        $ip = $request->ip() ?? 'UNKNOWN_IP';
+
+        // Proteksi Rate Limiter agar tidak dieksploitasi untuk OTP bombing
+        $throttleKey = 'forgot_pwd_attempt:' . md5($input . '|' . $ip);
+        $maxAttempts = (int) config('security.rate_limits.forgot_password_max_attempts', 3);
+        $decaySeconds = ((int) config('security.rate_limits.forgot_password_decay_minutes', 10)) * 60;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+
+            SecurityAlertService::notify(
+                'Spam Permintaan Reset Password (OTP Bombing)',
+                "Upaya permintaan reset kata sandi melebihi batas ({$maxAttempts}x) untuk identitas: {$input}.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => $input,
+                    'action' => "Permintaan dibatasi sementara ({$minutes} menit)",
+                ]
+            );
+
+            return back()->with('error', "Terlalu banyak permintaan reset kata sandi. Mohon tunggu {$minutes} menit sebelum mencoba kembali.");
+        }
+
+        RateLimiter::hit($throttleKey, $decaySeconds);
 
         // Cari user: bisa via WA (customer), email (google/vendor), atau whatsapp_vendor
         $user = User::where('whatsapp', $input)

@@ -70,9 +70,10 @@ class WhatsAppWebhookController extends Controller
     {
         $model = env('GEMINI_MODEL', 'gemini-1.5-flash');
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+        $webUrl = $this->getWebsiteUrl();
 
         $systemPrompt = <<<PROMPT
-Anda adalah "Asep", Merchant Partner Specialist & Customer Support resmi dari platform persewaan online 'Rentify' (website: https://rentify-peaceful-wave-4629.fly.dev).
+Anda adalah "Asep", Merchant Partner Specialist & Customer Support resmi dari platform persewaan online 'Rentify' (website: {$webUrl}).
 Tujuan utama Anda:
 1. Menjawab balasan chat WhatsApp dari calon mitra toko rental atau calon penyewa dengan ramah, natural, santun, dan meyakinkan.
 2. Jelaskan bahwa bergabung di Rentify 100% GRATIS pendaftaran, tanpa biaya bulanan, dan tim Rentify siap bantu upload-kan katalog & foto barang sampai tayang.
@@ -115,11 +116,12 @@ PROMPT;
     protected function smartRuleReply(string $message, string $name): string
     {
         $lower = strtolower($message);
+        $webUrl = $this->getWebsiteUrl();
 
         // Pertanyaan seputar cara daftar / gabung
         if (str_contains($lower, 'cara') || str_contains($lower, 'daftar') || str_contains($lower, 'gabung') || str_contains($lower, 'join') || str_contains($lower, 'gimana')) {
             return "Halo Kak {$name}! Caranya simpel dan praktis banget kak:\n\n"
-                . "1️⃣ Kakak bisa langsung daftar di web: https://rentify-peaceful-wave-4629.fly.dev/register\n"
+                . "1️⃣ Kakak bisa langsung daftar di web: {$webUrl}/register\n"
                 . "2️⃣ ATAU kalau Kakak lagi sibuk, cukup kirimkan daftar barang & foto rental Kakak ke chat WA ini, nanti tim Rentify yang bantu inputkan semuanya sampai tayang di web!\n\n"
                 . "Kira-kira Kakak ada list katalog/pricelist barang rental yang bisa kami bantu lihat kak? 😊";
         }
@@ -151,7 +153,19 @@ PROMPT;
 
         // Default sambutan hangat
         return "Halo Kak {$name}! Terima kasih banyak sudah merespon pesan Rentify ya kak 🙏\n\n"
-            . "Kami sangat senang kalau toko rental Kakak bisa ikut tayang di web Rentify (https://rentify-peaceful-wave-4629.fly.dev) untuk nambah jangkauan pelanggan baru.\n\n"
+            . "Kami sangat senang kalau toko rental Kakak bisa ikut tayang di web Rentify ({$webUrl}) untuk nambah jangkauan pelanggan baru.\n\n"
             . "Ada yang bisa kami bantu jelaskan lebih lanjut kak, atau mau kami bantu daftarkan langsung katalog barangnya? 😊";
+    }
+
+    /**
+     * Dapatkan URL website publik Rentify
+     */
+    protected function getWebsiteUrl(): string
+    {
+        $appUrl = config('app.url');
+        if (!empty($appUrl) && !str_contains($appUrl, 'localhost') && !str_contains($appUrl, '127.0.0.1')) {
+            return rtrim($appUrl, '/');
+        }
+        return 'https://rentify21.my.id';
     }
 }

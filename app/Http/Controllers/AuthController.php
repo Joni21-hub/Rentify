@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Models\User;
+use App\Services\SecurityAlertService;
 
 class AuthController extends Controller
 {
@@ -24,10 +26,41 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        $ip = $request->ip() ?? 'UNKNOWN_IP';
+        $loginKey = strtolower(trim($request->login));
+        $throttleKey = 'login_attempt:' . md5($loginKey . '|' . $ip);
+        $maxAttempts = (int) config('security.rate_limits.login_max_attempts', 5);
+        $decaySeconds = ((int) config('security.rate_limits.login_decay_minutes', 15)) * 60;
+
+        // Cek jika akun / IP sedang terkena lockout
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $secondsRemaining = RateLimiter::availableIn($throttleKey);
+            $minutesRemaining = ceil($secondsRemaining / 60);
+
+            // Kirim alert darurat jika belum terkirim
+            SecurityAlertService::notify(
+                'Brute Force Login Terdeteksi',
+                "Percobaan login melebihi batas {$maxAttempts}x gagal. Akses dikunci sementara selama {$minutesRemaining} menit.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => $loginKey,
+                    'action' => "Lockout aktif ({$secondsRemaining} detik tersisa)",
+                ]
+            );
+
+            return back()->withErrors([
+                'login' => "Terlalu banyak percobaan login yang gagal. Akun / koneksi Anda dikunci sementara selama {$minutesRemaining} menit demi keamanan.",
+            ])->withInput($request->only('login'));
+        }
+
         $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'whatsapp';
 
         // Coba login
         if (Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
+            // Berhasil login: bersihkan hitungan kegagalan login
+            RateLimiter::clear($throttleKey);
+
             $user = Auth::user();
 
             // Cek apakah WA sudah diverifikasi (kecuali admin)
@@ -56,10 +89,32 @@ class AuthController extends Controller
             return $this->redirectByRole();
         }
 
-        // Jika login gagal
+        // Catat kegagalan login ke RateLimiter
+        RateLimiter::hit($throttleKey, $decaySeconds);
+        $attemptsLeft = RateLimiter::retriesLeft($throttleKey, $maxAttempts);
+
+        // Jika batas 5x baru saja terlewati, langsung trigger alert WhatsApp ke Admin
+        if ($attemptsLeft <= 0) {
+            SecurityAlertService::notify(
+                'Upaya Brute Force Login Dicegah',
+                "Upaya tebak password gagal {$maxAttempts} kali berturut-turut pada akun '{$loginKey}' dari IP {$ip}. Sistem langsung mengunci akun/IP ini.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => $loginKey,
+                    'action' => "Otomatis di-lockout selama " . ($decaySeconds / 60) . " menit",
+                ]
+            );
+        }
+
+        $warningMessage = 'Email/WhatsApp atau kata sandi yang Anda masukkan salah.';
+        if ($attemptsLeft > 0 && $attemptsLeft <= 2) {
+            $warningMessage .= " (Peringatan: Sisa {$attemptsLeft} kali percobaan sebelum akun dikunci sementara).";
+        }
+
         return back()->withErrors([
-            'login' => 'Email/WhatsApp atau kata sandi yang Anda masukkan salah.',
-        ]);
+            'login' => $warningMessage,
+        ])->withInput($request->only('login'));
     }
 
     // 3. Logika Redirect Berdasarkan Role

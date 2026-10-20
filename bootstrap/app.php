@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
         
+        // Pasang firewall terdepan di pipeline HTTP
+        $middleware->prepend(\App\Http\Middleware\SecurityFirewallMiddleware::class);
+        
         $middleware->validateCsrfTokens(except: [
             '/midtrans/callback',
             '/api/payments/doku/notify',
