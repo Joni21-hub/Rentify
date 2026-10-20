@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rentify-pwa-v8-marketplace';
+const CACHE_NAME = 'rentify-pwa-v9-default-qris';
 
 // File statis ringan yang di-cache saat install
 const urlsToCache = [

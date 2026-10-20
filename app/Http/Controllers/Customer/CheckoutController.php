@@ -201,7 +201,7 @@ class CheckoutController extends Controller
         $invoiceIds = [];
         $totalBayarSemua = 0; 
         $nomorWaAman = $request->no_hp;
-        $metodeInput = $request->input('metode_pembayaran', 'COD');
+        $metodeInput = $request->input('metode_pembayaran', 'QRIS');
         
         // PERUBAHAN: Menangkap array data voucher jika ada
         $voucherDataStr = $request->input('voucher_data_json');
@@ -323,7 +323,7 @@ class CheckoutController extends Controller
             session()->forget('checkout_direct_id');
         }
 
-        $metodeInput = $request->input('metode_pembayaran', 'COD');
+        $metodeInput = $request->input('metode_pembayaran', 'QRIS');
 
         session([
             'metode_pembayaran' => $metodeInput,

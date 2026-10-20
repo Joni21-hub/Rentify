@@ -300,6 +300,10 @@ Route::post('/api/payments/doku/notify', [\App\Http\Controllers\Payment\Pembayar
     ->name('doku.notify')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+// ─── WHATSAPP WEBHOOK (FONNTE AUTO-REPLY BOT) ───────────────────────────────────
+Route::post('/webhook/fonnte', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
+    ->name('whatsapp.webhook');
+
 
 // ─── EMAIL VERIFICATION ROUTES ──────────────────────────────────────────────────
 use Illuminate\Foundation\Auth\EmailVerificationRequest;

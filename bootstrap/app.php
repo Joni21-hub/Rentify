@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '/midtrans/callback',
             '/api/payments/doku/notify',
+            '/webhook/fonnte',
         ]);
         
         // Tambahkan alias di sini
