@@ -37,14 +37,62 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['status' => true, 'note' => 'self_message_ignored']);
         }
 
-        // Susun balasan cerdas
-        $reply = $this->generateReply($message, $name);
+        // Cek apakah pengirim adalah Admin / Bos pemilik sistem
+        $adminPhone = (string) (preg_replace('/[^0-9]/', '', (string) config('security.admin_phone', '083183494835')) ?? '');
+        $isAdmin = false;
+        if ($adminPhone !== '' && str_ends_with($cleanSender, substr($adminPhone, -9))) {
+            $isAdmin = true;
+        }
+
+        // Susun balasan cerdas (khusus Admin vs Mitra/Customer)
+        if ($isAdmin) {
+            $reply = $this->generateAdminReply($message);
+        } else {
+            $reply = $this->generateReply($message, $name);
+        }
 
         if (!empty($reply)) {
             WhatsAppService::send($sender, $reply);
         }
 
         return response()->json(['status' => true]);
+    }
+
+    /**
+     * Balasan cerdas khusus untuk Admin / Bos pemilik sistem
+     */
+    protected function generateAdminReply(string $message): string
+    {
+        $lower = strtolower($message);
+
+        if (str_contains($lower, 'status') || str_contains($lower, 'cek') || str_contains($lower, 'radar') || str_contains($lower, 'server')) {
+            $time = now()->timezone('Asia/Jakarta')->format('d M Y H:i:s');
+            $webUrl = $this->getWebsiteUrl();
+            return "🛡️ *[RENTIFY SECURITY STATUS]* 🛡️\n\n"
+                . "Halo Bos Admin! Sistem pertahanan dan radar darurat beroperasi normal.\n\n"
+                . "🕒 *Waktu Sistem:* {$time} WIB\n"
+                . "🌐 *Website:* {$webUrl}\n"
+                . "🛡️ *Firewall:* AKTIF (Auto-Ban & WAF)\n"
+                . "📡 *Radar WhatsApp:* TERHUBUNG ke nomor Bos\n"
+                . "🤖 *Bot Respon:* AKTIF 24/7\n\n"
+                . "Ketik *status*, *bantuan*, atau balas instruksi kapan saja.";
+        }
+
+        if (str_contains($lower, 'bantuan') || str_contains($lower, 'help') || str_contains($lower, 'menu')) {
+            return "📋 *[MENU KOMANDO ADMIN RENTIFY]*\n\n"
+                . "Halo Bos Admin, berikut perintah cepat yang bisa diketik:\n"
+                . "• *status* : Cek kondisi radar dan firewall sistem\n"
+                . "• *ping* : Uji respon cepat bot\n"
+                . "• *info* : Informasi konfigurasi server & website\n\n"
+                . "Sistem siap menerima instruksi!";
+        }
+
+        if (str_contains($lower, 'ping') || str_contains($lower, 'halo') || str_contains($lower, 'hai') || str_contains($lower, 'tes') || str_contains($lower, 'test')) {
+            return "👋 *PONG!* Halo Bos Admin! 🛡️\n\nPesan Bos diterima dengan baik oleh Bot Gateway Rentify. Jalur komunikasi darurat & auto-reply beroperasi 100% lancar!\n\nAda yang perlu dicek atau dibantu Bos?";
+        }
+
+        // Respon umum untuk chat lain dari Admin
+        return "Halo Bos Admin! 🛡️\n\nPesan Bos sudah diterima oleh Bot Gateway Rentify:\n\"_{$message}_\"\n\nRadar keamanan dan seluruh sistem Rentify aktif dan beroperasi normal 24/7. Ketik *status* untuk ringkasan sistem.";
     }
 
     /**
