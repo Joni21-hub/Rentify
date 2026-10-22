@@ -45,7 +45,7 @@ class WhatsAppWebhookController extends Controller
         if ($isAdminCommand) {
             $reply = $this->generateAdminReply($message);
         } else {
-            // Susun balasan formal dan manusiawi layaknya Admin Customer Service resmi (Asep via Gemini AI)
+            // Susun balasan santai, ramah & responsif (Tim Rentify via Gemini AI)
             $reply = $this->generateReply($message, $name, (string) $sender);
         }
 
@@ -206,7 +206,7 @@ class WhatsAppWebhookController extends Controller
     }
 
     /**
-     * Susun balasan Customer Service Rentify (Formal & Manusiawi)
+     * Susun balasan Customer Service Rentify (Santai, Ramah & Responsif)
      */
     protected function generateReply(string $message, string $name, string $sender = ''): string
     {
@@ -224,7 +224,7 @@ class WhatsAppWebhookController extends Controller
     }
 
     /**
-     * Balasan AI formal & manusiawi via Gemini API dengan Session Memory
+     * Balasan AI santai, ramah & responsif via Gemini API dengan Session Memory
      */
     protected function callGemini(string $message, string $name, string $sender, string $rawApiKeys): ?string
     {
@@ -247,28 +247,25 @@ class WhatsAppWebhookController extends Controller
         $webUrl = $this->getWebsiteUrl();
 
         $systemPrompt = <<<PROMPT
-Anda adalah "Asep", Admin Customer Service (CS) resmi dari platform persewaan online 'Rentify' (website resmi: {$webUrl}).
+Anda adalah perwakilan resmi dari "Tim Rentify", platform persewaan online di Indonesia (website resmi: {$webUrl}).
 
 IDENTITAS & KARAKTER:
-1. Anda adalah manusia asli yang profesional, ramah, hangat, sopan, dan sangat solutif layaknya Customer Service WhatsApp di Indonesia.
-2. Selalu sapa pengguna dengan "Kak" atau nama pengirim secara natural jika tersedia.
-3. JANGAN PERNAH menyebut atau mengisyaratkan diri Anda sebagai AI, bot, robot, asisten virtual, program, atau model bahasa. Jika ditanya apakah Anda bot, tegaskan secara ramah bahwa Anda Asep, admin resmi Rentify yang sedang bertugas.
-4. JANGAN PERNAH mengeluarkan istilah teknis seperti webhook, server, database, radar, firewall, token, prompt, atau endpoint.
-5. Format Balasan: Singkat, padat, rapi, dan nyaman dibaca di layar WhatsApp (1-3 paragraf pendek atau poin-poin singkat). Hindari pesan yang terlalu panjang.
+1. JANGAN PERNAH menyebut nama Anda "Asep" atau nama orang tertentu. Posisikan dan perkenalkan diri secara natural sebagai "Tim Rentify" (atau "Admin Rentify").
+2. Anda adalah manusia asli: ramah, hangat, santai, asik diajak ngobrol, solutif, dan sangat responsif.
+3. Selalu sapa pengguna dengan ramah, gunakan panggilan "Kak" atau nama pengirim secara wajar.
+4. JANGAN PERNAH mengaku atau mengisyaratkan diri Anda sebagai AI, bot, robot, asisten virtual, program, atau model bahasa. Jika ditanya apakah Anda bot, tegaskan secara santai dan ramah bahwa Anda admin asli dari Tim Rentify yang sedang online dan siap bantu.
+5. GAYA NGOBROL & FORMAT BALASAN (WAJIB DIPATUHI):
+   - JANGAN PANJANG-PANJANG: Cukup 1 sampai 3 kalimat santai dan padat. Hindari balasan panjang bertele-tele atau formalitas kaku.
+   - SLOW & SANTAI: Ngobrol santai layaknya chat WhatsApp manusia nyata (luwes, akrab, bersahabat, sopan).
+   - TANYA KEBUTUHAN CUSTOMER: Secara proaktif tanyakan maunya apa dan butuhnya apa (misal: "Kakak lagi butuh atau cari sewa barang apa nih?", atau "Rencana mau cari alat apa buat di kota mana?").
+   - RESPONSIF & TO THE POINT: Jawab langsung inti pertanyaannya, lalu berikan pertanyaan balik yang santai untuk memandu customer.
+   - Jangan berikan penjelasan panjang jika belum ditanya secara spesifik.
+6. JANGAN PERNAH mengeluarkan istilah teknis seperti webhook, server, database, radar, prompt, token, endpoint, API, JSON, dsb.
 
-PENGETAHUAN & SOP RENTIFY:
-- TENTANG RENTIFY: Platform persewaan online di Indonesia ({$webUrl}) yang mempertemukan pemilik rental (vendor) dengan penyewa (customer).
-- UNTUK MITRA / PEMILIK RENTAL (VENDOR):
-  * Pendaftaran toko 100% GRATIS (tanpa biaya registrasi, tanpa biaya langganan bulanan).
-  * Bisa daftar mandiri di {$webUrl}/register, ATAU lebih praktis: cukup kirim nama toko, kota/lokasi, dan daftar produk/foto/pricelist di chat ini; admin Asep siap bantu inputkan dan tayangkan sampai aktif.
-  * Keamanan Vendor: Calon penyewa wajib verifikasi KTP resmi, sistem otomatis menerbitkan invoice & surat perjanjian sewa, dan vendor berhak menyetujui/menolak pesanan sewa.
-  * Uang sewa langsung masuk ke saldo dompet akun dan bisa ditarik/dicairkan (withdraw) ke rekening bank atau e-wallet kapan saja.
-- UNTUK PENYEWA (CUSTOMER):
-  * Menyediakan rental kamera & fotografi, alat camping/outdoor/tenda, PlayStation (PS4/PS5), proyektor, baju adat/kostum pesta, sound system, alat pesta, dsb.
-  * Katalog dan ketersediaan bisa langsung dicek di {$webUrl}.
-  * Pembayaran aman via QRIS, Transfer, atau COD sesuai ketentuan toko rental.
-- SIKAP TERHADAP KEBINGUNGAN PENGGUNA:
-  * Jika pengguna merasa bingung, ada yang tidak dimengerti, atau butuh bantuan ("bisa bantu aku", "aku bingung", dsb), sambut dengan ramah dan tanyakan apa yang belum dipahami (apakah ingin menyewa barang atau ingin buka toko rental). Bimbing dengan sabar dan tuntas.
+PENGETAHUAN LAYANAN RENTIFY:
+- Rentify ({$webUrl}) adalah tempat sewa-menyewa online: kamera/fotografi, alat outdoor/camping, PlayStation, proyektor, baju/kostum pesta, sound system, dsb.
+- UNTUK YANG INGIN SEWA BARANG: Tanya barang apa yang dicari dan daerah mana, arahkan atau bantu cekkan di katalog {$webUrl}.
+- UNTUK YANG MAU BUKA TOKO RENTAL: 100% GRATIS tanpa biaya pendaftaran/bulanan. Bisa daftar sendiri di {$webUrl}/register atau Tim Rentify siap bantu inputkan barangnya sampai tayang.
 PROMPT;
 
         $cachePhone = preg_replace('/[^0-9]/', '', $sender);
@@ -336,7 +333,7 @@ PROMPT;
             foreach ($candidateModels as $model) {
                 $generationConfig = [
                     'temperature'     => 0.6,
-                    'maxOutputTokens' => 800,
+                    'maxOutputTokens' => 350,
                 ];
                 if (!str_contains($model, 'lite')) {
                     $generationConfig['thinkingConfig'] = [
@@ -391,26 +388,14 @@ PROMPT;
     }
 
     /**
-     * Template balasan cerdas Customer Service manusia (Fallback jika AI offline)
+     * Template balasan cerdas Customer Service santai & responsif (Fallback jika AI offline)
      */
     protected function smartRuleReply(string $message, string $name, string $sender = ''): string
     {
         $lower = strtolower(trim($message));
         $webUrl = $this->getWebsiteUrl();
 
-        // Tentukan sapaan waktu berdasarkan jam WIB
-        $hour = (int) now()->timezone('Asia/Jakarta')->format('H');
-        if ($hour >= 4 && $hour < 11) {
-            $timeGreeting = 'Selamat pagi';
-        } elseif ($hour >= 11 && $hour < 15) {
-            $timeGreeting = 'Selamat siang';
-        } elseif ($hour >= 15 && $hour < 18) {
-            $timeGreeting = 'Selamat sore';
-        } else {
-            $timeGreeting = 'Selamat malam';
-        }
-
-        // Format panggilan sopan
+        // Format panggilan sopan & santai
         $salutation = 'Kak';
         if (!empty($name) && strtolower($name) !== 'kak' && strlen($name) <= 25 && !preg_match('/[0-9]{5,}/', $name)) {
             $salutation = "Kak {$name}";
@@ -437,26 +422,19 @@ PROMPT;
             str_contains($lower, 'mau tanya') ||
             str_contains($lower, 'bisa tanya')
         ) {
-            $reply = "Halo {$salutation}, tentu bisa! Asep siap bantu dengan senang hati. 😊🙏\n\n"
-                . "Boleh diinfokan bagian mana yang belum Kakak pahami atau apa yang sedang Kakak butuhkan?\n"
-                . "1. Ingin mencari dan menyewa barang kebutuhan di Rentify?\n"
-                . "2. Atau ingin membuka toko rental & menyewakan barang (100% Gratis)?\n\n"
-                . "Silakan ceritakan ya Kak, nanti Asep pandu langkah demi langkah sampai tuntas.";
+            $reply = "Halo {$salutation}! Tentu bisa banget, Tim Rentify siap bantu. 😊\n\n"
+                . "Boleh cerita Kak, lagi butuh atau mau sewa barang apa nih? Atau lagi mau info seputar buka toko rental di Rentify?";
         }
 
         // 2. Terima kasih / apresiasi
         elseif (preg_match('/\b(makasih|terima kasih|thanks|thank you|tengkyu|mksh|trims)\b/i', $lower)) {
-            $reply = "Sama-sama {$salutation}! Senang sekali bisa membantu. 😊🙏\n\n"
-                . "Jika nanti ada kebutuhan sewa barang atau ada hal lain yang ingin ditanyakan seputar Rentify ({$webUrl}), jangan ragu untuk hubungi Asep lagi ya Kak. Semoga hari Kakak menyenangkan!";
+            $reply = "Sama-sama {$salutation}! Senang bisa bantu. Kalau nanti ada butuh sewa apa-apa lagi seputar Rentify, kabari kami ya Kak. Have a nice day! 😊🙏";
         }
 
         // 3. Biaya / tarif / komisi / harga / gratis / bayar
         elseif (preg_match('/\b(biaya|bayar|tarif|harga|komisi|gratis|free|potongan|persen)\b/i', $lower)) {
-            $reply = "Halo {$salutation}, untuk bergabung dan membuka toko rental di Rentify 100% GRATIS Kak.\n\n"
-                . "• Tidak ada biaya pendaftaran\n"
-                . "• Tidak ada biaya langganan bulanan\n"
-                . "• Toko Kakak langsung mendapatkan jangkauan calon penyewa baru melalui website {$webUrl}\n\n"
-                . "Apakah Kakak berkenan untuk kami bantu buatkan akun tokonya sekarang?";
+            $reply = "Halo {$salutation}, untuk buka toko rental di Rentify 100% GRATIS ya Kak, tanpa biaya admin atau bulanan.\n\n"
+                . "Kakak rencananya mau sewakan barang, atau lagi cari barang buat disewa nih?";
         }
 
         // 4. Konfirmasi bergabung / pendaftaran toko vendor (secara spesifik)
@@ -464,56 +442,43 @@ PROMPT;
             preg_match('/\b(mau daftar|minat daftar|boleh daftar|siap daftar|gas daftar|mau gabung|minat gabung|bantu daftar|daftarin)\b/i', $lower) ||
             (preg_match('/\b(mau|boleh|minat|siap|setuju)\b/i', $lower) && preg_match('/\b(buka toko|toko rental|mitra|vendor|sewakan|daftar|gabung)\b/i', $lower))
         ) {
-            $reply = "Baik {$salutation}, terima kasih banyak atas kesediaannya. 🙏\n\n"
-                . "Untuk kami bantu proses pendaftaran dan penayangan produknya, boleh kami minta informasi berikut ya Kak:\n"
-                . "1. Nama toko rental Kakak\n"
-                . "2. Lokasi kota / domisili toko\n"
-                . "3. Jenis barang yang disewakan (misal: kamera, alat camping, baju/kostum, alat pesta, dsb)\n\n"
-                . "Jika ada foto produk atau daftar harga (pricelist), silakan langsung dikirimkan ke chat ini ya Kak. Nanti tim admin Asep yang bantu inputkan semuanya sampai tayang di web Rentify.";
+            $reply = "Siap {$salutation}, mantap! Boleh infokan nama toko, kota, dan barang apa aja yang mau disewakan ya Kak.\n\n"
+                . "Kalau ada foto produk atau pricelist, langsung kirim ke chat ini aja, nanti Tim Rentify yang bantu buatkan tokonya sampai aktif. 👍";
         }
 
         // 5. Pertanyaan cara daftar / gabung / menjadi mitra
         elseif (str_contains($lower, 'cara') || str_contains($lower, 'daftar') || str_contains($lower, 'gabung') || str_contains($lower, 'join') || str_contains($lower, 'mitra') || str_contains($lower, 'buka toko')) {
-            $reply = "Halo {$salutation}, untuk bergabung dan membuka toko rental di Rentify caranya sangat mudah Kak:\n\n"
-                . "1. Kakak bisa mendaftar mandiri secara gratis melalui website kami di:\n"
-                . "👉 {$webUrl}/register\n\n"
-                . "2. Atau jika Kakak ingin lebih praktis, cukup kirimkan nama toko, lokasi, dan daftar barang rental di chat ini. Tim admin kami yang akan bantu inputkan semuanya sampai katalog toko Kakak aktif dan siap disewa.\n\n"
-                . "Apakah saat ini Kakak sudah ada daftar barang rental yang ingin dibantu tayangkan?";
+            $reply = "Halo {$salutation}, caranya gampang banget! Kakak bisa daftar di {$webUrl}/register, atau kirim info toko dan produknya ke sini biar Tim Rentify bantu inputkan sampai beres.\n\n"
+                . "Kakak rencana mau sewakan barang apa nih?";
         }
 
         // 6. Keamanan / jaminan / KTP / hilang / rusak / syarat
         elseif (str_contains($lower, 'aman') || str_contains($lower, 'keamanan') || str_contains($lower, 'jaminan') || str_contains($lower, 'hilang') || str_contains($lower, 'rusak') || str_contains($lower, 'ktp') || str_contains($lower, 'syarat') || str_contains($lower, 'resiko')) {
-            $reply = "Halo {$salutation}, keamanan mitra toko rental adalah prioritas utama kami di Rentify.\n\n"
-                . "Sistem perlindungan kami mencakup:\n"
-                . "• Verifikasi Identitas: Calon penyewa wajib memverifikasi KTP dan data kontak resmi sebelum bertransaksi.\n"
-                . "• Surat Perjanjian & Invoice: Sistem otomatis menerbitkan bukti sewa dan surat perjanjian resmi untuk setiap pesanan.\n"
-                . "• Kendali Pemilik: Kakak memiliki hak penuh untuk menyetujui atau menolak pesanan yang masuk.\n\n"
-                . "Ada yang ingin Kakak ketahui lebih lanjut mengenai sistem keamanannya?";
+            $reply = "Tenang Kak, aman banget kok. Calon penyewa di Rentify wajib verifikasi KTP resmi, dan sistem otomatis buatkan invoice serta surat perjanjian sewa resmi. Kakak juga bebas setujui atau tolak pesanan sewa.\n\n"
+                . "Ada yang mau dipastikan lagi Kak?";
         }
 
         // 7. Ingin sewa barang / tanya stok produk
         elseif (str_contains($lower, 'sewa') || str_contains($lower, 'rental') || str_contains($lower, 'pinjam') || str_contains($lower, 'cari') || str_contains($lower, 'butuh') || str_contains($lower, 'katalog')) {
-            $reply = "Halo {$salutation}, untuk melihat katalog barang yang siap disewa, Kakak bisa langsung mengunjungi website resmi kami di:\n"
-                . "👉 {$webUrl}\n\n"
-                . "Atau boleh diinfokan barang rental apa yang sedang Kakak butuhkan serta lokasi kotanya, agar bisa kami bantu carikan mitra rental terdekat?";
+            $reply = "Halo {$salutation}! Kakak lagi cari atau butuh sewa barang apa nih dan buat di daerah mana? Biar kami bantu carikan di katalog Rentify ({$webUrl}). 😊";
         }
 
         // 8. Lokasi / kantor
         elseif (str_contains($lower, 'lokasi') || str_contains($lower, 'alamat') || str_contains($lower, 'kantor') || str_contains($lower, 'dimana') || str_contains($lower, 'daerah')) {
-            $reply = "Halo {$salutation}, Rentify adalah platform persewaan online yang melayani berbagai kota di Indonesia melalui website {$webUrl}.\n\n"
-                . "Kami menghubungkan pemilik usaha rental lokal dengan calon penyewa terdekat. Ada yang bisa kami bantu terkait kebutuhan rental di area Kakak?";
+            $reply = "Halo {$salutation}, Rentify berbasis online di {$webUrl} dan menghubungkan mitra rental dengan penyewa di berbagai kota.\n\n"
+                . "Kakak lagi di daerah mana nih, dan lagi butuh apa?";
         }
 
         // 9. Salam / sapaan / tes
         elseif (preg_match('/\b(halo|hai|hi|hei|p|ping|tes|test|assalamualaikum|pagi|siang|sore|malam|permisi)\b/i', $lower)) {
-            $reply = "{$timeGreeting} {$salutation}! Terima kasih sudah menghubungi Rentify. 🙏\n\n"
-                . "Perkenalkan saya Asep, admin Customer Service Rentify. Ada yang bisa kami bantu seputar kebutuhan sewa barang atau pendaftaran toko rental Kakak?";
+            $reply = "Halo {$salutation}! Selamat datang di Rentify. 😊\n\n"
+                . "Ada yang bisa Tim Rentify bantu? Lagi butuh atau cari sewa barang apa nih Kak?";
         }
 
-        // 10. Default fallback umum (formal, ramah, solutif)
+        // 10. Default fallback umum (santai, ramah, solutif)
         else {
-            $reply = "{$timeGreeting} {$salutation}, terima kasih telah menghubungi Rentify. 🙏\n\n"
-                . "Perkenalkan saya Asep dari tim Customer Service Rentify ({$webUrl}). Ada yang bisa kami bantu terkait layanan sewa barang atau pendaftaran toko rental hari ini Kak?";
+            $reply = "Halo {$salutation}! Salam dari Tim Rentify ({$webUrl}). 😊\n\n"
+                . "Ada yang bisa kami bantu? Boleh cerita Kakak lagi butuh atau mau sewa apa hari ini?";
         }
 
         // Simpan juga turn fallback ke memory percakapan agar ada riwayat
