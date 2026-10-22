@@ -13,6 +13,8 @@
 /.zed
 /auth.json
 /node_modules
+/whatsapp-gateway/node_modules
+/storage/whatsapp-session
 /public/hot
 /public/storage
 /storage/*.key

@@ -1,6 +1,8 @@
 .git
 .env
 node_modules
+whatsapp-gateway/node_modules
+storage/whatsapp-session
 vendor
 tests
 storage/logs/*.log

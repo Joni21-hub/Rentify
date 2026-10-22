@@ -150,6 +150,12 @@ Route::prefix('admin')->name('admin.')
     Route::post('ai-marketing/save-settings', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'saveSettings'])->name('ai-marketing.save-settings');
     Route::post('ai-marketing/generate-campaign', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'generateCampaign'])->name('ai-marketing.generate-campaign');
     Route::post('ai-marketing/create-banner', [\App\Http\Controllers\Admin\AdminAiMarketingController::class, 'createBannerFromAi'])->name('ai-marketing.create-banner');
+
+    // --- WHATSAPP GATEWAY (MANDIRI & BEBAS BIAYA)
+    Route::get('whatsapp', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
+    Route::get('whatsapp/status', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'checkStatus'])->name('whatsapp.status');
+    Route::post('whatsapp/test-send', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'testSend'])->name('whatsapp.test');
+    Route::post('whatsapp/logout', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'logout'])->name('whatsapp.logout');
 });
 
 
@@ -300,9 +306,11 @@ Route::post('/api/payments/doku/notify', [\App\Http\Controllers\Payment\Pembayar
     ->name('doku.notify')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-// ─── WHATSAPP WEBHOOK (FONNTE AUTO-REPLY BOT) ───────────────────────────────────
-Route::post('/webhook/fonnte', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
+// ─── WHATSAPP WEBHOOK (SELF-HOSTED GATEWAY & AUTO-REPLY CS) ────────────────────
+Route::post('/webhook/whatsapp', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
     ->name('whatsapp.webhook');
+Route::post('/webhook/fonnte', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
+    ->name('whatsapp.webhook.legacy');
 
 
 // ─── EMAIL VERIFICATION ROUTES ──────────────────────────────────────────────────

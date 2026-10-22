@@ -31,7 +31,7 @@ class WhatsAppWebhookController extends Controller
         }
 
         // Hindari infinite loop: abaikan jika nomor pengirim sama dengan nomor device bot sendiri
-        $botDevice = (string) (preg_replace('/[^0-9]/', '', (string) env('WHATSAPP_BOT_NUMBER', '081262364197')) ?? '');
+        $botDevice = (string) (preg_replace('/[^0-9]/', '', (string) config('services.whatsapp.bot_number', env('WHATSAPP_BOT_NUMBER', '081262364197'))) ?? '');
         $cleanSender = (string) (preg_replace('/[^0-9]/', '', (string) $sender) ?? '');
         if ($botDevice !== '' && str_ends_with($cleanSender, substr($botDevice, -9))) {
             return response()->json(['status' => true, 'note' => 'self_message_ignored']);

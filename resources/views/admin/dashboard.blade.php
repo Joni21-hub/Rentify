@@ -65,6 +65,15 @@
                     <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-sky-500 text-white">AI</span>
                 </a>
 
+                <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Komunikasi & CS</div>
+                <a href="{{ route('admin.whatsapp.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-brands fa-whatsapp text-emerald-600 w-5 text-base"></i>
+                        <span>WhatsApp Gateway</span>
+                    </div>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">Direct</span>
+                </a>
+
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Manajemen Master Data</div>
                 <a href="{{ route('admin.vendors.validation') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
                     <div class="flex items-center space-x-3">

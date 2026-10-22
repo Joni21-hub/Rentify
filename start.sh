@@ -1,4 +1,7 @@
 #!/bin/sh
+# Run database migrations (e.g. whatsapp_sessions)
+php artisan migrate --force
+
 # Clear caches to ensure we get fresh environment variables
 php artisan optimize:clear
 

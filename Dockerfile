@@ -56,6 +56,9 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
+# Install WhatsApp Gateway dependencies
+RUN cd /var/www/html/whatsapp-gateway && npm install --omit=dev --no-audit --no-fund
+
 # Konfigurasi Nginx untuk Laravel
 RUN mkdir -p /etc/nginx/http.d
 COPY conf/nginx/nginx-site.conf /etc/nginx/http.d/default.conf
@@ -108,6 +111,15 @@ autorestart=true\n\
 \n\
 [program:nginx]\n\
 command=nginx -g "daemon off;"\n\
+stdout_logfile=/dev/stdout\n\
+stdout_logfile_maxbytes=0\n\
+stderr_logfile=/dev/stderr\n\
+stderr_logfile_maxbytes=0\n\
+autorestart=true\n\
+\n\
+[program:whatsapp-gateway]\n\
+directory=/var/www/html/whatsapp-gateway\n\
+command=node server.js\n\
 stdout_logfile=/dev/stdout\n\
 stdout_logfile_maxbytes=0\n\
 stderr_logfile=/dev/stderr\n\
