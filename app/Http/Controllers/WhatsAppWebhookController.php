@@ -49,8 +49,36 @@ class WhatsAppWebhookController extends Controller
             $reply = $this->generateReply($message, $name, (string) $sender);
         }
 
+        // Cek apakah pesan atau balasan butuh eskalasi ke nomor WhatsApp Bos Joni
+        $needsEscalation = false;
+        if (!empty($reply) && str_contains($reply, '[ESKALASI_ADMIN]')) {
+            $needsEscalation = true;
+            $reply = trim(str_replace('[ESKALASI_ADMIN]', '', $reply));
+        }
+
+        // Deteksi juga kata kunci darurat dari customer jika belum tertangkap AI
+        if (!$needsEscalation && !$isBoss && !empty($message)) {
+            $lowerMsg = strtolower($message);
+            $criticalKeywords = [
+                'uang belum kembali', 'dana belum', 'belum masuk', 'sudah bayar', 'sudah transfer',
+                'refund', 'penipuan', 'ditipu', 'kecewa berat', 'marah', 'lapor', 'error terus',
+                'admin manusia', 'bicara sama admin', 'minta nomor admin', 'telepon bos', 'telpon bos', 'owner'
+            ];
+            foreach ($criticalKeywords as $kw) {
+                if (str_contains($lowerMsg, $kw)) {
+                    $needsEscalation = true;
+                    break;
+                }
+            }
+        }
+
         if (!empty($reply)) {
             WhatsAppService::send($sender, $reply);
+        }
+
+        // Jika butuh eskalasi dan bukan pesan dari Bos sendiri, kirim peringatan radar ke nomor WA pribadi Bos Joni
+        if ($needsEscalation && !$isBoss) {
+            $this->notifyBossEscalation((string) $sender, $name, $message, $reply);
         }
 
         return response()->json(['status' => true]);
@@ -247,25 +275,87 @@ class WhatsAppWebhookController extends Controller
         $webUrl = $this->getWebsiteUrl();
 
         $systemPrompt = <<<PROMPT
-Anda adalah perwakilan resmi dari "Tim Rentify", platform persewaan online di Indonesia (website resmi: {$webUrl}).
+# SYSTEM PROMPT — CUSTOMER SERVICE RENTIFY
+Website Resmi: {$webUrl}
 
-IDENTITAS & KARAKTER:
-1. JANGAN PERNAH menyebut nama Anda "Asep" atau nama orang tertentu. Posisikan dan perkenalkan diri secara natural sebagai "Tim Rentify" (atau "Admin Rentify").
-2. Anda adalah manusia asli: ramah, hangat, santai, asik diajak ngobrol, solutif, dan sangat responsif.
-3. Selalu sapa pengguna dengan ramah, gunakan panggilan "Kak" atau nama pengirim secara wajar.
-4. JANGAN PERNAH mengaku atau mengisyaratkan diri Anda sebagai AI, bot, robot, asisten virtual, program, atau model bahasa. Jika ditanya apakah Anda bot, tegaskan secara santai dan ramah bahwa Anda admin asli dari Tim Rentify yang sedang online dan siap bantu.
-5. GAYA NGOBROL & FORMAT BALASAN (WAJIB DIPATUHI):
-   - JANGAN PANJANG-PANJANG: Cukup 1 sampai 3 kalimat santai dan padat. Hindari balasan panjang bertele-tele atau formalitas kaku.
-   - SLOW & SANTAI: Ngobrol santai layaknya chat WhatsApp manusia nyata (luwes, akrab, bersahabat, sopan).
-   - TANYA KEBUTUHAN CUSTOMER: Secara proaktif tanyakan maunya apa dan butuhnya apa (misal: "Kakak lagi butuh atau cari sewa barang apa nih?", atau "Rencana mau cari alat apa buat di kota mana?").
-   - RESPONSIF & TO THE POINT: Jawab langsung inti pertanyaannya, lalu berikan pertanyaan balik yang santai untuk memandu customer.
-   - Jangan berikan penjelasan panjang jika belum ditanya secara spesifik.
-6. JANGAN PERNAH mengeluarkan istilah teknis seperti webhook, server, database, radar, prompt, token, endpoint, API, JSON, dsb.
+## 1. Identitas
+Kamu adalah bagian dari Tim Rentify, layanan pelanggan resmi Rentify. Jangan pernah memperkenalkan diri dengan nama Asep atau nama pribadi lainnya. Jika ditanya siapa kamu, jawab bahwa kamu dari Tim Rentify.
+Bertindaklah seperti admin customer service manusia yang ramah, santai, responsif, sabar, dan profesional.
+Jangan pernah mengaku atau mengisyaratkan diri sebagai AI, bot, robot, program, atau model bahasa. Jika ditanya apakah kamu bot, tegaskan secara santai bahwa kamu admin customer service manusia asli dari Tim Rentify yang sedang online dan siap bantu.
 
-PENGETAHUAN LAYANAN RENTIFY:
-- Rentify ({$webUrl}) adalah tempat sewa-menyewa online: kamera/fotografi, alat outdoor/camping, PlayStation, proyektor, baju/kostum pesta, sound system, dsb.
-- UNTUK YANG INGIN SEWA BARANG: Tanya barang apa yang dicari dan daerah mana, arahkan atau bantu cekkan di katalog {$webUrl}.
-- UNTUK YANG MAU BUKA TOKO RENTAL: 100% GRATIS tanpa biaya pendaftaran/bulanan. Bisa daftar sendiri di {$webUrl}/register atau Tim Rentify siap bantu inputkan barangnya sampai tayang.
+## 2. Gaya Komunikasi
+- Gunakan bahasa Indonesia sehari-hari yang natural, sopan, dan santai.
+- Balas dengan singkat, biasanya 1–3 kalimat.
+- Jangan menjawab terlalu panjang atau seperti membaca artikel.
+- Jangan menggunakan bahasa kaku, formal berlebihan, atau gaya bicara robot.
+- Jangan selalu menggunakan daftar poin jika tidak diperlukan.
+- Jangan mengulang salam atau memperkenalkan diri di setiap pesan.
+- Sesuaikan gaya bahasa dengan cara customer berbicara.
+- Gunakan emoji seperlunya, jangan berlebihan.
+- Buat percakapan terasa seperti sedang berbicara dengan admin manusia melalui WhatsApp.
+- JANGAN PERNAH mengeluarkan istilah teknis seperti webhook, server, database, API, JSON, token, prompt, endpoint, dsb.
+
+## 3. Cara Melayani Customer
+- Dengarkan dan pahami dahulu apa yang disampaikan customer.
+- Tanyakan apa yang mereka butuhkan jika masalahnya belum jelas.
+- Ajukan satu pertanyaan sederhana setiap kali jika membutuhkan informasi tambahan.
+- Jangan langsung memberikan penjelasan panjang sebelum memahami masalahnya.
+- Tanggapi setiap keluhan dengan empati, jangan defensif atau menyalahkan customer.
+- Terima kritik, saran, masukan, dan laporan bug dengan terbuka.
+- Bantu customer langkah demi langkah sampai masalahnya jelas atau terselesaikan.
+- Tetap sabar jika customer marah, bingung, atau mengirim pesan berkali-kali.
+- Jika customer hanya ingin bertanya, jawab langsung tanpa mempersulit percakapan.
+
+## 4. Kemampuan Layanan
+Bantu customer terkait:
+- Cara menggunakan Rentify ({$webUrl}).
+- Pendaftaran dan akun (Buka toko rental 100% GRATIS tanpa biaya admin atau bulanan di {$webUrl}/register, atau kirim data produk ke chat ini biar dibantu input sampai tayang).
+- Pencarian dan penyewaan barang (kamera/fotografi, alat outdoor/camping, PlayStation, proyektor, baju/kostum pesta, sound system, dsb).
+- Pembayaran, QRIS, saldo, dan transaksi.
+- Pesanan, pembatalan, pengembalian, serta pengembalian dana.
+- Masalah penyewa maupun pemilik barang (vendor).
+- Kendala teknis, error, dan bug.
+- Keluhan, kritik, saran, serta permintaan bantuan lainnya.
+
+Jika ada masalah transaksi, tanyakan informasi yang relevan secara bertahap (seperti nomor pesanan atau bukti transfer). Jangan meminta PIN, kata sandi, kode OTP, atau informasi rahasia lainnya.
+
+## 5. Kejujuran dan Batasan
+- Jangan mengarang informasi, status pesanan, status pembayaran, kebijakan, atau janji penyelesaian.
+- Jangan mengatakan masalah sudah selesai jika belum benar-benar terverifikasi.
+- Jangan mengaku sudah menghubungi admin lain, memeriksa database, atau melakukan tindakan jika sistem tidak menyediakan kemampuan tersebut.
+- Jika belum mengetahui jawabannya, jelaskan secara singkat dan tawarkan untuk meneruskan masalah kepada admin manusia melalui jalur yang tersedia.
+- Jika masalah memerlukan akses khusus atau keputusan admin, arahkan kepada tim yang berwenang.
+- Jangan menjamin pengembalian dana atau kompensasi tanpa dasar yang jelas.
+
+## 6. Contoh Percakapan
+Customer: Kak, kenapa pembayaran saya belum masuk?
+CS: Maaf ya, Kak. Kita bantu cek. Pembayarannya tadi menggunakan QRIS atau saldo Rentify?
+
+Customer: Saya sudah bayar, tapi pesanannya belum diproses.
+CS: Oke, Kak. Boleh kirim nomor pesanan atau bukti pembayarannya? Tutupi informasi pribadi yang tidak diperlukan, ya.
+
+Customer: Saya mau kasih saran.
+CS: Boleh banget, Kak 😊 Mau kasih saran tentang fitur apa di Rentify?
+
+Customer: Website-nya error terus.
+CS: Waduh, maaf ya, Kak. Error-nya muncul saat melakukan apa?
+
+Customer: Saya marah, uang saya belum kembali!
+CS: Kami paham Kakak pasti kesal. Maaf atas kendalanya. Boleh beri tahu nomor pesanan supaya masalahnya bisa ditindaklanjuti?
+
+Customer: Kamu siapa?
+CS: Saya dari Tim Rentify, Kak 😊 Ada yang bisa kami bantu?
+
+## 7. Aturan Utama
+Jangan berusaha terlihat pintar. Utamakan membuat customer merasa didengar, dipahami, dan dibantu.
+Berbicaralah seperti admin manusia yang benar-benar peduli, bukan chatbot yang sekadar menjawab pertanyaan.
+Responsif, singkat, hangat, jujur, dan fokus menyelesaikan kebutuhan customer. Jangan membanjiri customer dengan informasi yang tidak diminta.
+
+## 8. Tindakan Nyata & Eskalasi (PENTING DARI OWNER)
+- JANGAN SAMPAI CUMA BILANG AKAN MEMBANTU, TETAPI SEBENARNYA TIDAK BISA MELAKUKAN APA-APA.
+- Berikan langkah konkret: langsung tanyakan data yang dibutuhkan secara bertahap (nomor pesanan, bukti bayar, kronologi kendala).
+- Jika ada kendala yang tidak bisa kamu selesaikan sendiri, kamu tidak tahu jawabannya, atau butuh tindakan/keputusan manual admin/pemilik (seperti verifikasi transfer manual, kendala dana/refund, error sistem website, atau customer minta bicara langsung): sampaikan dengan jujur dan santai bahwa kamu akan langsung meneruskan data masalah ini ke Bos Admin / Pemilik Rentify untuk dicek dan ditindaklanjuti/dihubungi langsung.
+- Tambahkan kode [ESKALASI_ADMIN] di baris paling akhir balasanmu jika kendala customer memerlukan penanganan langsung dari Bos Owner/Admin agar radar darurat WhatsApp otomatis memberi tahu Bos Joni.
 PROMPT;
 
         $cachePhone = preg_replace('/[^0-9]/', '', $sender);
@@ -403,8 +493,45 @@ PROMPT;
 
         $reply = null;
 
-        // 1. Kebingungan / Permintaan Bantuan ("bisa bantu", "tolong", "bingung", "gak ngerti", "tidak paham", dsb)
+        // 1. Masalah Pembayaran / Transfer / Belum Masuk / Saldo / Refund
         if (
+            str_contains($lower, 'belum masuk') ||
+            str_contains($lower, 'sudah bayar') ||
+            str_contains($lower, 'sudah transfer') ||
+            str_contains($lower, 'uang belum') ||
+            str_contains($lower, 'refund') ||
+            str_contains($lower, 'belum diproses')
+        ) {
+            $reply = "Maaf ya {$salutation} atas kendalanya. Boleh kirimkan nomor pesanan atau bukti pembayarannya? Biar Tim Rentify bantu cek dan langsung teruskan ke admin untuk ditindaklanjuti. [ESKALASI_ADMIN]";
+        }
+
+        // 2. Website Error / Bug / Kendala Teknis
+        elseif (str_contains($lower, 'error') || str_contains($lower, 'bug') || str_contains($lower, 'rusak') || str_contains($lower, 'gak bisa') || str_contains($lower, 'tidak bisa') || str_contains($lower, 'gangguan')) {
+            $reply = "Waduh, maaf ya {$salutation}. Error-nya muncul saat melakukan apa atau di halaman mana? Boleh infokan biar langsung kami bantu tangani. [ESKALASI_ADMIN]";
+        }
+
+        // 3. Komplain / Marah / Kesal / Uang Belum Kembali
+        elseif (str_contains($lower, 'marah') || str_contains($lower, 'kesal') || str_contains($lower, 'kecewa') || str_contains($lower, 'lama') || str_contains($lower, 'lapor')) {
+            $reply = "Kami paham {$salutation} pasti kesal, maaf sekali atas kendalanya. Boleh beri tahu nomor pesanan supaya masalahnya bisa segera ditindaklanjuti? [ESKALASI_ADMIN]";
+        }
+
+        // 4. Tanya Identitas ("Kamu siapa", "Ini siapa", "Asep")
+        elseif (preg_match('/\b(siapa|kamu siapa|ini siapa|siapa kamu|siapa ini|nama kamu|namamu|asep)\b/i', $lower)) {
+            $reply = "Saya dari Tim Rentify, {$salutation} 😊 Ada yang bisa kami bantu seputar sewa barang atau buka toko rental?";
+        }
+
+        // 5. Minta bicara dengan Admin / Manusia / Telepon / Kontak Owner
+        elseif (str_contains($lower, 'admin') || str_contains($lower, 'manusia') || str_contains($lower, 'telepon') || str_contains($lower, 'telpon') || str_contains($lower, 'bos') || str_contains($lower, 'owner')) {
+            $reply = "Halo {$salutation}, saya dari Tim Rentify. Boleh ceritakan kendala atau nomor pesanannya supaya tim kami bisa langsung bantu cek atau hubungi Kakak? [ESKALASI_ADMIN]";
+        }
+
+        // 6. Saran / Masukan
+        elseif (str_contains($lower, 'saran') || str_contains($lower, 'masukan') || str_contains($lower, 'feedback') || str_contains($lower, 'usul')) {
+            $reply = "Boleh banget, {$salutation} 😊 Mau kasih saran tentang fitur apa di Rentify?";
+        }
+
+        // 7. Kebingungan / Permintaan Bantuan ("bisa bantu", "tolong", "bingung", dsb)
+        elseif (
             str_contains($lower, 'bisa bantu') ||
             str_contains($lower, 'tolong') ||
             str_contains($lower, 'bingung') ||
@@ -422,63 +549,55 @@ PROMPT;
             str_contains($lower, 'mau tanya') ||
             str_contains($lower, 'bisa tanya')
         ) {
-            $reply = "Halo {$salutation}! Tentu bisa banget, Tim Rentify siap bantu. 😊\n\n"
-                . "Boleh cerita Kak, lagi butuh atau mau sewa barang apa nih? Atau lagi mau info seputar buka toko rental di Rentify?";
+            $reply = "Halo {$salutation}! Tentu bisa banget, Tim Rentify siap bantu. 😊\n\nBoleh cerita Kak, lagi butuh atau mau sewa barang apa nih? Atau lagi mau info seputar buka toko rental di Rentify?";
         }
 
-        // 2. Terima kasih / apresiasi
+        // 8. Terima kasih / apresiasi
         elseif (preg_match('/\b(makasih|terima kasih|thanks|thank you|tengkyu|mksh|trims)\b/i', $lower)) {
-            $reply = "Sama-sama {$salutation}! Senang bisa bantu. Kalau nanti ada butuh sewa apa-apa lagi seputar Rentify, kabari kami ya Kak. Have a nice day! 😊🙏";
+            $reply = "Sama-sama {$salutation}! Senang bisa bantu. Kalau nanti ada butuh sewa apa-apa lagi seputar Rentify, kabari kami ya. Have a nice day! 😊🙏";
         }
 
-        // 3. Biaya / tarif / komisi / harga / gratis / bayar
+        // 9. Biaya / tarif / komisi / harga / gratis / bayar
         elseif (preg_match('/\b(biaya|bayar|tarif|harga|komisi|gratis|free|potongan|persen)\b/i', $lower)) {
-            $reply = "Halo {$salutation}, untuk buka toko rental di Rentify 100% GRATIS ya Kak, tanpa biaya admin atau bulanan.\n\n"
-                . "Kakak rencananya mau sewakan barang, atau lagi cari barang buat disewa nih?";
+            $reply = "Halo {$salutation}, untuk buka toko rental di Rentify 100% GRATIS ya Kak, tanpa biaya admin atau bulanan.\n\nKakak rencananya mau sewakan barang, atau lagi cari barang buat disewa nih?";
         }
 
-        // 4. Konfirmasi bergabung / pendaftaran toko vendor (secara spesifik)
+        // 10. Konfirmasi bergabung / pendaftaran toko vendor (secara spesifik)
         elseif (
             preg_match('/\b(mau daftar|minat daftar|boleh daftar|siap daftar|gas daftar|mau gabung|minat gabung|bantu daftar|daftarin)\b/i', $lower) ||
             (preg_match('/\b(mau|boleh|minat|siap|setuju)\b/i', $lower) && preg_match('/\b(buka toko|toko rental|mitra|vendor|sewakan|daftar|gabung)\b/i', $lower))
         ) {
-            $reply = "Siap {$salutation}, mantap! Boleh infokan nama toko, kota, dan barang apa aja yang mau disewakan ya Kak.\n\n"
-                . "Kalau ada foto produk atau pricelist, langsung kirim ke chat ini aja, nanti Tim Rentify yang bantu buatkan tokonya sampai aktif. 👍";
+            $reply = "Siap {$salutation}, mantap! Boleh infokan nama toko, kota, dan barang apa aja yang mau disewakan ya Kak.\n\nKalau ada foto produk atau pricelist, langsung kirim ke chat ini aja, nanti Tim Rentify yang bantu buatkan tokonya sampai aktif. 👍";
         }
 
-        // 5. Pertanyaan cara daftar / gabung / menjadi mitra
+        // 11. Pertanyaan cara daftar / gabung / menjadi mitra
         elseif (str_contains($lower, 'cara') || str_contains($lower, 'daftar') || str_contains($lower, 'gabung') || str_contains($lower, 'join') || str_contains($lower, 'mitra') || str_contains($lower, 'buka toko')) {
-            $reply = "Halo {$salutation}, caranya gampang banget! Kakak bisa daftar di {$webUrl}/register, atau kirim info toko dan produknya ke sini biar Tim Rentify bantu inputkan sampai beres.\n\n"
-                . "Kakak rencana mau sewakan barang apa nih?";
+            $reply = "Halo {$salutation}, caranya gampang banget! Kakak bisa daftar di {$webUrl}/register, atau kirim info toko dan produknya ke sini biar Tim Rentify bantu inputkan sampai beres.\n\nKakak rencana mau sewakan barang apa nih?";
         }
 
-        // 6. Keamanan / jaminan / KTP / hilang / rusak / syarat
+        // 12. Keamanan / jaminan / KTP / hilang / rusak / syarat
         elseif (str_contains($lower, 'aman') || str_contains($lower, 'keamanan') || str_contains($lower, 'jaminan') || str_contains($lower, 'hilang') || str_contains($lower, 'rusak') || str_contains($lower, 'ktp') || str_contains($lower, 'syarat') || str_contains($lower, 'resiko')) {
-            $reply = "Tenang Kak, aman banget kok. Calon penyewa di Rentify wajib verifikasi KTP resmi, dan sistem otomatis buatkan invoice serta surat perjanjian sewa resmi. Kakak juga bebas setujui atau tolak pesanan sewa.\n\n"
-                . "Ada yang mau dipastikan lagi Kak?";
+            $reply = "Tenang Kak, aman banget kok. Calon penyewa di Rentify wajib verifikasi KTP resmi, dan sistem otomatis buatkan invoice serta surat perjanjian sewa resmi. Kakak juga bebas setujui atau tolak pesanan sewa.\n\nAda yang mau dipastikan lagi Kak?";
         }
 
-        // 7. Ingin sewa barang / tanya stok produk
+        // 13. Ingin sewa barang / tanya stok produk
         elseif (str_contains($lower, 'sewa') || str_contains($lower, 'rental') || str_contains($lower, 'pinjam') || str_contains($lower, 'cari') || str_contains($lower, 'butuh') || str_contains($lower, 'katalog')) {
             $reply = "Halo {$salutation}! Kakak lagi cari atau butuh sewa barang apa nih dan buat di daerah mana? Biar kami bantu carikan di katalog Rentify ({$webUrl}). 😊";
         }
 
-        // 8. Lokasi / kantor
+        // 14. Lokasi / kantor
         elseif (str_contains($lower, 'lokasi') || str_contains($lower, 'alamat') || str_contains($lower, 'kantor') || str_contains($lower, 'dimana') || str_contains($lower, 'daerah')) {
-            $reply = "Halo {$salutation}, Rentify berbasis online di {$webUrl} dan menghubungkan mitra rental dengan penyewa di berbagai kota.\n\n"
-                . "Kakak lagi di daerah mana nih, dan lagi butuh apa?";
+            $reply = "Halo {$salutation}, Rentify berbasis online di {$webUrl} dan menghubungkan mitra rental dengan penyewa di berbagai kota.\n\nKakak lagi di daerah mana nih, dan lagi butuh apa?";
         }
 
-        // 9. Salam / sapaan / tes
+        // 15. Salam / sapaan / tes
         elseif (preg_match('/\b(halo|hai|hi|hei|p|ping|tes|test|assalamualaikum|pagi|siang|sore|malam|permisi)\b/i', $lower)) {
-            $reply = "Halo {$salutation}! Selamat datang di Rentify. 😊\n\n"
-                . "Ada yang bisa Tim Rentify bantu? Lagi butuh atau cari sewa barang apa nih Kak?";
+            $reply = "Halo {$salutation}! Selamat datang di Rentify. 😊\n\nAda yang bisa Tim Rentify bantu? Lagi butuh atau cari sewa barang apa nih Kak?";
         }
 
-        // 10. Default fallback umum (santai, ramah, solutif)
+        // 16. Default fallback umum (santai, ramah, solutif)
         else {
-            $reply = "Halo {$salutation}! Salam dari Tim Rentify ({$webUrl}). 😊\n\n"
-                . "Ada yang bisa kami bantu? Boleh cerita Kakak lagi butuh atau mau sewa apa hari ini?";
+            $reply = "Halo {$salutation}! Salam dari Tim Rentify ({$webUrl}). 😊\n\nAda yang bisa kami bantu? Boleh cerita Kakak lagi butuh atau mau sewa apa hari ini?";
         }
 
         // Simpan juga turn fallback ke memory percakapan agar ada riwayat
@@ -496,6 +615,47 @@ PROMPT;
         }
 
         return $reply;
+    }
+
+    /**
+     * Kirim notifikasi darurat / eskalasi langsung ke nomor WhatsApp pribadi Bos Joni
+     */
+    protected function notifyBossEscalation(string $sender, string $name, string $message, string $reply): void
+    {
+        $adminPhone = config('security.admin_phone', env('ADMIN_SECURITY_PHONE', '083183494835'));
+        if (empty($adminPhone)) {
+            return;
+        }
+
+        $cleanSender = preg_replace('/[^0-9]/', '', $sender);
+        $cooldownKey = "cs_escalate_cooldown_{$cleanSender}";
+
+        // Cegah spam notifikasi berulang untuk customer yang sama dalam 15 menit
+        if (Cache::has($cooldownKey)) {
+            return;
+        }
+
+        Cache::put($cooldownKey, true, now()->addMinutes(15));
+
+        $displayName = !empty($name) ? $name : 'Customer';
+        $timeStr = now()->setTimezone('Asia/Jakarta')->format('d M Y, H:i:s') . ' WIB';
+        $waLink = "https://wa.me/{$cleanSender}";
+
+        $pesan = "📢 *[RADAR CS RENTIFY — PERLU TINDAK LANJUT]* 📢\n\n"
+               . "Halo Bos Joni, ada kendala/pesan customer yang membutuhkan penanganan langsung:\n\n"
+               . "👤 *Customer:* {$displayName} ({$sender})\n"
+               . "🕒 *Waktu:* {$timeStr}\n\n"
+               . "💬 *Pesan Customer:*\n\"{$message}\"\n\n"
+               . "🤖 *Balasan CS:*\n\"{$reply}\"\n\n"
+               . "👉 *Telepon / Hubungi Customer Langsung:* {$waLink}\n\n"
+               . "_Notifikasi otomatis radar CS Rentify._";
+
+        try {
+            WhatsAppService::send($adminPhone, $pesan);
+            Log::info("CS Escalation alert sent to Boss Joni {$adminPhone} for {$sender}");
+        } catch (\Throwable $e) {
+            Log::warning("Failed to send CS Escalation alert to Boss Joni: " . $e->getMessage());
+        }
     }
 
     /**
