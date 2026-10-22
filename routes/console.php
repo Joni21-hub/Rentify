@@ -33,3 +33,18 @@ Schedule::command('rentify:generate-daily-content')
     ->name('rentify-ai-marketing-daily')
     ->withoutOverlapping();
 
+/*
+|--------------------------------------------------------------------------
+| Rentify AI Server Guardian - Autonomous 24/7 Monitoring Schedule
+|--------------------------------------------------------------------------
+|
+| Memantau status website (HTTP 5xx, latency), koneksi database Aiven,
+| log error baru, resource server, dan mengirim alert darurat ke WhatsApp pemilik.
+|
+*/
+Schedule::command('rentify:guardian-monitor')
+    ->everyFiveMinutes()
+    ->name('rentify-guardian-monitor')
+    ->withoutOverlapping();
+
+

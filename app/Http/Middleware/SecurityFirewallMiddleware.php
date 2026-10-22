@@ -11,13 +11,15 @@ use Symfony\Component\HttpFoundation\Response;
 class SecurityFirewallMiddleware
 {
     /**
-     * Webhook atau path publik yang dikecualikan dari pemindaian string agresif
+     * Webhook atau path publik yang dikecualikan dari pemindaian string agresif & blokir IP
      */
     protected array $excludedPaths = [
         'api/payments/doku/notify',
         'api/webhook/mutasi',
         'webhook/whatsapp',
         'webhook/fonnte',
+        'up',
+        'api/health',
     ];
 
     /**
@@ -34,16 +36,9 @@ class SecurityFirewallMiddleware
         $path = ltrim($request->path(), '/');
         $uri = $request->getRequestUri();
 
-        // 2. Cek apakah IP sudah berada dalam daftar blokir sementara
-        $banKey = "sec_firewall_banned_{$ip}";
-        if (Cache::has($banKey)) {
-            $banReason = Cache::get($banKey, 'Aktivitas mencurigakan terdeteksi sebelumnya.');
-            return $this->blockResponse($request, 'IP Anda telah diblokir sementara karena terdeteksi melakukan aktivitas mencurigakan.', $banReason, $ip);
-        }
-
-        // 3. Lewati jalur yang dikecualikan (misal: webhook payment gateway & aset statis)
+        // 2. Lewati jalur yang dikecualikan (webhook payment gateway, WhatsApp bot & health check)
         foreach ($this->excludedPaths as $exempt) {
-            if (str_starts_with($path, $exempt)) {
+            if ($path === $exempt || str_starts_with($path, $exempt)) {
                 return $next($request);
             }
         }
@@ -51,6 +46,13 @@ class SecurityFirewallMiddleware
         // Lewati file statis umum
         if (preg_match('/\.(css|js|jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|map)$/i', $path)) {
             return $next($request);
+        }
+
+        // 3. Cek apakah IP sudah berada dalam daftar blokir sementara
+        $banKey = "sec_firewall_banned_{$ip}";
+        if (Cache::has($banKey)) {
+            $banReason = Cache::get($banKey, 'Aktivitas mencurigakan terdeteksi sebelumnya.');
+            return $this->blockResponse($request, 'IP Anda telah diblokir sementara karena terdeteksi melakukan aktivitas mencurigakan.', $banReason, $ip);
         }
 
         // 4. Deteksi Pemindaian Berbahaya (Path Scanner & Vulnerability Probing)

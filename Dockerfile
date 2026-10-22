@@ -124,6 +124,14 @@ stdout_logfile=/dev/stdout\n\
 stdout_logfile_maxbytes=0\n\
 stderr_logfile=/dev/stderr\n\
 stderr_logfile_maxbytes=0\n\
+autorestart=true\n\
+\n\
+[program:laravel-scheduler]\n\
+command=php /var/www/html/artisan schedule:work\n\
+stdout_logfile=/dev/stdout\n\
+stdout_logfile_maxbytes=0\n\
+stderr_logfile=/dev/stderr\n\
+stderr_logfile_maxbytes=0\n\
 autorestart=true' > /etc/supervisor.d/app.ini
 
 # Pastikan direktori storage dan cache tersedia

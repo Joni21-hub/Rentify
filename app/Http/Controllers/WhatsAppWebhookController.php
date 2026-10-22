@@ -38,15 +38,19 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['status' => true, 'note' => 'self_message_ignored']);
         }
 
-        // Cek apakah pengirim adalah Admin / Bos dan mengirimkan perintah admin khusus
+        // Cek apakah pengirim adalah Admin / Bos Pemilik
         $isBoss = $this->isBossAdmin((string) $sender, $message);
-        $isAdminCommand = $isBoss && $this->isAdminCommand($message);
+        $isExplicitCsTest = $isBoss && (str_starts_with(strtolower($message), '!cs ') || str_starts_with(strtolower($message), '/cs '));
 
-        if ($isAdminCommand) {
-            $reply = $this->generateAdminReply($message);
+        if ($isBoss && !$isExplicitCsTest) {
+            // RENTIFY GUARDIAN: AI Agent Keamanan & Monitoring menangani seluruh pesan & perintah pemilik
+            /** @var \App\Services\RentifyGuardianService $guardian */
+            $guardian = app(\App\Services\RentifyGuardianService::class);
+            $reply = $guardian->handleOwnerMessage($message, (string) $sender);
         } else {
-            // Susun balasan santai, ramah & responsif (Tim Rentify via Gemini AI)
-            $reply = $this->generateReply($message, $name, (string) $sender);
+            $msgForReply = $isExplicitCsTest ? trim(substr($message, 4)) : $message;
+            // Susun balasan santai, ramah & responsif (Tim Rentify via Gemini AI untuk Customer)
+            $reply = $this->generateReply($msgForReply, $name, (string) $sender);
         }
 
         // Cek apakah pesan atau balasan butuh eskalasi ke nomor WhatsApp Bos Joni
@@ -99,16 +103,23 @@ class WhatsAppWebhookController extends Controller
             '44925643173935',  // WhatsApp LID Bos Joni (LID aktif)
         ];
 
-        // Ambil juga dari config/env security
+        // Ambil juga dari config/env security & guardian
         $adminPhone = config('security.admin_phone', env('ADMIN_SECURITY_PHONE', '083183494835'));
         if (!empty($adminPhone)) {
             $knownBossNumbers[] = $adminPhone;
         }
 
+        $guardianOwners = (array) config('guardian.owner_phones', []);
+        foreach ($guardianOwners as $gPhone) {
+            if (is_string($gPhone) && !empty($gPhone)) {
+                $knownBossNumbers[] = $gPhone;
+            }
+        }
+
         // Cek kecocokan nomor
         if (!empty($cleanSender)) {
             foreach ($knownBossNumbers as $bossNum) {
-                $cleanBoss = preg_replace('/[^0-9]/', '', $bossNum);
+                $cleanBoss = (string) (preg_replace('/[^0-9]/', '', (string) $bossNum) ?? '');
                 if (empty($cleanBoss)) continue;
 
                 // Match exact (LID atau nomor lengkap)
@@ -630,12 +641,12 @@ PROMPT;
         $cleanSender = preg_replace('/[^0-9]/', '', $sender);
         $cooldownKey = "cs_escalate_cooldown_{$cleanSender}";
 
-        // Cegah spam notifikasi berulang untuk customer yang sama dalam 15 menit
+        // Cegah spam notifikasi berulang untuk customer yang sama dalam 2-3 menit (cooldown 2 menit)
         if (Cache::has($cooldownKey)) {
             return;
         }
 
-        Cache::put($cooldownKey, true, now()->addMinutes(15));
+        Cache::put($cooldownKey, true, now()->addMinutes(2));
 
         $displayName = !empty($name) ? $name : 'Customer';
         $timeStr = now()->setTimezone('Asia/Jakarta')->format('d M Y, H:i:s') . ' WIB';
