@@ -9,28 +9,52 @@ const path = require('path');
 const mysql = require('mysql2/promise');
 const { initAuthCreds, BufferJSON, proto } = require('@whiskeysockets/baileys');
 
-async function createAuthState(options = {}) {
+// Singleton connection pool across the entire Node.js runtime
+let cachedPool = null;
+
+function getDbPool() {
+    if (cachedPool) return cachedPool;
+
     const dbHost = process.env.DB_HOST;
     const dbUser = process.env.DB_USERNAME || process.env.DB_USER;
     const dbPassword = process.env.DB_PASSWORD || '';
     const dbName = process.env.DB_DATABASE || process.env.DB_NAME;
     const dbPort = parseInt(process.env.DB_PORT || '3306', 10);
 
-    // If MySQL config is present, try database persistence
+    // If MySQL config is present, create a lightweight connection pool
     if (dbHost && dbUser && dbName) {
         try {
-            const pool = mysql.createPool({
+            cachedPool = mysql.createPool({
                 host: dbHost,
                 port: dbPort,
                 user: dbUser,
                 password: dbPassword,
                 database: dbName,
                 waitForConnections: true,
-                connectionLimit: 10,
+                connectionLimit: 2, // Minimal footprint: max 2 connections for Node.js gateway
+                maxIdle: 2,
+                idleTimeout: 30000,
                 queueLimit: 0,
+                enableKeepAlive: true,
+                keepAliveInitialDelay: 10000,
                 ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
             });
+            return cachedPool;
+        } catch (err) {
+            console.error('[DB-AUTH] Failed to initialize MySQL pool:', err.message);
+            cachedPool = null;
+            return null;
+        }
+    }
+    return null;
+}
 
+async function createAuthState(options = {}) {
+    const pool = getDbPool();
+
+    // If MySQL config is present, try database persistence
+    if (pool) {
+        try {
             // Verify connection & ensure table exists
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS whatsapp_sessions (

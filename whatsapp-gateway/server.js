@@ -119,10 +119,22 @@ async function startWhatsApp() {
         reconnectTimer = null;
     }
 
+    if (sock) {
+        try {
+            sock.ev.removeAllListeners();
+            sock.end(undefined);
+        } catch (e) {
+            // ignore
+        }
+        sock = null;
+    }
+
     connectionState = 'connecting';
     console.log('[WHATSAPP] Initializing WhatsApp multi-device connection...');
 
-    authAdapter = await createAuthState();
+    if (!authAdapter) {
+        authAdapter = await createAuthState();
+    }
     const { version, isLatest } = await fetchLatestBaileysVersion();
     console.log(`[WHATSAPP] Using Baileys version ${version.join('.')} (latest: ${isLatest})`);
 
@@ -182,7 +194,10 @@ async function startWhatsApp() {
 
             if (statusCode === DisconnectReason.loggedOut) {
                 console.log('[WHATSAPP] Session logged out by user. Clearing auth...');
-                await authAdapter.clearAuth();
+                if (authAdapter) {
+                    await authAdapter.clearAuth();
+                    authAdapter = null;
+                }
                 reconnectTimer = setTimeout(startWhatsApp, 3000);
             } else if (shouldReconnect) {
                 console.log('[WHATSAPP] Reconnecting in 5 seconds...');
@@ -401,10 +416,15 @@ app.post('/logout', checkAuth, async (req, res) => {
     try {
         console.log('[WHATSAPP] Logout requested via API.');
         if (sock) {
-            await sock.logout();
+            try {
+                sock.ev.removeAllListeners();
+                await sock.logout();
+            } catch (e) {}
+            sock = null;
         }
         if (authAdapter) {
             await authAdapter.clearAuth();
+            authAdapter = null;
         }
         connectionState = 'disconnected';
         currentQrDataUrl = null;
@@ -427,7 +447,11 @@ app.post('/reset-chat-sessions', checkAuth, async (req, res) => {
             await authAdapter.clearChatSessions();
         }
         if (sock) {
-            sock.end(new Error('Reset chat sessions'));
+            try {
+                sock.ev.removeAllListeners();
+                sock.end(new Error('Reset chat sessions'));
+            } catch (e) {}
+            sock = null;
         }
         setTimeout(startWhatsApp, 1500);
         return res.json({ status: true, message: 'Chat sessions reset successfully, login credentials preserved.' });
@@ -442,7 +466,11 @@ app.post('/restart', checkAuth, async (req, res) => {
     try {
         console.log('[WHATSAPP] Reconnection requested via API.');
         if (sock) {
-            sock.end(new Error('Manual restart'));
+            try {
+                sock.ev.removeAllListeners();
+                sock.end(new Error('Manual restart'));
+            } catch (e) {}
+            sock = null;
         }
         setTimeout(startWhatsApp, 1000);
         return res.json({ status: true, message: 'Reconnecting...' });
