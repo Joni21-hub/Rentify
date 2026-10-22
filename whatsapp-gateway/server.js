@@ -14,6 +14,25 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config(); // fallback to local
 
+// Global handlers to prevent Baileys/Signal crypto crashes (Bad MAC, Timed Out, etc.) from taking down Node
+process.on('uncaughtException', (err) => {
+    const msg = err?.message || String(err);
+    if (msg.includes('Bad MAC') || msg.includes('No session record') || msg.includes('Connection Closed') || msg.includes('Timed Out') || msg.includes('decrypt message')) {
+        console.warn('[WHATSAPP PROTOCOL WARNING] Caught transient protocol error safely:', msg);
+        return;
+    }
+    console.error('[CRITICAL UNCAUGHT EXCEPTION]:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    const msg = reason?.message || String(reason);
+    if (msg.includes('Bad MAC') || msg.includes('No session record') || msg.includes('Connection Closed') || msg.includes('Timed Out') || msg.includes('decrypt message')) {
+        console.warn('[WHATSAPP PROTOCOL WARNING] Caught unhandled protocol rejection safely:', msg);
+        return;
+    }
+    console.error('[UNHANDLED REJECTION AT]:', promise, 'reason:', reason);
+});
+
 const {
     default: makeWASocket,
     DisconnectReason,
@@ -58,12 +77,12 @@ const DEBOUNCE_DELAY_MS = 2500;
 function formatJid(target) {
     if (!target) return null;
     const str = String(target).trim();
-    if (str.endsWith('@s.whatsapp.net') || str.endsWith('@lid') || str.endsWith('@g.us')) {
-        return str;
-    }
-    // Check if target matches Bos Joni's known LID
+    // Check if target matches Bos Joni's known LID (resolve directly to his phone number)
     if (str.includes('249070069219550') || str.includes('44925643173935')) {
         return '6283183494835@s.whatsapp.net';
+    }
+    if (str.endsWith('@s.whatsapp.net') || str.endsWith('@lid') || str.endsWith('@g.us')) {
+        return str;
     }
     let clean = str.replace(/[^0-9]/g, '');
     if (clean.length >= 14 && !clean.startsWith('62')) {
@@ -199,6 +218,9 @@ async function startWhatsApp() {
                     authAdapter = null;
                 }
                 reconnectTimer = setTimeout(startWhatsApp, 3000);
+            } else if (statusCode === 440) {
+                console.log('[WHATSAPP] Conflict (code: 440): Session was replaced by another active connection. Backing off 15s...');
+                reconnectTimer = setTimeout(startWhatsApp, 15000);
             } else if (shouldReconnect) {
                 console.log('[WHATSAPP] Reconnecting in 5 seconds...');
                 reconnectTimer = setTimeout(startWhatsApp, 5000);
