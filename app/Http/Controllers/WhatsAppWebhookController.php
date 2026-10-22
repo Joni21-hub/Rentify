@@ -234,10 +234,12 @@ class WhatsAppWebhookController extends Controller
         }
 
         $preferredModel = config('rentify_ai.gemini.model')
-            ?: (config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-3.5-flash'));
+            ?: (config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-3.8-flash'));
 
         $candidateModels = array_values(array_unique(array_filter([
             $preferredModel,
+            'gemini-3.8-flash',
+            'gemini-3.6-flash',
             'gemini-3.5-flash',
             'gemini-3.5-flash-lite',
         ])));
@@ -354,7 +356,7 @@ PROMPT;
 
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
                 try {
-                    $response = Http::timeout(10)->post($url, $payload);
+                    $response = Http::timeout(5)->post($url, $payload);
 
                     if ($response->successful()) {
                         $data = $response->json();
@@ -379,7 +381,7 @@ PROMPT;
                             break; // Ganti ke key berikutnya
                         }
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     Log::warning("Gemini Webhook Exception (Model: {$model}): " . $e->getMessage());
                 }
             }
