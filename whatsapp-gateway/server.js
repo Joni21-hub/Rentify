@@ -36,6 +36,7 @@ try {
     };
 }
 const msgRetryCounterCache = new NodeCache({ stdTTL: 300 });
+const msgStore = new Map(); // Cache recent messages for Baileys getMessage / decryption retry
 
 const PORT = parseInt(process.env.WHATSAPP_GATEWAY_PORT || '3000', 10);
 const GATEWAY_SECRET = process.env.WHATSAPP_GATEWAY_SECRET || 'rentify-wa-secret-2026';
@@ -61,7 +62,7 @@ function formatJid(target) {
         return str;
     }
     // Check if target matches Bos Joni's known LID
-    if (str.includes('249070069219550')) {
+    if (str.includes('249070069219550') || str.includes('44925643173935')) {
         return '6283183494835@s.whatsapp.net';
     }
     let clean = str.replace(/[^0-9]/g, '');
@@ -138,6 +139,9 @@ async function startWhatsApp() {
         },
         msgRetryCounterCache,
         getMessage: async (key) => {
+            if (key?.id && msgStore.has(key.id)) {
+                return msgStore.get(key.id);
+            }
             return undefined;
         },
         browser: ['Rentify Platform', 'Chrome', '124.0.0.0'],
@@ -209,6 +213,14 @@ async function startWhatsApp() {
         if (type !== 'notify' && type !== 'append') return;
 
         for (const msg of messages) {
+            if (msg.key?.id && msg.message) {
+                msgStore.set(msg.key.id, msg.message);
+                if (msgStore.size > 2000) {
+                    const firstKey = msgStore.keys().next().value;
+                    msgStore.delete(firstKey);
+                }
+            }
+
             // Ignore if message is sent by ourselves
             if (msg.key.fromMe) continue;
 
@@ -368,6 +380,9 @@ app.post('/send', checkAuth, async (req, res) => {
         }
 
         const sent = await sock.sendMessage(jid, { text: String(message) });
+        if (sent?.key?.id && sent?.message) {
+            msgStore.set(sent.key.id, sent.message);
+        }
         console.log(`[WHATSAPP SENT] Message delivered to ${jid} (id: ${sent?.key?.id})`);
 
         return res.json({
