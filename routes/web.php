@@ -119,6 +119,11 @@ Route::prefix('admin')->name('admin.')
     Route::patch('pembayaran/{id}/verify', [AdminPembayaranController::class, 'verify'])->name('pembayaran.verify');
     Route::patch('pembayaran/{id}/refund', [AdminPembayaranController::class, 'refund'])->name('pembayaran.refund');
 
+    // Monitoring Mutasi Rekening & Simulasi Auto-Detect Android
+    Route::get('mutasi', [\App\Http\Controllers\Admin\AdminMutasiController::class, 'index'])->name('mutasi.index');
+    Route::post('mutasi/simulate', [\App\Http\Controllers\Admin\AdminMutasiController::class, 'simulate'])->name('mutasi.simulate');
+    Route::post('mutasi/{id}/match', [\App\Http\Controllers\Admin\AdminMutasiController::class, 'manualMatch'])->name('mutasi.match');
+
     Route::get('pengembalian', [AdminPengembalianController::class, 'index'])->name('pengembalian');
     Route::patch('pengembalian/{id}/approve', [AdminPengembalianController::class, 'approve'])->name('pengembalian.approve');
 
@@ -248,7 +253,7 @@ Route::prefix('customer')->name('customer.')
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
-    // Pembayaran Midtrans Snap & QRIS
+    // Pembayaran QRIS Dinamis Standar Bank Indonesia
     Route::get('/qris/{id}', [CheckoutController::class, 'qris'])->name('qris');
     Route::get('/menunggu-pembayaran/{id}', [CheckoutController::class, 'qris'])->name('doku.waiting');
 
@@ -256,8 +261,9 @@ Route::prefix('customer')->name('customer.')
     Route::get('/pembayaran/{id}/pay', [PembayaranController::class, 'pay'])->name('pembayaran.pay');
     Route::get('/pembayaran/{id}/return', [PembayaranController::class, 'return'])->name('pembayaran.return');
 
-    // AJAX Polling: cek status pembayaran (Midtrans & DB)
+    // AJAX Polling & Konfirmasi: cek status pembayaran (QRIS & DB)
     Route::get('/pembayaran/check-status/{id}', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check_status');
+    Route::post('/pembayaran/confirm/{id}', [PembayaranController::class, 'confirmPayment'])->name('pembayaran.confirm');
     Route::post('/pembayaran/simulate/{id}', [PembayaranController::class, 'simulatePayment'])->name('pembayaran.simulate');
 
     // Halaman Sukses setelah pembayaran dikonfirmasi
@@ -301,9 +307,13 @@ Route::prefix('customer')->name('customer.')
 
 
 // ─── PAYMENT WEBHOOKS (tanpa CSRF — dihandle di bootstrap/app.php) ──────────────
-Route::post('/midtrans/callback', [\App\Http\Controllers\Payment\PembayaranController::class, 'callback'])->name('midtrans.callback');
 Route::post('/api/payments/doku/notify', [\App\Http\Controllers\Payment\PembayaranController::class, 'notify'])
     ->name('doku.notify')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// ─── ANDROID NOTIFICATION MUTASI WEBHOOK (AUTO-CONFIRM 24/7) ─────────────────
+Route::post('/api/webhook/mutasi', [\App\Http\Controllers\Api\MutasiWebhookController::class, 'handle'])
+    ->name('webhook.mutasi')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 // ─── WHATSAPP WEBHOOK (SELF-HOSTED GATEWAY & AUTO-REPLY CS) ────────────────────

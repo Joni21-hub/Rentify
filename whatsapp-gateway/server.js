@@ -49,6 +49,10 @@ let connectedUser = null;
 let authAdapter = null;
 let reconnectTimer = null;
 
+// Debounce buffer for rapid sequential incoming messages from the same sender
+const incomingDebounceBuffers = new Map(); // senderKey -> { messages: [], name: '', timer: Timeout, targetJid: string }
+const DEBOUNCE_DELAY_MS = 2500;
+
 // Helper: Normalize Indonesian phone numbers or pass through valid JIDs
 function formatJid(target) {
     if (!target) return null;
@@ -56,7 +60,14 @@ function formatJid(target) {
     if (str.endsWith('@s.whatsapp.net') || str.endsWith('@lid') || str.endsWith('@g.us')) {
         return str;
     }
+    // Check if target matches Bos Joni's known LID
+    if (str.includes('249070069219550')) {
+        return '6283183494835@s.whatsapp.net';
+    }
     let clean = str.replace(/[^0-9]/g, '');
+    if (clean.length >= 14 && !clean.startsWith('62')) {
+        return `${clean}@lid`;
+    }
     if (clean.startsWith('0')) {
         clean = '62' + clean.slice(1);
     } else if (clean.startsWith('+62')) {
@@ -245,13 +256,59 @@ async function startWhatsApp() {
             }
 
             if (!senderPhone) {
-                senderPhone = remoteJid.replace('@s.whatsapp.net', '').replace('@lid', '');
+                // If it's Bos Joni's known WhatsApp LID, map directly to his phone number
+                if (remoteJid.includes('249070069219550')) {
+                    senderPhone = '083183494835';
+                } else if (remoteJid.endsWith('@lid')) {
+                    senderPhone = remoteJid; // Keep full @lid JID so formatJid preserves it
+                } else {
+                    senderPhone = remoteJid.replace('@s.whatsapp.net', '');
+                }
             }
 
             const senderName = msg.pushName || '';
+            const senderKey = String(senderPhone);
+            const targetJid = remoteJid;
 
             console.log(`[WHATSAPP INCOMING] Message from ${senderPhone} (${senderName}): "${trimmed}"`);
-            await forwardToWebhook(senderPhone, senderName, trimmed);
+
+            // Send presence update ("composing") so user sees "mengetik..."
+            try {
+                if (sock && targetJid) {
+                    await sock.sendPresenceUpdate('composing', targetJid);
+                }
+            } catch (presErr) {
+                // Ignore presence update error
+            }
+
+            // Debounce rapid sequential messages from the same sender
+            const existingBuffer = incomingDebounceBuffers.get(senderKey);
+            if (existingBuffer) {
+                clearTimeout(existingBuffer.timer);
+                existingBuffer.messages.push(trimmed);
+                if (senderName && (!existingBuffer.name || existingBuffer.name === 'Pengguna WhatsApp')) {
+                    existingBuffer.name = senderName;
+                }
+                existingBuffer.timer = setTimeout(async () => {
+                    const combinedText = existingBuffer.messages.join("\n");
+                    const finalName = existingBuffer.name;
+                    incomingDebounceBuffers.delete(senderKey);
+                    await forwardToWebhook(senderKey, finalName, combinedText);
+                }, DEBOUNCE_DELAY_MS);
+            } else {
+                const entry = {
+                    messages: [trimmed],
+                    name: senderName,
+                    targetJid: targetJid,
+                    timer: setTimeout(async () => {
+                        const combinedText = entry.messages.join("\n");
+                        const finalName = entry.name;
+                        incomingDebounceBuffers.delete(senderKey);
+                        await forwardToWebhook(senderKey, finalName, combinedText);
+                    }, DEBOUNCE_DELAY_MS)
+                };
+                incomingDebounceBuffers.set(senderKey, entry);
+            }
         }
     });
 }

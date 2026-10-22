@@ -17,10 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\App\Http\Middleware\SecurityFirewallMiddleware::class);
         
         $middleware->validateCsrfTokens(except: [
-            '/midtrans/callback',
-            'midtrans/callback',
             '/api/payments/doku/notify',
             'api/payments/doku/notify',
+            '/api/webhook/mutasi',
+            'api/webhook/mutasi',
+            'api/webhook/mutasi/*',
             '/webhook/whatsapp',
             'webhook/whatsapp',
             'webhook/whatsapp/*',

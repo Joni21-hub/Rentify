@@ -42,6 +42,10 @@
                     <i class="fas fa-credit-card text-[#0369a1] w-5"></i>
                     <span>Verifikasi Pembayaran</span>
                 </a>
+                <a href="{{ route('admin.mutasi.index') }}" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <i class="fas fa-bolt text-amber-500 w-5"></i>
+                    <span>Auto-Detect Mutasi</span>
+                </a>
                 <a href="/admin/dashboard" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
                     <i class="fas fa-file-invoice-dollar text-slate-400 w-5"></i>
                     <span>Data Transaksi</span>
@@ -154,7 +158,7 @@
                         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
                             <i class="fas fa-list-check text-[#0369a1] mr-2"></i>Daftar Mutasi Pembayaran Masuk
                         </h3>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">Pantau status transaksi dari GoPay, QRIS, Midtrans & DOKU Payment Gateway.</p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">Pantau status transaksi pembayaran QRIS & Penyewaan Rentify.</p>
                     </div>
                     <div class="relative w-full md:w-64">
                         <i class="fas fa-search absolute left-3 top-2.5 text-slate-300 text-xs"></i>

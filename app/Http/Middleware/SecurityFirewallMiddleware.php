@@ -14,8 +14,9 @@ class SecurityFirewallMiddleware
      * Webhook atau path publik yang dikecualikan dari pemindaian string agresif
      */
     protected array $excludedPaths = [
-        'midtrans/callback',
         'api/payments/doku/notify',
+        'api/webhook/mutasi',
+        'webhook/whatsapp',
         'webhook/fonnte',
     ];
 

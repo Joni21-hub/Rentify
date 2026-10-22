@@ -203,6 +203,12 @@ class CheckoutController extends Controller
         $nomorWaAman = $request->no_hp;
         $metodeInput = $request->input('metode_pembayaran', 'QRIS');
         
+        // Inisialisasi kode unik 3-digit untuk auto-detect mutasi (Metode 2)
+        $kodeUnikDigunakan = 0;
+        if ($metodeInput === 'QRIS' && config('mutasi.enable_kode_unik', true)) {
+            $kodeUnikDigunakan = rand(100, 999);
+        }
+
         // PERUBAHAN: Menangkap array data voucher jika ada
         $voucherDataStr = $request->input('voucher_data_json');
         $voucherData = [];
@@ -255,8 +261,15 @@ class CheckoutController extends Controller
                 $voucherIdDipakai = $voucherData['voucher_id'];
             }
 
+            // Kenakan kode unik hanya pada salah satu order jika checkout gabungan
+            $kodeUnikOrder = 0;
+            if ($kodeUnikDigunakan > 0) {
+                $kodeUnikOrder = $kodeUnikDigunakan;
+                $kodeUnikDigunakan = 0;
+            }
+
             // Pastikan diskon tidak membuat total harga minus
-            $totalHargaVendor = max(0, ($subtotalSewa - $potonganVoucher)) + $ongkir;
+            $totalHargaVendor = max(0, ($subtotalSewa - $potonganVoucher)) + $ongkir + $kodeUnikOrder;
             $totalBayarSemua += $totalHargaVendor;
 
             $orderId = DB::table('orders')->insertGetId([
@@ -271,6 +284,7 @@ class CheckoutController extends Controller
                 'metode_pengambilan' => $opsi,
                 'shipping_method' => $opsi,
                 'shipping_fee' => $ongkir,
+                'kode_unik' => $kodeUnikOrder,
                 'tanggal_mulai' => $waktuMulai,
                 'start_rent' => $waktuMulai,      
                 'tanggal_selesai' => $waktuKembali,
@@ -404,186 +418,66 @@ class CheckoutController extends Controller
             return redirect()->route('customer.struk', ['id' => $id]);
         }
 
-        $total      = $orders->sum('total_biaya') ?: $orders->sum('total_price');
-        $firstOrder = $orders->first();
-        $channelCode = strtoupper($firstOrder->payment_method ?? session('metode_pembayaran', 'QRIS'));
-        $midtransOrderId = count($orders) === 1
+        $firstOrder     = $orders->first();
+        $totalKodeUnik  = $orders->sum('kode_unik');
+
+        // Pastikan kode unik terpasang untuk auto-verifikasi mutasi notifikasi (Metode 2)
+        if (config('mutasi.enable_kode_unik', true) && $totalKodeUnik == 0 && in_array($firstOrder->status, ['PENDING_PAYMENT', 'Menunggu Pembayaran'])) {
+            $newKodeUnik = rand(100, 999);
+            DB::table('orders')->where('id', $firstOrder->id)->update([
+                'kode_unik'   => $newKodeUnik,
+                'total_biaya' => ($firstOrder->total_biaya ?: $firstOrder->total_price) + $newKodeUnik,
+                'total_price' => ($firstOrder->total_price ?: $firstOrder->total_biaya) + $newKodeUnik,
+                'updated_at'  => now(),
+            ]);
+            $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
+            $totalKodeUnik = $newKodeUnik;
+        }
+
+        $total          = $orders->sum('total_biaya') ?: $orders->sum('total_price');
+        $subtotal       = max(0, $total - $totalKodeUnik);
+        $channelCode    = 'QRIS';
+        $orderReference = count($orders) === 1
             ? $firstOrder->kode_booking
             : ('RNT-COMBO-' . implode('-', $orderIds));
 
-        \Midtrans\Config::$serverKey    = config('midtrans.server_key');
-        \Midtrans\Config::$isProduction = (bool) config('midtrans.is_production', false);
-        \Midtrans\Config::$isSanitized  = config('midtrans.is_sanitized', true);
-        \Midtrans\Config::$is3ds        = config('midtrans.is_3ds', true);
+        // Generate QRIS Dinamis Standar Bank Indonesia / ASPI
+        $qrisService  = app(\App\Services\QrisService::class);
+        $qrisPayload  = $qrisService->generateDynamicQris($total, $orderReference);
+        $qrisImageUrl = $qrisService->getQrImageUrl($qrisPayload, 350);
+        $merchantName = $qrisService->getMerchantName($qrisPayload);
+        $merchantNmid = $qrisService->getMerchantNmid($qrisPayload);
+        $acquirer     = $qrisService->getAcquirer();
 
-        // Nama & warna bank untuk tampilan UI
-        $bankName  = 'Pembayaran';
-        $bankLogo  = 'PAY';
-        $bankColor = '#0284c7';
-
-        if (str_contains($channelCode, 'MANDIRI'))       { $bankName = 'Bank Mandiri';       $bankLogo = 'MANDIRI';  $bankColor = '#002d62'; }
-        elseif (str_contains($channelCode, 'BCA'))       { $bankName = 'Bank BCA';            $bankLogo = 'BCA';      $bankColor = '#005baa'; }
-        elseif (str_contains($channelCode, 'BNI'))       { $bankName = 'Bank BNI';            $bankLogo = 'BNI';      $bankColor = '#f15a24'; }
-        elseif (str_contains($channelCode, 'BRI'))       { $bankName = 'Bank BRI (BRIVA)';    $bankLogo = 'BRI';      $bankColor = '#00529c'; }
-        elseif (str_contains($channelCode, 'PERMATA'))   { $bankName = 'Bank Permata';        $bankLogo = 'PERMATA';  $bankColor = '#008852'; }
-        elseif (str_contains($channelCode, 'LAINNYA'))   { $bankName = 'Bank Lainnya (VA)';   $bankLogo = 'ATM';      $bankColor = '#475569'; }
-        elseif ($channelCode === 'QRIS')                 { $bankName = 'QRIS';                $bankLogo = 'QRIS';     $bankColor = '#e11d48'; }
-        elseif ($channelCode === 'GOPAY')                { $bankName = 'GoPay';               $bankLogo = 'GOPAY';    $bankColor = '#00a5cf'; }
-        elseif ($channelCode === 'SHOPEEPAY')            { $bankName = 'ShopeePay';           $bankLogo = 'SHOPEEPAY'; $bankColor = '#ee4d2d'; }
-
-        // Variabel penampung data pembayaran
-        $snapToken     = null;
-        $snapError     = null;
-        $qrisImageUrl  = null;
-        $vaNumber      = null;
-        $gopayDeeplink = null;
-
-        // 1. Cek apakah detail pembayaran sudah pernah digenerate & tersimpan di database
-        if ($channelCode === 'QRIS' && !empty($firstOrder->doku_payment_url) && str_contains($firstOrder->doku_payment_url, 'qr-code')) {
-            $qrisImageUrl = $firstOrder->doku_payment_url;
-        } elseif ($channelCode === 'GOPAY' && !empty($firstOrder->doku_payment_url)) {
-            $gopayDeeplink = $firstOrder->doku_payment_url;
-        } elseif (!empty($firstOrder->doku_invoice_number) && $firstOrder->doku_invoice_number !== '—') {
-            $vaNumber = $firstOrder->doku_invoice_number;
-        }
-
-        // 2. Jika belum tersimpan, panggil Midtrans Core API
-        if (!$qrisImageUrl && !$gopayDeeplink && !$vaNumber) {
-            $baseParams = [
-                'transaction_details' => [
-                    'order_id'     => $midtransOrderId,
-                    'gross_amount' => (int) round($total),
-                ],
-                'customer_details' => [
-                    'first_name' => auth()->user()->name ?? 'Customer',
-                    'email'      => auth()->user()->email ?? 'customer@rentify.test',
-                    'phone'      => $firstOrder->customer_whatsapp ?? (auth()->user()->no_hp ?? '08123456789'),
-                ],
-                'item_details' => [[
-                    'id'       => $id,
-                    'price'    => (int) round($total),
-                    'quantity' => 1,
-                    'name'     => 'Sewa Barang Rentify ' . (count($orders) === 1 ? $firstOrder->kode_booking : $id),
-                ]],
-            ];
-
-            try {
-                if ($channelCode === 'QRIS') {
-                    // Charge QRIS -> dapat QR code URL langsung
-                    $response = \Midtrans\CoreApi::charge(array_merge($baseParams, [
-                        'payment_type' => 'qris',
-                        'qris'         => ['acquirer' => 'gopay'],
-                    ]));
-                    if (isset($response->actions)) {
-                        foreach ($response->actions as $action) {
-                            if (($action->name ?? '') === 'generate-qr-code') {
-                                $qrisImageUrl = $action->url;
-                            }
-                        }
-                    }
-
-                } elseif ($channelCode === 'GOPAY') {
-                    // Charge GoPay -> dapat deeplink
-                    $response = \Midtrans\CoreApi::charge(array_merge($baseParams, [
-                        'payment_type' => 'gopay',
-                        'gopay'        => ['enable_callback' => true, 'callback_url' => route('customer.struk', $id)],
-                    ]));
-                    if (isset($response->actions)) {
-                        foreach ($response->actions as $action) {
-                            if (in_array($action->name ?? '', ['deeplink-redirect', 'generate-deeplink'])) {
-                                $gopayDeeplink = $action->url;
-                            }
-                        }
-                    }
-
-                } elseif (str_contains($channelCode, 'BCA')) {
-                    $r = \Midtrans\CoreApi::charge(array_merge($baseParams, ['payment_type' => 'bank_transfer', 'bank_transfer' => ['bank' => 'bca']]));
-                    $vaNumber = $r->va_numbers[0]->va_number ?? null;
-
-                } elseif (str_contains($channelCode, 'BNI')) {
-                    $r = \Midtrans\CoreApi::charge(array_merge($baseParams, ['payment_type' => 'bank_transfer', 'bank_transfer' => ['bank' => 'bni']]));
-                    $vaNumber = $r->va_numbers[0]->va_number ?? null;
-
-                } elseif (str_contains($channelCode, 'BRI')) {
-                    $r = \Midtrans\CoreApi::charge(array_merge($baseParams, ['payment_type' => 'bank_transfer', 'bank_transfer' => ['bank' => 'bri']]));
-                    $vaNumber = $r->va_numbers[0]->va_number ?? null;
-
-                } elseif (str_contains($channelCode, 'PERMATA')) {
-                    $r = \Midtrans\CoreApi::charge(array_merge($baseParams, ['payment_type' => 'bank_transfer', 'bank_transfer' => ['bank' => 'permata']]));
-                    $vaNumber = $r->permata_va_number ?? null;
-
-                } elseif (str_contains($channelCode, 'MANDIRI')) {
-                    $r = \Midtrans\CoreApi::charge(array_merge($baseParams, [
-                        'payment_type' => 'echannel',
-                        'echannel'     => ['bill_info1' => 'Rentify', 'bill_info2' => $firstOrder->kode_booking ?? $id],
-                    ]));
-                    $vaNumber = ($r->biller_code ?? '') . ' / Kode Bayar: ' . ($r->bill_key ?? '');
-
-                } else {
-                    $snapToken = \Midtrans\Snap::getSnapToken(array_merge($baseParams, ['enabled_payments' => ['other_va']]));
-                }
-
-                // Simpan ke DB agar saat refresh tidak memicu error 406 conflict
-                if ($qrisImageUrl || $gopayDeeplink || $vaNumber) {
-                    DB::table('orders')->whereIn('id', $orderIds)->update([
-                        'doku_payment_url'    => $qrisImageUrl ?: $gopayDeeplink,
-                        'doku_invoice_number' => $vaNumber,
-                        'updated_at'          => now(),
-                    ]);
-                }
-
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Midtrans Core API Notice [' . $channelCode . ']: ' . $e->getMessage());
-
-                // Jika error 406 (sudah pernah dibuat), coba ambil status transaksinya
-                try {
-                    $trx = (object) \Midtrans\Transaction::status($midtransOrderId);
-                    $actions = is_object($trx) ? ($trx->actions ?? []) : (is_array($trx) ? ($trx['actions'] ?? []) : []);
-                    if ($channelCode === 'QRIS' && !empty($actions)) {
-                        foreach ($actions as $a) {
-                            $aName = is_object($a) ? ($a->name ?? '') : (is_array($a) ? ($a['name'] ?? '') : '');
-                            $aUrl = is_object($a) ? ($a->url ?? '') : (is_array($a) ? ($a['url'] ?? '') : '');
-                            if ($aName === 'generate-qr-code') {
-                                $qrisImageUrl = $aUrl;
-                            }
-                        }
-                    }
-                    $vaList = is_object($trx) ? ($trx->va_numbers ?? []) : (is_array($trx) ? ($trx['va_numbers'] ?? []) : []);
-                    if (!empty($vaList)) {
-                        $firstVa = $vaList[0] ?? null;
-                        if (is_object($firstVa) && !empty($firstVa->va_number)) {
-                            $vaNumber = $firstVa->va_number;
-                        } elseif (is_array($firstVa) && !empty($firstVa['va_number'])) {
-                            $vaNumber = $firstVa['va_number'];
-                        }
-                    }
-                } catch (\Throwable $statusEx) {
-                    // Fallback ke Snap token
-                    try {
-                        $snapToken = \Midtrans\Snap::getSnapToken($baseParams);
-                    } catch (\Throwable $snapEx) {
-                        $snapError = $e->getMessage();
-                    }
-                }
-            }
-        }
-
-        $kodePembayaran = $vaNumber ?? '—';
+        // Simpan data QRIS ke database agar tersinkronisasi
+        DB::table('orders')->whereIn('id', $orderIds)->update([
+            'payment_method'      => 'QRIS',
+            'doku_payment_url'    => $qrisImageUrl,
+            'doku_invoice_number' => $orderReference,
+            'updated_at'          => now(),
+        ]);
 
         return view('customer.checkout.qris', [
             'id'              => $id,
             'total'           => $total,
+            'subtotal'        => $subtotal,
+            'kodeUnik'        => $totalKodeUnik,
             'orders'          => $orders,
-            'snapToken'       => $snapToken,
-            'snapError'       => $snapError,
-            'midtransOrderId' => $midtransOrderId,
+            'orderReference'  => $orderReference,
+            'midtransOrderId' => $orderReference,
             'channelCode'     => $channelCode,
-            'bankName'        => $bankName,
-            'bankLogo'        => $bankLogo,
-            'bankColor'       => $bankColor,
-            'kodePembayaran'  => $kodePembayaran,
+            'bankName'        => 'QRIS',
+            'bankLogo'        => 'QRIS',
+            'bankColor'       => '#e11d48',
+            'kodePembayaran'  => $orderReference,
+            'qrisPayload'     => $qrisPayload,
             'qrisImageUrl'    => $qrisImageUrl,
-            'gopayDeeplink'   => $gopayDeeplink,
+            'merchantName'    => $merchantName,
+            'merchantNmid'    => $merchantNmid,
+            'acquirer'        => $acquirer,
+            'snapToken'       => null,
+            'snapError'       => null,
+            'gopayDeeplink'   => null,
         ]);
     }
 

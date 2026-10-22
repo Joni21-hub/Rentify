@@ -10,8 +10,7 @@
         "cloudinary-labs/cloudinary-laravel": "*",
         "laravel/framework": "^11.0",
         "laravel/socialite": "^5.31",
-        "laravel/tinker": "^2.10.1",
-        "midtrans/midtrans-php": "^2.6"
+        "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
         "php": "^8.2",
