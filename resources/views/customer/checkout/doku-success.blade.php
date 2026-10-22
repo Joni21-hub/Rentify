@@ -110,7 +110,7 @@
             </div>
 
             <div class="receipt-row">
-                <span class="receipt-label">No. Pesanan</span>
+                <span class="receipt-label">ID Pesanan</span>
                 <span class="receipt-value font-mono text-sky-700">{{ $nomorPesanan }}</span>
             </div>
 

@@ -64,7 +64,7 @@
             </a>
             <div>
                 <h1 class="text-[16px] font-bold text-slate-800 leading-tight">Selesaikan Pembayaran</h1>
-                <span class="text-[11px] text-slate-400 font-medium">No. Pesanan: {{ $id }}</span>
+                <span class="text-[11px] text-slate-400 font-medium">ID Pesanan: {{ $id }}</span>
             </div>
         </div>
         <div class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 flex items-center gap-1">
