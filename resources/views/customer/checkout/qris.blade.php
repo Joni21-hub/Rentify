@@ -1,5 +1,15 @@
 @extends('layouts.app')
 
+@php
+    /** @var mixed $id */
+    /** @var mixed $total */
+    /** @var mixed $kodeUnik */
+    /** @var mixed $subtotal */
+    /** @var mixed $merchantName */
+    /** @var mixed $qrisImageUrl */
+    /** @var mixed $qrisPayload */
+@endphp
+
 @section('content')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {{-- Library pembuat QR code lokal instan tanpa latency --}}

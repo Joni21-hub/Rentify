@@ -42,6 +42,12 @@
 </style>
 
 @php
+    /** @var \Carbon\Carbon|null $expiredAt */
+    /** @var mixed $firstOrder */
+    /** @var string|int $id */
+    /** @var int|float $total */
+    /** @var iterable $orders */
+
     $expiredAtJs   = $expiredAt ? $expiredAt->timestamp * 1000 : (now()->addMinutes(30)->timestamp * 1000);
     $totalDurasiMs = 30 * 60 * 1000; // 30 menit default
     if ($expiredAt) {
