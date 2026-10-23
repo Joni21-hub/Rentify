@@ -490,14 +490,13 @@ PROMPT;
             return null;
         }
 
-        $preferredModel = config('guardian.gemini.model', 'gemini-1.5-flash');
+        $preferredModel = config('guardian.gemini.model', 'gemini-3.8-flash');
         $candidateModels = array_values(array_unique(array_filter([
             $preferredModel,
-            'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-1.5-flash-8b',
             'gemini-3.8-flash',
             'gemini-3.6-flash',
+            'gemini-3.5-flash',
+            'gemini-3.5-flash-lite',
         ])));
 
         // Susun teks ringkasan data diagnostik riil untuk disuntikkan ke AI
@@ -579,20 +578,27 @@ PROMPT;
 
         foreach ($keys as $apiKey) {
             foreach ($candidateModels as $model) {
+                $generationConfig = [
+                    'temperature'     => (float) config('guardian.gemini.temperature', 0.2),
+                    'maxOutputTokens' => (int) config('guardian.gemini.max_tokens', 350),
+                ];
+                if (!str_contains($model, 'lite')) {
+                    $generationConfig['thinkingConfig'] = [
+                        'thinkingBudget' => 0,
+                    ];
+                }
+
                 $payload = [
                     'system_instruction' => [
                         'parts' => [['text' => $systemInstruction]]
                     ],
                     'contents' => $contents,
-                    'generationConfig' => [
-                        'temperature'     => (float) config('guardian.gemini.temperature', 0.2),
-                        'maxOutputTokens' => (int) config('guardian.gemini.max_tokens', 350),
-                    ],
+                    'generationConfig' => $generationConfig,
                 ];
 
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
                 try {
-                    $response = Http::timeout(6)->post($url, $payload);
+                    $response = Http::timeout(8)->post($url, $payload);
                     if ($response->successful()) {
                         $data = $response->json();
                         $replyText = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;

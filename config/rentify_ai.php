@@ -12,7 +12,7 @@ return [
     */
     'gemini' => [
         'api_key'     => env('GEMINI_API_KEY', ''),
-        'model'       => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+        'model'       => env('GEMINI_MODEL', 'gemini-3.8-flash'),
         'temperature' => (float) env('GEMINI_TEMPERATURE', 0.7),
         'timeout'     => (int) env('GEMINI_TIMEOUT', 20),
     ],

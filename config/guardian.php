@@ -32,7 +32,7 @@ return [
 
     // Konfigurasi Google Gemini untuk Rentify Guardian
     'gemini' => [
-        'model'       => env('GUARDIAN_GEMINI_MODEL', 'gemini-1.5-flash'),
+        'model'       => env('GUARDIAN_GEMINI_MODEL', 'gemini-3.8-flash'),
         'temperature' => (float) env('GUARDIAN_GEMINI_TEMP', 0.2), // Rendah untuk presisi teknis & singkat
         'max_tokens'  => (int) env('GUARDIAN_GEMINI_MAX_TOKENS', 350),
     ],

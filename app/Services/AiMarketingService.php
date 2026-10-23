@@ -20,7 +20,7 @@ class AiMarketingService
     public function __construct()
     {
         $this->apiKey = config('rentify_ai.gemini.api_key') ?: (config('services.gemini.api_key') ?: env('GEMINI_API_KEY'));
-        $this->model = config('rentify_ai.gemini.model') ?: (config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-1.5-flash'));
+        $this->model = config('rentify_ai.gemini.model') ?: (config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-3.8-flash'));
     }
 
     /**
