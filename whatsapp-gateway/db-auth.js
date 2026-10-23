@@ -153,8 +153,8 @@ async function createAuthState(options = {}) {
                 },
                 clearChatSessions: async () => {
                     try {
-                        await pool.query("DELETE FROM whatsapp_sessions WHERE `key` LIKE 'session-%'");
-                        console.log('[DB-AUTH] Cleared all broken session ratchets from database (login creds intact).');
+                        await pool.query("DELETE FROM whatsapp_sessions WHERE `key` LIKE 'session-%' OR `key` LIKE 'sender-key-%'");
+                        console.log('[DB-AUTH] Cleared all broken session and sender-key ratchets from database (login creds intact).');
                     } catch (err) {
                         console.error('[DB-AUTH] Error clearing chat sessions:', err.message);
                     }

@@ -99,7 +99,6 @@ class WhatsAppWebhookController extends Controller
         $knownBossNumbers = [
             '083183494835',    // Nomor HP Utama / Radar Keamanan Bos Joni
             '082183394549',    // Nomor HP Vendor / Bisnis Bos Joni
-            '249070069219550', // WhatsApp LID Bos Joni (LID lama)
             '44925643173935',  // WhatsApp LID Bos Joni (LID aktif)
         ];
 

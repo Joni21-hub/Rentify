@@ -160,6 +160,7 @@ Route::prefix('admin')->name('admin.')
     Route::get('whatsapp', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
     Route::get('whatsapp/status', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'checkStatus'])->name('whatsapp.status');
     Route::post('whatsapp/test-send', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'testSend'])->name('whatsapp.test');
+    Route::post('whatsapp/reset-sessions', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'resetSessions'])->name('whatsapp.reset-sessions');
     Route::post('whatsapp/logout', [\App\Http\Controllers\Admin\AdminWhatsAppController::class, 'logout'])->name('whatsapp.logout');
 });
 

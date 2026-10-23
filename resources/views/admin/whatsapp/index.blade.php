@@ -197,12 +197,21 @@
                                 </div>
                             </div>
 
-                            <form action="{{ route('admin.whatsapp.logout') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memutuskan koneksi nomor WhatsApp ini?')" class="pt-4">
-                                @csrf
-                                <button type="submit" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition">
-                                    <i class="fas fa-power-off mr-1.5"></i> Putuskan Sesi WhatsApp (Logout)
-                                </button>
-                            </form>
+                            <div class="flex items-center justify-center gap-3 pt-4 flex-wrap">
+                                <form action="{{ route('admin.whatsapp.reset-sessions') }}" method="POST" onsubmit="return confirm('Reset sesi enkripsi chat? Ini akan memperbaiki kendala \'Menunggu pesan ini\' tanpa menghapus login QR WhatsApp.')">
+                                    @csrf
+                                    <button type="submit" class="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold rounded-xl border border-sky-200 transition flex items-center gap-1.5 shadow-sm">
+                                        <i class="fas fa-shield-halved text-sky-600"></i> Perbaiki Enkripsi ('Menunggu Pesan')
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('admin.whatsapp.logout') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memutuskan koneksi nomor WhatsApp ini?')">
+                                    @csrf
+                                    <button type="submit" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition flex items-center gap-1.5">
+                                        <i class="fas fa-power-off"></i> Putuskan Sesi (Logout)
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
                         <!-- STATE 2: WAITING FOR QR SCAN -->

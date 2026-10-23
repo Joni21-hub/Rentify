@@ -55,6 +55,20 @@ class AdminWhatsAppController extends Controller
     }
 
     /**
+     * Reset sesi enkripsi chat (memperbaiki 'Menunggu Pesan Ini' / Bad MAC tanpa perlu logout)
+     */
+    public function resetSessions()
+    {
+        $success = WhatsAppService::resetChatSessions();
+
+        if ($success) {
+            return back()->with('success', 'Sesi enkripsi chat berhasil di-reset. Kunci enkripsi baru akan otomatis dibuat ulang pada pesan berikutnya.');
+        }
+
+        return back()->with('error', 'Gagal me-reset sesi chat. Pastikan gateway sedang aktif.');
+    }
+
+    /**
      * Putuskan sesi WhatsApp aktif (Logout)
      */
     public function logout()

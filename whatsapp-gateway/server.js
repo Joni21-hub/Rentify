@@ -14,10 +14,10 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config(); // fallback to local
 
-// Global handlers to prevent Baileys/Signal crypto crashes (Bad MAC, Timed Out, etc.) from taking down Node
+// Global handlers to prevent Baileys/Signal crypto crashes (Bad MAC, Timed Out, SessionError, etc.) from taking down Node
 process.on('uncaughtException', (err) => {
     const msg = err?.message || String(err);
-    if (msg.includes('Bad MAC') || msg.includes('No session record') || msg.includes('Connection Closed') || msg.includes('Timed Out') || msg.includes('decrypt message')) {
+    if (msg.includes('Bad MAC') || msg.includes('No session record') || msg.includes('Connection Closed') || msg.includes('Timed Out') || msg.includes('decrypt message') || msg.includes('SessionError') || msg.includes('into the future') || msg.includes('No matching sessions')) {
         console.warn('[WHATSAPP PROTOCOL WARNING] Caught transient protocol error safely:', msg);
         return;
     }
@@ -26,7 +26,7 @@ process.on('uncaughtException', (err) => {
 
 process.on('unhandledRejection', (reason, promise) => {
     const msg = reason?.message || String(reason);
-    if (msg.includes('Bad MAC') || msg.includes('No session record') || msg.includes('Connection Closed') || msg.includes('Timed Out') || msg.includes('decrypt message')) {
+    if (msg.includes('Bad MAC') || msg.includes('No session record') || msg.includes('Connection Closed') || msg.includes('Timed Out') || msg.includes('decrypt message') || msg.includes('SessionError') || msg.includes('into the future') || msg.includes('No matching sessions')) {
         console.warn('[WHATSAPP PROTOCOL WARNING] Caught unhandled protocol rejection safely:', msg);
         return;
     }
@@ -78,7 +78,7 @@ function formatJid(target) {
     if (!target) return null;
     const str = String(target).trim();
     // Check if target matches Bos Joni's known LID (resolve directly to his phone number)
-    if (str.includes('249070069219550') || str.includes('44925643173935')) {
+    if (str.includes('44925643173935')) {
         return '6283183494835@s.whatsapp.net';
     }
     if (str.endsWith('@s.whatsapp.net') || str.endsWith('@lid') || str.endsWith('@g.us')) {
@@ -258,13 +258,13 @@ async function startWhatsApp() {
                 }
             }
 
-            // Ignore if message is sent by ourselves
+            // Ignore if message is sent by ourselves or from the bot's own account (phone or LID)
             if (msg.key.fromMe) continue;
 
             const remoteJid = msg.key.remoteJid || '';
 
-            // Ignore status broadcasts and groups
-            if (remoteJid.endsWith('@broadcast') || remoteJid.endsWith('@g.us')) {
+            // Ignore status broadcasts, groups, and bot's own internal JIDs
+            if (remoteJid.endsWith('@broadcast') || remoteJid.endsWith('@g.us') || remoteJid.includes('249070069219550') || remoteJid.startsWith('6281262364197')) {
                 continue;
             }
 
@@ -306,7 +306,7 @@ async function startWhatsApp() {
 
             if (!senderPhone) {
                 // If it's Bos Joni's known WhatsApp LID, map directly to his phone number
-                if (remoteJid.includes('249070069219550')) {
+                if (remoteJid.includes('44925643173935')) {
                     senderPhone = '083183494835';
                 } else if (remoteJid.endsWith('@lid')) {
                     senderPhone = remoteJid; // Keep full @lid JID so formatJid preserves it
@@ -465,6 +465,7 @@ app.post('/logout', checkAuth, async (req, res) => {
 app.post('/reset-chat-sessions', checkAuth, async (req, res) => {
     try {
         console.log('[WHATSAPP] Resetting chat session ratchets via API...');
+        msgStore.clear();
         if (authAdapter && authAdapter.clearChatSessions) {
             await authAdapter.clearChatSessions();
         }
