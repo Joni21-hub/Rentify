@@ -1,3 +1,13 @@
+@php
+    /** @var string $status */
+    $status = $status ?? 'offline';
+    /** @var string|null $qr */
+    $qr = $qr ?? null;
+    /** @var array|null $user */
+    $user = $user ?? null;
+    /** @var string $adminPhone */
+    $adminPhone = $adminPhone ?? config('security.admin_phone', '083183494835');
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
