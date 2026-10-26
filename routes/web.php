@@ -34,6 +34,8 @@ use App\Http\Controllers\Customer\{
 // ─── 1. KATALOG PUBLIK (BISA DIAKSES SIAPA SAJA TANPA LOGIN) ───
 Route::name('customer.')->group(function () {
     Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
+    Route::get('/moments', [\App\Http\Controllers\Customer\MomentPageController::class, 'index'])->name('moments');
+    Route::get('/moments/create', [\App\Http\Controllers\Customer\MomentPageController::class, 'create'])->name('moments.create');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
     
     Route::get('/customer/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
@@ -46,6 +48,11 @@ Route::name('customer.')->group(function () {
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
     Route::get('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index']);
     Route::post('/customer/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store']);
+    Route::get('/wallet/coins', [\App\Http\Controllers\Customer\CustomerDashboardController::class, 'walletCoins'])->middleware('auth')->name('wallet.coins.direct');
+    
+    // Rute Akun Publik (Menangani Guest Landing State & Profil Terautentikasi)
+    Route::get('/account', [\App\Http\Controllers\Customer\CustomerDashboardController::class, 'account'])->name('account');
+    Route::get('/customer/account', [\App\Http\Controllers\Customer\CustomerDashboardController::class, 'account'])->name('account.alias');
 });
 
 
@@ -221,6 +228,9 @@ Route::prefix('customer')->name('customer.')
 
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
     
+    // Rute Dompet Koin Rentify
+    Route::get('/wallet/coins', [CustomerDashboardController::class, 'walletCoins'])->name('wallet.coins');
+    
     // Rute Pengaturan Akun Customer
     Route::get('/settings', [CustomerDashboardController::class, 'settings'])->name('settings');
     
@@ -250,27 +260,17 @@ Route::prefix('customer')->name('customer.')
     Route::patch('/keranjang/{id}', [KeranjangController::class, 'update'])->name('keranjang.update');
     Route::delete('/keranjang/{id}', [KeranjangController::class, 'remove'])->name('keranjang.remove');
 
-    // ── Checkout & Payment (DOKU Checkout) ───────────────────────────────────
+    // ── Checkout & Payment (QRIS & COD) ──────────────────────────────────────
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
     // Pembayaran QRIS Dinamis Standar Bank Indonesia
     Route::get('/qris/{id}', [CheckoutController::class, 'qris'])->name('qris');
-    Route::get('/menunggu-pembayaran/{id}', [CheckoutController::class, 'qris'])->name('doku.waiting');
-
-    // DOKU Pay & Return (kompatibilitas)
-    Route::get('/pembayaran/{id}/pay', [PembayaranController::class, 'pay'])->name('pembayaran.pay');
-    Route::get('/pembayaran/{id}/return', [PembayaranController::class, 'return'])->name('pembayaran.return');
 
     // AJAX Polling & Konfirmasi: cek status pembayaran (QRIS & DB)
     Route::get('/pembayaran/check-status/{id}', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check_status');
     Route::post('/pembayaran/confirm/{id}', [PembayaranController::class, 'confirmPayment'])->name('pembayaran.confirm');
     Route::post('/pembayaran/simulate/{id}', [PembayaranController::class, 'simulatePayment'])->name('pembayaran.simulate');
-
-    // Halaman Sukses setelah pembayaran dikonfirmasi
-    Route::get('/pembayaran-sukses/{id}', function ($id) {
-        return view('customer.checkout.doku-success', ['id' => $id]);
-    })->name('doku.success');
 
     // AJAX Voucher Toko
     Route::post('/checkout/cek-voucher', [CheckoutController::class, 'cekVoucher'])->name('checkout.cek_voucher');
@@ -304,13 +304,9 @@ Route::prefix('customer')->name('customer.')
     // Riwayat Transaksi Customer
     Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'index'])->name('pesanan');
     Route::post('/pesanan/{id}/selesai', [\App\Http\Controllers\Customer\PesananController::class, 'selesaikan'])->name('pesanan.selesai');
+    Route::post('/pesanan/{id}/batal', [\App\Http\Controllers\Customer\PesananController::class, 'batalkan'])->name('pesanan.batal');
 });
 
-
-// ─── PAYMENT WEBHOOKS (tanpa CSRF — dihandle di bootstrap/app.php) ──────────────
-Route::post('/api/payments/doku/notify', [\App\Http\Controllers\Payment\PembayaranController::class, 'notify'])
-    ->name('doku.notify')
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 // ─── ANDROID NOTIFICATION MUTASI WEBHOOK (AUTO-CONFIRM 24/7) ─────────────────
 Route::post('/api/webhook/mutasi', [\App\Http\Controllers\Api\MutasiWebhookController::class, 'handle'])
@@ -320,13 +316,69 @@ Route::post('/api/webhook/mutasi', [\App\Http\Controllers\Api\MutasiWebhookContr
 // ─── WHATSAPP WEBHOOK (SELF-HOSTED GATEWAY & AUTO-REPLY CS) ────────────────────
 Route::post('/webhook/whatsapp', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
     ->name('whatsapp.webhook');
-Route::post('/webhook/fonnte', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
-    ->name('whatsapp.webhook.legacy');
 
 
 // ─── EMAIL VERIFICATION ROUTES ──────────────────────────────────────────────────
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+
+// ─── MOMENTS & LIKE REWARD API ────────────────────────────────────────────────
+Route::prefix('api/moments')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\MomentController::class, 'index'])
+        ->name('api.moments.index');
+    Route::post('/', [\App\Http\Controllers\Api\MomentController::class, 'store'])
+        ->name('api.moments.store');
+    Route::get('/{id}', [\App\Http\Controllers\Api\MomentController::class, 'show'])
+        ->name('api.moments.show');
+    Route::match(['put', 'patch'], '/{id}', [\App\Http\Controllers\Api\MomentController::class, 'update'])
+        ->name('api.moments.update');
+    Route::delete('/{id}', [\App\Http\Controllers\Api\MomentController::class, 'destroy'])
+        ->name('api.moments.destroy');
+
+    Route::get('/{id}/suggestions', [\App\Http\Controllers\Api\MomentController::class, 'suggestions'])
+        ->name('api.moments.suggestions');
+    Route::post('/{id}/ai-tag', [\App\Http\Controllers\Api\MomentController::class, 'reprocessAiTag'])
+        ->name('api.moments.ai_tag');
+
+    Route::post('/{id}/like', [\App\Http\Controllers\Api\MomentLikeController::class, 'store'])
+        ->name('api.moments.like');
+    Route::delete('/{id}/like', [\App\Http\Controllers\Api\MomentLikeController::class, 'destroy'])
+        ->name('api.moments.unlike');
+
+    Route::post('/{id}/bookmark', [\App\Http\Controllers\Api\MomentController::class, 'bookmark'])
+        ->name('api.moments.bookmark');
+    Route::delete('/{id}/bookmark', [\App\Http\Controllers\Api\MomentController::class, 'unbookmark'])
+        ->name('api.moments.unbookmark');
+
+    Route::post('/{id}/report', [\App\Http\Controllers\Api\MomentController::class, 'report'])
+        ->name('api.moments.report');
+
+    // Komentar Momen
+    Route::get('/{id}/comments', [\App\Http\Controllers\Api\MomentCommentController::class, 'index'])
+        ->name('api.moments.comments.index');
+    Route::post('/{id}/comments', [\App\Http\Controllers\Api\MomentCommentController::class, 'store'])
+        ->name('api.moments.comments.store');
+    Route::delete('/{id}/comments/{commentId}', [\App\Http\Controllers\Api\MomentCommentController::class, 'destroy'])
+        ->name('api.moments.comments.destroy');
+});
+
+// ─── MOMENT CONTENT MODERATION API (ADMIN) ────────────────────────────────────
+Route::prefix('api/admin/moderation')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\AdminMomentModerationController::class, 'index'])
+        ->name('api.admin.moderation.index');
+    Route::post('/{id}/dismiss', [\App\Http\Controllers\Admin\AdminMomentModerationController::class, 'dismiss'])
+        ->name('api.admin.moderation.dismiss');
+    Route::post('/{id}/uphold', [\App\Http\Controllers\Admin\AdminMomentModerationController::class, 'uphold'])
+        ->name('api.admin.moderation.uphold');
+});
+
+// ─── WALLET & COINS API ───────────────────────────────────────────────────────
+Route::prefix('api/wallet')->group(function () {
+    Route::get('/coins', [\App\Http\Controllers\Api\WalletController::class, 'index'])
+        ->name('api.wallet.coins');
+    Route::post('/coins/calculate-discount', [\App\Http\Controllers\Api\WalletController::class, 'calculateDiscount'])
+        ->name('api.wallet.calculate_discount');
+});
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');

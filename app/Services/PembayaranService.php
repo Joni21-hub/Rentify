@@ -5,9 +5,6 @@ namespace App\Services;
 /**
  * Interface kontrak untuk driver pembayaran.
  * Semua implementasi gateway pembayaran harus mengimplementasikan interface ini.
- *
- * @deprecated Gunakan DokuService secara langsung. Interface ini disimpan untuk
- *             kompatibilitas ke depan jika diperlukan multi-driver.
  */
 interface PembayaranDriverInterface
 {
@@ -29,7 +26,7 @@ class ManualPaymentDriver implements PembayaranDriverInterface
 
     public function verifyPayment(string $transactionId): bool
     {
-        return true; // Admin meverifikasi secara manual
+        return true; // Admin memverifikasi secara manual
     }
 
     public function refund(string $transactionId, float $amount): bool
@@ -37,6 +34,3 @@ class ManualPaymentDriver implements PembayaranDriverInterface
         return true; // Proses refund manual oleh admin
     }
 }
-
-// Driver aktif: DokuService (lihat app/Services/DokuService.php)
-// Untuk masa depan: class XenditDriver implements PembayaranDriverInterface { ... }

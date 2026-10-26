@@ -9,9 +9,28 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\Penyewaan;
+use App\Models\Moment;
+use App\Models\MomentBookmark;
+use App\Models\Wishlist;
+use App\Models\MomentCoinLedger;
+use App\Services\CoinAccountingService;
+use Illuminate\Support\Facades\DB;
 
 class CustomerDashboardController extends Controller
 {
+    /**
+     * Halaman Akun publik yang menangani navigasi tamu (guest landing state)
+     * dan profil terautentikasi (Requirement 1.6 & 6.18).
+     */
+    public function account()
+    {
+        if (!Auth::check()) {
+            return view('customer.guest-account');
+        }
+
+        return $this->index();
+    }
+
     public function index()
     {
         if (!Auth::check()) {
@@ -20,22 +39,118 @@ class CustomerDashboardController extends Controller
 
         $user = Auth::user();
 
-        // Hitung jumlah pesanan berdasarkan status untuk badge notifikasi
-        $countMenunggu = Penyewaan::where('user_id', $user->id)
-            ->whereIn('status', ['Menunggu Konfirmasi', 'Menunggu Pembayaran'])
-            ->count();
-            
-        $countDiproses = Penyewaan::where('user_id', $user->id)
-            ->where('status', 'Berjalan')
-            ->count();
-            
-        $countDikirim  = 0; // Rentify menggunakan 'Berjalan' untuk status aktif
-        
-        $countSelesai  = Penyewaan::where('user_id', $user->id)
-            ->where('status', 'Selesai')
+        // 1. Pelacakan Pesanan Shopee (4 Tahapan Utama)
+        // a. Belum Bayar
+        $countBelumBayar = DB::table('orders')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['Menunggu Pembayaran', 'PENDING_PAYMENT', 'pending'])
             ->count();
 
-        return view('customer.dashboard', compact('countMenunggu', 'countDiproses', 'countDikirim', 'countSelesai'));
+        // b. Konfirmasi (Agregasi Menunggu Konfirmasi Toko + Siap Diambil/Dikirim + Disetujui)
+        $countKonfirmasi = DB::table('orders')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['Menunggu Konfirmasi', 'Menunggu Konfirmasi Toko', 'Siap Diambil/Dikirim', 'Disetujui'])
+            ->count();
+
+        // c. Berjalan (Sedang Disewa)
+        $countBerjalan = DB::table('orders')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['Sedang Disewa', 'Berjalan', 'PAID', 'dibayar'])
+            ->count();
+
+        // d. Ulasan (Menunggu Ulasan)
+        $countUlasan = DB::table('orders')
+            ->where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->where('status', 'Menunggu Ulasan')
+                  ->orWhere(function ($sub) {
+                      $sub->where('status', 'Selesai')
+                          ->whereNotExists(function ($notEx) {
+                              $notEx->select(DB::raw(1))
+                                    ->from('ulasans')
+                                    ->whereColumn('ulasans.order_id', 'orders.id');
+                          });
+                  });
+            })
+            ->count();
+
+        // 2. Metrik Statistik Ala TikTok/IG (Momen, Like, Koin)
+        $momentsCount = Moment::where('user_id', $user->id)->where('status', 'active')->count();
+        $likesCount = (int) Moment::where('user_id', $user->id)->where('status', 'active')->sum('likes_count');
+        $rentedCount = DB::table('orders')->where('user_id', $user->id)->count();
+        
+        $coinService = app(CoinAccountingService::class);
+        $coinBalance = $coinService->getAvailableBalance($user->id);
+        $deficitBalance = $coinService->getDeficitBalance($user->id);
+
+        // 3. Tab Tersegmentasi
+        // a. Momen Saya (3-column grid)
+        $userMoments = Moment::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->latest()
+            ->get();
+
+        // b. Tersimpan (Favorit Barang & Momen)
+        $savedBarang = Wishlist::where('user_id', $user->id)
+            ->with(['barang' => function ($query) {
+                $query->select('id', 'nama', 'slug', 'harga_sewa_harian', 'cover_photo', 'stok_total');
+            }])
+            ->latest()
+            ->get();
+
+        $savedMoments = MomentBookmark::where('user_id', $user->id)
+            ->with(['moment.author'])
+            ->latest('created_at')
+            ->get();
+
+        // Variabel penunjang kompatibilitas
+        $countMenunggu = $countBelumBayar + $countKonfirmasi;
+        $countDiproses = $countBerjalan;
+        $countDikirim  = 0;
+        $countSelesai  = DB::table('orders')->where('user_id', $user->id)->where('status', 'Selesai')->count();
+
+        return view('customer.dashboard', compact(
+            'user',
+            'countBelumBayar',
+            'countKonfirmasi',
+            'countBerjalan',
+            'countUlasan',
+            'momentsCount',
+            'likesCount',
+            'rentedCount',
+            'coinBalance',
+            'deficitBalance',
+            'userMoments',
+            'savedBarang',
+            'savedMoments',
+            'countMenunggu',
+            'countDiproses',
+            'countDikirim',
+            'countSelesai'
+        ));
+    }
+
+    public function walletCoins(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = Auth::user();
+        $coinService = app(CoinAccountingService::class);
+        $coinBalance = $coinService->getAvailableBalance($user->id);
+        $deficitBalance = $coinService->getDeficitBalance($user->id);
+
+        $mutations = MomentCoinLedger::where('user_id', $user->id)
+            ->with([
+                'moment:id,caption,thumbnail_url,media_url',
+                'interactor:id,name,username,foto_profil',
+                'order:id,kode_booking,total_biaya'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('customer.wallet.index', compact('user', 'coinBalance', 'deficitBalance', 'mutations'));
     }
 
     public function settings()
@@ -59,9 +174,28 @@ class CustomerDashboardController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'foto_profil' => 'nullable|image|max:10240',
+            'bio' => 'nullable|string|max:255',
+            'whatsapp' => 'nullable|string|max:25',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'tanggal_lahir' => 'nullable|date',
+            'instagram_username' => 'nullable|string|max:60',
+            'alamat_lengkap' => 'nullable|string|max:500',
         ]);
 
         $user->name = $request->name;
+        $user->bio = $request->bio;
+        if ($request->has('whatsapp')) {
+            $user->whatsapp = $request->whatsapp;
+        }
+        $user->jenis_kelamin = $request->jenis_kelamin;
+        $user->tanggal_lahir = $request->tanggal_lahir;
+        if ($request->has('instagram_username')) {
+            $ig = trim((string)$request->instagram_username);
+            $user->instagram_username = ltrim($ig, '@');
+        }
+        if ($request->has('alamat_lengkap')) {
+            $user->alamat_lengkap = $request->alamat_lengkap;
+        }
 
         if ($request->hasFile('foto_profil')) {
             try {
@@ -71,7 +205,7 @@ class CustomerDashboardController extends Controller
                 // Hapus foto lama jika ada di Cloudinary
                 if ($user->foto_profil && str_contains($user->foto_profil, 'cloudinary')) {
                     try {
-                        $path = parse_url($user->foto_profil, PHP_URL_PATH);
+                        $path = (string) (parse_url($user->foto_profil, PHP_URL_PATH) ?? '');
                         $pathSegments = explode('/', $path);
                         $uploadIndex = array_search('upload', $pathSegments);
                         if ($uploadIndex !== false) {
@@ -174,7 +308,7 @@ class CustomerDashboardController extends Controller
             'otp_code_change'  => $otp,
         ]);
 
-        // Kirim OTP via Fonnte
+        // Kirim OTP via WhatsApp Gateway
         $pesan = "*RENTIFY*\n\nKode OTP untuk mengubah Nomor WhatsApp Anda adalah: *$otp*.\n\nJangan berikan kode ini kepada siapapun.";
         \App\Services\WhatsAppService::send($request->whatsapp_baru, $pesan);
 

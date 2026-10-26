@@ -35,14 +35,15 @@ class AdminPenarikanController extends Controller
 
     public function approve($id)
     {
-        $penarikan = DB::table('withdrawals')->where('id', $id)->first();
-
-        if (!$penarikan || $penarikan->status != 'pending') {
-            return back()->with('error', 'Data penarikan tidak valid atau sudah diproses.');
-        }
-
         DB::beginTransaction();
         try {
+            $penarikan = DB::table('withdrawals')->where('id', $id)->lockForUpdate()->first();
+
+            if (!$penarikan || $penarikan->status !== 'pending') {
+                DB::rollback();
+                return back()->with('error', 'Data penarikan tidak valid atau sudah diproses.');
+            }
+
             // 1. Ubah status penarikan
             DB::table('withdrawals')->where('id', $id)->update([
                 'status' => 'disetujui',
@@ -50,10 +51,11 @@ class AdminPenarikanController extends Controller
             ]);
 
             // 2. Kurangi saldo ditahan (uangnya sudah sukses ditransfer Admin)
-            $saldo = DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->first();
+            $saldo = DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->lockForUpdate()->first();
             if ($saldo) {
+                $saldoDitahanBaru = max(0, (float) $saldo->saldo_ditahan - (float) $penarikan->nominal);
                 DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->update([
-                    'saldo_ditahan' => $saldo->saldo_ditahan - $penarikan->nominal,
+                    'saldo_ditahan' => $saldoDitahanBaru,
                     'updated_at' => now()
                 ]);
             }
@@ -68,32 +70,34 @@ class AdminPenarikanController extends Controller
 
     public function reject($id)
     {
-        $penarikan = DB::table('withdrawals')->where('id', $id)->first();
-
-        if (!$penarikan || $penarikan->status != 'pending') {
-            return back()->with('error', 'Data penarikan tidak valid atau sudah diproses.');
-        }
-
         DB::beginTransaction();
         try {
+            $penarikan = DB::table('withdrawals')->where('id', $id)->lockForUpdate()->first();
+
+            if (!$penarikan || $penarikan->status !== 'pending') {
+                DB::rollback();
+                return back()->with('error', 'Data penarikan tidak valid atau sudah diproses.');
+            }
+
             // 1. Ubah status penarikan
             DB::table('withdrawals')->where('id', $id)->update([
                 'status' => 'ditolak',
                 'updated_at' => now()
             ]);
 
-            // 2. Kembalikan uang ke saldo aktif Vendor!
-            $saldo = DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->first();
+            // 2. Kembalikan uang ke saldo aktif Vendor secara aman!
+            $saldo = DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->lockForUpdate()->first();
             if ($saldo) {
+                $saldoDitahanBaru = max(0, (float) $saldo->saldo_ditahan - (float) $penarikan->nominal);
                 DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->update([
-                    'saldo_aktif' => $saldo->saldo_aktif + $penarikan->nominal,
-                    'saldo_ditahan' => $saldo->saldo_ditahan - $penarikan->nominal,
+                    'saldo_aktif' => (float) $saldo->saldo_aktif + (float) $penarikan->nominal,
+                    'saldo_ditahan' => $saldoDitahanBaru,
                     'updated_at' => now()
                 ]);
             }
 
             DB::commit();
-            return back()->with('success', 'Penarikan dana ditolak, saldo telah dikembalikan ke dompet Vendor.');
+            return back()->with('success', 'Penarikan dana berhasil ditolak, saldo dikembalikan ke saldo aktif vendor.');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());

@@ -34,6 +34,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'longitude',
         'alamat_lengkap',
         'foto_profil',
+        'bio',
+        'jenis_kelamin',
+        'tanggal_lahir',
+        'instagram_username',
     ];
 
     /**
@@ -79,7 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
         }
         if (!empty($this->whatsapp)) {
             // Format nomor telepon menjadi 0831-2592-2565 jika memungkinkan
-            return preg_replace('/(\d{4})(\d{4})(\d+)/', '$1-$2-$3', $this->whatsapp);
+            return (string) (preg_replace('/(\d{4})(\d{4})(\d+)/', '$1-$2-$3', $this->whatsapp) ?? '-');
         }
         return '-';
     }
@@ -158,6 +162,76 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Relasi Postingan Momen Milik User
+     */
+    public function moments()
+    {
+        return $this->hasMany(Moment::class, 'user_id');
+    }
+
+    /**
+     * Relasi Like Momen
+     */
+    public function momentLikes()
+    {
+        return $this->hasMany(MomentLike::class, 'user_id');
+    }
+
+    /**
+     * Relasi Bookmark Momen
+     */
+    public function momentBookmarks()
+    {
+        return $this->hasMany(MomentBookmark::class, 'user_id');
+    }
+
+    /**
+     * Relasi Many-to-Many ke Momen yang Disimpan
+     */
+    public function bookmarkedMoments()
+    {
+        return $this->belongsToMany(Moment::class, 'moment_bookmarks', 'user_id', 'moment_id')
+            ->withPivot('created_at');
+    }
+
+    /**
+     * Relasi Buku Besar Koin
+     */
+    public function coinLedgers()
+    {
+        return $this->hasMany(MomentCoinLedger::class, 'user_id');
+    }
+
+    /**
+     * Relasi Catatan Defisit Koin
+     */
+    public function coinDeficit()
+    {
+        return $this->hasOne(UserCoinDeficit::class, 'user_id');
+    }
+
+    /**
+     * Relasi Daftar Tunggu Stok Produk
+     */
+    public function stockWaitlists()
+    {
+        return $this->hasMany(ProductStockWaitlist::class, 'user_id');
+    }
+
+    public function ulasans()
+    {
+        return $this->hasMany(Ulasan::class, 'user_id');
+    }
+
+    /**
+     * Mendapatkan total saldo koin tersedia
+     */
+    public function getCoinBalanceAttribute(): int
+    {
+        return (int) $this->coinLedgers()->sum('coins_amount');
+    }
+
+    /**
      * Mendapatkan role aktif yang sedang digunakan saat ini
      */
     public function getActiveRoleAttribute(): string
@@ -171,6 +245,31 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $this->role;
+    }
+
+    /**
+     * Mendapatkan username pengguna dengan fallback ke nama / user id
+     */
+    public function getUsernameAttribute(): string
+    {
+        if (isset($this->attributes['username']) && !empty($this->attributes['username'])) {
+            return $this->attributes['username'];
+        }
+
+        $slug = \Illuminate\Support\Str::slug($this->name ?? '', '');
+        return !empty($slug) ? $slug : ('user' . ($this->id ?? ''));
+    }
+
+    /**
+     * Mendapatkan bio profil customer jika tersedia
+     */
+    public function getBioAttribute(): ?string
+    {
+        if (isset($this->attributes['bio']) && !empty($this->attributes['bio'])) {
+            return $this->attributes['bio'];
+        }
+
+        return null;
     }
 }
 

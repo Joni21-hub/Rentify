@@ -1,3 +1,6 @@
+@php
+    /** @var \Illuminate\Support\Collection|\App\Models\Pembayaran[] $pembayarans */
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -203,7 +206,7 @@
                                 </td>
                                 <td class="p-4 text-center">
                                     @if(strtolower($p->status) === 'lunas')
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider shadow-sm">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wider shadow-sm">
                                             <i class="fas fa-check-circle mr-1"></i> Lunas
                                         </span>
                                     @elseif(strtolower($p->status) === 'refunded')

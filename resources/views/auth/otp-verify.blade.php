@@ -19,27 +19,30 @@
                 <i class="fa-solid fa-mobile-screen-button text-2xl text-slate-800"></i>
             </div>
 
-            <h2 class="text-2xl font-extrabold text-sky-500-md mb-2">Verifikasi OTP</h2>
+            <h2 class="text-2xl font-extrabold text-sky-500 mb-2">Verifikasi OTP</h2>
             <p class="text-xs text-slate-800/90 mb-6 leading-relaxed">
                 Kami telah mengirimkan 6 digit kode OTP ke WhatsApp <br>
                 <b>{{ substr(session('otp_phone', '08123xxx'), 0, 7) }}xxxx</b>
             </p>
 
             @if (session('error'))
-                <div class="mb-4 bg-rose-500/90 backdrop-blur-md border border-rose-400 text-slate-800 px-4 py-3 rounded-xl text-xs font-bold shadow-lg">
-                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ session('error') }}
+                <div class="mb-4 bg-rose-100 border border-rose-300 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>{{ session('error') }}</span>
                 </div>
             @endif
             
             @if (session('success'))
-                <div class="mb-4 bg-emerald-500/90 backdrop-blur-md border border-emerald-400 text-slate-800 px-4 py-3 rounded-xl text-xs font-bold shadow-lg">
-                    <i class="fa-solid fa-check-circle mr-1"></i> {{ session('success') }}
+                <div class="mb-4 bg-emerald-100 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>{{ session('success') }}</span>
                 </div>
             @endif
 
             @if ($errors->any())
-                <div class="mb-4 bg-rose-500/90 backdrop-blur-md border border-rose-400 text-slate-800 px-4 py-3 rounded-xl text-xs font-bold shadow-lg">
-                    {{ $errors->first() }}
+                <div class="mb-4 bg-rose-100 border border-rose-300 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>{{ $errors->first() }}</span>
                 </div>
             @endif
 
@@ -51,17 +54,17 @@
                         placeholder="••••••" autofocus>
                 </div>
 
-                <button type="submit" class="w-full rentify-btn text-slate-800 font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex justify-center items-center gap-2">
+                <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                     <i class="fa-solid fa-check-circle"></i>
                     <span>Verifikasi</span>
                 </button>
             </form>
 
-            <div class="mt-6 flex flex-col gap-2 text-xs text-slate-800/90">
+            <div class="mt-6 flex flex-col gap-2 text-xs text-slate-800/90 text-center">
                 <p>Belum menerima kode?</p>
                 <form action="{{ route('otp.resend') }}" method="POST">
                     @csrf
-                    <button type="submit" class="rentify-btn w-full py-3.5 text-sm tracking-widest uppercase">
+                    <button type="submit" class="w-full py-3 bg-white/60 hover:bg-white/80 border border-slate-300 rounded-2xl font-extrabold text-[#475569] text-xs transition-all shadow-sm">
                         Kirim Ulang Kode
                     </button>
                 </form>

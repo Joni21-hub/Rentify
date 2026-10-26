@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Barang;
 use App\Models\Penyewaan;
+use App\Services\TransactionCalculationService;
 use Carbon\Carbon;
 
 class VendorDashboardController extends Controller
@@ -27,8 +28,11 @@ class VendorDashboardController extends Controller
         $totalUnitFisik = (int) Barang::where('vendor_id', $user->id)->sum('stok_total');
 
         // 2. STATISTIK PESANAN
-        $pesananQuery = Penyewaan::whereHas('details.barang', function($query) use ($user) {
-            $query->where('vendor_id', $user->id);
+        $pesananQuery = Penyewaan::where(function($q) use ($user) {
+            $q->where('vendor_id', $user->id)
+              ->orWhereHas('details.barang', function($query) use ($user) {
+                  $query->where('vendor_id', $user->id);
+              });
         });
 
         $jmlPesananAktif = (clone $pesananQuery)->whereIn('status', ['Menunggu Konfirmasi', 'Disetujui', 'Sedang Disewa', 'berjalan', 'dibayar'])->count();
@@ -70,16 +74,24 @@ class VendorDashboardController extends Controller
         $totalSaldo = $saldoVendor ? (float) $saldoVendor->saldo_aktif : 0;
 
         // Estimasi Saldo Tertahan (Pesanan Sedang Berjalan / Belum Selesai)
-        $omsetBerjalan = (clone $pesananQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])->sum('total_biaya');
-        $saldoTertahan = $omsetBerjalan > 0 ? round($omsetBerjalan / 1.05) : 0;
+        $pesananBerjalan = (clone $pesananQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])->get();
+        $saldoTertahan = 0;
+        foreach ($pesananBerjalan as $p) {
+            $breakdown = TransactionCalculationService::getBreakdownForOrder($p);
+            $saldoTertahan += $breakdown['vendor_earning'];
+        }
 
         // Total pendapatan bersih bulan ini
-        $omsetBulanIni = (clone $pesananQuery)
+        $pesananBulanIni = (clone $pesananQuery)
             ->where('status', 'Selesai')
             ->whereMonth('updated_at', now()->month)
             ->whereYear('updated_at', now()->year)
-            ->sum('total_biaya');
-        $pendapatanBulanIni = $omsetBulanIni > 0 ? round($omsetBulanIni / 1.05) : 0;
+            ->get();
+        $pendapatanBulanIni = 0;
+        foreach ($pesananBulanIni as $p) {
+            $breakdown = TransactionCalculationService::getBreakdownForOrder($p);
+            $pendapatanBulanIni += $breakdown['vendor_earning'];
+        }
 
         // 5. GRAFIK PENDAPATAN (7 HARI TERAKHIR & 30 HARI TERAKHIR)
         $chart7Labels = [];
@@ -87,11 +99,16 @@ class VendorDashboardController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $tanggal = now()->subDays($i);
             $chart7Labels[] = $tanggal->translatedFormat('D, d M');
-            $pemasukan = (clone $pesananQuery)
+            $pesananHari = (clone $pesananQuery)
                 ->where('status', 'Selesai')
                 ->whereDate('updated_at', $tanggal->format('Y-m-d'))
-                ->sum('total_biaya');
-            $chart7Data[] = $pemasukan > 0 ? round($pemasukan / 1.05) : 0;
+                ->get();
+            $pemasukan = 0;
+            foreach ($pesananHari as $p) {
+                $breakdown = TransactionCalculationService::getBreakdownForOrder($p);
+                $pemasukan += $breakdown['vendor_earning'];
+            }
+            $chart7Data[] = round($pemasukan);
         }
 
         $chart30Labels = [];
@@ -99,21 +116,26 @@ class VendorDashboardController extends Controller
         for ($i = 29; $i >= 0; $i -= 3) {
             $tanggal = now()->subDays($i);
             $chart30Labels[] = $tanggal->translatedFormat('d M');
-            $pemasukan = (clone $pesananQuery)
+            $pesananRentang = (clone $pesananQuery)
                 ->where('status', 'Selesai')
                 ->whereBetween('updated_at', [
                     $tanggal->copy()->subDays(2)->startOfDay(),
                     $tanggal->copy()->endOfDay()
                 ])
-                ->sum('total_biaya');
-            $chart30Data[] = $pemasukan > 0 ? round($pemasukan / 1.05) : 0;
+                ->get();
+            $pemasukan = 0;
+            foreach ($pesananRentang as $p) {
+                $breakdown = TransactionCalculationService::getBreakdownForOrder($p);
+                $pemasukan += $breakdown['vendor_earning'];
+            }
+            $chart30Data[] = round($pemasukan);
         }
 
-        // 6. VOUCHER PROMO TOKO (PENTING UNTUK PROMOSI TOKO)
+        // 6. VOUCHER PROMO TOKO
         $totalVoucher = \App\Models\Voucher::where('vendor_id', $user->id)->count();
         $vouchers = \App\Models\Voucher::where('vendor_id', $user->id)->latest()->take(3)->get();
 
-        // Status Ringkas Pesanan (Untuk 4-Grid Status ala Marketplace Besar)
+        // Status Ringkas Pesanan
         $jmlMenungguKonfirmasi = (clone $pesananQuery)->where('status', 'Menunggu Konfirmasi')->count();
         $jmlSedangDisewa = $unitSedangDisewa;
         $jmlJatuhTempo = (clone $pesananQuery)->whereIn('status', ['Sedang Disewa', 'berjalan', 'Disetujui'])->whereDate('tanggal_selesai', '<=', now()->toDateString())->count();
@@ -126,7 +148,7 @@ class VendorDashboardController extends Controller
             ->take(4)
             ->get();
 
-        // 8. PESANAN TERAKHIR (TABEL MINI)
+        // 8. PESANAN TERAKHIR
         $recentOrders = (clone $pesananQuery)
             ->with(['customer', 'details.barang'])
             ->latest()

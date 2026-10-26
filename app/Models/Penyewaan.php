@@ -2,19 +2,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User; // Tambahan: Memanggil model User
+use App\Models\User;
 
 class Penyewaan extends Model
 {
     protected $table = 'orders';
 
     protected $fillable = [
-        'user_id', 'vendor_id', 'customer_id', 'kode_booking',
-        'payment_method', 'metode_pengambilan', 'alamat_pengiriman',
-        'cabang_id', 'total_biaya', 'total_deposit', 'total_denda',
+        'user_id', 'vendor_id', 'customer_id', 'customer_name', 'customer_whatsapp', 'kode_booking',
+        'payment_method', 'metode_pengambilan', 'alamat_pengiriman', 'shipping_address', 'shipping_method',
+        'shipping_fee', 'kode_unik', 'voucher_id', 'potongan_voucher',
+        'cabang_id', 'total_biaya', 'total_price', 'total_deposit', 'total_denda',
+        'vendor_earning', 'rentify_fee', 'completed_at',
         'status', 'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
-        // Kolom DOKU Checkout
-        'doku_invoice_number', 'doku_payment_url', 'doku_payment_id',
         'payment_expired_at', 'paid_at',
     ];
 
@@ -23,8 +23,15 @@ class Penyewaan extends Model
         'tanggal_selesai'        => 'date',
         'tanggal_kembali_aktual' => 'date',
         'total_biaya'            => 'decimal:2',
+        'total_price'            => 'decimal:2',
+        'vendor_earning'         => 'decimal:2',
+        'rentify_fee'            => 'decimal:2',
         'total_deposit'          => 'decimal:2',
         'total_denda'            => 'decimal:2',
+        'potongan_voucher'       => 'decimal:2',
+        'shipping_fee'           => 'decimal:2',
+        'kode_unik'              => 'integer',
+        'completed_at'           => 'datetime',
         'payment_expired_at'     => 'datetime',
         'paid_at'                => 'datetime',
     ];
@@ -34,16 +41,15 @@ class Penyewaan extends Model
         return 'RNT' . strtoupper(uniqid());
     }
 
-    // PERBAIKAN: Diubah dari Customer::class menjadi User::class
     public function customer() { return $this->belongsTo(User::class, 'user_id'); }
-    
+    public function vendor()   { return $this->belongsTo(User::class, 'vendor_id'); }
     public function cabang()   { return $this->belongsTo(Cabang::class); }
     public function details()  { return $this->hasMany(DetailPenyewaan::class, 'order_id'); }
-    public function pembayaran() { return $this->hasOne(Pembayaran::class); }
-    public function pengembalian() { return $this->hasOne(Pengembalian::class); }
-    public function ulasans()  { return $this->hasMany(Ulasan::class); }
-    public function chats()   { return $this->hasMany(Chat::class); }
-    public function komplain() { return $this->hasOne(Komplain::class); }
+    public function pembayaran() { return $this->hasOne(Pembayaran::class, 'order_id'); }
+    public function pengembalian() { return $this->hasOne(Pengembalian::class, 'penyewaan_id'); }
+    public function ulasans()  { return $this->hasMany(Ulasan::class, 'order_id'); }
+    public function chats()   { return $this->hasMany(Chat::class, 'order_id'); }
+    public function komplain() { return $this->hasOne(Komplain::class, 'order_id'); }
 
     public function isTerlambat(): bool
     {
@@ -62,7 +68,7 @@ class Penyewaan extends Model
      */
     public function getTotalPriceAttribute(): float
     {
-        return (float) ($this->attributes['total_biaya'] ?? 0);
+        return (float) ($this->attributes['total_biaya'] ?? $this->attributes['total_price'] ?? 0);
     }
 
     public function getShippingAddressAttribute(): ?string
@@ -89,4 +95,4 @@ class Penyewaan extends Model
     {
         return $this->customer->name ?? 'Pelanggan';
     }
-}
+}

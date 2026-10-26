@@ -111,46 +111,21 @@ class PesananController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengubah status pesanan ini.');
         }
 
+        // Perlindungan Integritas Keuangan: Pesanan yang sudah 'Selesai' dan mutasi saldo sudah masuk
+        // tidak boleh dibatalkan secara sepihak oleh vendor.
+        if ($pesanan->status === 'Selesai' && $request->status !== 'Selesai') {
+            return back()->with('error', '⚠️ Pesanan yang sudah berstatus Selesai tidak dapat diubah atau dibatalkan sepihak oleh Vendor. Silakan hubungi Admin jika terdapat sengketa/refund.');
+        }
+
         if ($request->status === 'Selesai' && $pesanan->status !== 'Selesai') {
-            DB::beginTransaction();
             try {
-                $totalNilai = (float) ($pesanan->total_biaya ?: $pesanan->total_price);
-                $hargaAsli = round($totalNilai / 1.05);
-                $feePlatform = $totalNilai - $hargaAsli;
+                \App\Services\TransactionCalculationService::settleOrderCompletion($pesanan->id);
 
-                $saldoVendor = DB::table('saldos')->where('vendor_id', $vendorId)->first();
-                if (!$saldoVendor) {
-                    DB::table('saldos')->insert([
-                        'vendor_id' => $vendorId,
-                        'saldo_aktif' => 0,
-                        'saldo_ditahan' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $saldoVendor = DB::table('saldos')->where('vendor_id', $vendorId)->first();
-                }
+                // Notifikasi WhatsApp otomatis ke Customer & Vendor
+                \App\Services\OrderNotificationService::notifyOrderStatusUpdated($pesanan->fresh(), 'Selesai');
 
-                $saldoAktifBaru = (float) $saldoVendor->saldo_aktif;
-
-                // Jika COD: Vendor pegang tunai 100%, fee sistem 5% dipotong dari saldo vendor
-                // Jika Online/Midtrans: Uang sewa bersih (setelah fee 5%) dimasukkan ke saldo vendor
-                if (strtoupper($pesanan->payment_method ?? '') === 'COD') {
-                    $saldoAktifBaru -= $feePlatform;
-                } else {
-                    $saldoAktifBaru += $hargaAsli;
-                }
-
-                DB::table('saldos')
-                    ->where('vendor_id', $vendorId)
-                    ->update(['saldo_aktif' => $saldoAktifBaru, 'updated_at' => now()]);
-
-                $pesanan->status = 'Selesai';
-                $pesanan->save();
-
-                DB::commit();
                 return back()->with('success', 'Pesanan Selesai! Saldo toko Anda otomatis diperbarui.');
             } catch (\Exception $e) {
-                DB::rollback();
                 return back()->with('error', 'Gagal memproses saldo: ' . $e->getMessage());
             }
         }
@@ -162,10 +137,25 @@ class PesananController extends Controller
                     ->where('kuota_terpakai', '>', 0)
                     ->decrement('kuota_terpakai');
             }
+
+            // Refund koin jika transaksi sewa menggunakan koin
+            $spentLedger = \App\Models\MomentCoinLedger::where('order_id', $pesanan->id)
+                ->where('interaction_type', 'checkout_spend')
+                ->first();
+            if ($spentLedger) {
+                app(\App\Services\CoinAccountingService::class)->refundOrderCoins(
+                    $pesanan->user_id,
+                    abs($spentLedger->coins_amount),
+                    $pesanan->id
+                );
+            }
         }
 
         $pesanan->status = $request->status;
         $pesanan->save();
+
+        // Notifikasi WhatsApp otomatis ke Customer & Vendor
+        \App\Services\OrderNotificationService::notifyOrderStatusUpdated($pesanan, $request->status);
 
         return back()->with('success', 'Status pesanan berhasil diperbarui!');
     }

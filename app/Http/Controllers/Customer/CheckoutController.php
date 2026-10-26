@@ -163,7 +163,7 @@ class CheckoutController extends Controller
                 ->update(['status' => 'CANCELLED', 'updated_at' => now()]);
         }
 
-        // Batalkan pesanan 'PENDING_PAYMENT' yang sudah lewat 35 menit tanpa pembayaran (DOKU expiry 30 menit + buffer)
+        // Batalkan pesanan 'PENDING_PAYMENT' yang sudah lewat 35 menit tanpa pembayaran (QRIS expiry 30 menit + buffer)
         DB::table('orders')
             ->whereIn('status', ['Menunggu Pembayaran', 'PENDING_PAYMENT'])
             ->where('created_at', '<', now()->subMinutes(35))
@@ -246,19 +246,41 @@ class CheckoutController extends Controller
             
             $waktuKembali = $waktuMulai->copy()->addDays($durasi);
             $subtotalSewa = 0;
+            $subtotalSewaAsli = 0;
 
             foreach ($items as $item) {
+                $subtotalSewaAsli += ((float)$item->barang->harga_sewa_harian * $item->jumlah * $durasi);
                 $hargaMarkup = $item->barang->harga_sewa_harian * 1.05;
                 $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
             }
 
-            // PERUBAHAN: Memotong harga dan mencatat ID voucher dari AJAX data (jika vendor id cocok)
+            // PERUBAHAN: Validasi voucher ketat di sisi server (mencegah manipulasi diskon dari client/AJAX)
             $potonganVoucher = 0;
             $voucherIdDipakai = null;
             
-            if (isset($voucherData['vendor_id']) && $voucherData['vendor_id'] == $vendorId) {
-                $potonganVoucher = $voucherData['potongan'];
-                $voucherIdDipakai = $voucherData['voucher_id'];
+            if (isset($voucherData['vendor_id']) && $voucherData['vendor_id'] == $vendorId && !empty($voucherData['voucher_id'])) {
+                $vId = (int) $voucherData['voucher_id'];
+                $dbVoucher = Voucher::where('id', $vId)
+                    ->where('vendor_id', $vendorId)
+                    ->where('is_active', 1)
+                    ->whereDate('tanggal_mulai', '<=', now())
+                    ->whereDate('tanggal_selesai', '>=', now())
+                    ->first();
+
+                if ($dbVoucher && $dbVoucher->kuota_terpakai < $dbVoucher->kuota_total) {
+                    if ($subtotalSewaAsli >= (float) $dbVoucher->minimal_belanja) {
+                        if ($dbVoucher->tipe_diskon === 'nominal') {
+                            $calc = (float) $dbVoucher->nilai_diskon;
+                        } else {
+                            $calc = ($subtotalSewaAsli * (float) $dbVoucher->nilai_diskon) / 100;
+                            if (!is_null($dbVoucher->maksimal_diskon) && $calc > (float) $dbVoucher->maksimal_diskon) {
+                                $calc = (float) $dbVoucher->maksimal_diskon;
+                            }
+                        }
+                        $potonganVoucher = min($subtotalSewaAsli, round($calc, 2));
+                        $voucherIdDipakai = $dbVoucher->id;
+                    }
+                }
             }
 
             // Kenakan kode unik hanya pada salah satu order jika checkout gabungan
@@ -268,8 +290,15 @@ class CheckoutController extends Controller
                 $kodeUnikDigunakan = 0;
             }
 
-            // Pastikan diskon tidak membuat total harga minus
-            $totalHargaVendor = max(0, ($subtotalSewa - $potonganVoucher)) + $ongkir + $kodeUnikOrder;
+            // Hitung kalkulasi resmi transaksi menggunakan TransactionCalculationService
+            $pricing = \App\Services\TransactionCalculationService::calculateOrderPricing(
+                $subtotalSewaAsli,
+                (float) $ongkir,
+                (float) $potonganVoucher,
+                (int) $kodeUnikOrder
+            );
+
+            $totalHargaVendor = $pricing['total_price'];
             $totalBayarSemua += $totalHargaVendor;
 
             $orderId = DB::table('orders')->insertGetId([
@@ -294,6 +323,8 @@ class CheckoutController extends Controller
                 'payment_method' => $metodeInput,
                 'total_biaya' => $totalHargaVendor,
                 'total_price' => $totalHargaVendor,
+                'vendor_earning' => $pricing['vendor_earning'],
+                'rentify_fee' => $pricing['rentify_fee'],
                 
                 // PERUBAHAN: Mencatat data voucher ke database
                 'voucher_id' => $voucherIdDipakai,
@@ -351,6 +382,15 @@ class CheckoutController extends Controller
 
         $gabunganInvoice = implode('_', $invoiceIds);
 
+        // Kirim notifikasi WhatsApp otomatis ke Customer & Vendor
+        foreach ($invoiceIds as $inv) {
+            $ordId = (int) str_replace('INV-', '', $inv);
+            $createdOrder = DB::table('orders')->where('id', $ordId)->first();
+            if ($createdOrder) {
+                \App\Services\OrderNotificationService::notifyOrderCreated($createdOrder);
+            }
+        }
+
         // Jika COD, langsung ke struk. Jika Transfer/QRIS/E-Wallet, arahkan ke halaman pembayaran (Snap Midtrans)
         if ($metodeInput === 'COD') {
             return redirect()->route('customer.struk', ['id' => $gabunganInvoice]);
@@ -376,6 +416,14 @@ class CheckoutController extends Controller
             'status' => 'Menunggu Konfirmasi',
             'updated_at' => Carbon::now('Asia/Jakarta')
         ]);
+
+        // Kirim notifikasi WhatsApp pesanan COD ke Customer & Vendor
+        foreach ($orderIds as $ordId) {
+            $codOrder = DB::table('orders')->where('id', $ordId)->first();
+            if ($codOrder) {
+                \App\Services\OrderNotificationService::notifyOrderCreated($codOrder);
+            }
+        }
 
         session([
             'metode_pembayaran' => 'COD'
@@ -449,11 +497,9 @@ class CheckoutController extends Controller
         $merchantNmid = $qrisService->getMerchantNmid($qrisPayload);
         $acquirer     = $qrisService->getAcquirer();
 
-        // Simpan data QRIS ke database agar tersinkronisasi
+        // Simpan metode pembayaran ke database
         DB::table('orders')->whereIn('id', $orderIds)->update([
             'payment_method'      => 'QRIS',
-            'doku_payment_url'    => $qrisImageUrl,
-            'doku_invoice_number' => $orderReference,
             'updated_at'          => now(),
         ]);
 
@@ -506,6 +552,14 @@ class CheckoutController extends Controller
             $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
 
             if ($orders->isNotEmpty()) {
+                // Cegah IDOR: Pastikan pemesan adalah pengguna yang sedang login atau Admin
+                $userId = auth()->id();
+                $isAdmin = auth()->user()?->role === 'admin';
+                $isAuthorized = $orders->every(fn($o) => $o->user_id == $userId) || $isAdmin;
+                if (!$isAuthorized) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat struk pesanan ini.');
+                }
+
                 $total = $orders->sum('total_price');
                 $metode = $orders->first()->payment_method ?? 'COD';
                 $no_hp = $orders->first()->customer_whatsapp ?? '';

@@ -26,6 +26,10 @@
     </nav>
 
     <div class="max-w-6xl mx-auto px-4 py-10">
+        @php
+            $cart = $cart ?? [];
+            $total = $total ?? 0;
+        @endphp
         <h2 class="text-2xl font-bold text-slate-800 mb-6"><i class="fas fa-shopping-basket text-brandBlue mr-2"></i> Konfirmasi Penyewaan</h2>
 
         @if(count($cart) > 0)
@@ -139,7 +143,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-brandBlue hover:bg-navy text-white font-bold py-3 px-4 rounded-xl transition shadow-lg text-center text-sm flex justify-center items-center">
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 px-4 rounded-2xl transition-all shadow-md transform hover:-translate-y-0.5 active:translate-y-0 text-center text-sm flex justify-center items-center">
                         <i class="fas fa-shopping-bag mr-2"></i> Selesaikan Pemesanan
                     </button>
                 </div>
@@ -147,9 +151,15 @@
         </form>
         @else
         <div class="rentify-card p-12 text-center">
-            <i class="fas fa-shopping-cart text-5xl text-slate-300 mb-4"></i>
+            <div class="w-20 h-20 bg-gradient-to-tr from-sky-50 to-sky-100/80 text-sky-500 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-sky-100">
+                <svg class="w-10 h-10 stroke-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="21" r="1"/>
+                    <circle cx="19" cy="21" r="1"/>
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                </svg>
+            </div>
             <p class="text-slate-500 font-medium">Keranjang belanjamu masih kosong nih.</p>
-            <a href="/customer" class="mt-4 inline-block bg-brandBlue text-white font-bold py-2 px-6 rounded-xl text-sm hover:bg-navy transition">Mulai Belanja</a>
+            <a href="/customer" class="mt-4 inline-block bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-2.5 px-6 rounded-2xl text-sm transition-all shadow-md transform hover:-translate-y-0.5 active:translate-y-0">Mulai Belanja</a>
         </div>
         @endif
     </div>

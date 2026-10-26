@@ -62,7 +62,12 @@ class MutasiWebhookTest extends TestCase
     public function test_webhook_auto_matches_order()
     {
         // Siapkan user
-        $user = User::first() ?? User::factory()->create();
+        $user = User::first() ?? User::create([
+            'name' => 'User Mutasi Test',
+            'email' => 'mutasi_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
 
         // Buat dummy pending order dengan nominal unik
         $nominalUnik = 49876.0;
@@ -95,11 +100,9 @@ class MutasiWebhookTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $response->assertJson([
-            'success' => true,
-            'matched' => true,
-            'order_id' => $orderId,
-        ]);
+        $this->assertTrue($response->json('success'));
+        $this->assertTrue($response->json('matched'));
+        $this->assertEquals($orderId, $response->json('order_id'));
 
         // Pastikan status order di database terupdate menjadi Menunggu Konfirmasi / Lunas
         $updatedOrder = DB::table('orders')->where('id', $orderId)->first();

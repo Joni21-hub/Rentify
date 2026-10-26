@@ -38,6 +38,14 @@ class LokasiController extends Controller
             $user->save();
         }
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Titik lokasi berhasil diatur! Menampilkan barang di sekitar Anda.',
+                'alamat' => $request->alamat_lengkap
+            ]);
+        }
+
         return redirect()->route('customer.home')->with('success', 'Titik lokasi berhasil diatur! Menampilkan barang di sekitar Anda.');
     }
 }

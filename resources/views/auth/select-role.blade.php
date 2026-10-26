@@ -52,7 +52,11 @@
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <div class="w-14 h-14 rounded-2xl bg-sky-100/90 text-sky-600 flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-sm">
-                                <i class="fa-solid fa-cart-shopping"></i>
+                                <svg class="w-7 h-7 stroke-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="8" cy="21" r="1"/>
+                                    <circle cx="19" cy="21" r="1"/>
+                                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                                </svg>
                             </div>
                             <span class="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-sky-100 text-sky-700 border border-sky-200">
                                 Mode Belanja

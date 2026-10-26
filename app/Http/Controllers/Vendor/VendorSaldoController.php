@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\Penyewaan; // Tambahkan model Penyewaan
+use App\Models\Penyewaan;
+use App\Services\TransactionCalculationService;
 
 class VendorSaldoController extends Controller
 {
@@ -27,7 +28,7 @@ class VendorSaldoController extends Controller
             $saldo = DB::table('saldos')->where('vendor_id', $vendorId)->first();
         }
 
-        // 2. KUMPULKAN RIWAYAT MUTASI (Trik Menggabungkan 2 Tabel Tanpa Migration Baru)
+        // 2. KUMPULKAN RIWAYAT MUTASI
         $mutasi = collect();
 
         // A. Ambil Data Penarikan Dana
@@ -55,18 +56,18 @@ class VendorSaldoController extends Controller
         })->where('status', 'Selesai')->get();
 
         foreach ($pesananSelesai as $p) {
-            $totalNilai = (float) ($p->total_biaya ?: $p->total_price);
-            $hargaAsli = round($totalNilai / 1.05);
-            $feePlatform = $totalNilai - $hargaAsli;
+            $breakdown = TransactionCalculationService::getBreakdownForOrder($p);
+            $vendorEarning = $breakdown['vendor_earning'];
+            $feePlatform = $breakdown['rentify_fee'];
             $kodeOrder = $p->kode_booking ?: ('#ORD-' . $p->id);
 
             if (strtoupper($p->payment_method ?? '') !== 'COD') {
-                // Semua pembayaran via Midtrans (QRIS, VA, Transfer, E-Wallet) masuk ke saldo vendor (uang ditahan sistem dulu)
+                // Semua pembayaran via Online (QRIS, VA, Transfer, E-Wallet) masuk ke saldo vendor
                 $mutasi->push((object)[
-                    'tanggal' => $p->updated_at,
+                    'tanggal' => $p->completed_at ?? $p->updated_at,
                     'jenis' => 'Pendapatan Online (Rental Selesai)',
-                    'nominal' => $hargaAsli,
-                    'keterangan' => 'Pemasukan uang sewa (potongan 5%) - Order ' . $kodeOrder,
+                    'nominal' => $vendorEarning,
+                    'keterangan' => 'Pemasukan bersih rental + ongkir - Order ' . $kodeOrder,
                     'status' => 'berhasil',
                     'icon' => 'fa-arrow-down-long',
                     'color' => 'text-emerald-500',
@@ -74,9 +75,9 @@ class VendorSaldoController extends Controller
                     'operator' => '+'
                 ]);
             } else {
-                // Pembayaran COD, uang dipegang Vendor, Vendor berhutang fee 5% ke sistem
+                // Pembayaran COD, uang tunai dipegang Vendor, fee sistem 5% dipotong dari saldo dompet
                 $mutasi->push((object)[
-                    'tanggal' => $p->updated_at,
+                    'tanggal' => $p->completed_at ?? $p->updated_at,
                     'jenis' => 'Potongan Fee Platform',
                     'nominal' => $feePlatform,
                     'keterangan' => 'Potongan fee 5% platform (Transaksi COD) - Order ' . $kodeOrder,
@@ -95,7 +96,6 @@ class VendorSaldoController extends Controller
         return view('vendor.saldo.index', compact('saldo', 'riwayatMutasi'));
     }
 
-    // Fungsi storePenarikan tidak saya ubah logika aslinya, 100% aman
     public function storePenarikan(Request $request)
     {
         $request->validate([
@@ -109,19 +109,21 @@ class VendorSaldoController extends Controller
         ]);
 
         $vendorId = Auth::id();
-        $nominalTarik = $request->nominal;
-
-        $saldo = DB::table('saldos')->where('vendor_id', $vendorId)->first();
-
-        if (!$saldo || $saldo->saldo_aktif < $nominalTarik) {
-            return back()->with('error', 'Saldo aktif Anda tidak mencukupi untuk penarikan ini.');
-        }
+        $nominalTarik = (float) $request->nominal;
 
         DB::beginTransaction();
         try {
+            // Lock row saldo untuk mencegah race condition penarikan ganda
+            $saldo = DB::table('saldos')->where('vendor_id', $vendorId)->lockForUpdate()->first();
+
+            if (!$saldo || (float) $saldo->saldo_aktif < $nominalTarik) {
+                DB::rollBack();
+                return back()->with('error', 'Saldo aktif Anda tidak mencukupi untuk penarikan ini.');
+            }
+
             DB::table('saldos')->where('vendor_id', $vendorId)->update([
-                'saldo_aktif' => $saldo->saldo_aktif - $nominalTarik,
-                'saldo_ditahan' => $saldo->saldo_ditahan + $nominalTarik,
+                'saldo_aktif' => (float) $saldo->saldo_aktif - $nominalTarik,
+                'saldo_ditahan' => (float) $saldo->saldo_ditahan + $nominalTarik,
                 'updated_at' => now()
             ]);
 
@@ -140,12 +142,11 @@ class VendorSaldoController extends Controller
             DB::commit();
             return back()->with('success', 'Pengajuan penarikan dana berhasil dikirim. Menunggu persetujuan Admin.');
         } catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
 
-    // FITUR UNDUH LAPORAN EXCEL (CSV)
     // FITUR UNDUH LAPORAN EXCEL (BENTUK TABEL RAPI)
     public function export()
     {
@@ -163,7 +164,7 @@ class VendorSaldoController extends Controller
         }
 
         // Ambil Data Pendapatan
-        $pesananSelesai = \App\Models\Penyewaan::where(function($q) use ($vendorId) {
+        $pesananSelesai = Penyewaan::where(function($q) use ($vendorId) {
             $q->where('vendor_id', $vendorId)
               ->orWhereHas('details.barang', function($query) use ($vendorId) {
                   $query->where('vendor_id', $vendorId);
@@ -171,20 +172,20 @@ class VendorSaldoController extends Controller
         })->where('status', 'Selesai')->get();
 
         foreach ($pesananSelesai as $p) {
-            $totalNilai = (float) ($p->total_biaya ?: $p->total_price);
-            $hargaAsli = round($totalNilai / 1.05);
-            $feePlatform = $totalNilai - $hargaAsli;
+            $breakdown = TransactionCalculationService::getBreakdownForOrder($p);
+            $vendorEarning = $breakdown['vendor_earning'];
+            $feePlatform = $breakdown['rentify_fee'];
             $kodeOrder = $p->kode_booking ?: ('#ORD-' . $p->id);
 
             if (strtoupper($p->payment_method ?? '') !== 'COD') {
                 $mutasi->push((object)[
-                    'tanggal' => $p->updated_at, 'jenis' => 'Pendapatan Online',
-                    'nominal' => $hargaAsli, 'keterangan' => 'Order ' . $kodeOrder,
+                    'tanggal' => $p->completed_at ?? $p->updated_at, 'jenis' => 'Pendapatan Online',
+                    'nominal' => $vendorEarning, 'keterangan' => 'Order ' . $kodeOrder,
                     'status' => 'berhasil', 'operator' => '+'
                 ]);
             } else {
                 $mutasi->push((object)[
-                    'tanggal' => $p->updated_at, 'jenis' => 'Potongan Fee Platform (COD)',
+                    'tanggal' => $p->completed_at ?? $p->updated_at, 'jenis' => 'Potongan Fee Platform (COD)',
                     'nominal' => $feePlatform, 'keterangan' => 'Order ' . $kodeOrder,
                     'status' => 'berhasil', 'operator' => '-'
                 ]);
@@ -193,7 +194,7 @@ class VendorSaldoController extends Controller
 
         $riwayatMutasi = $mutasi->sortByDesc('tanggal')->values();
 
-        // BUAT TAMPILAN TABEL HTML (EXCEL BISA MEMBACA INI DENGAN SEMPURNA)
+        // BUAT TAMPILAN TABEL HTML
         $html = '<table border="1" cellpadding="5" style="border-collapse: collapse;">';
         $html .= '<tr style="background-color: #1E3A8A; color: white;">
                     <th>Tanggal Transaksi</th>
@@ -214,7 +215,6 @@ class VendorSaldoController extends Controller
         }
         $html .= '</table>';
 
-        // Paksa browser mendownload sebagai file .xls
         $fileName = 'Laporan_Keuangan_Rentify_' . date('Y-m-d') . '.xls';
         return response($html)
             ->header('Content-Type', 'application/vnd.ms-excel')

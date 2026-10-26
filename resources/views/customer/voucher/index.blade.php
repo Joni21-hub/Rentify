@@ -93,7 +93,7 @@
                                     <span class="font-mono font-black text-xs text-slate-800 tracking-wider select-all">{{ $voucher->kode_voucher }}</span>
                                 </div>
                                 <button type="button" onclick="salinKode('{{ $voucher->kode_voucher }}', this)" 
-                                        class="px-3 py-1 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-xs">
+                                        class="px-3.5 py-1.5 bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 shadow-xs">
                                     <i class="fa-regular fa-copy"></i>
                                     <span>Salin</span>
                                 </button>
@@ -118,19 +118,7 @@
         </main>
         
         <!-- BOTTOM NAV MOBILE -->
-        <div class="fixed bottom-2 left-0 w-full z-50 flex justify-center pointer-events-none px-4">
-            <nav class="rentify-card backdrop-blur-xl border border-white/60 pointer-events-auto px-6 py-1.5 rounded-full flex justify-between items-center gap-7 shadow-lg shadow-sky-900/10">
-                <a href="{{ route('customer.home') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-1 py-0.5">
-                    <i class="fa-solid fa-house text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Beranda</span>
-                </a>
-                <a href="{{ route('customer.wishlist') }}" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-colors px-1 py-0.5">
-                    <i class="fa-solid fa-heart text-[16px] mb-0.5"></i><span class="text-[8.5px] font-bold tracking-tight">Favorit</span>
-                </a>
-                <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center text-sky-600 px-1 py-0.5">
-                    <i class="fa-solid fa-user text-[16px] mb-0.5"></i><span class="text-[8.5px] font-black tracking-tight">Akun</span>
-                </a>
-            </nav>
-        </div>
+        <x-bottom-navigation-bar active="akun" />
 
     </div>
 

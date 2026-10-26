@@ -278,7 +278,7 @@ class AuthController extends Controller
             'otp_phone' => $user->whatsapp
         ]);
 
-        // Kirim OTP via Fonnte
+        // Kirim OTP via WhatsApp Gateway
         $pesan = "*RENTIFY*\n\nSelamat datang, {$user->name}!\nKode OTP pendaftaran Anda adalah: *$otp*.\n\nJangan berikan kode ini kepada siapapun.";
         \App\Services\WhatsAppService::send($user->whatsapp, $pesan);
 

@@ -16,7 +16,7 @@ class CustomerHomeController extends Controller
         $banners = Banner::all();
         $kategoris = Kategori::where('is_active', 1)->get();
         $daftarBarang = collect(); 
-        $butuhLokasi = false;
+        $hasLokasi = false;
 
         // 1. Cek Lokasi: Ambil dari Session (Tamu) atau Database (Member)
         $lat1 = session('user_latitude');
@@ -31,22 +31,25 @@ class CustomerHomeController extends Controller
             }
         }
 
-        // 2. Jika koordinat DITEMUKAN (baik dari tamu maupun member), proses pencarian barang
-        if ($lat1 && $lon1) {
-            $semuaBarang = Barang::with(['vendor', 'kategori'])
-                ->where('status_barang', 'disetujui')
-                ->whereHas('vendor', function ($query) {
-                    $query->where('vendor_status', '!=', 'suspended')
-                          ->orWhereNull('vendor_status'); 
-                })
-                ->get();
+        // Ambil semua barang disetujui dari vendor aktif
+        $semuaBarang = Barang::with(['vendor', 'kategori'])
+            ->where('status_barang', 'disetujui')
+            ->whereHas('vendor', function ($query) {
+                $query->where('vendor_status', '!=', 'suspended')
+                      ->orWhereNull('vendor_status'); 
+            })
+            ->latest()
+            ->get();
 
+        // 2. Jika koordinat DITEMUKAN (baik dari tamu maupun member), proses perhitungan jarak
+        if ($lat1 && $lon1) {
+            $hasLokasi = true;
             $lat1 = (float) $lat1;
             $lon1 = (float) $lon1;
 
             foreach ($semuaBarang as $barang) {
-                $lat2 = (float) $barang->latitude;
-                $lon2 = (float) $barang->longitude;
+                $lat2 = (float) ($barang->latitude ?? $barang->vendor->latitude ?? 0);
+                $lon2 = (float) ($barang->longitude ?? $barang->vendor->longitude ?? 0);
 
                 if (!$lat2 || !$lon2 || ($lat2 == 0 && $lon2 == 0)) {
                     continue; // Lewati barang yang tokonya tidak pasang pin lokasi
@@ -66,23 +69,45 @@ class CustomerHomeController extends Controller
                     $daftarBarang->push($barang);
                 }
             }
+
+            // Urutkan barang dari jarak terdekat ala Shopee/Tokopedia Nearby
+            $daftarBarang = $daftarBarang->sortBy('jarak')->values();
         } else {
-            // 3. Jika sama sekali tidak ada data koordinat, munculkan Banner "Tentukan Lokasimu"
-            $butuhLokasi = true;
+            $hasLokasi = false;
+        }
+
+        // Standar Shopee & Tokopedia:
+        // Saat pengguna pertama kali klik link (belum pasang titik lokasi),
+        // JANGAN kosongkan katalog! Tampilkan etalase barang rekomendasi terbaik agar marketplace terlihat aktif, menarik & terpercaya.
+        $rekomendasiBarang = $semuaBarang;
+        $butuhLokasi = !$hasLokasi;
+
+        if (!$hasLokasi || $daftarBarang->isEmpty()) {
+            $katalogTampil = $daftarBarang->isNotEmpty() ? $daftarBarang : $rekomendasiBarang;
+        } else {
+            $katalogTampil = $daftarBarang;
         }
 
         $wishlistIds = Auth::check() 
             ? \App\Models\Wishlist::where('user_id', Auth::id())->pluck('barang_id')->flip()->toArray() 
             : [];
 
-        return view('customer.home', compact('daftarBarang', 'banners', 'butuhLokasi', 'kategoris', 'wishlistIds'));
+        return view('customer.home', [
+            'daftarBarang' => $katalogTampil,
+            'banners' => $banners,
+            'butuhLokasi' => $butuhLokasi,
+            'hasLokasi' => $hasLokasi,
+            'rekomendasiBarang' => $rekomendasiBarang,
+            'kategoris' => $kategoris,
+            'wishlistIds' => $wishlistIds
+        ]);
     }
 
     // PERBAIKAN: Fungsi show kini mendukung SLUG, memblokir toko Banned, dan memakai logika lokasi Tamu/Member Anda
     public function show($slug)
     {
         // 1. Cari barang berdasarkan slug atau id
-        $barang = Barang::with(['fotos', 'vendor', 'kategori'])
+        $barang = Barang::with(['fotos', 'vendor', 'kategori', 'ulasans.user'])
                         ->where(function ($query) use ($slug) {
                             $query->where('slug', $slug)
                                   ->orWhere('id', $slug);

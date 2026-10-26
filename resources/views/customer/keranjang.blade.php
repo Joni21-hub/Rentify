@@ -29,8 +29,12 @@
 
     @if($keranjangs->isEmpty())
         <div class="rentify-card m-4 p-10 text-center border border-slate-100">
-            <div class="w-20 h-20 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-[0_0_15px_rgba(14,165,233,0.3)]">
-                <i class="fa-solid fa-cart-shopping"></i>
+            <div class="w-20 h-20 bg-gradient-to-tr from-sky-50 to-sky-100/80 text-sky-500 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-sky-100">
+                <svg class="w-10 h-10 stroke-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="21" r="1"/>
+                    <circle cx="19" cy="21" r="1"/>
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                </svg>
             </div>
             <h3 class="font-bold text-slate-800 text-lg mb-2">Keranjangmu Masih Kosong</h3>
             <p class="text-sm text-slate-400 mb-6">Yuk, mulai cari alat impianmu dan sewa sekarang!</p>

@@ -263,45 +263,10 @@ class MutasiService
      */
     protected function sendNotifications($order, Mutasi $mutasi): void
     {
-        $nomorCust = $order->customer_whatsapp ?? null;
-        $nominalFormatted = number_format($mutasi->nominal, 0, ',', '.');
-        $strukUrl = route('customer.struk', ['id' => 'INV-' . $order->id]);
-
-        // WhatsApp ke Pelanggan
-        if (!empty($nomorCust)) {
-            $pesanCust = "🎉 *PEMBAYARAN DIVERIFIKASI OTOMATIS!* 🎉\n\n"
-                . "Halo *{$order->customer_name}*, terima kasih!\n"
-                . "Pembayaran QRIS pesanan Anda telah berhasil diverifikasi oleh sistem Rentify secara otomatis 24/7:\n\n"
-                . "📋 *No. Pesanan:* INV-{$order->id}\n"
-                . "🔖 *Kode Booking:* {$order->kode_booking}\n"
-                . "💰 *Total Terbayar:* Rp {$nominalFormatted}\n"
-                . "🏦 *Channel:* QRIS ({$mutasi->app_name})\n"
-                . "⏱️ *Waktu:* " . Carbon::now()->format('d M Y, H:i') . " WIB\n\n"
-                . "Pesanan Anda sekarang sedang dipersiapkan oleh pihak rental. Lihat bukti dan struk digital Anda di sini:\n"
-                . "👉 {$strukUrl}\n\n"
-                . "_Rentify — Sewa Mudah, Cepat & Terpercaya._";
-
-            WhatsAppService::send($nomorCust, $pesanCust);
-        }
-
-        // WhatsApp ke Vendor (jika nomor vendor ada)
-        if (!empty($order->vendor_id)) {
-            $vendor = DB::table('users')->where('id', $order->vendor_id)->first();
-            $vendorPhone = $vendor->whatsapp_vendor ?? $vendor->no_hp ?? null;
-
-            if (!empty($vendorPhone)) {
-                $vendorPesananUrl = route('admin.dashboard'); // atau halaman pesanan vendor
-                $pesanVendor = "🔔 *PESANAN BARU TERBAYAR LUNAS (QRIS)*\n\n"
-                    . "Halo *{$vendor->name}*, ada pesanan baru yang telah terbayar lunas via QRIS otomatis:\n\n"
-                    . "📋 *No. Pesanan:* INV-{$order->id}\n"
-                    . "👤 *Penyewa:* {$order->customer_name}\n"
-                    . "💰 *Total Pembayaran:* Rp {$nominalFormatted}\n\n"
-                    . "Silakan periksa detail pesanan dan siapkan barang sewaan di panel toko Anda:\n"
-                    . "👉 https://rentify21.my.id/vendor/pesanan\n\n"
-                    . "_Sistem Rentify Auto-Settlement_";
-
-                WhatsAppService::send($vendorPhone, $pesanVendor);
-            }
-        }
+        \App\Services\OrderNotificationService::notifyPaymentConfirmed(
+            $order,
+            'QRIS (' . ($mutasi->app_name ?? 'Mutasi Bank') . ')',
+            (float) $mutasi->nominal
+        );
     }
 }

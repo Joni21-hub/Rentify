@@ -14,7 +14,7 @@
         @php
             $st = strtolower($pesanan->status);
             $badgeClass = 'bg-slate-100 text-slate-600';
-            if (in_array($st, ['selesai'])) $badgeClass = 'bg-emerald-50 text-emerald-700';
+            if (in_array($st, ['selesai'])) $badgeClass = 'bg-sky-50 text-sky-700 border border-sky-200/80';
             elseif (in_array($st, ['menunggu konfirmasi', 'pending'])) $badgeClass = 'bg-amber-50 text-amber-700';
             elseif (in_array($st, ['disetujui', 'sedang disewa', 'berjalan'])) $badgeClass = 'bg-sky-50 text-sky-700';
             elseif (in_array($st, ['dibatalkan', 'ditolak'])) $badgeClass = 'bg-rose-50 text-rose-700';
@@ -44,8 +44,8 @@
                         <span class="text-[11px] text-slate-400 font-medium">Order ID: #{{ $pesanan->id }}</span>
                     </div>
                     @php
-                        $hp = $pesanan->customer_whatsapp ?? ($pesanan->customer->no_hp ?? '');
-                        $cleanPhone = preg_replace('/[^0-9]/', '', $hp);
+                        $hp = (string)($pesanan->customer_whatsapp ?? ($pesanan->customer->no_hp ?? ''));
+                        $cleanPhone = (string)preg_replace('/[^0-9]/', '', $hp);
                         if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
                     @endphp
                     @if(!empty($cleanPhone))

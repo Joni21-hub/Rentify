@@ -15,8 +15,11 @@ class PenyewaanTrackingController extends Controller
             return redirect()->route('login');
         }
 
-        // Untuk sementara kita arahkan ke halaman view kosong dulu
-        // Nanti bisa ditambahkan logika untuk menarik data pesanan dari database
-        return view('customer.pesanan');
+        return redirect()->route('customer.pesanan');
+    }
+
+    public function show($kode)
+    {
+        return redirect()->route('customer.pesanan');
     }
 }

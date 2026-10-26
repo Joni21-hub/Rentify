@@ -170,18 +170,18 @@
             if (score <= 1) {
                 bar1.className = 'h-1.5 flex-1 rounded-full bg-rose-400 transition-all duration-300';
                 label.className = 'text-[10px] font-bold text-rose-500';
-                label.textContent = '? Lemah';
+                label.textContent = '• Sandi Lemah';
             } else if (score === 2 || score === 3) {
                 bar1.className = 'h-1.5 flex-1 rounded-full bg-amber-400 transition-all duration-300';
                 bar2.className = 'h-1.5 flex-1 rounded-full bg-amber-400 transition-all duration-300';
                 label.className = 'text-[10px] font-bold text-amber-500';
-                label.textContent = '?? Cukup';
+                label.textContent = '•• Sandi Cukup';
             } else {
                 bar1.className = 'h-1.5 flex-1 rounded-full bg-emerald-500 transition-all duration-300';
                 bar2.className = 'h-1.5 flex-1 rounded-full bg-emerald-500 transition-all duration-300';
                 bar3.className = 'h-1.5 flex-1 rounded-full bg-emerald-500 transition-all duration-300';
                 label.className = 'text-[10px] font-bold text-emerald-600';
-                label.textContent = '? Kuat';
+                label.textContent = '••• Sandi Kuat';
             }
         }
     </script>

@@ -161,7 +161,7 @@
         <!-- Footer Sidebar (Beralih Mode & Logout) -->
         <div class="p-4 border-t border-white/10 bg-navydark/50 space-y-2">
             <a href="{{ route('role.switch', 'customer') }}" class="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs font-bold text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/20 rounded-xl transition-all">
-                <i class="fa-solid fa-cart-shopping"></i> Beralih ke Mode Customer
+                <svg class="w-4 h-4 stroke-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Beralih ke Mode Customer
             </a>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

@@ -27,14 +27,14 @@
 
             <!-- Pesan Error -->
             @if (session('error'))
-                <div class="bg-rose-500/90 backdrop-blur-md border border-rose-400 text-slate-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg mb-4">
+                <div class="bg-rose-100 border border-rose-300 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm mb-4">
                     <i class="fa-solid fa-circle-exclamation text-sm flex-shrink-0"></i>
                     <span>{{ session('error') }}</span>
                 </div>
             @endif
 
             @if ($errors->any())
-                <div class="bg-rose-500/90 backdrop-blur-md border border-rose-400 text-slate-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg mb-4">
+                <div class="bg-rose-100 border border-rose-300 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm mb-4">
                     <i class="fa-solid fa-circle-exclamation text-sm flex-shrink-0"></i>
                     <span>{{ $errors->first() }}</span>
                 </div>
@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="pt-1">
-                    <button type="submit" class="w-full rentify-btn text-slate-800 font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.2)] transition-all transform hover:-translate-y-0. active:translate-y-05 active:translate-y-0 flex justify-center items-center gap-2">
+                    <button type="submit" class="w-full bg-gradient-to-br from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-3.5 rounded-2xl text-sm tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-paper-plane"></i>
                         <span>Kirim Kode OTP</span>
                     </button>

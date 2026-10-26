@@ -30,6 +30,22 @@ class Barang extends Model
     // ─── Accessors ────────────────────────────────────
 
     /**
+     * Accessor untuk URL Cover Photo dengan Fallback Media
+     */
+    public function getCoverPhotoUrlAttribute(): string
+    {
+        return \App\Services\StorageService::getPublicUrl($this->cover_photo, 'placeholders/placeholder-barang.png');
+    }
+
+    /**
+     * Alias getImageUrlAttribute untuk standardisasi template & controller
+     */
+    public function getImageUrlAttribute(): string
+    {
+        return $this->cover_photo_url;
+    }
+
+    /**
      * Accessor untuk Harga Sewa Markup (ditambah 5% untuk Customer)
      * Cara panggil di View/Controller: $barang->harga_sewa_customer
      */
@@ -121,6 +137,23 @@ class Barang extends Model
         return $this->hasMany(Wishlist::class);
     }
 
+    public function momentTaggedProducts()
+    {
+        return $this->hasMany(MomentTaggedProduct::class, 'product_id');
+    }
+
+    public function moments()
+    {
+        return $this->belongsToMany(Moment::class, 'moment_tagged_products', 'product_id', 'moment_id')
+            ->withPivot('display_order')
+            ->withTimestamps();
+    }
+
+    public function stockWaitlists()
+    {
+        return $this->hasMany(ProductStockWaitlist::class, 'product_id');
+    }
+
     public function details()
     {
         return $this->hasMany(DetailPenyewaan::class, 'product_id');
@@ -129,6 +162,42 @@ class Barang extends Model
     public function detailPenyewaan()
     {
         return $this->hasMany(DetailPenyewaan::class, 'product_id');
+    }
+
+    public function ulasans()
+    {
+        return $this->hasMany(Ulasan::class, 'barang_id');
+    }
+
+    /**
+     * Rata-rata rating bintang produk (1 - 5)
+     */
+    public function getRatingRataRataAttribute(): float
+    {
+        if ($this->relationLoaded('ulasans')) {
+            $avg = $this->ulasans->avg('rating');
+            return $avg ? round((float) $avg, 1) : 0.0;
+        }
+        return round((float) ($this->ulasans()->avg('rating') ?? 0), 1);
+    }
+
+    /**
+     * Alias getAverageRatingAttribute
+     */
+    public function getAverageRatingAttribute(): float
+    {
+        return $this->rating_rata_rata;
+    }
+
+    /**
+     * Total ulasan produk
+     */
+    public function getTotalUlasanAttribute(): int
+    {
+        if ($this->relationLoaded('ulasans')) {
+            return $this->ulasans->count();
+        }
+        return (int) $this->ulasans()->count();
     }
 
     // ─── Scopes ───────────────────────────────────────

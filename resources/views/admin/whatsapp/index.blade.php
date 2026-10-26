@@ -199,7 +199,7 @@
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="font-medium text-slate-600">Penyimpanan Sesi:</span>
-                                    <span class="font-bold text-sky-700">Aiven Cloud MySQL (Permanen)</span>
+                                    <span class="font-bold text-sky-700">Oracle Cloud VPS MySQL (Permanen)</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="font-medium text-slate-600">Integrasi Webhook:</span>
@@ -321,7 +321,7 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="fas fa-check text-emerald-500 mt-0.5"></i>
-                                <span><strong>Sesi Permanen:</strong> Tersimpan di database MySQL Aiven, tidak hilang saat restart</span>
+                                <span><strong>Sesi Permanen:</strong> Tersimpan di database MySQL Oracle Cloud VPS, tidak hilang saat restart</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="fas fa-check text-emerald-500 mt-0.5"></i>

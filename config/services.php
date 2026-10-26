@@ -50,8 +50,7 @@ return [
         'provider'       => env('WHATSAPP_PROVIDER', 'self_hosted'),
         'gateway_url'    => env('WHATSAPP_GATEWAY_URL', 'http://127.0.0.1:3000'),
         'gateway_secret' => env('WHATSAPP_GATEWAY_SECRET', 'rentify-wa-secret-2026'),
-        'bot_number'     => env('WHATSAPP_BOT_NUMBER', '081262364197'),
-        'fonnte_token'   => env('FONNTE_TOKEN', ''),
+        'bot_number'     => env('WHATSAPP_BOT_NUMBER', null),
     ],
 
 ];

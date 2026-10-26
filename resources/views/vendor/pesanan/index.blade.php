@@ -54,7 +54,7 @@
         </a>
 
         <!-- 5. Selesai -->
-        <a href="{{ route('vendor.pesanan.index', ['status' => 'selesai']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'selesai' ? 'bg-emerald-600 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
+        <a href="{{ route('vendor.pesanan.index', ['status' => 'selesai']) }}" class="px-3 py-2 rounded-xl shrink-0 transition flex items-center gap-1.5 {{ ($statusFilter ?? '') === 'selesai' ? 'bg-sky-600 text-white font-black shadow-xs' : 'bg-white border border-slate-200/80 text-slate-600 font-bold hover:bg-slate-50' }}">
             <span>Selesai</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ ($statusFilter ?? '') === 'selesai' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $countSelesai ?? 0 }}</span>
         </a>
@@ -72,7 +72,7 @@
             @php
                 $st = strtolower($pesanan->status);
                 $badgeClass = 'bg-slate-100 text-slate-600';
-                if (in_array($st, ['selesai'])) $badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                if (in_array($st, ['selesai'])) $badgeClass = 'bg-sky-50 text-sky-700 border border-sky-200';
                 elseif (in_array($st, ['menunggu konfirmasi', 'pending'])) $badgeClass = 'bg-amber-50 text-amber-700 border border-amber-200';
                 elseif (in_array($st, ['disetujui', 'sedang disewa', 'berjalan'])) $badgeClass = 'bg-sky-50 text-sky-700 border border-sky-200';
                 elseif (in_array($st, ['dibatalkan', 'ditolak'])) $badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
@@ -155,7 +155,7 @@
                     @php
                         $st = strtolower($pesanan->status);
                         $badgeClass = 'bg-slate-100 text-slate-600';
-                        if (in_array($st, ['selesai'])) $badgeClass = 'bg-emerald-50 text-emerald-700';
+                        if (in_array($st, ['selesai'])) $badgeClass = 'bg-sky-50 text-sky-700 border border-sky-200/80';
                         elseif (in_array($st, ['menunggu konfirmasi', 'pending'])) $badgeClass = 'bg-amber-50 text-amber-700';
                         elseif (in_array($st, ['disetujui', 'sedang disewa', 'berjalan'])) $badgeClass = 'bg-sky-50 text-sky-700';
                         elseif (in_array($st, ['dibatalkan', 'ditolak'])) $badgeClass = 'bg-rose-50 text-rose-700';

@@ -17,22 +17,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\App\Http\Middleware\SecurityFirewallMiddleware::class);
         
         $middleware->validateCsrfTokens(except: [
-            '/api/payments/doku/notify',
-            'api/payments/doku/notify',
             '/api/webhook/mutasi',
             'api/webhook/mutasi',
             'api/webhook/mutasi/*',
             '/webhook/whatsapp',
             'webhook/whatsapp',
             'webhook/whatsapp/*',
-            '/webhook/fonnte',
-            'webhook/fonnte',
-            'webhook/fonnte/*',
         ]);
         
         // Tambahkan alias di sini
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'storage.writable' => \App\Http\Middleware\EnsureStorageWritable::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

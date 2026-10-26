@@ -82,7 +82,7 @@ class KeranjangController extends Controller
             $keranjang->jumlah = (int) $request->jumlah;
         }
 
-        // Menyimpan pilihan durasi hari ke database Aiven
+        // Menyimpan pilihan durasi hari ke database
         if ($request->has('durasi_sewa') && $request->durasi_sewa > 0) {
             $keranjang->durasi_sewa = (int) $request->durasi_sewa;
         }

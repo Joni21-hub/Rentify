@@ -14,10 +14,8 @@ class SecurityFirewallMiddleware
      * Webhook atau path publik yang dikecualikan dari pemindaian string agresif & blokir IP
      */
     protected array $excludedPaths = [
-        'api/payments/doku/notify',
         'api/webhook/mutasi',
         'webhook/whatsapp',
-        'webhook/fonnte',
         'up',
         'api/health',
     ];

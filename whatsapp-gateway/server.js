@@ -37,7 +37,8 @@ const {
     default: makeWASocket,
     DisconnectReason,
     fetchLatestBaileysVersion,
-    makeCacheableSignalKeyStore
+    makeCacheableSignalKeyStore,
+    proto
 } = require('@whiskeysockets/baileys');
 
 const { createAuthState } = require('./db-auth');
@@ -59,7 +60,21 @@ const msgStore = new Map(); // Cache recent messages for Baileys getMessage / de
 
 const PORT = parseInt(process.env.WHATSAPP_GATEWAY_PORT || '3000', 10);
 const GATEWAY_SECRET = process.env.WHATSAPP_GATEWAY_SECRET || 'rentify-wa-secret-2026';
-const WEBHOOK_URL = process.env.WHATSAPP_WEBHOOK_URL || 'http://127.0.0.1/webhook/whatsapp';
+const getInitialWebhookUrl = () => {
+    if (process.env.WHATSAPP_WEBHOOK_URL) return process.env.WHATSAPP_WEBHOOK_URL;
+    if (process.env.APP_URL) {
+        return `${process.env.APP_URL.replace(/\/+$/, '')}/webhook/whatsapp`;
+    }
+    return 'http://127.0.0.1:8000/webhook/whatsapp';
+};
+const WEBHOOK_URL = getInitialWebhookUrl();
+const CANDIDATE_WEBHOOK_URLS = Array.from(new Set([
+    WEBHOOK_URL,
+    'http://127.0.0.1:8000/webhook/whatsapp',
+    'http://127.0.0.1/rentify/public/webhook/whatsapp',
+    'http://localhost/rentify/public/webhook/whatsapp',
+]));
+const isSandbox = process.env.GATEWAY_SANDBOX_MODE === 'true';
 
 let sock = null;
 let currentQrDataUrl = null;
@@ -98,41 +113,67 @@ function formatJid(target) {
     return `${clean}@s.whatsapp.net`;
 }
 
-// Forward incoming message to Laravel Webhook
+// Forward incoming message to Laravel Webhook with smart local fallback
 async function forwardToWebhook(senderPhone, senderName, textMessage) {
-    try {
-        console.log(`[GATEWAY -> WEBHOOK] Forwarding message from ${senderPhone} (${senderName}): "${textMessage.slice(0, 50)}..."`);
-        
-        const payload = {
-            sender: senderPhone,
-            name: senderName || 'Pengguna WhatsApp',
-            message: textMessage,
-            gateway_secret: GATEWAY_SECRET
-        };
+    console.log(`[GATEWAY -> WEBHOOK] Forwarding message from ${senderPhone} (${senderName}): "${textMessage.slice(0, 50)}..."`);
+    
+    const payload = {
+        sender: senderPhone,
+        name: senderName || 'Pengguna WhatsApp',
+        message: textMessage,
+        gateway_secret: GATEWAY_SECRET
+    };
 
-        const res = await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Gateway-Secret': GATEWAY_SECRET
-            },
-            body: JSON.stringify(payload)
-        });
+    let delivered = false;
+    for (const targetUrl of CANDIDATE_WEBHOOK_URLS) {
+        try {
+            const res = await fetch(targetUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Gateway-Secret': GATEWAY_SECRET
+                },
+                body: JSON.stringify(payload)
+            });
 
-        if (!res.ok) {
-            const errText = await res.text();
-            console.warn(`[WEBHOOK] Warning: Webhook returned HTTP ${res.status}: ${errText.slice(0, 100)}`);
-        } else {
-            console.log(`[WEBHOOK] Webhook response HTTP ${res.status} OK`);
+            if (res.ok) {
+                console.log(`[WEBHOOK] Webhook delivered successfully to ${targetUrl} (HTTP ${res.status})`);
+                delivered = true;
+                break;
+            } else if (res.status === 404) {
+                // Try next candidate URL
+                continue;
+            } else {
+                const errText = await res.text();
+                console.warn(`[WEBHOOK] Warning: Webhook at ${targetUrl} returned HTTP ${res.status}: ${errText.slice(0, 100)}`);
+                delivered = true;
+                break;
+            }
+        } catch (err) {
+            // If connection refused, try next candidate
+            continue;
         }
-    } catch (err) {
-        console.error('[WEBHOOK] Failed to post to Laravel webhook:', err.message);
+    }
+
+    if (!delivered) {
+        console.error('[WEBHOOK] Failed to post to any candidate Laravel webhook endpoints.');
     }
 }
 
 // Start Baileys WhatsApp Connection
 async function startWhatsApp() {
+    if (isSandbox) {
+        connectionState = 'unpaired';
+        console.log('[WHATSAPP SANDBOX] Gateway running in sandbox mode (bypassing live Baileys socket)');
+        try {
+            currentQrDataUrl = await qrcode.toDataURL('https://rentify21.my.id/sandbox-qr-mock');
+        } catch (e) {
+            currentQrDataUrl = 'data:image/png;base64,mockqr';
+        }
+        return;
+    }
+
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
@@ -173,7 +214,7 @@ async function startWhatsApp() {
             if (key?.id && msgStore.has(key.id)) {
                 return msgStore.get(key.id);
             }
-            return undefined;
+            return proto.Message.fromObject({});
         },
         browser: ['Rentify Platform', 'Chrome', '124.0.0.0'],
         syncFullHistory: false,
@@ -264,7 +305,8 @@ async function startWhatsApp() {
             const remoteJid = msg.key.remoteJid || '';
 
             // Ignore status broadcasts, groups, and bot's own internal JIDs
-            if (remoteJid.endsWith('@broadcast') || remoteJid.endsWith('@g.us') || remoteJid.includes('249070069219550') || remoteJid.startsWith('6281262364197')) {
+            const selfPhone = connectedUser?.phone || (sock?.user?.id ? sock.user.id.split(':')[0] : null);
+            if (remoteJid.endsWith('@broadcast') || remoteJid.endsWith('@g.us') || remoteJid.includes('249070069219550') || (selfPhone && remoteJid.startsWith(selfPhone))) {
                 continue;
             }
 
@@ -388,11 +430,55 @@ app.get('/health', (req, res) => {
 app.get('/status', (req, res) => {
     res.json({
         status: connectionState,
+        paired: connectionState === 'connected',
         qr: currentQrDataUrl,
         user: connectedUser,
         uptime: process.uptime(),
+        sandbox: isSandbox,
         timestamp: new Date().toISOString()
     });
+});
+
+// Render visual QR Code HTML page (protected by checkAuth)
+app.get('/qr', checkAuth, (req, res) => {
+    if (connectionState === 'connected') {
+        return res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head><title>WhatsApp Gateway Status</title></head>
+            <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                <h2 style="color: #16a34a;">WhatsApp Terhubung</h2>
+                <p>Perangkat aktif: <strong>${connectedUser?.name || connectedUser?.id || 'Connected'}</strong></p>
+            </body>
+            </html>
+        `);
+    }
+
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>WhatsApp Gateway QR Code</title>
+            <meta http-equiv="refresh" content="20">
+            <style>
+                body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; margin: 0; }
+                .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+                img { max-width: 280px; width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin: 20px 0; }
+                .status { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 14px; font-weight: 500; background: #fef3c7; color: #92400e; margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h2>Rentify WhatsApp QR</h2>
+                <span class="status">Status: ${connectionState}</span>
+                <div>
+                    ${currentQrDataUrl ? `<img src="${currentQrDataUrl}" alt="WhatsApp QR Code" />` : '<p style="padding: 40px; color: #64748b;">Membuat QR code baru, mohon tunggu...</p>'}
+                </div>
+                <p style="color: #64748b; font-size: 14px;">Buka WhatsApp di ponsel > Pengaturan / Titik 3 > Perangkat Tertaut > Tautkan Perangkat</p>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
 // Send WhatsApp text message
@@ -401,6 +487,16 @@ app.post('/send', checkAuth, async (req, res) => {
 
     if (!target || !message) {
         return res.status(400).json({ status: false, error: 'Missing target phone number or message content' });
+    }
+
+    if (isSandbox) {
+        const jid = formatJid(target) || `${target}@s.whatsapp.net`;
+        console.log(`[WHATSAPP SANDBOX] Mock message delivered to ${jid}`);
+        return res.json({
+            status: true,
+            messageId: 'mock-' + Date.now(),
+            target: jid
+        });
     }
 
     if (connectionState !== 'connected' || !sock) {
@@ -429,6 +525,15 @@ app.post('/send', checkAuth, async (req, res) => {
         });
     } catch (err) {
         console.error(`[WHATSAPP SEND ERROR] Failed sending to ${target}:`, err.message);
+        // Auto-heal session ratchets if crypto / Bad MAC error occurs to prevent "Menunggu pesan ini"
+        if (err.message && (err.message.includes('Bad MAC') || err.message.includes('Session') || err.message.includes('decrypt') || err.message.includes('No session record'))) {
+            try {
+                if (authAdapter && authAdapter.clearChatSessions) {
+                    await authAdapter.clearChatSessions();
+                    console.log('[WHATSAPP AUTO-HEAL] Cleared session ratchets after encryption ratchet error');
+                }
+            } catch (healErr) {}
+        }
         return res.status(500).json({ status: false, error: err.message });
     }
 });

@@ -38,7 +38,7 @@ Schedule::command('rentify:generate-daily-content')
 | Rentify AI Server Guardian - Autonomous 24/7 Monitoring Schedule
 |--------------------------------------------------------------------------
 |
-| Memantau status website (HTTP 5xx, latency), koneksi database Aiven,
+| Memantau status website (HTTP 5xx, latency), koneksi database Oracle Cloud VPS,
 | log error baru, resource server, dan mengirim alert darurat ke WhatsApp pemilik.
 |
 */
@@ -46,5 +46,20 @@ Schedule::command('rentify:guardian-monitor')
     ->everyFiveMinutes()
     ->name('rentify-guardian-monitor')
     ->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Moments Feed Gravity Ranking Recalculation Schedule
+|--------------------------------------------------------------------------
+|
+| Memperbarui skor ranking gravitasi secara berkala per jam
+| agar postingan yang tidak mendapat interaksi baru meluruh secara halus.
+|
+*/
+Schedule::command('moments:recalculate-ranking-scores')
+    ->hourly()
+    ->name('moments-ranking-recalculate')
+    ->withoutOverlapping();
+
 
 

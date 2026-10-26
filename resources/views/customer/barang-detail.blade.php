@@ -34,10 +34,14 @@
     </a>
 
     <!-- TOMBOL KERANJANG HEADER DENGAN BADGE -->
-    <a href="{{ route('customer.keranjang') }}" id="btn-header-cart" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition">
-        <i class="fa-solid fa-cart-shopping text-xs"></i>
-        <span id="header-cart-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs {{ ($keranjangCount ?? 0) > 0 ? '' : 'hidden' }}">
-            {{ $keranjangCount ?? 0 }}
+    <a href="{{ route('customer.keranjang') }}" id="btn-header-cart" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/35 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/55 transition active:scale-95 group" aria-label="Keranjang Belanja">
+        <svg class="w-4 h-4 stroke-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"/>
+            <circle cx="19" cy="21" r="1"/>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+        </svg>
+        <span id="header-cart-badge" class="absolute -top-1 -right-1 bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[9px] font-black min-w-[17px] h-4 px-1 rounded-full flex items-center justify-center border border-white shadow-xs leading-none {{ ($keranjangCount ?? 0) > 0 ? '' : 'hidden' }}">
+            {{ ($keranjangCount ?? 0) > 99 ? '99+' : ($keranjangCount ?? 0) }}
         </span>
     </a>
 
@@ -47,9 +51,9 @@
             <div class="swiper-slide flex items-center justify-center p-4">
                 @if($barang->cover_photo)
                     @php
-                        $coverUrl = str_starts_with($barang->cover_photo, 'http') 
+                        $coverUrl = str_starts_with((string)$barang->cover_photo, 'http') 
                             ? $barang->cover_photo 
-                            : asset(str_replace('public/', '', $barang->cover_photo));
+                            : asset(str_replace('public/', '', (string)$barang->cover_photo));
                     @endphp
                     <img src="{{ $coverUrl }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/400?text=Foto+Utama+Rusak'">
                 @else
@@ -60,7 +64,7 @@
             @if(isset($barang->fotos) && $barang->fotos->count() > 0)
                 @foreach($barang->fotos as $foto)
                 @php
-                    $rawPath = $foto->foto_path ?? $foto->foto ?? $foto->gambar ?? '';
+                    $rawPath = (string)($foto->foto_path ?? $foto->foto ?? $foto->gambar ?? '');
                     $fotoUrl = str_starts_with($rawPath, 'http') 
                         ? $rawPath 
                         : asset(str_replace('public/', '', $rawPath));
@@ -80,15 +84,20 @@
 
     <div class="p-4 border-b border-slate-100 bg-white">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-[10px] font-black text-sky-600 bg-sky-50 px-2 py-0.5 rounded uppercase border border-sky-100">
-                🏷️ {{ $barang->kategori->nama ?? 'Umum' }}
-            </span>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded uppercase border border-sky-100">
+                    🏷️ {{ $barang->kategori->nama ?? 'Umum' }}
+                </span>
+                <span class="text-[10px] text-slate-500 font-medium flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                    <i class="fa-solid fa-shield-halved text-sky-500 text-[9px]"></i> Rental Terjamin
+                </span>
+            </div>
             
             @php $stokNyata = max(0, $barang->stok_total); @endphp
             <span class="text-[11px] text-slate-500 font-medium">Sisa Stok: <strong class="{{ $stokNyata == 0 ? 'text-rose-500' : 'text-slate-800' }}">{{ $stokNyata }}</strong> unit</span>
         </div>
         
-        <h1 class="text-[15px] font-medium text-slate-800 leading-snug mb-2">{{ $barang->nama }}</h1>
+        <h1 class="text-[15px] font-medium text-slate-800 leading-snug mb-2.5">{{ $barang->nama }}</h1>
         
         @if($barang->is_kos && $barang->harga_bulanan)
             <div class="space-y-1.5">
@@ -461,6 +470,136 @@
         <p class="text-[10px] text-slate-400 text-center mt-2 font-medium">*Titik Maps akurat & alamat lengkap akan diberikan di struk pesanan.</p>
     </div>
 
+    <!-- ============================================== -->
+    <!-- SEKSI ULASAN & PENILAIAN PELANGGAN -->
+    <!-- ============================================== -->
+    <section id="section-ulasan" class="p-4 bg-white border-b border-slate-100 mb-20 scroll-mt-6">
+        <div class="flex items-center justify-between mb-3.5">
+            <div>
+                <h3 class="text-[13px] font-bold text-slate-800">Penilaian & Ulasan Penyewa</h3>
+                <p class="text-[11px] text-slate-400 font-medium">Ulasan asli dari penyewa terverifikasi</p>
+            </div>
+            @if($barang->total_ulasan > 0)
+                <span class="text-[11px] font-semibold text-slate-600 bg-slate-100/80 px-2.5 py-0.5 rounded-full border border-slate-200/50">
+                    {{ $barang->total_ulasan }} ulasan
+                </span>
+            @endif
+        </div>
+
+        @if($barang->total_ulasan > 0)
+            <!-- Ringkasan Rating & Breakdown Bar Minimalis -->
+            <div class="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 mb-4 flex items-center gap-4">
+                <!-- Score Minimalis -->
+                <div class="text-center shrink-0 pr-3.5 border-r border-slate-200/60">
+                    <div class="flex items-baseline justify-center gap-1">
+                        <span class="text-2xl font-black text-slate-800 leading-none">
+                            {{ number_format($barang->rating_rata_rata, 1) }}
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-semibold">/ 5.0</span>
+                    </div>
+                    <div class="flex items-center justify-center gap-0.5 text-amber-400 text-[10px] my-1">
+                        @for($s = 1; $s <= 5; $s++)
+                            @if($s <= floor($barang->rating_rata_rata))
+                                <i class="fa-solid fa-star"></i>
+                            @elseif($s - $barang->rating_rata_rata < 1 && $s - $barang->rating_rata_rata > 0)
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            @else
+                                <i class="fa-regular fa-star text-slate-200"></i>
+                            @endif
+                        @endfor
+                    </div>
+                    <span class="text-[9.5px] text-slate-400 font-medium block">Kepuasan Penyewa</span>
+                </div>
+
+                <!-- Breakdown Bar per Bintang (Ramping & Halus) -->
+                <div class="flex-1 space-y-1 text-[10px]">
+                    @php
+                        $ratingCounts = [
+                            5 => $barang->ulasans->where('rating', 5)->count(),
+                            4 => $barang->ulasans->where('rating', 4)->count(),
+                            3 => $barang->ulasans->where('rating', 3)->count(),
+                            2 => $barang->ulasans->where('rating', 2)->count(),
+                            1 => $barang->ulasans->where('rating', 1)->count(),
+                        ];
+                        $total = max(1, $barang->total_ulasan);
+                    @endphp
+                    @foreach([5, 4, 3, 2, 1] as $bintang)
+                        @php
+                            $count = $ratingCounts[$bintang] ?? 0;
+                            $pct = round(($count / $total) * 100);
+                        @endphp
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 font-bold text-slate-500 text-[10px] text-center">{{ $bintang }}</span>
+                            <div class="flex-1 h-1.5 bg-slate-200/60 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-400 rounded-full transition-all duration-300" style="width: {{ $pct }}%"></div>
+                            </div>
+                            <span class="w-3 text-[10px] text-slate-400 text-right font-medium">{{ $count }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- List Daftar Ulasan -->
+            <div class="space-y-3.5 divide-y divide-slate-100">
+                @foreach($barang->ulasans->sortByDesc('created_at') as $ulasan)
+                    @php
+                        $userUlasan = $ulasan->user;
+                        $namaUser = $userUlasan->name ?? 'Penyewa Terverifikasi';
+                        $avatarUrl = $userUlasan->foto_profil_url ?? null;
+                    @endphp
+                    <div class="pt-3.5 first:pt-0">
+                        <div class="flex items-start justify-between gap-2 mb-1.5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-full overflow-hidden bg-slate-100 border border-slate-200/80 flex items-center justify-center shrink-0">
+                                    @if($avatarUrl)
+                                        <img src="{{ $avatarUrl }}" alt="{{ $namaUser }}" class="w-full h-full object-cover">
+                                    @else
+                                        <span class="font-bold text-slate-600 text-[10px]">{{ strtoupper(substr($namaUser, 0, 1)) }}</span>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800 leading-tight">{{ $namaUser }}</h4>
+                                    <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                                        <span class="text-sky-600 font-semibold flex items-center gap-0.5 bg-sky-50 px-1.5 py-0.5 rounded text-[9px] border border-sky-100/60">
+                                            <i class="fa-solid fa-circle-check text-[8.5px]"></i> Penyewa
+                                        </span>
+                                        <span>•</span>
+                                        <span>{{ \Carbon\Carbon::parse($ulasan->created_at)->diffForHumans() }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Star Rating -->
+                            <div class="flex items-center gap-0.5 text-amber-400 text-[10px]">
+                                @for($s = 1; $s <= 5; $s++)
+                                    <i class="fa-solid fa-star {{ $s <= $ulasan->rating ? 'text-amber-400' : 'text-slate-200' }}"></i>
+                                @endfor
+                            </div>
+                        </div>
+
+                        <!-- Komentar -->
+                        @if(!empty($ulasan->komentar))
+                            <p class="text-[11.5px] text-slate-600 leading-relaxed pl-9.5 pr-2">
+                                {{ $ulasan->komentar }}
+                            </p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <!-- Empty State Ulasan Minimalis -->
+            <div class="p-5 rounded-2xl bg-slate-50/70 border border-slate-100 text-center space-y-1.5">
+                <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-sm mx-auto">
+                    <i class="fa-regular fa-comment-dots"></i>
+                </div>
+                <h4 class="text-xs font-bold text-slate-700">Belum Ada Ulasan</h4>
+                <p class="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                    Jadilah penyewa pertama yang memberikan ulasan untuk barang ini.
+                </p>
+            </div>
+        @endif
+    </section>
+
     <div class="rentify-navbar fixed bottom-0 left-0 w-full px-3 py-2.5 flex items-center justify-center z-50">
         <div class="w-full max-w-md flex gap-2">
             
@@ -469,7 +608,7 @@
                     @csrf
                     <input type="hidden" name="barang_id" value="{{ $barang->id }}">
                     <input type="hidden" name="jumlah" value="1">
-                    <button type="submit" id="btn-add-to-cart" class="w-full bg-sky-50 text-sky-600 border border-sky-400 font-bold text-[13px] py-2.5 rounded-md flex items-center justify-center gap-2 hover:bg-sky-100 transition active:scale-95">
+                    <button type="submit" id="btn-add-to-cart" class="w-full bg-sky-50 text-sky-600 border border-sky-300 font-extrabold text-[13px] py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-100 transition active:scale-95">
                         <i class="fa-solid fa-cart-plus" id="btn-add-icon"></i>
                         <span id="btn-add-text">Masukkan</span>
                     </button>
@@ -482,7 +621,7 @@
                     <input type="hidden" name="start_time" id="direct-start-time">
                     <input type="hidden" name="durasi_sewa" id="direct-durasi">
                     
-                    <button type="button" id="btn-sewa-sekarang" class="w-full bg-gradient-to-r from-sky-400 to-sky-600 text-white font-bold text-[13px] py-2.5 rounded-md flex items-center justify-center hover:from-sky-500 hover:to-sky-700 transition shadow-[0_0_10px_rgba(14,165,233,0.3)]">
+                    <button type="button" id="btn-sewa-sekarang" class="w-full bg-gradient-to-r from-sky-400 to-sky-600 text-white font-extrabold text-[13px] py-2.5 rounded-xl flex items-center justify-center hover:from-sky-500 hover:to-sky-700 transition shadow-[0_4px_12px_rgba(14,165,233,0.35)] transform hover:-translate-y-0.5 active:translate-y-0">
                         Sewa Sekarang
                     </button>
                 </form>
@@ -558,7 +697,7 @@
 
             <div class="flex gap-3">
                 <button type="button" id="btn-close-modal" class="flex-1 bg-slate-100 text-slate-500 font-bold py-3 rounded-xl hover:bg-slate-200 transition">Batal</button>
-                <button type="button" id="btn-confirm-modal" class="flex-1 bg-sky-500 text-white font-bold py-3 rounded-xl hover:bg-sky-600 shadow-[0_0_15px_rgba(14,165,233,0.4)] transition">Lanjut Checkout</button>
+                <button type="button" id="btn-confirm-modal" class="flex-1 bg-gradient-to-r from-sky-400 to-sky-600 text-white font-extrabold py-3 rounded-xl hover:from-sky-500 hover:to-sky-700 shadow-[0_4px_15px_rgba(14,165,233,0.35)] transition transform hover:-translate-y-0.5 active:translate-y-0">Lanjut Checkout</button>
             </div>
         </div>
     </div>
@@ -677,7 +816,7 @@
             if (imgSrc) {
                 flyer.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;">`;
             } else {
-                flyer.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:white;"><i class="fa-solid fa-cart-shopping text-xs"></i></div>`;
+                flyer.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:white;"><svg style="width:15px;height:15px;stroke:white;fill:none;" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div>`;
             }
 
             document.body.appendChild(flyer);

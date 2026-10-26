@@ -56,7 +56,7 @@
     <!-- 1. HEADER NAVIGASI -->
     <div class="clean-card p-3.5 mb-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <a href="{{ route('customer.pesanan') }}" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition active:scale-95" title="Kembali ke Pesanan Saya">
+            <a href="{{ route('customer.pesanan') }}" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition active:scale-95" title="Kembali ke Pesanan">
                 <i class="fa-solid fa-arrow-left text-sm"></i>
             </a>
             <div>

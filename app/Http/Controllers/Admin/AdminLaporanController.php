@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\TransactionCalculationService;
 use Carbon\Carbon;
 
 class AdminLaporanController extends Controller
@@ -53,23 +54,19 @@ class AdminLaporanController extends Controller
         foreach ($allOrders as $t) {
             $st = strtolower($t->status ?? '');
             $ong = (float) ($t->shipping_fee ?? 0);
-            $tot = (float) ($t->total_price ?? 0);
+            $tot = (float) ($t->total_price ?? $t->total_biaya ?? 0);
             $pot = (float) ($t->potongan_voucher ?? 0);
 
             if (in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                 $transaksiBatalCount++;
-            } else {
-                if ($st === 'selesai') {
-                    $transaksiSelesaiCount++;
-                }
+            } elseif ($st === 'selesai') {
+                $transaksiSelesaiCount++;
                 $totalPendapatanKotor += $tot;
                 $totalOngkir += $ong;
                 $totalDiskonVoucher += $pot;
 
-                $sewaBersih = $tot - $ong + $pot;
-                $sewaAsli = $sewaBersih / 1.05;
-                $feeT = ($t->rentify_fee && $t->rentify_fee > 0) ? $t->rentify_fee : ($sewaBersih - $sewaAsli);
-                $totalFeeRentify += $feeT;
+                $breakdown = TransactionCalculationService::getBreakdownForOrder($t);
+                $totalFeeRentify += $breakdown['rentify_fee'];
             }
         }
 
@@ -134,15 +131,14 @@ class AdminLaporanController extends Controller
         foreach ($orders as $t) {
             $st = strtolower($t->status ?? '');
             $ong = (float) ($t->shipping_fee ?? 0);
-            $tot = (float) ($t->total_price ?? 0);
+            $tot = (float) ($t->total_price ?? $t->total_biaya ?? 0);
             $pot = (float) ($t->potongan_voucher ?? 0);
 
-            if (in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
-                $feeT = 0;
+            if ($st === 'selesai') {
+                $breakdown = TransactionCalculationService::getBreakdownForOrder($t);
+                $feeT = $breakdown['rentify_fee'];
             } else {
-                $sewaBersih = $tot - $ong + $pot;
-                $sewaAsli = $sewaBersih / 1.05;
-                $feeT = ($t->rentify_fee && $t->rentify_fee > 0) ? $t->rentify_fee : ($sewaBersih - $sewaAsli);
+                $feeT = 0;
             }
 
             $html .= '<tr>';

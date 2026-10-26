@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Barang;
 use App\Models\FotoBarang;
+use App\Services\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class VendorFotoBarangController extends Controller
 {
     /**
-     * Upload foto tambahan (galeri) untuk produk vendor
+     * Upload foto tambahan (galeri) untuk produk vendor ke disk public
      */
     public function upload(Request $request, $id)
     {
@@ -22,37 +23,15 @@ class VendorFotoBarangController extends Controller
             'fotos.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-        $cloudinary = $cloudinaryUrl ? new \Cloudinary\Cloudinary($cloudinaryUrl) : null;
-
         $uploadedCount = 0;
         foreach ($request->file('fotos') as $foto) {
-            $fotoPath = null;
-            if ($cloudinary) {
-                try {
-                    $upload = $cloudinary->uploadApi()->upload($foto->getRealPath(), [
-                        'folder' => 'rentify/barang/galeri'
-                    ]);
-                    $fotoPath = $upload['secure_url'];
-                } catch (\Exception $e) {
-                    // Fallback ke penyimpanan lokal jika koneksi Cloudinary bermasalah
-                    $filename = time() . '_' . uniqid() . '.' . $foto->getClientOriginalExtension();
-                    $foto->move(public_path('uploads/barang/galeri'), $filename);
-                    $fotoPath = 'uploads/barang/galeri/' . $filename;
-                }
-            } else {
-                $filename = time() . '_' . uniqid() . '.' . $foto->getClientOriginalExtension();
-                $foto->move(public_path('uploads/barang/galeri'), $filename);
-                $fotoPath = 'uploads/barang/galeri/' . $filename;
-            }
+            $fotoPath = StorageService::storePublicFile($foto, 'barang/galeri');
 
-            if ($fotoPath) {
-                FotoBarang::create([
-                    'barang_id' => $barang->id,
-                    'foto_path' => $fotoPath,
-                ]);
-                $uploadedCount++;
-            }
+            FotoBarang::create([
+                'barang_id' => $barang->id,
+                'foto_path' => $fotoPath,
+            ]);
+            $uploadedCount++;
         }
 
         return back()->with('success', "{$uploadedCount} foto galeri berhasil ditambahkan!");
@@ -88,7 +67,7 @@ class VendorFotoBarangController extends Controller
     }
 
     /**
-     * Menghapus salah satu foto galeri
+     * Menghapus salah satu foto galeri dari disk public dan database
      */
     public function destroy($fotoId)
     {
@@ -98,34 +77,9 @@ class VendorFotoBarangController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus foto ini.');
         }
 
-        // Hapus file dari Cloudinary jika tersimpan di cloud
-        if ($foto->foto_path && str_contains($foto->foto_path, 'cloudinary')) {
-            try {
-                $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-                if ($cloudinaryUrl) {
-                    $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-                    $path = (string) (parse_url($foto->foto_path, PHP_URL_PATH) ?? '');
-                    $pathSegments = explode('/', $path);
-                    $uploadIndex = array_search('upload', $pathSegments);
-
-                    if ($uploadIndex !== false) {
-                        $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
-                        if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
-                            array_shift($slicedSegments);
-                        }
-                        $publicIdWithExt = implode('/', $slicedSegments);
-                        $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
-                        $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
-                        $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
-
-                        $cloudinary->uploadApi()->destroy($finalPublicId);
-                    }
-                }
-            } catch (\Exception $e) {
-                // Abaikan error Cloudinary agar proses delete DB tetap berjalan
-            }
-        } elseif ($foto->foto_path && file_exists(public_path($foto->foto_path))) {
-            @unlink(public_path($foto->foto_path));
+        // Hapus berkas fisik lokal
+        if ($foto->foto_path) {
+            StorageService::deletePublicFile($foto->foto_path);
         }
 
         $foto->delete();

@@ -359,13 +359,8 @@
                     foreach($allTransaksi ?? [] as $t) {
                         $st = strtolower($t->status ?? '');
                         if (!in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
-                            $ong = (float) ($t->shipping_fee ?? 0);
-                            $tot = (float) ($t->total_price ?? 0);
-                            $pot = (float) ($t->potongan_voucher ?? 0);
-                            $sew = ($tot + $pot) - $ong;
-                            $asl = $sew / 1.05;
-                            $feeT = ($t->rentify_fee && $t->rentify_fee > 0) ? $t->rentify_fee : ($sew - $asl);
-                            $totalPendapatanRentify += $feeT;
+                            $breakdown = \App\Services\TransactionCalculationService::getBreakdownForOrder($t);
+                            $totalPendapatanRentify += $breakdown['rentify_fee'];
                         }
                     }
                 @endphp
@@ -412,16 +407,8 @@
                                             if (in_array($statusTrx, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                                                 $feeHitung = 0;
                                             } else {
-                                                $ongkir = (float) ($trx->shipping_fee ?? 0);
-                                                $total = (float) ($trx->total_price ?? 0);
-                                                
-                                                // PERBAIKAN LOGIKA FEE 5%:
-                                                // Jika ada potongan_voucher, kita harus MENAMBAHKAN discount itu dulu ke total
-                                                // untuk menemukan "Harga Sewa Dasar" sebelum dipotong 5%
-                                                $diskonVoucher = (float) ($trx->potongan_voucher ?? 0);
-                                                $sewaBersih = $total - $ongkir + $diskonVoucher; 
-                                                $sewaAsli = $sewaBersih / 1.05;
-                                                $feeHitung = ($trx->rentify_fee && $trx->rentify_fee > 0) ? $trx->rentify_fee : ($sewaBersih - $sewaAsli);
+                                                $breakdown = \App\Services\TransactionCalculationService::getBreakdownForOrder($trx);
+                                                $feeHitung = $breakdown['rentify_fee'];
                                             }
                                         @endphp
                                         <span class="font-black {{ $feeHitung > 0 ? 'text-emerald-600' : 'text-slate-400' }} text-sm block">

@@ -44,8 +44,16 @@
             <i class="fa-solid fa-arrow-left text-sm"></i>
         </a>
         <h1 class="text-sm font-extrabold text-slate-800 truncate px-2">{{ $vendor->vendor_name ?? $vendor->name }}</h1>
-        <a href="{{ route('customer.keranjang') }}" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition relative">
-            <i class="fa-solid fa-cart-shopping text-xs"></i>
+        <a href="{{ route('customer.keranjang') }}" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:text-sky-600 hover:bg-sky-50 transition relative group active:scale-95" aria-label="Keranjang Belanja">
+            <svg class="w-4.5 h-4.5 stroke-slate-700 group-hover:stroke-sky-600 group-hover:scale-105 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="21" r="1"/>
+                <circle cx="19" cy="21" r="1"/>
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+            </svg>
+            @php $cartCount = \App\Models\Keranjang::where('user_id', Auth::id())->count(); @endphp
+            @if($cartCount > 0)
+                <span class="absolute -top-1 -right-1 bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[9px] font-black min-w-[17px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white shadow-xs leading-none">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
+            @endif
         </a>
     </div>
 
@@ -95,8 +103,8 @@
         <!-- Tombol Aksi Hubungi Toko -->
         <div class="mt-4 pt-3 border-t border-white/15 flex items-center gap-2 relative z-10">
             @php
-                $waRaw = $vendor->whatsapp_vendor ?? ($vendor->whatsapp ?? '');
-                $waClean = preg_replace('/[^0-9]/', '', $waRaw);
+                $waRaw = (string) ($vendor->whatsapp_vendor ?? ($vendor->whatsapp ?? ''));
+                $waClean = (string) preg_replace('/[^0-9]/', '', $waRaw);
                 if (str_starts_with($waClean, '0')) {
                     $waClean = '62' . substr($waClean, 1);
                 }

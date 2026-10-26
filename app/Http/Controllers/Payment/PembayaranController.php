@@ -4,143 +4,26 @@ namespace App\Http\Controllers\Payment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pembayaran;
-use App\Services\DokuService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * PembayaranController — DOKU Checkout Integration
+ * PembayaranController — Verifikasi Pembayaran QRIS Dinamis & E-Wallet
  *
- * Menggantikan integrasi Midtrans sepenuhnya dengan DOKU Checkout.
- * Alur:
- *   1. pay()         → Generate DOKU payment URL, redirect customer
- *   2. checkStatus() → AJAX polling status pesanan (dari DB, bukan API DOKU)
- *   3. notify()      → Webhook POST dari DOKU, update status otomatis
- *   4. return()      → Halaman return setelah customer selesai di DOKU
+ * Mengelola status polling pembayaran QRIS, konfirmasi pelanggan,
+ * serta pengujian simulasi sandbox yang aman.
  */
 class PembayaranController extends Controller
 {
-    private DokuService $doku;
-
-    public function __construct(DokuService $doku)
-    {
-        $this->doku = $doku;
-    }
-
     // ─────────────────────────────────────────────────────────────────────────
-    // 1.  PAY — Redirect ke DOKU Checkout
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Membuat tagihan DOKU dan meredirect customer ke halaman pembayaran DOKU.
-     * Dipanggil dari halaman qris/pembayaran saat customer menekan "Bayar Sekarang".
-     *
-     * Route: GET /customer/pembayaran/{id}/pay
-     */
-    public function pay(Request $request, $id)
-    {
-        // Ambil order tunggal atau gabungan (format: INV-123_INV-456)
-        $orderIds = $this->parseOrderIds($id);
-
-        if (empty($orderIds)) {
-            return redirect()->route('customer.pesanan')
-                ->with('error', 'Format ID pesanan tidak valid.');
-        }
-
-        $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
-
-        if ($orders->isEmpty()) {
-            return redirect()->route('customer.pesanan')
-                ->with('error', 'Pesanan tidak ditemukan.');
-        }
-
-        // Cek jika sudah dibayar
-        $isPaid = $orders->every(fn($o) => in_array($o->status, [
-            'PAID', 'Menunggu Konfirmasi', 'Disetujui', 'Sedang Disewa', 'Selesai'
-        ]));
-
-        if ($isPaid) {
-            return redirect()->route('customer.struk', ['id' => $id]);
-        }
-
-        $firstOrder = $orders->first();
-        $total      = $orders->sum('total_biaya') ?: $orders->sum('total_price');
-
-        // Gunakan payment_url yang sudah ada jika belum expired
-        $existingUrl     = $firstOrder->doku_payment_url ?? null;
-        $paymentExpiredAt = $firstOrder->payment_expired_at
-            ? Carbon::parse($firstOrder->payment_expired_at)
-            : null;
-
-        if ($existingUrl && $paymentExpiredAt && $paymentExpiredAt->isFuture()) {
-            return redirect()->away($existingUrl);
-        }
-
-        // Generate DOKU Checkout baru
-        $kodeBooking = count($orders) === 1
-            ? $firstOrder->kode_booking
-            : ('RNT-COMBO-' . implode('-', $orderIds));
-
-        // Siapkan user email
-        $user       = auth()->user();
-        $userEmail  = $user ? ($user->email ?? 'customer@rentify.id') : 'customer@rentify.id';
-
-        $orderData = [
-            'kode_booking'       => $kodeBooking,
-            'total_biaya'        => $total,
-            'customer_name'      => $firstOrder->customer_name ?? ($user->name ?? 'Pelanggan'),
-            'customer_email'     => $userEmail,
-            'customer_whatsapp'  => $firstOrder->customer_whatsapp ?? ($user->no_hp ?? '08123456789'),
-            'return_url'         => route('customer.pembayaran.return', ['id' => $id]),
-        ];
-
-        $result = $this->doku->createCheckout($orderData);
-
-        if (!$result['success']) {
-            Log::error('[PembayaranController] DOKU checkout gagal', $result);
-
-            $rawMsg = $result['message'] ?? 'Error tidak diketahui.';
-            if (stripos($rawMsg, 'merchant_inactive') !== false || stripos($rawMsg, 'MERCHANT INACTIVE') !== false) {
-                $friendlyMsg = 'Akun gateway pembayaran DOKU sedang dalam verifikasi aktivasi oleh pihak DOKU. Silakan gunakan metode COD agar pesanan Anda dapat langsung diproses.';
-            } elseif (stripos($rawMsg, 'invalid_client_id') !== false) {
-                $friendlyMsg = 'Koneksi ke gateway pembayaran DOKU belum siap (kredensial belum sesuai). Silakan gunakan metode COD.';
-            } else {
-                $friendlyMsg = 'Gagal menginisiasi pembayaran: ' . $rawMsg . '. Silakan pilih metode COD atau coba beberapa saat lagi.';
-            }
-
-            return redirect()->route('customer.doku.waiting', ['id' => $id])
-                ->with('error', $friendlyMsg);
-        }
-
-        $paymentUrl = $result['payment_url'];
-        $expiredAt  = $result['expired_at'];
-
-        // Simpan payment_url dan expiry ke semua order terkait
-        DB::table('orders')->whereIn('id', $orderIds)->update([
-            'doku_invoice_number' => $kodeBooking,
-            'doku_payment_url'    => $paymentUrl,
-            'payment_expired_at'  => $expiredAt,
-            'status'              => 'PENDING_PAYMENT',
-            'updated_at'          => now(),
-        ]);
-
-        Log::info("[PembayaranController] Redirect ke DOKU pay: {$kodeBooking}", [
-            'url'        => $paymentUrl,
-            'expired_at' => $expiredAt,
-        ]);
-
-        return redirect()->away($paymentUrl);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // 2.  CHECK STATUS — AJAX Polling dari frontend
+    // 1.  CHECK STATUS — AJAX Polling dari frontend (QRIS)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Endpoint polling AJAX untuk cek status pembayaran dari DB.
-     * Tidak memanggil API DOKU langsung — status diupdate via webhook.
+     * Status diupdate otomatis via Webhook Mutasi Rekening atau verifikasi Admin.
      *
      * Route: GET /customer/pembayaran/check-status/{id}
      */
@@ -160,7 +43,7 @@ class PembayaranController extends Controller
 
         $firstOrder = $orders->first();
 
-        // Cek PAID
+        // Cek jika pesanan sudah terkonfirmasi lunas
         $isPaid = $orders->every(fn($o) => in_array($o->status, [
             'PAID', 'Menunggu Konfirmasi', 'Disetujui', 'Sedang Disewa', 'Selesai'
         ]));
@@ -204,12 +87,15 @@ class PembayaranController extends Controller
             'status'        => $firstOrder->status ?? 'PENDING_PAYMENT',
             'message'       => 'Menunggu pembayaran QRIS...',
             'remaining_sec' => $sisaDetik,
-            'payment_url'   => $firstOrder->doku_payment_url ?? null,
         ]);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 2.  CONFIRM PAYMENT — Pelanggan Konfirmasi Bayar Mandiri
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * Konfirmasi pembayaran oleh pelanggan setelah melakukan scan/transfer QRIS
+     * Konfirmasi pembayaran oleh pelanggan setelah melakukan scan QRIS / transfer
      * Route: POST /customer/pembayaran/confirm/{id}
      */
     public function confirmPayment(Request $request, $id)
@@ -222,6 +108,16 @@ class PembayaranController extends Controller
         $orders = DB::table('orders')->whereIn('id', $orderIds)->get();
         if ($orders->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
+        }
+
+        // Cegah IDOR: Pastikan pemesan adalah pengguna yang sedang login atau Admin
+        $userId = auth()->id();
+        $isAdmin = auth()->user()?->role === 'admin';
+        if (!$orders->every(fn($o) => $o->user_id == $userId) && !$isAdmin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk mengonfirmasi pesanan ini.'
+            ], 403);
         }
 
         DB::table('orders')->whereIn('id', $orderIds)->update([
@@ -237,7 +133,6 @@ class PembayaranController extends Controller
                     'metode'  => 'QRIS',
                     'jumlah'  => $ord->total_biaya ?? $ord->total_price,
                     'status'  => 'Menunggu Konfirmasi',
-                    'paid_at' => now(),
                 ]
             );
         }
@@ -250,12 +145,43 @@ class PembayaranController extends Controller
         ]);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 3.  SIMULATE PAYMENT — Testing / Sandbox
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
      * Endpoint simulasi pembayaran lunas (Khusus Mode Sandbox / Testing)
      * Route: POST /customer/pembayaran/simulate/{id}
      */
     public function simulatePayment(Request $request, $id)
     {
+        // 1. Matikan mutlak di lingkungan production demi keamanan finansial
+        if (app()->isProduction()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fitur simulasi pembayaran dinonaktifkan di lingkungan produksi.'
+            ], 403);
+        }
+
+        // 2. Wajib mode debug aktif
+        if (!config('app.debug')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Simulasi hanya dapat digunakan pada mode pengujian/debug.'
+            ], 403);
+        }
+
+        // 3. Hak akses: Wajib menyertakan token otorisasi simulasi rahasia
+        $validToken = config('services.payment_simulation.token', 'RENTIFY_SIM_SECURE_TOKEN_2026');
+        $providedToken = $request->header('X-Simulation-Token') ?? $request->input('simulation_token');
+
+        if ($providedToken !== $validToken) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Simulasi pembayaran memerlukan token otorisasi pengujian yang valid.'
+            ], 403);
+        }
+
         $orderIds = $this->parseOrderIds($id);
         if (empty($orderIds)) {
             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
@@ -266,8 +192,14 @@ class PembayaranController extends Controller
             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
         }
 
-        $firstOrder = $orders->first();
-        $paymentType = 'QRIS';
+        // 4. Cegah IDOR: Pastikan pemesan adalah pemilik pesanan
+        $userId = auth()->id();
+        if (!$orders->every(fn($o) => $o->user_id == $userId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk pesanan ini.'
+            ], 403);
+        }
 
         DB::table('orders')->whereIn('id', $orderIds)->update([
             'status'         => 'Menunggu Konfirmasi',
@@ -286,6 +218,13 @@ class PembayaranController extends Controller
                     'paid_at' => now(),
                 ]
             );
+
+            // Notifikasi WhatsApp otomatis ke Customer & Vendor
+            \App\Services\OrderNotificationService::notifyPaymentConfirmed(
+                $ord,
+                'QRIS (Simulasi Testing)',
+                (float) ($ord->total_biaya ?? $ord->total_price ?? 0)
+            );
         }
 
         return response()->json([
@@ -294,184 +233,6 @@ class PembayaranController extends Controller
             'message'      => '🎉 Simulasi berhasil! Pembayaran otomatis terkonfirmasi lunas.',
             'redirect_url' => route('customer.struk', ['id' => $id]),
         ]);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // 3.  NOTIFY — Webhook POST dari DOKU (Idempotent)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Handler webhook notifikasi pembayaran dari DOKU.
-     * Idempotent: update hanya terjadi jika status belum final.
-     *
-     * Route: POST /api/payments/doku/notify  (tanpa middleware auth)
-     */
-    public function notify(Request $request)
-    {
-        $bodyRaw = $request->getContent();
-
-        Log::info('[DOKU Webhook] Incoming notification', [
-            'headers' => $request->headers->all(),
-            'body'    => $bodyRaw,
-        ]);
-
-        // ── A. Verifikasi Signature ────────────────────────────────────────
-        $incomingSignature = $request->header('Signature', '');
-        $requestId         = $request->header('Request-Id', '');
-        $requestTimestamp  = $request->header('Request-Timestamp', '');
-        $requestTarget     = '/api/payments/doku/notify';
-
-        $isValid = $this->doku->verifyWebhookSignature(
-            $requestId,
-            $requestTimestamp,
-            $incomingSignature,
-            $requestTarget,
-            $bodyRaw
-        );
-
-        if (!$isValid) {
-            Log::warning('[DOKU Webhook] Invalid signature', [
-                'incoming'  => $incomingSignature,
-                'client_id' => $request->header('Client-Id'),
-            ]);
-            return response()->json(['message' => 'Invalid signature'], 403);
-        }
-
-        // ── B. Parse payload ───────────────────────────────────────────────
-        $payload = $request->json()->all();
-
-        $trxStatus     = strtoupper($payload['transaction']['status'] ?? '');
-        $invoiceNumber = $payload['order']['invoice_number'] ?? '';
-        $dokuPaymentId = $payload['transaction']['id'] ?? '';
-        $channelCode   = $payload['channel_code'] ?? $payload['payment']['channel_code'] ?? '';
-        $amount        = (float) ($payload['order']['amount'] ?? 0);
-        $paidAt        = isset($payload['transaction']['date'])
-            ? Carbon::parse($payload['transaction']['date'])
-            : now();
-
-        Log::info('[DOKU Webhook] Parsed', compact('trxStatus', 'invoiceNumber', 'dokuPaymentId', 'channelCode'));
-
-        if (empty($invoiceNumber)) {
-            return response()->json(['message' => 'invoice_number kosong'], 400);
-        }
-
-        // ── C. Temukan pesanan ─────────────────────────────────────────────
-        $orders = $this->findOrdersByInvoice($invoiceNumber);
-
-        if ($orders->isEmpty()) {
-            Log::warning('[DOKU Webhook] Pesanan tidak ditemukan', ['invoice' => $invoiceNumber]);
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        $orderIds = $orders->pluck('id')->toArray();
-
-        // ── D. Idempotency — skip jika sudah final ─────────────────────────
-        $alreadyFinal = $orders->every(fn($o) => in_array($o->status, [
-            'PAID', 'EXPIRED', 'FAILED', 'CANCELLED',
-            'Menunggu Konfirmasi', 'Disetujui', 'Sedang Disewa', 'Selesai'
-        ]));
-
-        if ($alreadyFinal) {
-            Log::info('[DOKU Webhook] Idempotency skip — status sudah final', ['invoice' => $invoiceNumber]);
-            return response()->json(['message' => 'Already processed']);
-        }
-
-        // ── E. Update status berdasarkan notifikasi ────────────────────────
-        if ($trxStatus === 'SUCCESS') {
-            DB::table('orders')->whereIn('id', $orderIds)->update([
-                'status'          => 'PAID',
-                'payment_method'  => $channelCode ?: 'DOKU',
-                'doku_payment_id' => $dokuPaymentId,
-                'paid_at'         => $paidAt,
-                'updated_at'      => now(),
-            ]);
-
-            // Catat ke tabel pembayarans (upsert idempoten)
-            foreach ($orders as $order) {
-                Pembayaran::updateOrCreate(
-                    ['order_id' => $order->id],
-                    [
-                        'metode'          => 'DOKU',
-                        'doku_payment_id' => $dokuPaymentId,
-                        'doku_channel'    => $channelCode,
-                        'jumlah'          => $order->total_biaya ?? $order->total_price,
-                        'status'          => 'Lunas',
-                        'paid_at'         => $paidAt,
-                    ]
-                );
-            }
-
-            Log::info('[DOKU Webhook] ✅ Pembayaran SUKSES', [
-                'invoice'  => $invoiceNumber,
-                'channel'  => $channelCode,
-                'paid_at'  => $paidAt,
-            ]);
-
-        } elseif (in_array($trxStatus, ['EXPIRED', 'FAILED', 'CANCELLED', 'REVERSED'])) {
-            $newStatus = in_array($trxStatus, ['CANCELLED', 'REVERSED']) ? 'CANCELLED' : $trxStatus;
-
-            DB::table('orders')->whereIn('id', $orderIds)->update([
-                'status'          => $newStatus,
-                'doku_payment_id' => $dokuPaymentId ?: null,
-                'updated_at'      => now(),
-            ]);
-
-            foreach ($orders as $order) {
-                Pembayaran::updateOrCreate(
-                    ['order_id' => $order->id],
-                    [
-                        'metode'          => 'DOKU',
-                        'doku_payment_id' => $dokuPaymentId,
-                        'doku_channel'    => $channelCode,
-                        'jumlah'          => $order->total_biaya ?? $order->total_price,
-                        'status'          => 'Gagal',
-                    ]
-                );
-            }
-
-            Log::info('[DOKU Webhook] ❌ Pembayaran GAGAL/EXPIRED', [
-                'invoice' => $invoiceNumber,
-                'status'  => $newStatus,
-            ]);
-        } else {
-            Log::info('[DOKU Webhook] Status tidak dikenali: ' . $trxStatus, ['invoice' => $invoiceNumber]);
-        }
-
-        // DOKU mengharapkan respons 200 dengan header Client-Id
-        return response()->json(['message' => 'Notification received'])
-            ->header('Client-Id', config('doku.client_id'));
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // 4.  RETURN — Halaman setelah customer selesai di DOKU
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Return URL yang dibuka setelah customer menyelesaikan (atau menutup) halaman DOKU.
-     * Redirect ke halaman menunggu pembayaran (qris view) dengan status polling aktif.
-     *
-     * Route: GET /customer/pembayaran/{id}/return
-     */
-    public function return(Request $request, $id)
-    {
-        // Cek status dari DB setelah kembali dari DOKU
-        $orderIds = $this->parseOrderIds($id);
-        $orders   = DB::table('orders')->whereIn('id', $orderIds)->get();
-
-        if ($orders->isEmpty()) {
-            return redirect()->route('customer.pesanan');
-        }
-
-        $isPaid = $orders->every(fn($o) => in_array($o->status, [
-            'PAID', 'Menunggu Konfirmasi', 'Disetujui', 'Sedang Disewa', 'Selesai'
-        ]));
-
-        if ($isPaid) {
-            return redirect()->route('customer.doku.success', ['id' => $id]);
-        }
-
-        // Belum terkonfirmasi, redirect ke halaman menunggu (polling aktif)
-        return redirect()->route('customer.doku.waiting', ['id' => $id]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -496,30 +257,5 @@ class PembayaranController extends Controller
             }
         }
         return $ids;
-    }
-
-    /**
-     * Temukan pesanan berdasarkan invoice number (kode_booking atau doku_invoice_number).
-     */
-    private function findOrdersByInvoice(string $invoice)
-    {
-        // Coba via doku_invoice_number
-        $orders = DB::table('orders')->where('doku_invoice_number', $invoice)->get();
-        if ($orders->isNotEmpty()) return $orders;
-
-        // Coba via kode_booking (untuk order tunggal)
-        $orders = DB::table('orders')->where('kode_booking', $invoice)->get();
-        if ($orders->isNotEmpty()) return $orders;
-
-        // Combo format: RNT-COMBO-123-456
-        if (str_starts_with($invoice, 'RNT-COMBO-')) {
-            $idsPart = str_replace('RNT-COMBO-', '', $invoice);
-            $ids     = array_filter(explode('-', $idsPart), 'is_numeric');
-            if (!empty($ids)) {
-                return DB::table('orders')->whereIn('id', $ids)->get();
-            }
-        }
-
-        return collect();
     }
 }

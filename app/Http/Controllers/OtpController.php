@@ -146,7 +146,7 @@ class OtpController extends Controller
             $newOtp = rand(100000, 999999);
             session(['otp_code' => $newOtp]);
 
-            // Kirim via Fonnte
+            // Kirim via WhatsApp Gateway
             $pesan = "*RENTIFY*\n\nKode OTP (Sekali Pakai) Anda adalah: *$newOtp*.\n\nJangan berikan kode ini kepada siapapun demi keamanan akun Anda.";
             WhatsAppService::send($nomor, $pesan);
 

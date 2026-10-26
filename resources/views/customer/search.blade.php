@@ -132,6 +132,8 @@
                                     </div>
                                     <div class="text-[10px] text-slate-400 font-medium">
                                         (Rp{{ number_format($hargaTampil, 0, ',', '.') }}/hari)
+           
+           
                                     </div>
                                 @else
                                     <div class="text-sky-600 font-bold text-[15px]">

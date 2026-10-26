@@ -50,10 +50,19 @@ class AdminPembayaranController extends Controller
             // Update status pesanan jika masih pending
             if ($pembayaran->order_id) {
                 DB::table('orders')->where('id', $pembayaran->order_id)->update([
-                    'status' => 'diproses',
+                    'status' => 'Menunggu Konfirmasi',
                     'paid_at' => now(),
                     'updated_at' => now()
                 ]);
+
+                $order = DB::table('orders')->where('id', $pembayaran->order_id)->first();
+                if ($order) {
+                    \App\Services\OrderNotificationService::notifyPaymentConfirmed(
+                        $order,
+                        'Transfer Bank (Verifikasi Manual Admin)',
+                        (float) ($pembayaran->jumlah ?? $order->total_price ?? 0)
+                    );
+                }
             }
 
             DB::commit();
@@ -79,10 +88,21 @@ class AdminPembayaranController extends Controller
             ]);
 
             if ($pembayaran->order_id) {
-                DB::table('orders')->where('id', $pembayaran->order_id)->update([
-                    'status' => 'dibatalkan',
-                    'updated_at' => now()
-                ]);
+                $orderBefore = DB::table('orders')->where('id', $pembayaran->order_id)->first();
+                if ($orderBefore && strtolower($orderBefore->status) === 'selesai') {
+                    // Revert saldo vendor secara atomik jika pesanan sebelumnya sudah lunas/selesai
+                    \App\Services\TransactionCalculationService::revertOrderSettlement($pembayaran->order_id, 'Refund oleh Administrator');
+                } else {
+                    DB::table('orders')->where('id', $pembayaran->order_id)->update([
+                        'status' => 'dibatalkan',
+                        'updated_at' => now()
+                    ]);
+                }
+
+                $order = DB::table('orders')->where('id', $pembayaran->order_id)->first();
+                if ($order) {
+                    \App\Services\OrderNotificationService::notifyOrderStatusUpdated($order, 'Dibatalkan', 'Pembayaran telah direfund oleh Administrator.');
+                }
             }
 
             DB::commit();

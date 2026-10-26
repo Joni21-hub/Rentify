@@ -8,17 +8,11 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     /**
-     * Mengirim pesan WhatsApp (Mendukung Gateway Mandiri Baileys & Fallback Fonnte)
+     * Mengirim pesan WhatsApp melalui Gateway Mandiri Baileys (100% Gratis, Tanpa Watermark)
      */
     public static function send($nomorTujuan, $pesan)
     {
-        $provider = config('services.whatsapp.provider', env('WHATSAPP_PROVIDER', 'self_hosted'));
-
-        if ($provider === 'self_hosted') {
-            return self::sendViaSelfHosted($nomorTujuan, $pesan);
-        }
-
-        return self::sendViaFonnte($nomorTujuan, $pesan);
+        return self::sendViaSelfHosted($nomorTujuan, $pesan);
     }
 
     /**
@@ -56,28 +50,6 @@ class WhatsAppService
             ];
         } catch (\Exception $e) {
             Log::error('WhatsApp Gateway Self-Hosted Exception: ' . $e->getMessage());
-            return ['status' => false, 'message' => $e->getMessage()];
-        }
-    }
-
-    /**
-     * Fallback: Kirim melalui Fonnte API
-     */
-    public static function sendViaFonnte($nomorTujuan, $pesan)
-    {
-        $token = env('FONNTE_TOKEN', 'TOKEN_FONNTE_ANDA_DISINI');
-
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => $token,
-            ])->post('https://api.fonnte.com/send', [
-                'target'      => $nomorTujuan,
-                'message'     => $pesan,
-                'countryCode' => '62',
-            ]);
-
-            return $response->json();
-        } catch (\Exception $e) {
             return ['status' => false, 'message' => $e->getMessage()];
         }
     }

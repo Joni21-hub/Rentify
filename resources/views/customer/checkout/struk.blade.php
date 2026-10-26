@@ -40,7 +40,7 @@
         left: 0;
         right: 0;
         height: 6px;
-        background: linear-gradient(90deg, #0284c7, #38bdf8, #10b981);
+        background: linear-gradient(90deg, #0284c7, #38bdf8, #0ea5e9);
     }
     
     .info-row { 
@@ -173,7 +173,7 @@
                         (Bayar tunai langsung saat serah terima barang)
                     </div>
                 @else
-                    <div style="display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #059669; border: 1.5px solid #a7f3d0; padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 900;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0f9ff; color: #0284c7; border: 1.5px solid #bae6fd; padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 900;">
                         <i class="fa-solid fa-circle-check text-xs"></i>
                         <span>LUNAS &bull; PEMBAYARAN TERKONFIRMASI</span>
                     </div>
@@ -212,26 +212,10 @@
                 <span style="font-size: 11.5px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; border: 1px solid #bae6fd;">
                     @if(strtoupper($metode) === 'COD')
                         COD (Bayar di Tempat)
-                    @elseif(str_contains(strtoupper($metode), 'MANDIRI'))
-                        Bank Mandiri (Virtual Account)
-                    @elseif(str_contains(strtoupper($metode), 'BCA'))
-                        Bank BCA (Virtual Account)
-                    @elseif(str_contains(strtoupper($metode), 'BNI'))
-                        Bank BNI (Virtual Account)
-                    @elseif(str_contains(strtoupper($metode), 'BRI'))
-                        Bank BRI (BRIVA)
-                    @elseif(str_contains(strtoupper($metode), 'PERMATA'))
-                        Bank Permata (Virtual Account)
                     @elseif(str_contains(strtoupper($metode), 'QRIS'))
-                        QRIS
-                    @elseif(str_contains(strtoupper($metode), 'GOPAY'))
-                        GoPay
-                    @elseif(str_contains(strtoupper($metode), 'SHOPEEPAY'))
-                        ShopeePay
-                    @elseif(str_contains(strtoupper($metode), 'BANK') || str_contains(strtoupper($metode), 'VA'))
-                        Transfer Bank (Virtual Account)
+                        QRIS (Pembayaran Online Otomatis)
                     @else
-                        Pembayaran Online Otomatis
+                        {{ $metode }}
                     @endif
                 </span>
             </div>
@@ -246,6 +230,9 @@
             @php 
                 $grandSewa = 0; 
                 $grandDeposit = 0;
+                $grandOngkir = 0;
+                $grandVoucher = 0;
+                $grandKodeUnik = 0;
             @endphp
 
             @foreach($keranjangPerVendor as $vendorId => $items)
@@ -266,12 +253,18 @@
                             $q->whereIn('id', $orderIds);
                         })->first();
 
+                    if ($orderAsli) {
+                        $grandOngkir += (float) ($orderAsli->shipping_fee ?? 0);
+                        $grandVoucher += (float) ($orderAsli->potongan_voucher ?? 0);
+                        $grandKodeUnik += (int) ($orderAsli->kode_unik ?? 0);
+                    }
+
                     $waktuMulai = $orderAsli ? \Carbon\Carbon::parse($orderAsli->start_rent, 'Asia/Jakarta') : \Carbon\Carbon::parse($waktu_pesan, 'Asia/Jakarta');
                     $waktuKembali = $orderAsli ? \Carbon\Carbon::parse($orderAsli->end_rent, 'Asia/Jakarta') : $waktuMulai->copy()->addDays($durasi);
 
                     $waRaw = $vendor->whatsapp_vendor ?? ($vendor->no_hp ?? '081234567890');
-                    $waClean = preg_replace('/[^0-9]/', '', $waRaw);
-                    if (substr($waClean, 0, 1) === '0') {
+                    $waClean = (string)preg_replace('/[^0-9]/', '', (string)$waRaw);
+                    if (str_starts_with($waClean, '0')) {
                         $waClean = '62' . substr($waClean, 1);
                     }
 
@@ -399,10 +392,28 @@
                 <span style="font-weight: 800; color: #0f172a;">Rp {{ number_format($grandSewa, 0, ',', '.') }}</span>
             </div>
             
-            <div class="info-row" style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 8px;">
-                <span style="font-weight: 600; color: #64748b;">Total Ongkos Kirim</span> 
-                <span style="font-weight: 800; color: #0f172a;">Rp {{ number_format($total - $grandSewa, 0, ',', '.') }}</span>
+            @if($grandVoucher > 0)
+            <div class="info-row" style="color: #e11d48;">
+                <span style="font-weight: 600;">Potongan Voucher Promo</span> 
+                <span style="font-weight: 800;">- Rp {{ number_format($grandVoucher, 0, ',', '.') }}</span>
             </div>
+            @endif
+
+            @if($grandOngkir > 0)
+            <div class="info-row">
+                <span style="font-weight: 600; color: #64748b;">Total Ongkos Kirim</span> 
+                <span style="font-weight: 800; color: #0f172a;">Rp {{ number_format($grandOngkir, 0, ',', '.') }}</span>
+            </div>
+            @endif
+
+            @if($grandKodeUnik > 0)
+            <div class="info-row" style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 8px;">
+                <span style="font-weight: 600; color: #64748b;">Kode Unik Transaksi</span> 
+                <span style="font-weight: 800; color: #0f172a;">Rp {{ number_format($grandKodeUnik, 0, ',', '.') }}</span>
+            </div>
+            @else
+            <div style="border-bottom: 1px dashed #cbd5e1; margin-bottom: 8px;"></div>
+            @endif
 
             @if($grandDeposit > 0)
             <div class="info-row" style="background: #fffbeb; padding: 6px 10px; border-radius: 8px; border: 1px solid #fef3c7; margin-bottom: 8px;">

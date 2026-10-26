@@ -11,7 +11,7 @@ return [
     |
     */
 
-    // Nomor WhatsApp Admin yang menerima alarm darurat keamanan via Fonnte
+    // Nomor WhatsApp Admin yang menerima alarm darurat keamanan via WhatsApp Gateway
     'admin_phone' => env('ADMIN_SECURITY_PHONE', '083183494835'),
 
     'firewall' => [
@@ -21,7 +21,7 @@ return [
         // Durasi pemblokiran IP mencurigakan (dalam menit)
         'block_duration_minutes' => env('SECURITY_BLOCK_MINUTES', 30),
 
-        // Waktu jeda cooldown pengiriman alert WA agar tidak spam/menghabiskan kuota Fonnte
+        // Waktu jeda cooldown pengiriman alert WA agar tidak spam HP Admin
         'alert_cooldown_minutes' => env('SECURITY_ALERT_COOLDOWN_MINUTES', 10),
     ],
 

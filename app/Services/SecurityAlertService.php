@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 class SecurityAlertService
 {
     /**
-     * Mengirim notifikasi keamanan otomatis ke WhatsApp Admin melalui Fonnte
-     * Dilengkapi mekanisme anti-flood cooldown agar kuota Fonnte aman dan HP Admin tidak ter-spam.
+     * Mengirim notifikasi keamanan otomatis ke WhatsApp Admin melalui WhatsApp Gateway
+     * Dilengkapi mekanisme anti-flood cooldown agar HP Admin tidak ter-spam.
      *
      * @param string $threatType    Jenis ancaman (contoh: 'Brute Force Login', 'Path Scanning', 'SQL Injection')
      * @param string $description   Deskripsi rincian insiden
@@ -70,26 +70,26 @@ class SecurityAlertService
         // Potong User Agent jika terlalu panjang
         $shortAgent = strlen($agent) > 65 ? substr($agent, 0, 62) . '...' : $agent;
 
-        // Susun pesan WhatsApp darurat
-        $pesan = "🚨 *[RENTIFY SECURITY RADAR]* 🚨\n\n"
-               . "⚠️ *Ancaman:* {$threatType}\n"
-               . "🕒 *Waktu:* {$timeStr}\n"
-               . "🌐 *IP Pelaku:* `{$ip}`\n"
-               . "📍 *Endpoint:* {$url}\n";
+        // Susun pesan WhatsApp alert keamanan resmi
+        $pesan = "*RENTIFY SECURITY ALERT*\n\n"
+               . "• *Ancaman:* {$threatType}\n"
+               . "• *Waktu:* {$timeStr}\n"
+               . "• *IP:* `{$ip}`\n"
+               . "• *Endpoint:* {$url}\n";
 
         if ($target !== '-') {
-            $pesan .= "👤 *Target/Input:* {$target}\n";
+            $pesan .= "• *Target/Input:* {$target}\n";
         }
 
-        $pesan .= "📱 *User-Agent:* {$shortAgent}\n"
-               . "🛡️ *Tindakan Otomatis:* {$action}\n\n"
-               . "📝 *Keterangan:* {$description}\n";
+        $pesan .= "• *User-Agent:* {$shortAgent}\n"
+               . "• *Tindakan Otomatis:* {$action}\n\n"
+               . "• *Keterangan:* {$description}\n";
 
         if ($previousAttempts > 0) {
-            $pesan .= "\n🔁 *Catatan:* Telah terjadi {$previousAttempts}x serangan berulang dari IP ini yang dicegat otomatis.\n";
+            $pesan .= "\n*Catatan:* Terdeteksi {$previousAttempts}x serangan berulang dari IP ini yang dicegat otomatis.\n";
         }
 
-        $pesan .= "\n_Sistem Pertahanan Otonom Rentify beroperasi 24/7._";
+        $pesan .= "\n---\n_Sistem Pertahanan Otonom Rentify (rentify21.my.id)_";
 
         try {
             $res = WhatsAppService::send($adminPhone, $pesan);

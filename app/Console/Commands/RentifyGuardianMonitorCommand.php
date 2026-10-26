@@ -21,7 +21,7 @@ class RentifyGuardianMonitorCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Rentify Server Guardian: Monitoring otonom 24/7 mendeteksi status website, database Aiven, error logs, dan alert WhatsApp';
+    protected $description = 'Rentify Server Guardian: Monitoring otonom 24/7 mendeteksi status website, database Oracle Cloud VPS, error logs, dan alert WhatsApp';
 
     /**
      * Execute the console command.
@@ -65,7 +65,7 @@ class RentifyGuardianMonitorCommand extends Command
                 ['Komponen', 'Metrik', 'Status'],
                 [
                     ['Website', "{$diag['website']['target_url']} (HTTP {$diag['website']['status_code']})", $diag['website']['is_ok'] ? 'OK (' . $diag['website']['latency_ms'] . 'ms)' : 'FAIL'],
-                    ['Database', "Aiven MySQL ({$diag['database']['name']})", $diag['database']['is_ok'] ? 'OK (' . $diag['database']['latency_ms'] . 'ms)' : 'FAIL'],
+                    ['Database', "Oracle MySQL ({$diag['database']['name']})", $diag['database']['is_ok'] ? 'OK (' . $diag['database']['latency_ms'] . 'ms)' : 'FAIL'],
                     ['Error Logs', "15m: {$diag['logs']['errors_last_15m']} | 1h: {$diag['logs']['errors_last_1h']} | 24h: {$diag['logs']['errors_last_24h']}", $diag['logs']['latest_error']],
                     ['RAM & Disk', "RAM: {$diag['resources']['memory_usage_mb']}MB | Disk: {$diag['resources']['disk_used_percent']}%", "Free {$diag['resources']['disk_free_gb']}GB"],
                     ['Firewall', "WAF & Auto-ban: " . ($diag['security']['firewall_enabled'] ? 'Active' : 'Off'), "Threats today: {$diag['security']['blocked_threats_today']}"],

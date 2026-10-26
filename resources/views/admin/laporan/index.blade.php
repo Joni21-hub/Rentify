@@ -224,9 +224,7 @@
                                 if (in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                                     $feeT = 0;
                                 } else {
-                                    $sewaBersih = $tot - $ong + $pot;
-                                    $sewaAsli = $sewaBersih / 1.05;
-                                    $feeT = ($t->rentify_fee && $t->rentify_fee > 0) ? $t->rentify_fee : ($sewaBersih - $sewaAsli);
+                                    $feeT = \App\Services\TransactionCalculationService::getBreakdownForOrder($t)['rentify_fee'];
                                 }
                             @endphp
                             <tr class="hover:bg-slate-50/60 transition lap-row">

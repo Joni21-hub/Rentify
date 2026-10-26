@@ -65,7 +65,7 @@
                         <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-sky-100 flex items-center justify-center text-sky-600 text-3xl font-black relative">
                             <!-- Image Element (Tampil jika sudah ada foto atau dipilih foto baru) -->
                             <img id="avatarPreviewImage" 
-                                 src="{{ $user->foto_profil ? (str_starts_with($user->foto_profil, 'http') ? $user->foto_profil : Storage::url($user->foto_profil)) : '' }}" 
+                                 src="{{ $user->foto_profil ? (str_starts_with((string)$user->foto_profil, 'http') ? $user->foto_profil : Storage::url((string)$user->foto_profil)) : '' }}" 
                                  alt="Foto" 
                                  class="w-full h-full object-cover {{ $user->foto_profil ? '' : 'hidden' }}">
                             
@@ -101,15 +101,110 @@
                     </div>
                 </div>
 
-                <!-- NAMA -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5 ml-1">Nama Lengkap</label>
-                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                           class="rentify-input input-glass w-full px-4 py-3.5 rounded-2xl font-bold text-sm focus:outline-none transition">
+                <!-- 1. INFORMASI DASAR -->
+                <div class="space-y-4 pt-2 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-sky-600 uppercase tracking-widest ml-1">Informasi Dasar</p>
+
+                    <!-- NAMA LENGKAP -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Nama Lengkap <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-user text-xs"></i>
+                            </span>
+                            <input type="text" name="name" value="{{ (string) old('name', $user->name) }}" required
+                                   class="rentify-input input-glass w-full pl-9 pr-4 py-3 rounded-2xl font-bold text-xs focus:outline-none transition"
+                                   placeholder="Nama lengkap Anda">
+                        </div>
+                    </div>
+
+                    <!-- BIO / DESKRIPSI SINGKAT -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5 ml-1">
+                            <label class="block text-xs font-bold text-slate-700">Bio Singkat</label>
+                            <span id="bioCharCount" class="text-[10px] text-slate-400">0/200</span>
+                        </div>
+                        <div class="relative">
+                            <textarea name="bio" id="bioInput" rows="2" maxlength="200"
+                                      class="rentify-input input-glass w-full p-3.5 rounded-2xl text-xs font-medium focus:outline-none transition leading-relaxed"
+                                      placeholder="Contoh: Penggemar camping & fotografi 🏕️📸 | Suka sewa kamera & outdoor gear"
+                                      oninput="document.getElementById('bioCharCount').innerText = this.value.length + '/200'">{{ (string) old('bio', $user->bio) }}</textarea>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">Tampil di halaman profil dan momen Anda.</p>
+                    </div>
+
+                    <!-- USERNAME INSTAGRAM -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Username Instagram</label>
+                        <div class="relative flex rounded-2xl shadow-xs">
+                            <span class="inline-flex items-center px-3 rounded-l-2xl border border-r-0 border-slate-200/80 bg-slate-50 text-slate-500 text-xs font-bold">
+                                <i class="fa-brands fa-instagram text-pink-500 mr-1.5 text-sm"></i> @
+                            </span>
+                            <input type="text" name="instagram_username" value="{{ (string) old('instagram_username', $user->instagram_username) }}"
+                                   class="rentify-input input-glass flex-1 min-w-0 rounded-none rounded-r-2xl px-3.5 py-3 font-bold text-xs focus:outline-none transition"
+                                   placeholder="username_instagram">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">Membangun kredibilitas sewa dan terhubung ke profil sosial Anda.</p>
+                    </div>
+                </div>
+
+                <!-- 2. KONTAK & PENGIRIMAN SEWA -->
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-sky-600 uppercase tracking-widest ml-1">Kontak & Pengiriman</p>
+
+                    <!-- WHATSAPP -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Nomor WhatsApp Aktif</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-500">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                            </span>
+                            <input type="tel" name="whatsapp" value="{{ (string) old('whatsapp', $user->whatsapp) }}"
+                                   class="rentify-input input-glass w-full pl-9 pr-4 py-3 rounded-2xl font-bold text-xs focus:outline-none transition"
+                                   placeholder="08xxxxxxxxxx">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">Digunakan vendor untuk konfirmasi ketersediaan barang dan kurir pengantaran.</p>
+                    </div>
+
+                    <!-- ALAMAT LENGKAP PENGANTARAN -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Alamat Domisili / Pengiriman</label>
+                        <div class="relative">
+                            <textarea name="alamat_lengkap" rows="2"
+                                      class="rentify-input input-glass w-full p-3.5 rounded-2xl text-xs font-medium focus:outline-none transition leading-relaxed"
+                                      placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, patokan">{{ (string) old('alamat_lengkap', $user->alamat_lengkap) }}</textarea>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">Mempercepat proses checkout sewa tanpa perlu ketik ulang alamat.</p>
+                    </div>
+                </div>
+
+                <!-- 3. DATA PERSONAL -->
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-sky-600 uppercase tracking-widest ml-1">Data Personal</p>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- JENIS KELAMIN -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Jenis Kelamin</label>
+                            <select name="jenis_kelamin" class="rentify-input input-glass w-full px-3 py-3 rounded-2xl font-bold text-xs focus:outline-none transition bg-white">
+                                <option value="" {{ (string) old('jenis_kelamin', $user->jenis_kelamin) == '' ? 'selected' : '' }}>Pilih</option>
+                                <option value="Laki-laki" {{ (string) old('jenis_kelamin', $user->jenis_kelamin) == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                <option value="Perempuan" {{ (string) old('jenis_kelamin', $user->jenis_kelamin) == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                            </select>
+                        </div>
+
+                        <!-- TANGGAL LAHIR -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Tanggal Lahir</label>
+                            <input type="date" name="tanggal_lahir" value="{{ (string) old('tanggal_lahir', $user->tanggal_lahir ? (\Carbon\Carbon::parse($user->tanggal_lahir)->format('Y-m-d')) : '') }}"
+                                   class="rentify-input input-glass w-full px-3 py-3 rounded-2xl font-bold text-xs focus:outline-none transition bg-white">
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 ml-1">Membantu rekomendasi ukuran sewa pakaian/outdoor dan voucher ulang tahun.</p>
                 </div>
 
                 <!-- SIMPAN PERUBAHAN -->
-                <div class="pt-2">
+                <div class="pt-3">
                     <button id="btnSubmit" type="submit" class="rentify-btn w-full py-3.5 rounded-2xl text-xs font-black tracking-widest uppercase shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-floppy-disk text-sm"></i>
                         <span id="btnSubmitText">Simpan Perubahan</span>
@@ -169,7 +264,7 @@
             </div>
 
             <!-- Tombol Batal -->
-            <button type="button" onclick="closePhotoModal()" class="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition">
+            <button type="button" onclick="closePhotoModal()" class="w-full py-3 rounded-2xl border border-slate-200 text-slate-600 font-extrabold uppercase tracking-wider text-xs hover:bg-slate-50 transition shadow-xs">
                 Batal
             </button>
         </div>
@@ -177,6 +272,13 @@
 
     <!-- JAVASCRIPT REAL-TIME PREVIEW & CAMERA/GALLERY HANDLING -->
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bio = document.getElementById('bioInput');
+            if (bio) {
+                document.getElementById('bioCharCount').innerText = bio.value.length + '/200';
+            }
+        });
+
         function openPhotoModal() {
             const modal = document.getElementById('photoSourceModal');
             const card = document.getElementById('photoModalCard');

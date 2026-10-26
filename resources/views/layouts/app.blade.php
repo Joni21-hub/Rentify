@@ -16,8 +16,8 @@
             theme: { 
                 extend: {
                     colors: {
-                        navy: { DEFAULT: '#0D1B3E', mid: '#1A2F5E' },
-                        rentify: { blue: '#1E4DAA', sky: '#5C9EE8' },
+                        navy: { DEFAULT: '#0369a1', mid: '#0284c7' },
+                        rentify: { blue: '#0284c7', sky: '#38bdf8', primary: '#0ea5e9' },
                     }
                 }
             }
@@ -29,13 +29,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- ================================================================= -->
-    <!-- PWA RENTIFY META TAGS -->
+    <!-- FAVICON & PWA RENTIFY META TAGS -->
     <!-- ================================================================= -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#1E4DAA">
+    <meta name="theme-color" content="#0ea5e9">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784260498/ukuran_satu_g4ihwu.png">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
     @stack('head')
 </head>
@@ -53,7 +56,7 @@
         const swalRentify = Swal.mixin({
             customClass: {
                 popup: 'rounded-3xl shadow-2xl border border-gray-100 p-6',
-                confirmButton: 'bg-[#1E4DAA] hover:bg-[#0D1B3E] text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md',
+                confirmButton: 'bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold py-2.5 px-6 rounded-2xl transition-all shadow-md',
                 cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 px-6 rounded-xl transition-all ml-2'
             },
             buttonsStyling: false
@@ -88,7 +91,7 @@
             });
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && $errors->any())
             swalRentify.fire({
                 icon: 'warning',
                 title: 'Periksa Inputanmu',

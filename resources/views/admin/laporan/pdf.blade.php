@@ -100,12 +100,11 @@
 
         <!-- TOTALS & FEE CALCULATION -->
         @php
-            $ongkir = (float) ($order->shipping_fee ?? 0);
-            $totalTagihan = (float) ($order->total_price ?? 0);
-            $diskon = (float) ($order->potongan_voucher ?? 0);
-            $sewaBersih = $totalTagihan - $ongkir + $diskon;
-            $sewaAsli = $sewaBersih / 1.05;
-            $feePlatform = ($order->rentify_fee && $order->rentify_fee > 0) ? $order->rentify_fee : ($sewaBersih - $sewaAsli);
+            $breakdown = \App\Services\TransactionCalculationService::getBreakdownForOrder($order);
+            $ongkir = $breakdown['shipping_fee'];
+            $totalTagihan = $breakdown['total_price'];
+            $diskon = $breakdown['potongan_voucher'];
+            $feePlatform = $breakdown['rentify_fee'];
         @endphp
         <div class="border-t border-slate-200 pt-4 space-y-2 text-xs">
             <div class="flex justify-between text-slate-600">

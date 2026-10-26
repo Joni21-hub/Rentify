@@ -9,6 +9,7 @@ use App\Models\FotoBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use App\Services\StorageService;
 
 class VendorBarangController extends Controller
 {
@@ -60,18 +61,15 @@ class VendorBarangController extends Controller
         ]);
 
         $vendorId = Auth::user()->id;
-        $fotos = $request->file('fotos');
+        /** @var array<int, \Illuminate\Http\UploadedFile> $fotos */
+        $fotos = $request->file('fotos', []);
 
-        // JALUR PINTAS PAMUNGKAS: Inisialisasi Mesin Asli Cloudinary
-        $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-        $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-
-        // UPLOAD COVER PHOTO KE CLOUDINARY
-        $fileCover = $fotos[0];
-        $uploadCover = $cloudinary->uploadApi()->upload($fileCover->getRealPath(), [
-            'folder' => 'rentify/barang'
-        ]);
-        $pathCover = $uploadCover['secure_url'];
+        // PENYIMPANAN MEDIA LOKAL MENGGUNAKAN STORAGE DISK PUBLIC
+        $fileCover = $fotos[0] ?? null;
+        if (!$fileCover instanceof \Illuminate\Http\UploadedFile) {
+            return back()->withErrors(['fotos' => 'Foto cover wajib diunggah.']);
+        }
+        $pathCover = StorageService::storePublicFile($fileCover, 'barang');
 
         $barang = Barang::create([
             'vendor_id' => $vendorId,
@@ -94,17 +92,15 @@ class VendorBarangController extends Controller
             'spesifikasi' => $request->input('spesifikasi', []),
         ]);
 
-        // UPLOAD FOTO GALERI TAMBAHAN KE CLOUDINARY
+        // SIMPAN FOTO GALERI TAMBAHAN KE DISK PUBLIC
         if (count($fotos) > 1) {
             for ($i = 1; $i < count($fotos); $i++) {
                 $foto = $fotos[$i];
-                $uploadGaleri = $cloudinary->uploadApi()->upload($foto->getRealPath(), [
-                    'folder' => 'rentify/barang/galeri'
-                ]);
+                $pathGaleri = StorageService::storePublicFile($foto, 'barang/galeri');
                 
                 FotoBarang::create([
                     'barang_id' => $barang->id,
-                    'foto_path' => $uploadGaleri['secure_url']
+                    'foto_path' => $pathGaleri
                 ]);
             }
         }
@@ -168,25 +164,28 @@ class VendorBarangController extends Controller
             'spesifikasi' => $request->input('spesifikasi', []),
         ];
 
-        if ($request->hasFile('fotos') && count($request->file('fotos')) > 0) {
-            $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-            $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-            $fotos = $request->file('fotos');
-            $fileCover = $fotos[0];
-            $uploadCover = $cloudinary->uploadApi()->upload($fileCover->getRealPath(), [
-                'folder' => 'rentify/barang'
-            ]);
-            $updateData['cover_photo'] = $uploadCover['secure_url'];
+        /** @var array<int, \Illuminate\Http\UploadedFile> $fotos */
+        $fotos = $request->file('fotos', []);
+        if (!empty($fotos)) {
+            $fileCover = $fotos[0] ?? null;
+            if ($fileCover instanceof \Illuminate\Http\UploadedFile) {
+                $pathCover = StorageService::storePublicFile($fileCover, 'barang');
+
+                // Hapus cover photo lama jika ada
+                StorageService::deletePublicFile($barang->cover_photo);
+                $updateData['cover_photo'] = $pathCover;
+            }
 
             if (count($fotos) > 1) {
                 for ($i = 1; $i < count($fotos); $i++) {
-                    $uploadGaleri = $cloudinary->uploadApi()->upload($fotos[$i]->getRealPath(), [
-                        'folder' => 'rentify/barang/galeri'
-                    ]);
-                    FotoBarang::create([
-                        'barang_id' => $barang->id,
-                        'foto_path' => $uploadGaleri['secure_url']
-                    ]);
+                    $fotoItem = $fotos[$i] ?? null;
+                    if ($fotoItem instanceof \Illuminate\Http\UploadedFile) {
+                        $pathGaleri = StorageService::storePublicFile($fotoItem, 'barang/galeri');
+                        FotoBarang::create([
+                            'barang_id' => $barang->id,
+                            'foto_path' => $pathGaleri
+                        ]);
+                    }
                 }
             }
         }
@@ -200,32 +199,9 @@ class VendorBarangController extends Controller
     {
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
         
-        if ($barang->cover_photo && str_contains($barang->cover_photo, 'cloudinary')) {
-            try {
-                $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-                $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-
-                $path = parse_url($barang->cover_photo, PHP_URL_PATH);
-                $pathSegments = explode('/', $path);
-                $uploadIndex = array_search('upload', $pathSegments);
-
-                if ($uploadIndex !== false) {
-                    $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
-                    if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
-                        array_shift($slicedSegments);
-                    }
-                    $publicIdWithExt = implode('/', $slicedSegments);
-                    $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
-                    $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
-                    $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
-
-                    $cloudinary->uploadApi()->destroy($finalPublicId);
-                }
-            } catch (\Exception $e) {
-                // Abaikan jika error hapus di cloud agar tidak menghambat hapus data di database
-            }
-        } elseif ($barang->cover_photo && file_exists(public_path(str_replace('public/', '', $barang->cover_photo)))) {
-            @unlink(public_path(str_replace('public/', '', $barang->cover_photo)));
+        // Hapus cover photo dari penyimpanan lokal
+        if ($barang->cover_photo) {
+            StorageService::deletePublicFile($barang->cover_photo);
         }
 
         $barang->delete();
