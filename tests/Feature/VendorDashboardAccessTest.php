@@ -32,7 +32,8 @@ class VendorDashboardAccessTest extends TestCase
         echo "2. /home status: " . $response2->getStatusCode() . ", target: " . $response2->headers->get('Location') . "\n";
 
         // 3. Follow redirect from /home (which should go to /customer)
-        $response3 = $this->actingAs($customer)->get($response2->headers->get('Location'));
+        $location = (string) $response2->headers->get('Location');
+        $response3 = $this->actingAs($customer)->get($location);
         echo "3. Target status: " . $response3->getStatusCode() . "\n";
     }
 }

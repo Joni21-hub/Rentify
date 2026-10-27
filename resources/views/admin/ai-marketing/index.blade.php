@@ -112,7 +112,7 @@
                     </span>
                 </div>
                 <h1 class="text-xl font-black text-slate-800 tracking-tight mt-1 flex items-center gap-2">
-                    Pusat Auto-Promosi & Konten Viral Rentify
+                    Pusat Auto-Promosi &amp; Konten Viral Rentify
                 </h1>
             </div>
 
@@ -144,7 +144,7 @@
                 </button>
                 <button onclick="switchAiTab('tab-settings')" id="btn-tab-settings" class="tab-btn px-4 py-2 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
                     <i class="fas fa-sliders"></i>
-                    <span>Pengaturan Jadwal & API</span>
+                    <span>Pengaturan Jadwal &amp; API</span>
                 </button>
                 <button onclick="switchAiTab('tab-history')" id="btn-tab-history" class="tab-btn px-4 py-2 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
                     <i class="fas fa-clock-rotate-left"></i>
