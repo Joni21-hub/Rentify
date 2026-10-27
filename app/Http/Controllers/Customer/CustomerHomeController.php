@@ -13,23 +13,28 @@ class CustomerHomeController extends Controller
 {
     public function index()
     {
-        $banners = Banner::all();
-        $kategoris = Kategori::where('is_active', 1)->get();
-        $daftarBarang = collect(); 
-        $hasLokasi = false;
-
-        // 1. Cek Lokasi: Ambil dari Session (Tamu) atau Database (Member)
+        // 1. Jika sudah login tetapi role Vendor atau Admin, arahkan ke dashboard masing-masing
         $lat1 = session('user_latitude');
         $lon1 = session('user_longitude');
 
         if (Auth::check()) {
             $user = Auth::user();
-            // Jika member punya lokasi di profil, utamakan lokasi profilnya
+            if ($user->role === 'vendor') {
+                return redirect()->route('vendor.dashboard');
+            } elseif ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+
             if ($user->latitude && $user->longitude) {
                 $lat1 = $user->latitude;
                 $lon1 = $user->longitude;
             }
         }
+
+        $banners = Banner::all();
+        $kategoris = Kategori::where('is_active', 1)->get();
+        $daftarBarang = collect(); 
+        $hasLokasi = false;
 
         // Ambil semua barang disetujui dari vendor aktif
         $semuaBarang = Barang::with(['vendor', 'kategori'])
@@ -101,6 +106,14 @@ class CustomerHomeController extends Controller
             'kategoris' => $kategoris,
             'wishlistIds' => $wishlistIds
         ]);
+    }
+
+    /**
+     * Halaman Pengenalan Rentify Publik (Dapat diakses langsung via /tentang)
+     */
+    public function about()
+    {
+        return view('customer.welcome');
     }
 
     // PERBAIKAN: Fungsi show kini mendukung SLUG, memblokir toko Banned, dan memakai logika lokasi Tamu/Member Anda

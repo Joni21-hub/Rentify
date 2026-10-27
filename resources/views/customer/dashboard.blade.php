@@ -394,6 +394,13 @@
                                                 <i class="fa-solid fa-video text-[7px] text-sky-400"></i>
                                                 <span>{{ $moment->video_duration_seconds ? sprintf('%02d:%02d', floor($moment->video_duration_seconds / 60), $moment->video_duration_seconds % 60) : 'Reels' }}</span>
                                             </div>
+                                        @elseif(!empty($moment->media_urls) && count($moment->media_urls) > 1)
+                                            <img src="{{ $moment->media_url }}" alt="{{ $moment->caption ?? 'Momen' }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                            <!-- Multi-Photo / Carousel Badge (Instagram Style) -->
+                                            <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white flex items-center gap-1 text-[8px] font-semibold border border-white/20 shadow-xs">
+                                                <i class="fa-solid fa-images text-[8px] text-sky-400"></i>
+                                                <span>{{ count($moment->media_urls) }}</span>
+                                            </div>
                                         @else
                                             <img src="{{ $moment->media_url }}" alt="{{ $moment->caption ?? 'Momen' }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                             <!-- Photo Badge -->
@@ -514,6 +521,12 @@
                                                 <video src="{{ $bm->moment->media_url }}#t=0.001" preload="metadata" playsinline muted class="w-full h-full object-cover group-hover:scale-105 transition duration-500"></video>
                                                 <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white flex items-center gap-1 text-[8px] font-semibold border border-white/20 shadow-xs">
                                                     <i class="fa-solid fa-video text-[7px] text-sky-400"></i>
+                                                </div>
+                                            @elseif(!empty($bm->moment->media_urls) && count($bm->moment->media_urls) > 1)
+                                                <img src="{{ $bm->moment->media_url }}" alt="Momen Disimpan" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                                <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white flex items-center gap-1 text-[8px] font-semibold border border-white/20 shadow-xs">
+                                                    <i class="fa-solid fa-images text-[8px] text-sky-400"></i>
+                                                    <span>{{ count($bm->moment->media_urls) }}</span>
                                                 </div>
                                             @else
                                                 <img src="{{ $bm->moment->media_url }}" alt="Momen Disimpan" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">

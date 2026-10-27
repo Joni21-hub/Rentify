@@ -183,21 +183,35 @@
             <form id="upload-moment-form" onsubmit="submitMomentUpload(event)" class="space-y-3.5">
                 <!-- Media Picker & Live Preview -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto atau Video *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto (Multi-Foto / Carousel) atau Video *</label>
                     <div id="drop-area" onclick="document.getElementById('media-file-input').click()" class="border-2 border-dashed border-sky-200 hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer transition bg-sky-50/40 hover:bg-sky-50/80">
-                        <input type="file" id="media-file-input" accept="image/*,video/*,.heic,.heif,.*" class="hidden" onchange="handleFileSelection(event)">
+                        <input type="file" id="media-file-input" accept="image/*,video/*,.heic,.heif,.*" multiple class="hidden" onchange="handleFileSelection(event)">
                         <div id="upload-prompt" class="space-y-2">
                             <div class="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center mx-auto text-xl shadow-xs">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
-                            <p class="text-xs font-bold text-slate-800">Pilih foto atau video</p>
-                            <p class="text-[10px] text-slate-400">Semua jenis foto & video bebas tanpa batasan ukuran/durasi</p>
+                            <p class="text-xs font-bold text-slate-800">Pilih foto (bisa banyak / carousel) atau video</p>
+                            <p class="text-[10px] text-slate-400">Pilih hingga 10 foto untuk postingan carousel bergaya Instagram atau 1 video tanpa batas ukuran</p>
                         </div>
-                        <div id="media-preview-container" class="hidden">
-                            <img id="image-preview" class="hidden max-h-56 mx-auto rounded-xl object-contain shadow-xs">
-                            <video id="video-preview" class="hidden max-h-56 mx-auto rounded-xl shadow-xs" controls></video>
-                            <p id="file-info-text" class="text-[11px] text-sky-700 mt-2 font-bold"></p>
-                            <span class="inline-block mt-1 text-[10px] text-slate-400 underline">Klik untuk ganti file</span>
+                        <div id="media-preview-container" class="hidden space-y-2">
+                            <!-- Multi-Photo Grid Thumbnails -->
+                            <div id="multi-image-preview-grid" class="hidden grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-1.5 rounded-xl bg-slate-50/70 border border-slate-100 scrollbar-none"></div>
+                            <!-- Single Preview (1 Foto atau 1 Video) -->
+                            <div id="single-media-preview" class="hidden">
+                                <img id="image-preview" class="hidden max-h-56 mx-auto rounded-xl object-contain shadow-xs">
+                                <video id="video-preview" class="hidden max-h-56 mx-auto rounded-xl shadow-xs" controls></video>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] pt-1">
+                                <span id="file-info-text" class="text-sky-700 font-bold"></span>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="event.stopPropagation(); document.getElementById('media-file-input').click()" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-full border border-sky-200 transition">
+                                        <i class="fa-solid fa-plus text-[9px] mr-1"></i> Tambah Foto
+                                    </button>
+                                    <button type="button" onclick="event.stopPropagation(); resetSelectedMedia()" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-full border border-rose-200 transition">
+                                        <i class="fa-solid fa-trash text-[9px] mr-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- HEIC conversion status -->
@@ -305,6 +319,7 @@
     let nextCursor = null;
     let hasMore = true;
     let isLoading = false;
+    let selectedFiles = [];
     let selectedFile = null;
     let selectedVideoDuration = null;
     let taggedProductIds = [];
@@ -487,6 +502,47 @@
                         <!-- Video Bottom Progress Bar (2px) -->
                         <div class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-white/20 z-20 pointer-events-none">
                             <div class="video-progress-bar h-full bg-sky-400 w-0 transition-all duration-100 ease-linear"></div>
+                        </div>
+                    </div>
+                `;
+            } else if (m.media_urls && Array.isArray(m.media_urls) && m.media_urls.length > 1) {
+                // Carousel Post (Multi-Foto Instagram Reels Style)
+                const totalSlides = m.media_urls.length;
+                const slides = m.media_urls.map((url, sIdx) => `
+                    <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
+                        <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none">
+                        <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none">
+                    </div>
+                `).join('');
+
+                const dots = m.media_urls.map((_, dIdx) => `
+                    <div class="carousel-dot-${m.id} transition-all duration-300 rounded-full ${dIdx === 0 ? 'w-4 h-1.5 bg-sky-400' : 'w-1.5 h-1.5 bg-white/50'}" data-dot-index="${dIdx}"></div>
+                `).join('');
+
+                mediaHtml = `
+                    <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden group/carousel" id="carousel-wrap-${m.id}">
+                        <!-- Track Slide Horizontal Snap -->
+                        <div class="carousel-track flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none" id="carousel-track-${m.id}" onscroll="handleCarouselScroll(event, ${m.id}, ${totalSlides})" style="-webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                            ${slides}
+                        </div>
+
+                        <!-- Badge Counter Top-Right (e.g. 1/3) -->
+                        <div class="absolute top-16 right-4 z-20 glass-pill px-2.5 py-1 rounded-full text-[11px] font-black text-white/95 shadow-xl pointer-events-none flex items-center gap-1.5 border border-white/20">
+                            <i class="fa-solid fa-images text-sky-400 text-xs"></i>
+                            <span id="carousel-counter-${m.id}">1/${totalSlides}</span>
+                        </div>
+
+                        <!-- Prev & Next Arrows (Desktop & Hover) -->
+                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, -1)" class="carousel-prev-${m.id} absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20" aria-label="Foto Sebelumnya">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, 1)" class="carousel-next-${m.id} absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20" aria-label="Foto Berikutnya">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+
+                        <!-- Dots Pagination Bottom -->
+                        <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 pointer-events-none" id="carousel-dots-${m.id}">
+                            ${dots}
                         </div>
                     </div>
                 `;
@@ -1027,73 +1083,75 @@
     }
 
     function resetUploadForm() {
+        selectedFiles = [];
         selectedFile = null;
         selectedVideoDuration = null;
         taggedProductIds = [];
         document.getElementById('upload-moment-form')?.reset();
         document.getElementById('upload-prompt')?.classList.remove('hidden');
         document.getElementById('media-preview-container')?.classList.add('hidden');
+        document.getElementById('multi-image-preview-grid')?.classList.add('hidden');
+        document.getElementById('single-media-preview')?.classList.add('hidden');
         document.getElementById('image-preview')?.classList.add('hidden');
         document.getElementById('video-preview')?.classList.add('hidden');
+        const grid = document.getElementById('multi-image-preview-grid');
+        if (grid) grid.innerHTML = '';
         const container = document.getElementById('selected-tags-container');
         if (container) container.innerHTML = '';
         const counter = document.getElementById('caption-counter');
         if (counter) counter.textContent = '0/1000';
     }
 
+    function resetSelectedMedia() {
+        selectedFiles = [];
+        selectedFile = null;
+        selectedVideoDuration = null;
+        const input = document.getElementById('media-file-input');
+        if (input) input.value = '';
+        document.getElementById('upload-prompt')?.classList.remove('hidden');
+        document.getElementById('media-preview-container')?.classList.add('hidden');
+        document.getElementById('multi-image-preview-grid')?.classList.add('hidden');
+        document.getElementById('single-media-preview')?.classList.add('hidden');
+        document.getElementById('image-preview')?.classList.add('hidden');
+        document.getElementById('video-preview')?.classList.add('hidden');
+        const grid = document.getElementById('multi-image-preview-grid');
+        if (grid) grid.innerHTML = '';
+    }
+
     /**
-     * Pemilihan file dengan validasi client-side dan WebAssembly HEIC transcoding.
+     * Pemilihan file (bisa multi-foto hingga 10 foto atau 1 video) dengan HEIC auto-transcoding.
      */
     async function handleFileSelection(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const sizeKb = file.size / 1024;
-        const mime = file.type || '';
-        const ext = file.name.split('.').pop().toLowerCase();
+        const rawFiles = Array.from(event.target.files || []);
+        if (rawFiles.length === 0) return;
 
         const imageExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'bmp', 'tiff', 'tif', 'svg', 'avif', 'ico', 'raw', 'cr2', 'nef', 'arw', 'dng', 'psd', 'eps', 'ai'];
         const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
 
-        const isImage = mime.startsWith('image/') || imageExts.includes(ext);
-        const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
+        // Cek jika terdapat file video
+        const hasVideo = rawFiles.some(f => {
+            const m = f.type || '';
+            const e = (f.name || '').split('.').pop().toLowerCase();
+            return m.startsWith('video/') || videoExts.includes(e);
+        });
 
-        if (!isImage && !isVideo) {
-            Swal.fire({ icon: 'error', text: 'Format berkas tidak didukung. Harap pilih berkas foto atau video.' });
-            event.target.value = '';
-            return;
-        }
-
-        // Penanganan format HEIC/HEIF WebAssembly conversion
-        if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
-            const statusEl = document.getElementById('heic-converting-status');
-            statusEl?.classList.remove('hidden');
-
-            try {
-                if (typeof heic2any === 'function') {
-                    const convertedBlob = await heic2any({
-                        blob: file,
-                        toType: 'image/jpeg',
-                        quality: 0.9
-                    });
-                    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-                    selectedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-                } else {
-                    selectedFile = file;
-                }
-            } catch (err) {
-                console.warn('heic2any failed, falling back to server-side transcoding:', err);
-                selectedFile = file;
-            } finally {
-                statusEl?.classList.add('hidden');
+        if (hasVideo) {
+            if (rawFiles.length > 1 || selectedFiles.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Postingan video hanya mendukung 1 berkas video. Untuk multi-upload, silakan pilih foto (maksimal 10 foto).'
+                });
             }
-        } else {
-            selectedFile = file;
-        }
+            const videoFile = rawFiles.find(f => {
+                const m = f.type || '';
+                const e = (f.name || '').split('.').pop().toLowerCase();
+                return m.startsWith('video/') || videoExts.includes(e);
+            }) || rawFiles[0];
 
-        // Penanganan video: hitung durasi tanpa batasan durasi
-        if (isVideo) {
-            const videoUrl = URL.createObjectURL(selectedFile);
+            selectedFiles = [videoFile];
+            selectedFile = videoFile;
+
+            const videoUrl = URL.createObjectURL(videoFile);
             const tempVideo = document.createElement('video');
             tempVideo.preload = 'metadata';
             tempVideo.src = videoUrl;
@@ -1101,21 +1159,126 @@
             tempVideo.onloadedmetadata = function () {
                 URL.revokeObjectURL(videoUrl);
                 selectedVideoDuration = tempVideo.duration;
-                showMediaPreview(selectedFile, true);
+                showSingleMediaPreview(videoFile, true);
             };
 
             tempVideo.onerror = function () {
                 selectedVideoDuration = null;
-                showMediaPreview(selectedFile, true);
+                showSingleMediaPreview(videoFile, true);
             };
+            return;
+        }
+
+        // Penanganan multi-foto
+        const statusEl = document.getElementById('heic-converting-status');
+        const processedPhotos = [];
+
+        for (const file of rawFiles) {
+            const mime = file.type || '';
+            const ext = (file.name || '').split('.').pop().toLowerCase();
+            const isImage = mime.startsWith('image/') || imageExts.includes(ext);
+
+            if (!isImage) continue;
+
+            if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
+                statusEl?.classList.remove('hidden');
+                try {
+                    if (typeof heic2any === 'function') {
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg',
+                            quality: 0.9
+                        });
+                        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                        processedPhotos.push(new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' }));
+                    } else {
+                        processedPhotos.push(file);
+                    }
+                } catch (err) {
+                    console.warn('heic2any failed, fallback to file:', err);
+                    processedPhotos.push(file);
+                } finally {
+                    statusEl?.classList.add('hidden');
+                }
+            } else {
+                processedPhotos.push(file);
+            }
+        }
+
+        const currentImages = selectedFiles.filter(f => !(f.type || '').startsWith('video/'));
+        const totalNew = currentImages.concat(processedPhotos);
+
+        if (totalNew.length > 10) {
+            Swal.fire({
+                icon: 'warning',
+                text: 'Maksimal 10 foto per momen. Hanya 10 foto pertama yang disimpan.'
+            });
+            selectedFiles = totalNew.slice(0, 10);
         } else {
-            showMediaPreview(selectedFile, false);
+            selectedFiles = totalNew;
+        }
+
+        selectedFile = selectedFiles[0] || null;
+        selectedVideoDuration = null;
+
+        renderMultiPhotoPreview();
+    }
+
+    function removePhotoByIndex(index) {
+        selectedFiles.splice(index, 1);
+        selectedFile = selectedFiles[0] || null;
+        if (selectedFiles.length === 0) {
+            resetSelectedMedia();
+        } else {
+            renderMultiPhotoPreview();
         }
     }
 
-    function showMediaPreview(file, isVideo) {
+    function renderMultiPhotoPreview() {
         document.getElementById('upload-prompt')?.classList.add('hidden');
         document.getElementById('media-preview-container')?.classList.remove('hidden');
+        document.getElementById('single-media-preview')?.classList.add('hidden');
+
+        const grid = document.getElementById('multi-image-preview-grid');
+        const fileInfo = document.getElementById('file-info-text');
+
+        if (selectedFiles.length === 1) {
+            showSingleMediaPreview(selectedFiles[0], false);
+            return;
+        }
+
+        if (grid) {
+            grid.innerHTML = '';
+            grid.classList.remove('hidden');
+
+            let totalBytes = 0;
+            selectedFiles.forEach((f, idx) => {
+                totalBytes += f.size;
+                const url = URL.createObjectURL(f);
+                const item = document.createElement('div');
+                item.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 group border border-slate-200 shadow-xs';
+                item.innerHTML = `
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <span class="absolute top-1 left-1 bg-black/70 backdrop-blur-md text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">#${idx + 1}</span>
+                    <button type="button" onclick="event.stopPropagation(); removePhotoByIndex(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                grid.appendChild(item);
+            });
+
+            if (fileInfo) {
+                fileInfo.textContent = `${selectedFiles.length} Foto Dipilih (${(totalBytes / (1024 * 1024)).toFixed(1)} MB) — Format Carousel`;
+            }
+        }
+    }
+
+    function showSingleMediaPreview(file, isVideo) {
+        document.getElementById('upload-prompt')?.classList.add('hidden');
+        document.getElementById('media-preview-container')?.classList.remove('hidden');
+        document.getElementById('multi-image-preview-grid')?.classList.add('hidden');
+        document.getElementById('single-media-preview')?.classList.remove('hidden');
+
         const fileInfo = document.getElementById('file-info-text');
         if (fileInfo) fileInfo.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
 
@@ -1178,11 +1341,11 @@
     }
 
     /**
-     * Submit formulir unggah Momen.
+     * Submit formulir unggah Momen (Mendukung Multi-Foto / Carousel dan Video).
      */
     async function submitMomentUpload(event) {
         event.preventDefault();
-        if (!selectedFile) {
+        if (!selectedFiles || selectedFiles.length === 0) {
             Swal.fire({ icon: 'warning', text: 'Silakan pilih foto atau video terlebih dahulu.' });
             return;
         }
@@ -1192,26 +1355,34 @@
         const spinner = document.getElementById('submit-btn-spinner');
 
         submitBtn.disabled = true;
-        btnText.textContent = 'Mengunggah momen...';
+        const isMulti = selectedFiles.length > 1;
+        btnText.textContent = isMulti ? `Mengunggah ${selectedFiles.length} foto...` : 'Mengunggah momen...';
         spinner?.classList.remove('hidden');
 
         const formData = new FormData();
-        formData.append('media', selectedFile);
-        formData.append('caption', document.getElementById('caption-input')?.value || '');
-
-        const ext = (selectedFile.name || '').split('.').pop().toLowerCase();
-        const mime = selectedFile.type || '';
+        const firstFile = selectedFiles[0];
+        const ext = (firstFile.name || '').split('.').pop().toLowerCase();
+        const mime = firstFile.type || '';
         const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
         const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
 
         if (isVideo) {
+            formData.append('media', firstFile);
             formData.append('media_type', 'video');
             if (selectedVideoDuration) {
                 formData.append('video_duration_seconds', selectedVideoDuration.toFixed(2));
             }
+        } else if (isMulti) {
+            selectedFiles.forEach((file, idx) => {
+                formData.append(`media[${idx}]`, file);
+            });
+            formData.append('media_type', 'image');
         } else {
+            formData.append('media', firstFile);
             formData.append('media_type', 'image');
         }
+
+        formData.append('caption', document.getElementById('caption-input')?.value || '');
 
         taggedProductIds.forEach((prodId, idx) => {
             formData.append(`product_ids[${idx}]`, prodId);
@@ -1233,7 +1404,7 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Momen Berhasil Dibagikan!',
-                    text: 'Postingan Anda telah aktif di komunitas Rentify.',
+                    text: isMulti ? `${selectedFiles.length} foto berhasil dibagikan dalam format carousel.` : 'Postingan Anda telah aktif di komunitas Rentify.',
                     timer: 2500,
                     showConfirmButton: false
                 });

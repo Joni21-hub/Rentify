@@ -111,6 +111,7 @@ class MomentController extends Controller
                 ],
                 'media_url'              => $m->media_url,
                 'thumbnail_url'          => $m->thumbnail_url,
+                'media_urls'             => $m->media_urls ?: ($m->media_url ? [$m->media_url] : []),
                 'media_type'             => $m->media_type,
                 'video_duration_seconds' => $m->video_duration_seconds,
                 'caption'                => $m->caption,
@@ -185,6 +186,7 @@ class MomentController extends Controller
                 ],
                 'media_url'              => $moment->media_url,
                 'thumbnail_url'          => $moment->thumbnail_url,
+                'media_urls'             => $moment->media_urls ?: ($moment->media_url ? [$moment->media_url] : []),
                 'media_type'             => $moment->media_type,
                 'video_duration_seconds' => $moment->video_duration_seconds,
                 'caption'                => $moment->caption,
@@ -219,30 +221,65 @@ class MomentController extends Controller
     public function store(StoreMomentRequest $request): JsonResponse
     {
         $user = $request->user();
-        $file = $request->file('media');
-
-        $mime = $file->getMimeType() ?: '';
-        $ext = strtolower($file->getClientOriginalExtension() ?: '');
+        $mediaInput = $request->file('media');
 
         $videoExtensions = [
             'mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp',
             '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'
         ];
 
-        $mediaType = (str_starts_with($mime, 'video/') || in_array($ext, $videoExtensions)) ? 'video' : 'image';
-        if ($request->filled('media_type') && in_array($request->input('media_type'), ['image', 'video'])) {
-            $mediaType = $request->input('media_type');
-        }
+        $mediaUrls = [];
+        $mediaType = 'image';
+        $thumbnailUrl = null;
+        $videoDuration = null;
 
-        // Upload media ke Cloudinary dengan optimasi f_auto, q_auto dan fallback HEIC
-        $uploadResult = $this->uploadMediaToCloudinary($file, $mediaType);
+        if (is_array($mediaInput)) {
+            // Multi-photo upload (Carousel Post)
+            foreach ($mediaInput as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                    $uploadResult = $this->uploadMediaToCloudinary($file, 'image');
+                    $mediaUrls[] = $uploadResult['secure_url'];
+                }
+            }
+
+            if (empty($mediaUrls)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memproses berkas foto yang diunggah.',
+                ], 422);
+            }
+
+            $primaryMediaUrl = $mediaUrls[0];
+            $mediaType = 'image';
+        } else {
+            // Single media (image or video)
+            $file = $mediaInput;
+            $mime = $file->getMimeType() ?: '';
+            $ext = strtolower($file->getClientOriginalExtension() ?: '');
+
+            $mediaType = (str_starts_with($mime, 'video/') || in_array($ext, $videoExtensions)) ? 'video' : 'image';
+            if ($request->filled('media_type') && in_array($request->input('media_type'), ['image', 'video'])) {
+                $mediaType = $request->input('media_type');
+            }
+
+            // Upload media ke Cloudinary dengan optimasi f_auto, q_auto dan fallback HEIC
+            $uploadResult = $this->uploadMediaToCloudinary($file, $mediaType);
+            $primaryMediaUrl = $uploadResult['secure_url'];
+            $thumbnailUrl = $uploadResult['thumbnail_url'];
+            $mediaUrls = [$primaryMediaUrl];
+
+            if ($mediaType === 'video') {
+                $videoDuration = $request->input('video_duration_seconds');
+            }
+        }
 
         $moment = Moment::create([
             'user_id'                => $user->id,
-            'media_url'              => $uploadResult['secure_url'],
-            'thumbnail_url'          => $uploadResult['thumbnail_url'],
+            'media_url'              => $primaryMediaUrl,
+            'thumbnail_url'          => $thumbnailUrl,
+            'media_urls'             => $mediaUrls,
             'media_type'             => $mediaType,
-            'video_duration_seconds' => $request->input('video_duration_seconds'),
+            'video_duration_seconds' => $videoDuration,
             'caption'                => $request->input('caption'),
             'likes_count'            => 0,
             'lifetime_minted_count'  => 0,

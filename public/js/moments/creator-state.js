@@ -24,6 +24,7 @@
                 recordingElapsed: 0,   // detik saat ini pada klip yang sedang direkam
                 clips: [],             // Array of { id, blob, url, duration, speed, filter }
                 capturedPhoto: null,   // { blob, dataUrl, filter }
+                capturedPhotos: [],    // Array of { blob, dataUrl, filter } for multi-photo
                 selectedMusic: null,   // { id, title, artist, cover, previewUrl, startMs, duration }
                 gallerySelectedMedia: null, // Dari galeri
             };
@@ -182,6 +183,7 @@
             });
             this.state.clips = [];
             this.state.capturedPhoto = null;
+            this.state.capturedPhotos = [];
             this.emit('clips:cleared');
             this.emit('clips:updated', this.state.clips);
         }
@@ -196,7 +198,7 @@
         }
 
         hasRecordedContent() {
-            return this.state.clips.length > 0 || this.state.capturedPhoto !== null;
+            return this.state.clips.length > 0 || this.state.capturedPhoto !== null || (this.state.capturedPhotos && this.state.capturedPhotos.length > 0);
         }
 
         setCapturedPhoto(blob, dataUrl) {
@@ -206,7 +208,18 @@
                 filter: this.state.activeFilter,
                 timestamp: Date.now()
             };
+            this.state.capturedPhotos = [this.state.capturedPhoto];
             this.emit('photo:captured', this.state.capturedPhoto);
+        }
+
+        setCapturedPhotos(photos) {
+            this.state.capturedPhotos = photos || [];
+            if (photos && photos.length > 0) {
+                this.state.capturedPhoto = photos[0];
+            } else {
+                this.state.capturedPhoto = null;
+            }
+            this.emit('photos:captured', this.state.capturedPhotos);
         }
 
         setMusic(music) {

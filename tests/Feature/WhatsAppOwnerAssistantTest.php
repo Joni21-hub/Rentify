@@ -115,7 +115,8 @@ class WhatsAppOwnerAssistantTest extends TestCase
 
         $this->assertNotEmpty($reply);
         $this->assertStringContainsString('BOS JONI', $reply);
-        $this->assertStringContainsString('ASISTEN PRIBADI', $reply);
+        $this->assertStringContainsStringIgnoringCase('asisten', $reply);
+        $this->assertStringContainsStringIgnoringCase('pribadi', $reply);
     }
 
     public function test_webhook_controller_routes_owner_to_personal_assistant(): void

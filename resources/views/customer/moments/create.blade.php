@@ -254,7 +254,7 @@
         </footer>
 
         <!-- Hidden Input for File Selection (Semua format foto & video tanpa batasan) -->
-        <input type="file" id="creator-hidden-file-input" accept="image/*,video/*,.heic,.heif,.*" class="hidden">
+        <input type="file" id="creator-hidden-file-input" accept="image/*,video/*,.heic,.heif,.*" multiple class="hidden">
     </div>
 
     <!-- ============================================================== -->

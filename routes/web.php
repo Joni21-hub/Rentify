@@ -34,6 +34,7 @@ use App\Http\Controllers\Customer\{
 // ─── 1. KATALOG PUBLIK (BISA DIAKSES SIAPA SAJA TANPA LOGIN) ───
 Route::name('customer.')->group(function () {
     Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
+    Route::get('/tentang', [CustomerHomeController::class, 'about'])->name('about');
     Route::get('/moments', [\App\Http\Controllers\Customer\MomentPageController::class, 'index'])->name('moments');
     Route::get('/moments/create', [\App\Http\Controllers\Customer\MomentPageController::class, 'create'])->name('moments.create');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');

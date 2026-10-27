@@ -776,16 +776,18 @@
         }
 
         async handleFileSelection(event) {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
+            const files = event.target.files ? Array.from(event.target.files) : [];
+            if (files.length === 0) return;
 
-            const mime = file.type || '';
-            const ext = (file.name.split('.').pop() || '').toLowerCase();
             const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
+            const firstFile = files[0];
+            const mime = firstFile.type || '';
+            const ext = (firstFile.name.split('.').pop() || '').toLowerCase();
             const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
 
             if (isVideo) {
                 // Buat klip dari file video tanpa batasan format/ukuran
+                const file = firstFile;
                 const url = URL.createObjectURL(file);
                 const tempVideo = document.createElement('video');
                 tempVideo.preload = 'metadata';
@@ -809,28 +811,49 @@
                     this.handleNextStep();
                 };
             } else {
-                // Foto dari galeri (mendukung konversi HEIC jika tersedia)
-                let targetFile = file;
-                if (['heic', 'heif'].includes(ext) && typeof heic2any === 'function') {
-                    try {
-                        const convertedBlob = await heic2any({
-                            blob: file,
-                            toType: 'image/jpeg',
-                            quality: 0.9
-                        });
-                        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-                        targetFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-                    } catch (err) {
-                        console.warn('heic2any failed in creator-ui, fallback to original:', err);
+                // Foto dari galeri (mendukung satu atau banyak foto / carousel hingga 10 foto)
+                const photoFiles = files.filter(f => {
+                    const m = f.type || '';
+                    const e = (f.name.split('.').pop() || '').toLowerCase();
+                    return !m.startsWith('video/') && !videoExts.includes(e);
+                }).slice(0, 10);
+
+                const processedPhotos = [];
+                for (const f of photoFiles) {
+                    const e = (f.name.split('.').pop() || '').toLowerCase();
+                    let targetF = f;
+                    if (['heic', 'heif'].includes(e) && typeof heic2any === 'function') {
+                        try {
+                            const convertedBlob = await heic2any({
+                                blob: f,
+                                toType: 'image/jpeg',
+                                quality: 0.9
+                            });
+                            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            targetF = new File([blob], f.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        } catch (err) {
+                            console.warn('heic2any failed in creator-ui, fallback to original:', err);
+                        }
                     }
+
+                    const dataUrl = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = ev => resolve(ev.target.result);
+                        reader.readAsDataURL(targetF);
+                    });
+
+                    processedPhotos.push({
+                        blob: targetF,
+                        dataUrl: dataUrl,
+                        filter: this.state.get('activeFilter') || 'normal',
+                        timestamp: Date.now()
+                    });
                 }
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.state.setCapturedPhoto(targetFile, e.target.result);
+                if (processedPhotos.length > 0) {
+                    this.state.setCapturedPhotos(processedPhotos);
                     this.handleNextStep();
-                };
-                reader.readAsDataURL(targetFile);
+                }
             }
         }
 

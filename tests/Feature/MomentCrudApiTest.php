@@ -221,6 +221,59 @@ class MomentCrudApiTest extends TestCase
         $this->assertStringEndsWith('.jpg', $mediaUrl);
     }
 
+    public function test_store_moment_successfully_uploads_multiple_photos(): void
+    {
+        Queue::fake();
+
+        $photo1 = UploadedFile::fake()->image('photo_1.jpg', 800, 600);
+        $photo2 = UploadedFile::fake()->image('photo_2.png', 800, 600);
+        $photo3 = UploadedFile::fake()->image('photo_3.webp', 800, 600);
+
+        $response = $this->actingAs($this->author)
+            ->postJson('/api/moments', [
+                'media'   => [$photo1, $photo2, $photo3],
+                'caption' => 'Postingan Carousel 3 Foto Keren',
+            ]);
+
+        $response->assertStatus(201);
+        $this->assertTrue($response->json('success'));
+
+        $mediaUrls = $response->json('data.media_urls');
+        $this->assertIsArray($mediaUrls);
+        $this->assertCount(3, $mediaUrls);
+        $this->assertEquals($response->json('data.media_url'), $mediaUrls[0]);
+    }
+
+    public function test_store_moment_rejects_more_than_10_photos(): void
+    {
+        $photos = [];
+        for ($i = 0; $i < 11; $i++) {
+            $photos[] = UploadedFile::fake()->image("photo_{$i}.jpg", 100, 100);
+        }
+
+        $response = $this->actingAs($this->author)
+            ->postJson('/api/moments', [
+                'media' => $photos,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['media']);
+    }
+
+    public function test_store_moment_rejects_video_in_multi_upload(): void
+    {
+        $photo = UploadedFile::fake()->image('photo_1.jpg', 800, 600);
+        $video = UploadedFile::fake()->create('clip.mp4', 1000, 'video/mp4');
+
+        $response = $this->actingAs($this->author)
+            ->postJson('/api/moments', [
+                'media' => [$photo, $video],
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['media']);
+    }
+
     public function test_author_authorization_for_updating_caption_and_product_tags(): void
     {
         $moment = Moment::create([

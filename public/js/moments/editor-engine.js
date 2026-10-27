@@ -102,13 +102,23 @@
                 window.MomentCameraEngine.stopStream();
             }
 
+            const capturedPhotos = this.state.get('capturedPhotos');
             const capturedPhoto = this.state.get('capturedPhoto');
             const clips = this.state.get('clips');
 
-            if (capturedPhoto) {
+            if (capturedPhotos && capturedPhotos.length > 0) {
                 this.mediaType = 'photo';
+                this.mediaBlobs = capturedPhotos.map(p => p.blob);
+                this.mediaUrls = capturedPhotos.map(p => p.dataUrl || URL.createObjectURL(p.blob));
+                this.mediaBlob = this.mediaBlobs[0];
+                this.mediaUrl = this.mediaUrls[0];
+                this.setupPhotoPreview();
+            } else if (capturedPhoto) {
+                this.mediaType = 'photo';
+                this.mediaBlobs = [capturedPhoto.blob];
+                this.mediaUrls = [capturedPhoto.dataUrl || URL.createObjectURL(capturedPhoto.blob)];
                 this.mediaBlob = capturedPhoto.blob;
-                this.mediaUrl = capturedPhoto.dataUrl || URL.createObjectURL(capturedPhoto.blob);
+                this.mediaUrl = this.mediaUrls[0];
                 this.setupPhotoPreview();
             } else if (clips && clips.length > 0) {
                 this.mediaType = 'video';
@@ -680,11 +690,18 @@
 
             // Siapkan FormData
             const formData = new FormData();
-            const ext = (this.mediaType === 'video') ? 'mp4' : 'jpg';
-            const filename = `moment_${Date.now()}.${ext}`;
-
-            formData.append('media', this.mediaBlob, filename);
-            formData.append('media_type', this.mediaType);
+            if (this.mediaType === 'photo' && this.mediaBlobs && this.mediaBlobs.length > 1) {
+                // Multi-photo upload
+                this.mediaBlobs.forEach((blob, idx) => {
+                    formData.append(`media[${idx}]`, blob, `moment_${Date.now()}_${idx}.jpg`);
+                });
+                formData.append('media_type', 'image');
+            } else {
+                const ext = (this.mediaType === 'video') ? 'mp4' : 'jpg';
+                const filename = `moment_${Date.now()}.${ext}`;
+                formData.append('media', this.mediaBlob, filename);
+                formData.append('media_type', this.mediaType);
+            }
             formData.append('caption', caption);
 
             if (this.mediaType === 'video') {

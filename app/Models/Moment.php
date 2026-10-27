@@ -19,6 +19,7 @@ class Moment extends Model
         'user_id',
         'media_url',
         'thumbnail_url',
+        'media_urls',
         'media_type',
         'video_duration_seconds',
         'caption',
@@ -32,6 +33,7 @@ class Moment extends Model
     ];
 
     protected $casts = [
+        'media_urls'             => 'array',
         'video_duration_seconds' => 'decimal:2',
         'likes_count'            => 'integer',
         'comments_count'         => 'integer',
@@ -42,6 +44,18 @@ class Moment extends Model
         'created_at'             => 'datetime',
         'updated_at'             => 'datetime',
     ];
+
+    /**
+     * Ambil seluruh URL media untuk momen ini (baik tunggal maupun multi-foto carousel).
+     */
+    public function getAllMediaUrlsAttribute(): array
+    {
+        if (!empty($this->media_urls) && is_array($this->media_urls)) {
+            return $this->media_urls;
+        }
+
+        return $this->media_url ? [$this->media_url] : [];
+    }
 
     public function user(): BelongsTo
     {

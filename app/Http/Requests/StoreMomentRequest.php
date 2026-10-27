@@ -19,41 +19,57 @@ class StoreMomentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $imageExtensions = [
+            'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'bmp', 'tiff', 'tif',
+            'svg', 'avif', 'ico', 'raw', 'cr2', 'nef', 'arw', 'dng', 'psd', 'eps', 'ai'
+        ];
+
+        $videoExtensions = [
+            'mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp',
+            '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'
+        ];
+
         return [
             'media' => [
                 'required',
-                'file',
-                function ($attribute, $value, $fail) {
-                    if (!$value->isValid()) {
-                        return $fail('Berkas media gagal diunggah ke server atau melebihi batas upload.');
+                function ($attribute, $value, $fail) use ($imageExtensions, $videoExtensions) {
+                    $validateSingleFile = function ($file, bool $allowVideo = true) use ($imageExtensions, $videoExtensions, $fail) {
+                        if (!($file instanceof \Illuminate\Http\UploadedFile) || !$file->isValid()) {
+                            return $fail('Berkas media gagal diunggah ke server atau melebihi batas upload.');
+                        }
+
+                        $mime = $file->getMimeType() ?: '';
+                        $ext = strtolower($file->getClientOriginalExtension() ?: '');
+
+                        $isImage = str_starts_with($mime, 'image/') || in_array($ext, $imageExtensions);
+                        $isVideo = str_starts_with($mime, 'video/') || in_array($ext, $videoExtensions);
+
+                        if (!$isImage && !$isVideo) {
+                            return $fail('Format media tidak didukung. Harap unggah berkas foto atau video.');
+                        }
+
+                        if (!$allowVideo && $isVideo) {
+                            return $fail('Unggah lebih dari satu berkas hanya diperbolehkan untuk foto/gambar.');
+                        }
+                    };
+
+                    if (is_array($value)) {
+                        if (count($value) === 0) {
+                            return $fail('Berkas media (foto/video) wajib diunggah.');
+                        }
+                        if (count($value) > 10) {
+                            return $fail('Maksimal foto yang dapat diunggah dalam satu momen adalah 10 foto.');
+                        }
+                        $allowVideo = (count($value) === 1);
+                        foreach ($value as $file) {
+                            $validateSingleFile($file, $allowVideo);
+                        }
+                    } else {
+                        $validateSingleFile($value, true);
                     }
-
-                    $mime = $value->getMimeType() ?: '';
-                    $ext = strtolower($value->getClientOriginalExtension() ?: '');
-
-                    // Semua jenis foto: jpeg, png, webp, heic, heif, gif, bmp, tiff, svg, avif, raw, cr2, nef, arw, dng, psd, dsb.
-                    $imageExtensions = [
-                        'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'bmp', 'tiff', 'tif',
-                        'svg', 'avif', 'ico', 'raw', 'cr2', 'nef', 'arw', 'dng', 'psd', 'eps', 'ai'
-                    ];
-
-                    // Semua jenis video: mp4, mov, quicktime, webm, mkv, avi, wmv, flv, 3gp, 3g2, m4v, ts, mpeg, mpg, ogv, vob, m2ts, divx, rm, rmvb, asf, dsb.
-                    $videoExtensions = [
-                        'mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp',
-                        '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'
-                    ];
-
-                    $isImage = str_starts_with($mime, 'image/') || in_array($ext, $imageExtensions);
-                    $isVideo = str_starts_with($mime, 'video/') || in_array($ext, $videoExtensions);
-
-                    // Menolak format non-media/dokumen non-visual
-                    if (!$isImage && !$isVideo) {
-                        return $fail('Format media tidak didukung. Harap unggah berkas foto atau video.');
-                    }
-
-                    // Bebas tanpa batasan ukuran file (foto & video)
                 },
             ],
+            'media.*' => ['nullable'],
             'media_type' => ['nullable', 'string', 'in:image,video'],
             'video_duration_seconds' => ['nullable', 'numeric', 'min:0'],
             'caption' => ['nullable', 'string', 'max:1000'],

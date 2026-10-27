@@ -481,7 +481,7 @@
             </div>
             @if($barang->total_ulasan > 0)
                 <span class="text-[11px] font-semibold text-slate-600 bg-slate-100/80 px-2.5 py-0.5 rounded-full border border-slate-200/50">
-                    {{ $barang->total_ulasan }} ulasan
+                    {{ $barang->total_ulasan }} Ulasan
                 </span>
             @endif
         </div>
