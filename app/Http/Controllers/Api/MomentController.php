@@ -588,24 +588,23 @@ class MomentController extends Controller
      */
     protected function uploadMediaToCloudinary($file, string $mediaType): array
     {
-        $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+        $cloudinaryUrl = config('cloudinary.cloud_url') ?: env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
 
         // Lingkungan testing atau bila kredensial Cloudinary belum diatur
         if (app()->environment('testing') || empty($cloudinaryUrl) || str_contains($cloudinaryUrl, 'dummy') || str_contains($cloudinaryUrl, 'test')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: ($mediaType === 'video' ? 'mp4' : 'jpg'));
-            $uniq = uniqid('moment_');
-
-            // HEIC transcoding fallback test simulation
-            if (in_array($ext, ['heic', 'heif'])) {
-                $ext = 'jpg';
+            try {
+                $path = \App\Services\StorageService::storePublicFile($file, 'moments');
+                $fullUrl = \App\Services\StorageService::getPublicUrl($path);
+                return [
+                    'secure_url'    => $fullUrl,
+                    'thumbnail_url' => $mediaType === 'video' ? $fullUrl : null,
+                ];
+            } catch (\Throwable $e) {
+                return [
+                    'secure_url'    => 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg',
+                    'thumbnail_url' => null,
+                ];
             }
-
-            return [
-                'secure_url'    => "https://res.cloudinary.com/rentify/{$mediaType}/upload/v12345/rentify/moments/{$uniq}.{$ext}",
-                'thumbnail_url' => $mediaType === 'video'
-                    ? "https://res.cloudinary.com/rentify/video/upload/c_thumb,w_400/v12345/rentify/moments/{$uniq}.jpg"
-                    : null,
-            ];
         }
 
         try {
@@ -632,7 +631,8 @@ class MomentController extends Controller
             $thumbnailUrl = null;
 
             if ($mediaType === 'video' && isset($uploadResult['public_id'])) {
-                $thumbnailUrl = "https://res.cloudinary.com/rentify/video/upload/c_thumb,w_400/{$uploadResult['public_id']}.jpg";
+                $cloudName = $cloudinary->configuration->cloud->cloudName ?? 'fnf8f1pm';
+                $thumbnailUrl = "https://res.cloudinary.com/{$cloudName}/video/upload/c_thumb,w_400/{$uploadResult['public_id']}.jpg";
             }
 
             return [
@@ -642,15 +642,20 @@ class MomentController extends Controller
         } catch (\Throwable $e) {
             Log::error("Cloudinary upload failed: " . $e->getMessage());
 
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-            if (in_array($ext, ['heic', 'heif'])) {
-                $ext = 'jpg';
+            try {
+                $path = \App\Services\StorageService::storePublicFile($file, 'moments');
+                $fullUrl = \App\Services\StorageService::getPublicUrl($path);
+                return [
+                    'secure_url'    => $fullUrl,
+                    'thumbnail_url' => $mediaType === 'video' ? $fullUrl : null,
+                ];
+            } catch (\Throwable $fallbackEx) {
+                Log::error("Local moments fallback failed: " . $fallbackEx->getMessage());
+                return [
+                    'secure_url'    => 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg',
+                    'thumbnail_url' => null,
+                ];
             }
-
-            return [
-                'secure_url'    => "https://res.cloudinary.com/rentify/moments/" . uniqid('moment_') . '.' . $ext,
-                'thumbnail_url' => null,
-            ];
         }
     }
 }

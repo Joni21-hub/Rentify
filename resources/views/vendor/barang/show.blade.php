@@ -45,11 +45,7 @@
     @endif
 
     @php
-        $rawCover = (string) ($barang->cover_photo ?? ($barang->fotos->first()->foto_path ?? ''));
-        $cover = $rawCover;
-        if ($rawCover && !str_starts_with($rawCover, 'http')) {
-            $cover = asset((string) str_replace('public/', '', $rawCover));
-        }
+        $cover = $barang->cover_photo_url;
     @endphp
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -64,7 +60,7 @@
                 </div>
                 <div class="aspect-square rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center">
                     @if($cover)
-                        <img src="{{ $cover }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover">
+                        <img src="{{ $cover }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                     @else
                         <i class="fa-solid fa-image text-3xl text-slate-300"></i>
                     @endif
@@ -83,14 +79,10 @@
                     <div class="grid grid-cols-2 gap-2.5">
                         @foreach($fotoTambahans as $foto)
                             @php
-                                $rawFpath = (string) ($foto->foto_path ?? '');
-                                $fpath = $rawFpath;
-                                if ($rawFpath && !str_starts_with($rawFpath, 'http')) {
-                                    $fpath = asset((string) str_replace('public/', '', $rawFpath));
-                                }
+                                $fpath = $foto->foto_url;
                             @endphp
                             <div class="relative group rounded-xl overflow-hidden bg-slate-100 border border-slate-200 aspect-square">
-                                <img src="{{ $fpath }}" class="w-full h-full object-cover">
+                                <img src="{{ $fpath }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                 
                                 <!-- Action Buttons Overlay -->
                                 <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-1">

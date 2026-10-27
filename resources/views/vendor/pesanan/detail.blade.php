@@ -96,16 +96,13 @@
                     @foreach($pesanan->details as $detail)
                         @if($detail->barang && $detail->barang->vendor_id == Auth::id())
                             @php
-                                $cImg = $detail->barang->cover_photo ?? null;
-                                if ($cImg && !str_starts_with($cImg, 'http')) {
-                                    $cImg = asset(str_replace('public/', '', $cImg));
-                                }
+                                $cImg = $detail->barang->cover_photo_url;
                             @endphp
                             <div class="p-3 rounded-xl border border-slate-100 flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
                                     <div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
                                         @if($cImg)
-                                            <img src="{{ $cImg }}" class="w-full h-full object-cover">
+                                            <img src="{{ $cImg }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                         @else
                                             <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fa-solid fa-image text-xs"></i></div>
                                         @endif

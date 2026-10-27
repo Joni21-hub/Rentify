@@ -47,16 +47,13 @@
     <div class="block lg:hidden space-y-2.5">
         @forelse($barangs as $barang)
             @php
-                $imgUrl = $barang->cover_photo ?? ($barang->fotos->first()->foto_path ?? null);
-                if ($imgUrl && !str_starts_with($imgUrl, 'http')) {
-                    $imgUrl = asset(str_replace('public/', '', $imgUrl));
-                }
+                $imgUrl = $barang->cover_photo_url;
             @endphp
             <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
                 <div class="flex items-start gap-3">
                     <div class="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
                         @if($imgUrl)
-                            <img src="{{ $imgUrl }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover">
+                            <img src="{{ $imgUrl }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-slate-300">
                                 <i class="fa-solid fa-image text-lg"></i>
@@ -129,17 +126,14 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse($barangs as $barang)
                     @php
-                        $imgUrl = $barang->cover_photo ?? ($barang->fotos->first()->foto_path ?? null);
-                        if ($imgUrl && !str_starts_with($imgUrl, 'http')) {
-                            $imgUrl = asset(str_replace('public/', '', $imgUrl));
-                        }
+                        $imgUrl = $barang->cover_photo_url;
                     @endphp
                     <tr class="hover:bg-slate-50/60 transition">
                         <td class="px-6 py-3.5">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
                                     @if($imgUrl)
-                                        <img src="{{ $imgUrl }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover">
+                                        <img src="{{ $imgUrl }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-slate-300">
                                             <i class="fa-solid fa-image text-sm"></i>

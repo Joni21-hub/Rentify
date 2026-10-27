@@ -477,7 +477,7 @@
                                         <div class="group bg-white rounded-2xl p-2.5 border border-slate-100 hover:border-sky-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
                                             <a href="{{ route('customer.barang.show', $fav->barang->slug ?? $fav->barang->id) }}" class="block space-y-2">
                                                 <div class="aspect-square rounded-xl bg-slate-50 overflow-hidden relative">
-                                                    <img src="{{ $fav->barang->cover_photo ? (str_starts_with((string)$fav->barang->cover_photo, 'http') ? $fav->barang->cover_photo : Storage::url((string)$fav->barang->cover_photo)) : asset('images/placeholder.png') }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                                    <img src="{{ $fav->barang->cover_photo_url }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                                     <!-- Floating Sky Blue Heart Badge -->
                                                     <div class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/95 backdrop-blur-xs flex items-center justify-center text-sky-500 shadow-xs">
                                                         <i class="fa-solid fa-heart text-[10px]"></i>

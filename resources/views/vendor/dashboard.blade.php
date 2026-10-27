@@ -300,13 +300,10 @@
                             </span>
                             <div class="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
                                 @php
-                                    $furl = $prod->cover_photo ?? ($prod->fotos->first()->foto_path ?? null);
-                                    if ($furl && !str_starts_with($furl, 'http')) {
-                                        $furl = asset(str_replace('public/', '', $furl));
-                                    }
+                                    $furl = $prod->cover_photo_url;
                                 @endphp
                                 @if($furl)
-                                    <img src="{{ $furl }}" alt="{{ $prod->nama }}" class="w-full h-full object-cover">
+                                    <img src="{{ $furl }}" alt="{{ $prod->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fa-solid fa-image text-xs"></i></div>
                                 @endif

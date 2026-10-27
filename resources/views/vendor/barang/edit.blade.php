@@ -58,9 +58,9 @@
                     </div>
 
                     <!-- Foto Saat Ini -->
-                    @if($barang->cover_photo)
+                    @if($barang->cover_photo_url)
                     <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
-                        <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" class="w-16 h-16 rounded-xl object-cover border border-slate-200" alt="Cover Saat Ini">
+                        <img src="{{ $barang->cover_photo_url }}" class="w-16 h-16 rounded-xl object-cover border border-slate-200" alt="Cover Saat Ini" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                         <div>
                             <span class="text-xs font-black text-slate-800 block">Foto Cover Saat Ini</span>
                             <span class="text-[11px] text-slate-400">Pilih foto baru di bawah jika ingin memperbarui.</span>

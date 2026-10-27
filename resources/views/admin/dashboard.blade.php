@@ -469,12 +469,9 @@
                                     <td class="p-4 pl-6">
                                         <div class="w-12 h-12 border border-slate-200 overflow-hidden rentify-card">
                                             @php
-                                                $coverUrl = 'https://placehold.co/50?text=No+Img';
-                                                if($p->cover_photo){
-                                                    $coverUrl = str_starts_with($p->cover_photo, 'http') ? $p->cover_photo : Storage::url($p->cover_photo);
-                                                }
+                                                $coverUrl = $p->cover_photo_url;
                                             @endphp
-                                            <img src="{{ $coverUrl }}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/50?text=No+Img'">
+                                            <img src="{{ $coverUrl }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                         </div>
                                     </td>
                                     <td class="p-4 font-bold text-slate-800 text-sm max-w-[200px] truncate produk-nama">{{ $p->nama }}</td>

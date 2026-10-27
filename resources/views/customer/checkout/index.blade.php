@@ -91,8 +91,8 @@
                 @php $hargaTampil = $item->barang->harga_sewa_harian * 1.05; @endphp
                 <div style="display: flex; gap: 12px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0;">
                     <div style="width: 60px; height: 60px; border-radius: 8px; border: 1px solid #e2e8f0; overflow:hidden; flex-shrink: 0;">
-                        @if($item->barang->cover_photo)
-                            <img src="{{ asset(str_replace('public/', '', $item->barang->cover_photo)) }}" class="w-full h-full object-cover">
+                        @if($item->barang)
+                            <img src="{{ $item->barang->cover_photo_url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                         @else
                             <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No Img</div>
                         @endif

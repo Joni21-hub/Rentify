@@ -84,24 +84,42 @@ class StorageService
 
         // Jika path adalah URL lengkap eksternal (Cloudinary lama / CDN)
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
+            // Abaikan jika URL mock palsu
+            if (!str_contains($path, 'res.cloudinary.com/rentify/')) {
+                return $path;
+            }
         }
 
         $clean = (string) preg_replace('#^(public/|storage/)+#', '', ltrim((string) $path, '/'));
+        $baseName = basename($clean);
 
-        // Cek keberadaan berkas fisik pada public/
+        // 1. Cek keberadaan berkas fisik pada public/
         if (file_exists(public_path($clean))) {
             return asset($clean);
         }
 
-        // Cek keberadaan berkas fisik pada disk publik lokal
+        // 2. Cek keberadaan berkas fisik pada public/storage/
+        if (file_exists(public_path('storage/' . $clean))) {
+            return asset('storage/' . $clean);
+        }
+
+        // 3. Cek keberadaan berkas fisik pada disk publik lokal
         if (Storage::disk('public')->exists($clean)) {
             return asset('storage/' . $clean);
         }
 
-        // Cek keberadaan berkas fisik pada public/storage/
-        if (file_exists(public_path('storage/' . $clean))) {
-            return asset('storage/' . $clean);
+        // 4. Cek variasi subfolder barang atau galeri
+        if (file_exists(public_path('barang/' . $baseName))) {
+            return asset('barang/' . $baseName);
+        }
+        if (file_exists(public_path('barang/galeri/' . $baseName))) {
+            return asset('barang/galeri/' . $baseName);
+        }
+        if (Storage::disk('public')->exists('barang/' . $baseName)) {
+            return asset('storage/barang/' . $baseName);
+        }
+        if (Storage::disk('public')->exists('barang/galeri/' . $baseName)) {
+            return asset('storage/barang/galeri/' . $baseName);
         }
 
         // Fallback untuk media lama yang belum disinkronkan ke lokal
@@ -120,20 +138,30 @@ class StorageService
 
         // 1. Jika URL eksternal (Cloudinary, S3, CDN)
         if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
-            return $raw;
+            if (!str_contains($raw, 'res.cloudinary.com/rentify/')) {
+                return $raw;
+            }
         }
 
         // 2. Jika berkas fisik eksis di public atau disk storage
         if (!empty($raw)) {
             $clean = (string) preg_replace('#^(public/|storage/)+#', '', ltrim($raw, '/'));
+            $baseName = basename($clean);
+
             if (file_exists(public_path($clean))) {
                 return asset($clean);
+            }
+            if (file_exists(public_path('storage/' . $clean))) {
+                return asset('storage/' . $clean);
             }
             if (Storage::disk('public')->exists($clean)) {
                 return asset('storage/' . $clean);
             }
-            if (file_exists(public_path('storage/' . $clean))) {
-                return asset('storage/' . $clean);
+            if (file_exists(public_path('barang/' . $baseName))) {
+                return asset('barang/' . $baseName);
+            }
+            if (Storage::disk('public')->exists('barang/' . $baseName)) {
+                return asset('storage/barang/' . $baseName);
             }
         }
 

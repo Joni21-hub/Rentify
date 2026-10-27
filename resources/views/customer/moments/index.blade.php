@@ -508,10 +508,11 @@
             } else if (m.media_urls && Array.isArray(m.media_urls) && m.media_urls.length > 1) {
                 // Carousel Post (Multi-Foto Instagram Reels Style)
                 const totalSlides = m.media_urls.length;
+                const fallbackMomentImg = 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg';
                 const slides = m.media_urls.map((url, sIdx) => `
                     <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
-                        <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none">
-                        <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none">
+                        <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                        <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                     </div>
                 `).join('');
 
@@ -547,12 +548,13 @@
                     </div>
                 `;
             } else {
+                const fallbackMomentImg = 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg';
                 mediaHtml = `
                     <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
                         <!-- Ambient Blurred Backdrop -->
-                        <img src="${m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none">
+                        <img src="${m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         <!-- High-res Sharp Image -->
-                        <img src="${m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none">
+                        <img src="${m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                     </div>
                 `;
             }
