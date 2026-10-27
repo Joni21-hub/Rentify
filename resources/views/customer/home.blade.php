@@ -74,35 +74,8 @@
 </head>
 <body class="text-slate-800 antialiased bg-slate-50/50">
 
-    <!-- ===== TOP BAR: LOKASI ALA TOKOPEDIA (DESKTOP & MOBILE) ===== -->
-    <div class="bg-white/90 backdrop-blur-md border-b border-slate-100 text-xs text-slate-600 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
-            <a href="{{ route('customer.lokasi') }}" class="flex items-center gap-1.5 hover:text-sky-600 transition truncate max-w-[80%] sm:max-w-md">
-                <i class="fa-solid fa-location-dot text-sky-500 text-[11px] flex-shrink-0"></i>
-                <span class="text-slate-400 font-medium hidden sm:inline">Lokasi Rental:</span>
-                <span class="font-bold text-slate-700 truncate">
-                    {{ session('user_alamat') ? Str::limit(session('user_alamat'), 28) : 'Pilih Lokasi Kamu (Maks 50 KM)' }}
-                </span>
-                <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 ml-0.5"></i>
-            </a>
-
-            <div class="flex items-center gap-2 flex-shrink-0">
-                @if(!session('user_latitude'))
-                    <button type="button" onclick="autoDetectLocation()" id="top-btn-gps" class="text-[10.5px] font-bold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-100 transition flex items-center gap-1 shadow-2xs">
-                        <i class="fa-solid fa-crosshairs text-[9.5px]"></i>
-                        <span>Deteksi GPS</span>
-                    </button>
-                @else
-                    <a href="{{ route('customer.lokasi') }}" class="text-[10.5px] font-bold text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100 transition">
-                        Ubah Lokasi
-                    </a>
-                @endif
-            </div>
-        </div>
-    </div>
-
     <!-- ===== TOP NAVBAR (DESKTOP ONLY) ===== -->
-    <header class="hidden md:block bg-white/80 backdrop-blur-md border-b border-slate-100/80 shadow-2xs">
+    <header class="hidden md:block bg-white/90 backdrop-blur-md border-b border-slate-100/80 shadow-2xs sticky top-0 z-50">
         <div class="max-w-7xl mx-auto w-full px-6 py-3 flex items-center gap-5">
             <!-- Logo -->
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2.5 flex-shrink-0 hover:opacity-95 transition">
@@ -163,7 +136,7 @@
     </header>
 
     <!-- ===== TOP NAVBAR (MOBILE ONLY) ===== -->
-    <header class="md:hidden px-3.5 pt-2.5 pb-2 flex gap-2.5 items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
+    <header class="md:hidden sticky top-0 z-50 px-3.5 pt-2.5 pb-2 flex gap-2.5 items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
         <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-1.5 hover:opacity-90 transition">
             <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
             <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
@@ -238,50 +211,6 @@
             @endif
         </section>
 
-        <!-- ===== TRUST BAR / VALUE PROPOSITION (ALA TOKOPEDIA & SHOPEE) ===== -->
-        <section class="mb-3 px-3 sm:px-4 md:px-0">
-            <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-100 shadow-2xs grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div class="flex items-center gap-2 p-1">
-                    <div class="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[11px] font-bold text-slate-700 truncate leading-tight">100% Terverifikasi</div>
-                        <div class="text-[9.5px] text-slate-400 truncate leading-tight">Vendor Resmi & Aman</div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 p-1">
-                    <div class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fa-solid fa-location-crosshairs"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[11px] font-bold text-slate-700 truncate leading-tight">Radius 50 KM</div>
-                        <div class="text-[9.5px] text-slate-400 truncate leading-tight">Cari Toko Terdekat</div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 p-1">
-                    <div class="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fa-solid fa-bolt"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[11px] font-bold text-slate-700 truncate leading-tight">Booking Cepat</div>
-                        <div class="text-[9.5px] text-slate-400 truncate leading-tight">Proses Praktis & Jelas</div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 p-1">
-                    <div class="w-7 h-7 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xs flex-shrink-0">
-                        <i class="fa-solid fa-qrcode"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[11px] font-bold text-slate-700 truncate leading-tight">QRIS Otomatis</div>
-                        <div class="text-[9.5px] text-slate-400 truncate leading-tight">Bayar Instan & Aman</div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
         <!-- ===== ETALASE KATEGORI UTAMA (RINGKAS & PROPORSIONAL) ===== -->
         <section class="mb-4 px-3 sm:px-4 md:px-0">
