@@ -34,9 +34,15 @@
                     @foreach($wishlists as $fav)
                     <div class="rentify-card relative rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between">
                         <a href="{{ url('/customer/barang/' . ($fav->barang->slug ?? $fav->barang->id)) }}" class="block p-2.5 space-y-2">
-                            <div class="relative aspect-square bg-slate-100 rounded-xl overflow-hidden shadow-inner">
-                                @if($fav->barang && $fav->barang->cover_photo)
-                                    <img src="{{ str_starts_with((string)$fav->barang->cover_photo, 'http') ? $fav->barang->cover_photo : Storage::url((string)$fav->barang->cover_photo) }}" alt="{{ $fav->barang->nama }}" class="w-full h-full object-cover">
+                            <div class="relative aspect-square bg-slate-100 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+                                @if($fav->barang)
+                                    @php
+                                        $namaLower = strtolower($fav->barang->nama ?? '');
+                                        $fallbackImg = str_contains($namaLower, 'kurs') 
+                                            ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
+                                            : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
+                                    @endphp
+                                    <img src="{{ $fav->barang->cover_photo_url }}" alt="{{ $fav->barang->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-slate-300">
                                         <i class="fa-solid fa-box text-2xl"></i>

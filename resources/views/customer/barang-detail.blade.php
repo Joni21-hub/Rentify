@@ -49,30 +49,26 @@
         <div class="swiper-wrapper">
             
             <div class="swiper-slide flex items-center justify-center p-4">
-                @if($barang->cover_photo)
-                    @php
-                        $coverUrl = str_starts_with((string)$barang->cover_photo, 'http') 
-                            ? $barang->cover_photo 
-                            : asset(str_replace('public/', '', (string)$barang->cover_photo));
-                    @endphp
-                    <img src="{{ $coverUrl }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/400?text=Foto+Utama+Rusak'">
-                @else
-                    <i class="fa-solid fa-image text-slate-200 text-6xl"></i>
-                @endif
+                @php
+                    $coverUrl = $barang->cover_photo_url;
+                    $namaLower = strtolower($barang->nama ?? '');
+                    $fallbackImg = str_contains($namaLower, 'kurs') 
+                        ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
+                        : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
+                @endphp
+                <img src="{{ $coverUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
             </div>
 
             @if(isset($barang->fotos) && $barang->fotos->count() > 0)
                 @foreach($barang->fotos as $foto)
                 @php
                     $rawPath = (string)($foto->foto_path ?? $foto->foto ?? $foto->gambar ?? '');
-                    $fotoUrl = str_starts_with($rawPath, 'http') 
-                        ? $rawPath 
-                        : asset(str_replace('public/', '', $rawPath));
+                    $fotoUrl = \App\Services\StorageService::getPublicUrl($rawPath, 'placeholders/placeholder-barang.png');
                 @endphp
                 
                 @if(!empty($rawPath))
                 <div class="swiper-slide flex items-center justify-center p-4">
-                    <img src="{{ $fotoUrl }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/400?text=Foto+Galeri+Rusak'">
+                    <img src="{{ $fotoUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
                 </div>
                 @endif
                 @endforeach

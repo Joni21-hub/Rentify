@@ -34,7 +34,7 @@ class Barang extends Model
      */
     public function getCoverPhotoUrlAttribute(): string
     {
-        return \App\Services\StorageService::getPublicUrl($this->cover_photo, 'placeholders/placeholder-barang.png');
+        return \App\Services\StorageService::getBarangImageUrl($this);
     }
 
     /**

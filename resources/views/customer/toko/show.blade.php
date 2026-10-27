@@ -219,23 +219,19 @@
             <div class="grid grid-cols-2 gap-3">
                 @foreach($barangs as $item)
                     @php
-                        $coverUrl = $item->cover_photo 
-                            ? (str_starts_with($item->cover_photo, 'http') ? $item->cover_photo : asset(str_replace('public/', '', $item->cover_photo)))
-                            : null;
+                        $coverUrl = $item->cover_photo_url;
                         $hargaSewa = $item->harga_sewa_customer ?? ($item->harga_sewa_harian * 1.05);
+                        $namaLower = strtolower($item->nama ?? '');
+                        $fallbackImg = str_contains($namaLower, 'kurs') 
+                            ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
+                            : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
                     @endphp
                     <a href="{{ route('customer.barang.show', $item->slug ?? $item->id) }}" 
                        class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs hover:shadow-md transition flex flex-col">
                         
                         <!-- Gambar Cover -->
-                        <div class="w-full aspect-square bg-slate-100 relative overflow-hidden">
-                            @if($coverUrl)
-                                <img src="{{ $coverUrl }}" alt="{{ $item->nama }}" class="w-full h-full object-cover">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-slate-300">
-                                    <i class="fa-solid fa-image text-3xl"></i>
-                                </div>
-                            @endif
+                        <div class="w-full aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                            <img src="{{ $coverUrl }}" alt="{{ $item->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
 
                             <span class="absolute top-2 left-2 bg-white/90 backdrop-blur-xs text-sky-700 text-[9px] font-extrabold px-2 py-0.5 rounded-md border border-slate-200/60 shadow-2xs">
                                 {{ $item->kategori->nama ?? 'Sewa' }}

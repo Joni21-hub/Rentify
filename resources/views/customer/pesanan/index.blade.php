@@ -185,20 +185,14 @@
                         @foreach($order->items as $item)
                             @php
                                 $itemUlasan = $orderUlasans->firstWhere('barang_id', $item->product_id);
-                                $fotoItemUrl = $item->cover_photo ? asset(str_replace('public/', '', (string)$item->cover_photo)) : '';
+                                $fotoItemUrl = $item->barang ? $item->barang->cover_photo_url : \App\Services\StorageService::getPublicUrl((string)$item->cover_photo);
                             @endphp
 
                             <!-- Item Box -->
                             <div class="p-3.5 rounded-2xl bg-sky-50/50 backdrop-blur-xs border border-sky-100/70 space-y-2.5">
                                 <div class="flex gap-3">
                                     <div class="w-16 h-16 rounded-2xl bg-white overflow-hidden shrink-0 border border-slate-200/70 flex items-center justify-center shadow-2xs">
-                                        @if($item->cover_photo)
-                                            <img src="{{ asset(str_replace('public/', '', (string)$item->cover_photo)) }}" alt="{{ $item->product_name }}" class="w-full h-full object-cover">
-                                        @else
-                                            <div class="w-full h-full flex items-center justify-center text-slate-300">
-                                                <i class="fa-solid fa-box text-xl"></i>
-                                            </div>
-                                        @endif
+                                        <img src="{{ $fotoItemUrl }}" alt="{{ $item->product_name }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                                     </div>
                                     <div class="flex-1 min-w-0 space-y-1">
                                         <h4 class="font-black text-xs text-slate-800 leading-snug line-clamp-1">{{ $item->product_name }}</h4>
@@ -320,7 +314,7 @@
                             @elseif($isMenungguUlasan)
                                 @php
                                     $firstItem = $order->items->first();
-                                    $firstPhoto = $firstItem && $firstItem->cover_photo ? asset(str_replace('public/', '', (string)$firstItem->cover_photo)) : '';
+                                    $firstPhoto = $firstItem && $firstItem->barang ? $firstItem->barang->cover_photo_url : ($firstItem && $firstItem->cover_photo ? \App\Services\StorageService::getPublicUrl((string)$firstItem->cover_photo) : asset('storage/placeholders/placeholder-barang.png'));
                                     $firstItemName = $firstItem ? $firstItem->product_name : 'Barang Rental';
                                     $firstItemId = $firstItem ? $firstItem->product_id : '';
                                     $firstUlasan = $orderUlasans->first();
@@ -334,7 +328,7 @@
                             @elseif($isSelesai)
                                 @php
                                     $firstItem = $order->items->first();
-                                    $firstPhoto = $firstItem && $firstItem->cover_photo ? asset(str_replace('public/', '', (string)$firstItem->cover_photo)) : '';
+                                    $firstPhoto = $firstItem && $firstItem->barang ? $firstItem->barang->cover_photo_url : ($firstItem && $firstItem->cover_photo ? \App\Services\StorageService::getPublicUrl((string)$firstItem->cover_photo) : asset('storage/placeholders/placeholder-barang.png'));
                                     $firstItemName = $firstItem ? $firstItem->product_name : 'Barang Rental';
                                     $firstItemId = $firstItem ? ($firstItem->product_id ?? '') : '';
                                 @endphp

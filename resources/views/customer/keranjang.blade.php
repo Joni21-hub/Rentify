@@ -60,8 +60,8 @@
                         <input type="checkbox" name="selected_items[]" value="{{ $item->id }}" class="item-checkbox w-5 h-5 text-sky-500 rounded border-slate-300 focus:ring-sky-500 cursor-pointer flex-shrink-0" data-harga="{{ $harga }}">
 
                         <div class="w-20 h-20 bg-white rounded-xl border border-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
-                            @if($item->barang->cover_photo)
-                                <img src="{{ asset(str_replace('public/', '', $item->barang->cover_photo)) }}" class="w-full h-full object-contain">
+                            @if($item->barang)
+                                <img src="{{ $item->barang->cover_photo_url }}" class="w-full h-full object-contain" alt="{{ $item->barang->nama }}" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
                             @else
                                 <i class="fa-solid fa-image text-slate-300 text-2xl"></i>
                             @endif

@@ -96,12 +96,15 @@
                     <a href="{{ route('customer.barang.show', $barang->slug ?? $barang->id) }}" class="break-inside-avoid mb-2.5 rentify-card border border-slate-100/80 overflow-hidden hover:border-sky-300 hover:shadow-md transition duration-200 flex flex-col group relative">
                         
                         <!-- Area Foto -->
-                        <div class="relative w-full overflow-hidden bg-slate-50 border-b border-slate-50">
-                            @if($barang->cover_photo)
-                                <img src="{{ asset(str_replace('public/', '', $barang->cover_photo)) }}" alt="{{ $barang->nama }}" class="w-full h-auto max-h-[420px] object-cover group-hover:scale-105 transition duration-300 block">
-                            @else
-                                <div class="w-full h-36 flex items-center justify-center text-slate-200"><i class="fa-solid fa-image text-3xl"></i></div>
-                            @endif
+                        <div class="relative w-full overflow-hidden bg-slate-50 border-b border-slate-50 flex items-center justify-center">
+                            @php
+                                $coverImg = $barang->cover_photo_url;
+                                $namaLower = strtolower($barang->nama ?? '');
+                                $fallbackImg = str_contains($namaLower, 'kurs') 
+                                    ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
+                                    : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
+                            @endphp
+                            <img src="{{ $coverImg }}" alt="{{ $barang->nama }}" class="w-full h-auto max-h-[420px] object-cover group-hover:scale-105 transition duration-300 block" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
                             
                             <!-- Badge Stok -->
                             <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm border border-emerald-100 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">

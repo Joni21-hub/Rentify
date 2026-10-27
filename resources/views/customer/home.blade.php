@@ -479,12 +479,15 @@
                         <div class="bg-white rounded-2xl border border-slate-100/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_24px_rgba(14,165,233,0.14)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative group">
                             
                             <!-- GAMBAR PRODUK SQUARE DENGAN BADGE -->
-                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square overflow-hidden bg-slate-100">
-                                @if($barang->cover_photo)
-                                    <img src="{{ asset(str_replace('public/', '', (string)$barang->cover_photo)) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" decoding="async" alt="{{ $barang->nama }}">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fa-solid fa-image text-3xl"></i></div>
-                                @endif
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square overflow-hidden bg-slate-100 flex items-center justify-center">
+                                @php
+                                    $coverImg = $barang->cover_photo_url;
+                                    $namaLower = strtolower($barang->nama ?? '');
+                                    $fallbackImg = str_contains($namaLower, 'kurs') 
+                                        ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
+                                        : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
+                                @endphp
+                                <img src="{{ $coverImg }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" decoding="async" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
 
                                 <!-- BADGE JARAK (JIKA TERSEDIA) -->
                                 @if(isset($barang->jarak))
