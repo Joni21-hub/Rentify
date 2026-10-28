@@ -402,13 +402,13 @@
                     </a>
                 </div>
             @else
-                <!-- PRODUCT GRID (2 KOLOM MOBILE, 3-5 KOLOM DESKTOP ALA SHOPEE/TOKOPEDIA) -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+                <!-- PRODUCT GRID (MASONRY WATERFALL: MENYESUAIKAN ASLI GAMBAR PANJANG/PENDEK YANG DIUPLOAD) -->
+                <div class="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-2.5 sm:gap-3.5 [column-fill:_balance]">
                     @foreach($daftarBarang as $barang)
-                        <div class="bg-white rounded-2xl border border-slate-100/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_24px_rgba(14,165,233,0.14)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative group">
+                        <div class="break-inside-avoid mb-2.5 sm:mb-3.5 bg-white rounded-2xl border border-slate-100/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_24px_rgba(14,165,233,0.14)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative group">
                             
-                            <!-- GAMBAR PRODUK SQUARE DENGAN BADGE -->
-                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full aspect-square overflow-hidden bg-slate-100 flex items-center justify-center">
+                            <!-- GAMBAR PRODUK DINAMIS (MENYESUAIKAN RASIO FOTO ASLI TANPA TERPOTONG KOTAK) -->
+                            <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full overflow-hidden bg-slate-100 flex items-center justify-center">
                                 @php
                                     $coverImg = $barang->cover_photo_url;
                                     $namaLower = strtolower($barang->nama ?? '');
@@ -416,7 +416,7 @@
                                         ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
                                         : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
                                 @endphp
-                                <img src="{{ $coverImg }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" decoding="async" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                                <img src="{{ $coverImg }}" class="w-full h-auto max-h-[420px] object-cover group-hover:scale-105 transition-transform duration-500 ease-out block" loading="lazy" decoding="async" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
 
                                 <!-- BADGE JARAK (JIKA TERSEDIA) -->
                                 @if(isset($barang->jarak))
@@ -460,18 +460,11 @@
                                 </a>
 
                                 <!-- VENDOR INFO FOOTER (SIGNATURE E-COMMERCE) -->
-                                <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px] text-slate-500">
-                                    <div class="flex items-center gap-1 min-w-0">
-                                        <i class="fa-solid fa-store text-sky-500 text-[10px] flex-shrink-0"></i>
-                                        <span class="truncate font-medium text-slate-600">
-                                            {{ $barang->vendor->vendor_name ?? $barang->vendor->name ?? 'Toko Rental' }}
-                                        </span>
-                                    </div>
-                                    @if($barang->is_delivery_supported)
-                                        <span class="flex-shrink-0 text-[8.5px] font-extrabold text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded-md border border-sky-100">
-                                            Bisa Antar
-                                        </span>
-                                    @endif
+                                <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10.5px] text-slate-500 min-w-0">
+                                    <i class="fa-solid fa-store text-sky-500 text-[10px] flex-shrink-0"></i>
+                                    <span class="truncate font-medium text-slate-600">
+                                        {{ $barang->vendor->vendor_name ?? $barang->vendor->name ?? 'Toko Rental' }}
+                                    </span>
                                 </div>
                             </div>
 

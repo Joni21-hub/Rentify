@@ -3,8 +3,6 @@
 @section('title', 'Rentify Moments — Feed Komunitas Rental')
 
 @push('head')
-<!-- heic2any CDN untuk konversi format HEIC/HEIF WebAssembly di sisi client -->
-<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <style>
     html, body {
         height: 100% !important;
@@ -1175,6 +1173,20 @@
         const statusEl = document.getElementById('heic-converting-status');
         const processedPhotos = [];
 
+        async function loadHeicConverter() {
+            if (typeof heic2any === 'function') return true;
+            return new Promise((resolve) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+                s.onload = () => resolve(true);
+                s.onerror = () => {
+                    console.warn('Gagal memuat heic2any CDN');
+                    resolve(false);
+                };
+                document.head.appendChild(s);
+            });
+        }
+
         for (const file of rawFiles) {
             const mime = file.type || '';
             const ext = (file.name || '').split('.').pop().toLowerCase();
@@ -1185,6 +1197,7 @@
             if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
                 statusEl?.classList.remove('hidden');
                 try {
+                    await loadHeicConverter();
                     if (typeof heic2any === 'function') {
                         const convertedBlob = await heic2any({
                             blob: file,

@@ -206,15 +206,23 @@
 
             <!-- Authentication CTAs -->
             <div class="flex items-center gap-2 sm:gap-3">
-                <a href="{{ route('login') }}" 
-                   class="btn-ghost-deluxe px-4 sm:px-5 py-2 rounded-full text-xs font-bold text-slate-200 hover:text-white transition active:scale-95 flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-right-to-bracket text-sky-400 text-xs"></i>
-                    <span>Masuk</span>
-                </a>
-                <a href="{{ route('register') }}" 
-                   class="btn-glow-primary px-4 sm:px-5 py-2 rounded-full text-xs font-extrabold uppercase tracking-wider text-white transition active:scale-95 flex items-center gap-1.5">
-                    <span>Daftar Gratis</span>
-                </a>
+                @auth
+                    <a href="{{ route('customer.home') }}" 
+                       class="btn-glow-primary px-5 py-2 rounded-full text-xs font-extrabold uppercase tracking-wider text-white transition active:scale-95 flex items-center gap-1.5 shadow-lg">
+                        <i class="fa-solid fa-house text-xs"></i>
+                        <span>Ke Beranda</span>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" 
+                       class="btn-ghost-deluxe px-4 sm:px-5 py-2 rounded-full text-xs font-bold text-slate-200 hover:text-white transition active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-to-bracket text-sky-400 text-xs"></i>
+                        <span>Masuk</span>
+                    </a>
+                    <a href="{{ route('register') }}" 
+                       class="btn-glow-primary px-4 sm:px-5 py-2 rounded-full text-xs font-extrabold uppercase tracking-wider text-white transition active:scale-95 flex items-center gap-1.5">
+                        <span>Daftar Gratis</span>
+                    </a>
+                @endauth
             </div>
 
         </div>
@@ -234,7 +242,7 @@
             <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] backdrop-blur-xl mb-6 shadow-inner">
                 <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span class="text-[11px] sm:text-xs font-extrabold tracking-wide text-sky-300 uppercase">
-                    ✨ Marketplace Rental #1 Terpercaya di Sekitarmu
+                    ✨ Rentify • Sewa Gampang, Cuan Datang!
                 </span>
             </div>
 
@@ -242,22 +250,30 @@
             <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-4xl mx-auto mb-6">
                 Sewa Apapun yang Kamu Butuhkan, <br class="hidden sm:inline" />
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-sky-200 to-indigo-300">
-                    Kapan Saja & Tanpa Beban Membeli.
+                    Sewa Gampang, Cuan Datang!
                 </span>
             </h1>
 
             <!-- Plain, Punchy Subtitle: Clear & Relatable -->
             <p class="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed mb-8 sm:mb-10">
-                Dari kamera sinema, tenda camping, drone 4K, hingga kendaraan liburan. Rentify menghubungkan kamu dengan ratusan toko rental terverifikasi dalam radius <strong>50 KM</strong>. Nikmati pengalaman terbaik dengan <strong>hemat hingga 95%</strong>.
+                Butuh barang? Tinggal cari dan sewa di Rentify! Punya barang jarang dipakai? Yuk sewakan dan dapatkan penghasilan tambahan. <span class="text-sky-300 font-semibold">Lebih praktis, lebih hemat, dan sama-sama untung.</span>
             </p>
 
             <!-- Dual Clear Call To Action -->
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto mb-16">
-                <a href="{{ route('login') }}" 
-                   class="w-full sm:w-auto btn-glow-primary px-8 py-3.5 rounded-full text-sm font-extrabold text-white transition flex items-center justify-center gap-2.5 shadow-xl">
-                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                    <span>Mulai Cari Barang Rental</span>
-                </a>
+                @auth
+                    <a href="{{ route('customer.home') }}" 
+                       class="w-full sm:w-auto btn-glow-primary px-8 py-3.5 rounded-full text-sm font-extrabold text-white transition flex items-center justify-center gap-2.5 shadow-xl">
+                        <i class="fa-solid fa-bag-shopping text-xs"></i>
+                        <span>Buka Katalog Beranda</span>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" 
+                       class="w-full sm:w-auto btn-glow-primary px-8 py-3.5 rounded-full text-sm font-extrabold text-white transition flex items-center justify-center gap-2.5 shadow-xl">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        <span>Mulai Cari Barang Rental</span>
+                    </a>
+                @endauth
                 <a href="{{ route('vendor.register') }}" 
                    class="w-full sm:w-auto btn-ghost-deluxe px-7 py-3.5 rounded-full text-sm font-bold text-slate-200 hover:text-white transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-store text-sky-400"></i>
@@ -332,10 +348,17 @@
                                 </p>
                             </div>
                             <div class="flex items-center gap-2">
+                                @auth
+                                <a href="{{ route('customer.home') }}" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition flex items-center gap-1.5">
+                                    <span>Buka Katalog Beranda</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </a>
+                                @else
                                 <a href="{{ route('login') }}" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition flex items-center gap-1.5">
                                     <span>Lihat Semua Kategori</span>
                                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                                 </a>
+                                @endauth
                             </div>
                         </div>
 
@@ -855,13 +878,13 @@
                             💼 KHUSUS PEMILIK BARANG & TOKO RENTAL
                         </span>
                         <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight mb-3">
-                            Punya Barang Nganggur? <br class="hidden sm:inline" />
+                            Punya Barang Jarang Dipakai? <br class="hidden sm:inline" />
                             <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-indigo-200">
-                                Jadikan Mesin Penghasilan Pasif.
+                                Sewakan & Dapatkan Cuan Tambahan!
                             </span>
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Daripada kamera, tenda, atau genset hanya disimpan dan berdebu di lemari, sewakan di Rentify! Dapatkan penghasilan jutaan rupiah per bulan dengan proteksi deposit dan data penyewa terverifikasi.
+                            Apa yang kamu punya, mungkin orang lain butuhkan. Daripada kamera, tenda, atau perlengkapan hobi hanya disimpan dan berdebu di lemari, sewakan di Rentify! Lebih praktis, lebih hemat, dan sama-sama untung.
                         </p>
                     </div>
 
@@ -869,7 +892,7 @@
                         <a href="{{ route('vendor.register') }}" 
                            class="btn-glow-primary px-8 py-4 rounded-full text-white font-black text-xs sm:text-sm uppercase tracking-wider transition inline-flex items-center gap-2.5 shadow-xl">
                             <i class="fa-solid fa-store text-xs"></i>
-                            <span>Daftar Jadi Toko Rental</span>
+                            <span>Daftar & Raih Cuan Tambahan</span>
                         </a>
                     </div>
                 </div>
@@ -980,16 +1003,24 @@
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-sm mx-auto">
-                <a href="{{ route('login') }}" 
-                   class="w-full sm:w-auto btn-glow-primary px-9 py-4 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider text-white transition flex items-center justify-center gap-2.5 shadow-2xl">
-                    <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
-                    <span>Masuk ke Rentify</span>
-                </a>
-                <a href="{{ route('register') }}" 
-                   class="w-full sm:w-auto btn-ghost-deluxe px-8 py-4 rounded-full text-xs sm:text-sm font-bold tracking-wider text-slate-200 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-user-plus text-sky-400 text-xs"></i>
-                    <span>Daftar Akun Baru</span>
-                </a>
+                @auth
+                    <a href="{{ route('customer.home') }}" 
+                       class="w-full sm:w-auto btn-glow-primary px-9 py-4 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider text-white transition flex items-center justify-center gap-2.5 shadow-2xl">
+                        <i class="fa-solid fa-bag-shopping text-xs"></i>
+                        <span>Buka Katalog Beranda</span>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" 
+                       class="w-full sm:w-auto btn-glow-primary px-9 py-4 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider text-white transition flex items-center justify-center gap-2.5 shadow-2xl">
+                        <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+                        <span>Masuk ke Rentify</span>
+                    </a>
+                    <a href="{{ route('register') }}" 
+                       class="w-full sm:w-auto btn-ghost-deluxe px-8 py-4 rounded-full text-xs sm:text-sm font-bold tracking-wider text-slate-200 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-plus text-sky-400 text-xs"></i>
+                        <span>Daftar Akun Baru</span>
+                    </a>
+                @endauth
             </div>
 
         </div>

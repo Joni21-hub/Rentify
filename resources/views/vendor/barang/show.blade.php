@@ -60,7 +60,11 @@
                 </div>
                 <div class="aspect-square rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center">
                     @if($cover)
-                        <img src="{{ $cover }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
+                        @if(\App\Services\StorageService::isVideoMedia($cover))
+                            <video src="{{ $cover }}" class="w-full h-full object-cover" controls playsinline></video>
+                        @else
+                            <img src="{{ $cover }}" alt="{{ $barang->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
+                        @endif
                     @else
                         <i class="fa-solid fa-image text-3xl text-slate-300"></i>
                     @endif
@@ -82,7 +86,12 @@
                                 $fpath = $foto->foto_url;
                             @endphp
                             <div class="relative group rounded-xl overflow-hidden bg-slate-100 border border-slate-200 aspect-square">
-                                <img src="{{ $fpath }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
+                                @if(\App\Services\StorageService::isVideoMedia($foto->foto_path))
+                                    <video src="{{ $fpath }}" class="w-full h-full object-cover" muted playsinline></video>
+                                    <div class="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-slate-900/80 text-white text-[9px] font-bold rounded flex items-center gap-1 z-10"><i class="fa-solid fa-video text-rose-400 text-[8px]"></i> Video</div>
+                                @else
+                                    <img src="{{ $fpath }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
+                                @endif
                                 
                                 <!-- Action Buttons Overlay -->
                                 <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-1">
@@ -114,10 +123,10 @@
                 <!-- Form Upload Foto Tambahan Cepat -->
                 <form action="{{ route('vendor.barang.fotos.upload', $barang->id) }}" method="POST" enctype="multipart/form-data" class="pt-2 border-t border-slate-100 space-y-2">
                     @csrf
-                    <input type="file" name="fotos[]" id="inputFotoTambah" multiple accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="this.form.submit()">
+                    <input type="file" name="fotos[]" id="inputFotoTambah" multiple accept="image/*,video/*,.heic,.heif,.avif,.webp,.mp4,.mov,.mkv,.webm" class="hidden" onchange="this.form.submit()">
                     <label for="inputFotoTambah" class="w-full py-2 px-3 bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 rounded-xl text-center text-xs font-bold text-slate-600 flex items-center justify-center gap-2 cursor-pointer transition">
                         <i class="fa-solid fa-cloud-arrow-up text-sky-500"></i>
-                        <span>Tambah Foto Galeri</span>
+                        <span>Tambah Media Galeri (Foto/Video)</span>
                     </label>
                 </form>
             </div>

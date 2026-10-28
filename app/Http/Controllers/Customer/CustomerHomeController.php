@@ -13,22 +13,29 @@ class CustomerHomeController extends Controller
 {
     public function index()
     {
-        // 1. Jika sudah login tetapi role Vendor atau Admin, arahkan ke dashboard masing-masing
+        // 1. Jika belum login (Guest/Pengunjung), tampilkan halaman perkenalan web Rentify (Landing Page)
+        if (!Auth::check()) {
+            return view('customer.welcome');
+        }
+
+        $user = Auth::user();
+
+        // 2. Jika user adalah admin, arahkan ke dashboard admin
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        // Saat mengakses beranda katalog customer, pastikan session active_role adalah customer
+        if (session('active_role') !== 'customer') {
+            session(['active_role' => 'customer']);
+        }
+
         $lat1 = session('user_latitude');
         $lon1 = session('user_longitude');
 
-        if (Auth::check()) {
-            $user = Auth::user();
-            if ($user->role === 'vendor') {
-                return redirect()->route('vendor.dashboard');
-            } elseif ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard');
-            }
-
-            if ($user->latitude && $user->longitude) {
-                $lat1 = $user->latitude;
-                $lon1 = $user->longitude;
-            }
+        if ($user->latitude && $user->longitude) {
+            $lat1 = $user->latitude;
+            $lon1 = $user->longitude;
         }
 
         $banners = Banner::all();

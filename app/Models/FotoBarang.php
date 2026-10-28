@@ -12,9 +12,26 @@ class FotoBarang extends Model
     protected $table = 'foto_barangs';
     protected $guarded = ['id'];
 
+    /**
+     * Membersihkan berkas fisik di Cloudinary / disk lokal saat foto galeri dihapus.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (FotoBarang $foto) {
+            if (!empty($foto->foto_path)) {
+                \App\Services\StorageService::deleteFile($foto->foto_path);
+            }
+        });
+    }
+
     public function getFotoUrlAttribute(): string
     {
         return \App\Services\StorageService::getPublicUrl($this->foto_path, 'placeholders/placeholder-barang.png');
+    }
+
+    public function getIsVideoAttribute(): bool
+    {
+        return \App\Services\StorageService::isVideoMedia($this->foto_path);
     }
 
     public function getImageUrlAttribute(): string

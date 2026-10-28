@@ -30,8 +30,10 @@ class AiMarketingPost extends Model
         'status',
         'posted_to_instagram',
         'posted_to_tiktok',
+        'posted_to_facebook',
         'instagram_post_id',
         'tiktok_post_id',
+        'facebook_post_id',
         'posted_at',
         'log_info',
     ];
@@ -42,6 +44,7 @@ class AiMarketingPost extends Model
         'teks_di_layar'       => 'array',
         'posted_to_instagram' => 'boolean',
         'posted_to_tiktok'    => 'boolean',
+        'posted_to_facebook'  => 'boolean',
         'posted_at'           => 'datetime',
     ];
 

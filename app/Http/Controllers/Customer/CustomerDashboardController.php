@@ -15,6 +15,8 @@ use App\Models\Wishlist;
 use App\Models\MomentCoinLedger;
 use App\Services\CoinAccountingService;
 use Illuminate\Support\Facades\DB;
+use App\Rules\ValidImage;
+use App\Services\StorageService;
 
 class CustomerDashboardController extends Controller
 {
@@ -35,6 +37,10 @@ class CustomerDashboardController extends Controller
     {
         if (!Auth::check()) {
             return redirect()->route('login');
+        }
+
+        if (session('active_role') !== 'customer') {
+            session(['active_role' => 'customer']);
         }
 
         $user = Auth::user();
@@ -173,7 +179,7 @@ class CustomerDashboardController extends Controller
         // Validasi: perbarui profil tanpa perlu sandi
         $request->validate([
             'name' => 'required|string|max:255',
-            'foto_profil' => 'nullable|image|max:10240',
+            'foto_profil' => ['nullable', new ValidImage(20480)],
             'bio' => 'nullable|string|max:255',
             'whatsapp' => 'nullable|string|max:25',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
@@ -185,7 +191,7 @@ class CustomerDashboardController extends Controller
         $user->name = $request->name;
         $user->bio = $request->bio;
         if ($request->has('whatsapp')) {
-            $user->whatsapp = $request->whatsapp;
+            $user->whatsapp = !empty(trim((string)$request->whatsapp)) ? trim((string)$request->whatsapp) : null;
         }
         $user->jenis_kelamin = $request->jenis_kelamin;
         $user->tanggal_lahir = $request->tanggal_lahir;
@@ -198,35 +204,21 @@ class CustomerDashboardController extends Controller
         }
 
         if ($request->hasFile('foto_profil')) {
-            try {
-                $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-                $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-
-                // Hapus foto lama jika ada di Cloudinary
-                if ($user->foto_profil && str_contains($user->foto_profil, 'cloudinary')) {
-                    try {
-                        $path = (string) (parse_url($user->foto_profil, PHP_URL_PATH) ?? '');
-                        $pathSegments = explode('/', $path);
-                        $uploadIndex = array_search('upload', $pathSegments);
-                        if ($uploadIndex !== false) {
-                            $sliced = array_slice($pathSegments, $uploadIndex + 1);
-                            if (isset($sliced[0]) && preg_match('/^v\d+$/', $sliced[0])) array_shift($sliced);
-                            $publicIdWithExt = implode('/', $sliced);
-                            $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
-                            $dir = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
-                            $finalId = $dir !== '.' ? $dir . '/' . $publicId : $publicId;
-                            $cloudinary->uploadApi()->destroy($finalId);
-                        }
-                    } catch (\Exception $e) {}
+            $file = $request->file('foto_profil');
+            if ($file instanceof \Illuminate\Http\UploadedFile) {
+                $uploadedUrl = null;
+                // Hapus foto profil lama jika ada dari Cloudinary / lokal
+                if ($user->foto_profil) {
+                    StorageService::deleteFile($user->foto_profil);
                 }
 
-                $result = $cloudinary->uploadApi()->upload(
-                    $request->file('foto_profil')->getRealPath(),
-                    ['folder' => 'rentify/customer_profil']
-                );
-                $user->foto_profil = $result['secure_url'];
-            } catch (\Exception $e) {
-                return back()->with('error', 'Gagal mengunggah foto: ' . $e->getMessage());
+                // Unggah foto baru via StorageService (Cloudinary 100% HD dengan fallback disk lokal)
+                $uploadedUrl = StorageService::storeMedia($file, 'customer_profil');
+                if (!str_starts_with($uploadedUrl, 'http://') && !str_starts_with($uploadedUrl, 'https://')) {
+                    $uploadedUrl = StorageService::getPublicUrl($uploadedUrl);
+                }
+
+                $user->foto_profil = $uploadedUrl;
             }
         }
 

@@ -2,105 +2,87 @@
 
 namespace Tests\Feature;
 
-use App\Models\Barang;
-use App\Models\Kategori;
-use App\Models\User;
-use App\Models\Voucher;
+use App\Models\AiMarketingPost;
 use App\Services\AiMarketingService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class AiMarketingTest extends TestCase
 {
-    public function test_ai_marketing_service_generates_copywriting()
+    use RefreshDatabase;
+
+    public function test_ai_marketing_service_generates_daily_customer_video_content()
     {
         $service = new AiMarketingService();
 
-        $productData = [
-            'nama'        => 'Kamera Sony A7 IV Fullset',
-            'kategori'    => 'Kamera & Lensa',
-            'harga_sewa'  => 350000,
-            'deskripsi'   => 'Kamera mirrorless full-frame profesional untuk event dan video.',
-            'diskon'      => 'Diskon 15% kode SEWAASIK',
-        ];
+        // Tanggal ganjil -> target customer
+        $date = Carbon::parse('2026-10-21');
+        $post = $service->generateDailyVideoContent($date);
 
-        $result = $service->generateCopywriting($productData, 'all', 'fomo', 'Termasuk 2 baterai cadangan');
-
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('whatsapp', $result);
-        $this->assertArrayHasKey('instagram', $result);
-        $this->assertArrayHasKey('tiktok', $result);
-        $this->assertArrayHasKey('banner', $result);
-        $this->assertStringContainsString('Kamera Sony A7 IV Fullset', $result['whatsapp']);
-        $this->assertStringContainsString('Rentify', $result['instagram']);
+        $this->assertInstanceOf(AiMarketingPost::class, $post);
+        $this->assertEquals('customer', $post->target_audience);
+        $this->assertNotEmpty($post->hook_masalah);
+        $this->assertIsArray($post->naskah_video);
+        $this->assertCount(4, $post->naskah_video);
+        $this->assertStringContainsString('rentify21.my.id', $post->caption);
     }
 
-    public function test_ai_marketing_service_generates_admin_campaign()
+    public function test_ai_marketing_service_generates_daily_vendor_video_content()
     {
         $service = new AiMarketingService();
 
-        $result = $service->generateAdminCampaign('Promo Mudik Seru', 'Pemudik & Keluarga', 'Diskon 25%');
+        // Tanggal genap -> target vendor
+        $date = Carbon::parse('2026-10-22');
+        $post = $service->generateDailyVideoContent($date);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('judul_kampanye', $result);
-        $this->assertArrayHasKey('slogan', $result);
-        $this->assertArrayHasKey('banner_promo', $result);
-        $this->assertArrayHasKey('broadcast_notifikasi', $result);
-        $this->assertStringContainsString('Promo Mudik Seru', $result['judul_kampanye']);
+        $this->assertInstanceOf(AiMarketingPost::class, $post);
+        $this->assertEquals('vendor', $post->target_audience);
+        $this->assertNotEmpty($post->hook_masalah);
+        $this->assertIsArray($post->naskah_video);
+        $this->assertStringContainsString('rentify21.my.id', $post->caption);
     }
 
-    public function test_vendor_can_generate_copy_via_post_endpoint()
+    public function test_ai_marketing_service_publishes_to_all_platforms()
     {
-        $vendor = User::factory()->create([
-            'role'          => 'vendor',
-            'vendor_status' => 'approved',
-        ]);
+        $service = new AiMarketingService();
+        $date = Carbon::parse('2026-10-23');
+        $post = $service->generateDailyVideoContent($date);
 
-        $response = $this->actingAs($vendor)
-            ->postJson(route('vendor.ai-marketing.generate-copy'), [
-                'manual_nama'     => 'PlayStation 5 + 2 Stik',
-                'manual_kategori' => 'Gaming & Konsol',
-                'manual_harga'    => 120000,
-                'platform'        => 'whatsapp',
-                'tone'            => 'fomo',
-            ]);
+        $results = $service->publishToAllPlatforms($post, ['instagram', 'tiktok', 'facebook']);
 
-        $response->assertStatus(200);
-        $response->assertJsonPath('success', true);
-        $response->assertJsonStructure([
-            'success',
-            'data' => ['whatsapp', 'instagram', 'tiktok'],
-            'product'
-        ]);
+        $this->assertArrayHasKey('instagram', $results);
+        $this->assertArrayHasKey('tiktok', $results);
+        $this->assertArrayHasKey('facebook', $results);
+
+        $this->assertTrue($results['instagram']['success']);
+        $this->assertTrue($results['tiktok']['success']);
+        $this->assertTrue($results['facebook']['success']);
+
+        $post->refresh();
+        $this->assertTrue($post->posted_to_instagram);
+        $this->assertTrue($post->posted_to_tiktok);
+        $this->assertTrue($post->posted_to_facebook);
+        $this->assertNotNull($post->instagram_post_id);
+        $this->assertNotNull($post->tiktok_post_id);
+        $this->assertNotNull($post->facebook_post_id);
     }
 
-    public function test_vendor_can_auto_apply_voucher_recommended_by_ai()
+    public function test_console_command_generate_daily_content_with_publish()
     {
-        $vendor = User::factory()->create([
-            'role'          => 'vendor',
-            'vendor_status' => 'approved',
+        $exitCode = Artisan::call('rentify:generate-daily-content', [
+            '--date'      => '2026-10-25',
+            '--publish'   => true,
+            '--platform'  => 'all',
         ]);
 
-        $voucherCode = 'AIPROMO' . rand(100, 999);
+        $this->assertEquals(0, $exitCode);
 
-        $response = $this->actingAs($vendor)
-            ->postJson(route('vendor.ai-marketing.auto-apply-voucher'), [
-                'kode_voucher'    => $voucherCode,
-                'tipe_diskon'     => 'persen',
-                'nilai_diskon'    => 20,
-                'minimal_belanja' => 100000,
-                'maksimal_diskon' => 50000,
-                'durasi_hari'     => 14,
-            ]);
-
-        $response->assertStatus(200);
-        $response->assertJsonPath('success', true);
-
-        $this->assertDatabaseHas('vouchers', [
-            'vendor_id'    => $vendor->id,
-            'kode_voucher' => $voucherCode,
-            'nilai_diskon' => 20,
-            'is_active'    => 1,
-        ]);
+        $latestPost = AiMarketingPost::latest('id')->first();
+        $this->assertNotNull($latestPost);
+        $this->assertTrue($latestPost->posted_to_instagram);
+        $this->assertTrue($latestPost->posted_to_tiktok);
+        $this->assertTrue($latestPost->posted_to_facebook);
     }
 }

@@ -11,7 +11,7 @@ class Penyewaan extends Model
     protected $fillable = [
         'user_id', 'vendor_id', 'customer_id', 'customer_name', 'customer_whatsapp', 'kode_booking',
         'payment_method', 'metode_pengambilan', 'alamat_pengiriman', 'shipping_address', 'shipping_method',
-        'shipping_fee', 'kode_unik', 'voucher_id', 'potongan_voucher',
+        'shipping_fee', 'kode_unik', 'voucher_id', 'potongan_voucher', 'koin_digunakan', 'potongan_koin',
         'cabang_id', 'total_biaya', 'total_price', 'total_deposit', 'total_denda',
         'vendor_earning', 'rentify_fee', 'completed_at',
         'status', 'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
@@ -29,6 +29,8 @@ class Penyewaan extends Model
         'total_deposit'          => 'decimal:2',
         'total_denda'            => 'decimal:2',
         'potongan_voucher'       => 'decimal:2',
+        'koin_digunakan'         => 'integer',
+        'potongan_koin'          => 'decimal:2',
         'shipping_fee'           => 'decimal:2',
         'kode_unik'              => 'integer',
         'completed_at'           => 'datetime',

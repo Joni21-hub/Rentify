@@ -56,15 +56,6 @@
                     <span>Monitor Voucher</span>
                 </button>
 
-                <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Pemasaran & Promosi</div>
-                <a href="{{ route('admin.ai-marketing.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-wand-magic-sparkles text-sky-500 w-5"></i>
-                        <span>AI Marketing</span>
-                    </div>
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-sky-500 text-white">AI</span>
-                </a>
-
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Komunikasi & CS</div>
                 <a href="{{ route('admin.whatsapp.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
                     <div class="flex items-center space-x-3">
@@ -261,7 +252,7 @@
                                 @csrf
                                 <div class="flex-1 space-y-2">
                                     <input type="text" name="judul_promo" placeholder="Judul Banner Promo..." required class="rentify-input w-full px-3 py-2 text-xs outline-none focus:">
-                                    <input type="file" name="gambar" required class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-sky-700 file:font-bold">
+                                    <input type="file" name="gambar" required accept="image/*,.heic,.heif,.avif,.webp" class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-sky-700 file:font-bold">
                                 </div>
                                 <button type="submit" class="rentify-btn text-white font-bold px-4 rounded-lg text-xs shadow-sm transition">Upload</button>
                             </form>

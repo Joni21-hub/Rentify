@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Rules\ValidImage;
+use App\Services\StorageService;
 
 class AdminDashboardController extends Controller
 {
@@ -66,21 +68,22 @@ class AdminDashboardController extends Controller
     {
         $request->validate([
             'judul_promo' => 'required|string|max:255',
-            'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'gambar' => ['required', new ValidImage(20480)],
         ]);
 
         $banner = new Banner();
         $banner->judul_promo = $request->judul_promo;
 
         if ($request->hasFile('gambar')) {
-            $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
-            $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-            
-            $uploadResult = $cloudinary->uploadApi()->upload($request->file('gambar')->getRealPath(), [
-                'folder' => 'rentify/banners'
-            ]);
-            
-            $banner->gambar_url = $uploadResult['secure_url'];
+            $file = $request->file('gambar');
+            if ($file instanceof \Illuminate\Http\UploadedFile) {
+                $uploadedUrl = StorageService::storeMedia($file, 'banners');
+                if (!str_starts_with($uploadedUrl, 'http://') && !str_starts_with($uploadedUrl, 'https://')) {
+                    $uploadedUrl = StorageService::getPublicUrl($uploadedUrl);
+                }
+
+                $banner->gambar_url = $uploadedUrl;
+            }
         }
         $banner->save();
 
@@ -91,26 +94,7 @@ class AdminDashboardController extends Controller
     {
         $banner = Banner::findOrFail($id);
 
-        if ($banner->gambar_url) {
-            $path = parse_url($banner->gambar_url, PHP_URL_PATH);
-            $pathSegments = explode('/', $path);
-            $uploadIndex = array_search('upload', $pathSegments);
-
-            if ($uploadIndex !== false) {
-                $slicedSegments = array_slice($pathSegments, $uploadIndex + 1);
-                if (isset($slicedSegments[0]) && preg_match('/^v\d+$/', $slicedSegments[0])) {
-                    array_shift($slicedSegments);
-                }
-                
-                $publicIdWithExt = implode('/', $slicedSegments);
-                $publicId = pathinfo($publicIdWithExt, PATHINFO_FILENAME);
-                $folderPath = pathinfo($publicIdWithExt, PATHINFO_DIRNAME);
-                $finalPublicId = $folderPath !== '.' ? $folderPath . '/' . $publicId : $publicId;
-
-                Cloudinary::destroy($finalPublicId);
-            }
-        }
-
+        // Model event 'deleting' pada Banner akan otomatis membersihkan gambar dari Cloudinary & disk lokal
         $banner->delete();
 
         return redirect()->back()->with('success', 'Banner promosi berjaya dipadam.');

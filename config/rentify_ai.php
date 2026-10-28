@@ -28,11 +28,12 @@ return [
     |
     */
     'automation' => [
-        'enabled'          => (bool) env('RENTIFY_AI_AUTOGEN_ENABLED', true),
-        'schedule_time'    => env('RENTIFY_AI_SCHEDULE_TIME', '08:00'), // Jam generate otomatis harian
-        'rotation_mode'    => 'odd_even_days', // 'odd_even_days'
+        'enabled'             => (bool) env('RENTIFY_AI_AUTOGEN_ENABLED', true),
+        'schedule_time'       => env('RENTIFY_AI_SCHEDULE_TIME', '08:00'), // Jam generate otomatis harian
+        'rotation_mode'       => 'odd_even_days', // 'odd_even_days'
         'auto_post_instagram' => (bool) env('RENTIFY_AI_AUTOPOST_INSTAGRAM', false),
         'auto_post_tiktok'    => (bool) env('RENTIFY_AI_AUTOPOST_TIKTOK', false),
+        'auto_post_facebook'  => (bool) env('RENTIFY_AI_AUTOPOST_FACEBOOK', false),
     ],
 
     /*
@@ -44,8 +45,8 @@ return [
     'brand' => [
         'name'        => 'Rentify',
         'tagline'     => 'Sewa Mudah, Hemat, dan Dekat di Sekitar Anda',
-        'website_url' => env('APP_URL', 'http://localhost:8000'),
-        'cta_text'    => 'Kunjungi rentify untuk sewa atau sewakan barangmu sekarang!',
+        'website_url' => env('RENTIFY_PUBLIC_URL', 'https://rentify21.my.id'),
+        'cta_text'    => 'Kunjungi https://rentify21.my.id untuk sewa atau sewakan barangmu sekarang!',
     ],
 
     /*
@@ -122,6 +123,11 @@ return [
             'client_key'   => env('TIKTOK_CLIENT_KEY', ''),
             'client_secret' => env('TIKTOK_CLIENT_SECRET', ''),
             'access_token' => env('TIKTOK_ACCESS_TOKEN', ''),
+        ],
+        'facebook' => [
+            'page_id'       => env('FACEBOOK_PAGE_ID', ''),
+            'access_token'  => env('FACEBOOK_PAGE_ACCESS_TOKEN', ''),
+            'graph_version' => env('FACEBOOK_GRAPH_VERSION', 'v19.0'),
         ],
     ],
 ];

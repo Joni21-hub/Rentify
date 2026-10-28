@@ -87,8 +87,8 @@
                     </div>
 
                     <!-- Hidden Inputs: Kamera, Galeri, Form Input -->
-                    <input type="file" id="inputKamera" accept="image/*" capture="user" class="hidden" onchange="handleFilePicked(this)">
-                    <input type="file" id="inputGaleri" accept="image/*" class="hidden" onchange="handleFilePicked(this)">
+                    <input type="file" id="inputKamera" accept="image/*,.heic,.heif,.avif,.webp" capture="user" class="hidden" onchange="handleFilePicked(this)">
+                    <input type="file" id="inputGaleri" accept="image/*,.heic,.heif,.avif,.webp" class="hidden" onchange="handleFilePicked(this)">
                     <input type="file" id="fotoProfilInput" name="foto_profil" class="hidden">
 
                     <!-- Label Panduan -->
@@ -271,6 +271,7 @@
     </div>
 
     <!-- JAVASCRIPT REAL-TIME PREVIEW & CAMERA/GALLERY HANDLING -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const bio = document.getElementById('bioInput');
@@ -308,9 +309,27 @@
             }, 150);
         }
 
-        function handleFilePicked(input) {
+        async function handleFilePicked(input) {
             if (input.files && input.files[0]) {
-                const file = input.files[0];
+                let file = input.files[0];
+
+                const ext = (file.name || '').split('.').pop().toLowerCase();
+                const mime = file.type || '';
+                if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
+                    try {
+                        if (typeof heic2any === 'function') {
+                            const convertedBlob = await heic2any({
+                                blob: file,
+                                toType: 'image/jpeg',
+                                quality: 0.9
+                            });
+                            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            file = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        }
+                    } catch (err) {
+                        console.warn('heic2any failed, fallback to raw file:', err);
+                    }
+                }
 
                 // Sinkronkan ke input form utama
                 const targetInput = document.getElementById('fotoProfilInput');

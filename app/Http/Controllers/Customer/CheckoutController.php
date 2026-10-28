@@ -103,7 +103,13 @@ class CheckoutController extends Controller
             return $item->barang->vendor_id;
         });
 
-        return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs', 'kodeVoucher'));
+        $userCoinBalance = 0;
+        if (auth()->check()) {
+            $coinService = app(\App\Services\CoinAccountingService::class);
+            $userCoinBalance = $coinService->getAvailableBalance((int) auth()->id());
+        }
+
+        return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs', 'kodeVoucher', 'userCoinBalance'));
     }
 
     public function store(Request $request)
@@ -157,6 +163,25 @@ class CheckoutController extends Controller
 
         // Batalkan pesanan 'PENDING_PAYMENT' milik user yang sama agar tidak mengunci stoknya sendiri
         if ($userId) {
+            $unpaidOrders = DB::table('orders')
+                ->where('user_id', $userId)
+                ->whereIn('status', ['Menunggu Pembayaran', 'PENDING_PAYMENT'])
+                ->get();
+
+            foreach ($unpaidOrders as $unpaid) {
+                $spent = DB::table('moment_coin_ledgers')
+                    ->where('order_id', $unpaid->id)
+                    ->where('interaction_type', 'checkout_spend')
+                    ->first();
+                if ($spent) {
+                    app(\App\Services\CoinAccountingService::class)->refundOrderCoins(
+                        $unpaid->user_id,
+                        abs($spent->coins_amount),
+                        $unpaid->id
+                    );
+                }
+            }
+
             DB::table('orders')
                 ->where('user_id', $userId)
                 ->whereIn('status', ['Menunggu Pembayaran', 'PENDING_PAYMENT'])
@@ -164,6 +189,25 @@ class CheckoutController extends Controller
         }
 
         // Batalkan pesanan 'PENDING_PAYMENT' yang sudah lewat 35 menit tanpa pembayaran (QRIS expiry 30 menit + buffer)
+        $expiredOrders = DB::table('orders')
+            ->whereIn('status', ['Menunggu Pembayaran', 'PENDING_PAYMENT'])
+            ->where('created_at', '<', now()->subMinutes(35))
+            ->get();
+
+        foreach ($expiredOrders as $exp) {
+            $spent = DB::table('moment_coin_ledgers')
+                ->where('order_id', $exp->id)
+                ->where('interaction_type', 'checkout_spend')
+                ->first();
+            if ($spent) {
+                app(\App\Services\CoinAccountingService::class)->refundOrderCoins(
+                    $exp->user_id,
+                    abs($spent->coins_amount),
+                    $exp->id
+                );
+            }
+        }
+
         DB::table('orders')
             ->whereIn('status', ['Menunggu Pembayaran', 'PENDING_PAYMENT'])
             ->where('created_at', '<', now()->subMinutes(35))
@@ -216,156 +260,235 @@ class CheckoutController extends Controller
             $voucherData = json_decode($voucherDataStr, true);
         }
 
-        foreach ($keranjangPerVendor as $vendorId => $items) {
-            $opsi = $request->opsi_pengiriman[$vendorId] ?? 'ambil';
-            $ongkir = (int) ($request->ongkir_vendor[$vendorId] ?? 0);
-            $durasi = (int) ($request->durasi_sewa[$vendorId] ?? 1);
-            $jaminanTerpilih = $request->jaminan[$vendorId] ?? 'KTP'; 
-
-            if ($opsi === 'diantar') {
-                $latToko = (float) ($items->first()->barang->latitude ?? $items->first()->barang->vendor->latitude ?? 0);
-                $lonToko = (float) ($items->first()->barang->longitude ?? $items->first()->barang->vendor->longitude ?? 0);
-                $latCust = (float) $request->cust_lat;
-                $lonCust = (float) $request->cust_lon;
-
-                if ($latToko && $lonToko && $latCust && $lonCust) {
-                    $earthRadius = 6371;
-                    $dLat = deg2rad($latToko - $latCust);
-                    $dLon = deg2rad($lonToko - $lonCust);
-                    $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($latCust)) * cos(deg2rad($latToko)) * sin($dLon/2) * sin($dLon/2);
-                    $c = 2 * asin(sqrt($a));
-                    $jarakKm = ceil($earthRadius * $c);
-                    
-                    $ongkir = max(4000, $jarakKm * 4000);
-                } else {
-                    if ($ongkir < 10000) $ongkir = 10000;
-                }
-            } else {
-                $ongkir = 0; 
-            }
-            
-            $waktuKembali = $waktuMulai->copy()->addDays($durasi);
-            $subtotalSewa = 0;
-            $subtotalSewaAsli = 0;
-
-            foreach ($items as $item) {
-                $subtotalSewaAsli += ((float)$item->barang->harga_sewa_harian * $item->jumlah * $durasi);
-                $hargaMarkup = $item->barang->harga_sewa_harian * 1.05;
-                $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
-            }
-
-            // PERUBAHAN: Validasi voucher ketat di sisi server (mencegah manipulasi diskon dari client/AJAX)
-            $potonganVoucher = 0;
-            $voucherIdDipakai = null;
-            
-            if (isset($voucherData['vendor_id']) && $voucherData['vendor_id'] == $vendorId && !empty($voucherData['voucher_id'])) {
-                $vId = (int) $voucherData['voucher_id'];
-                $dbVoucher = Voucher::where('id', $vId)
-                    ->where('vendor_id', $vendorId)
-                    ->where('is_active', 1)
-                    ->whereDate('tanggal_mulai', '<=', now())
-                    ->whereDate('tanggal_selesai', '>=', now())
-                    ->first();
-
-                if ($dbVoucher && $dbVoucher->kuota_terpakai < $dbVoucher->kuota_total) {
-                    if ($subtotalSewaAsli >= (float) $dbVoucher->minimal_belanja) {
-                        if ($dbVoucher->tipe_diskon === 'nominal') {
-                            $calc = (float) $dbVoucher->nilai_diskon;
-                        } else {
-                            $calc = ($subtotalSewaAsli * (float) $dbVoucher->nilai_diskon) / 100;
-                            if (!is_null($dbVoucher->maksimal_diskon) && $calc > (float) $dbVoucher->maksimal_diskon) {
-                                $calc = (float) $dbVoucher->maksimal_diskon;
-                            }
-                        }
-                        $potonganVoucher = min($subtotalSewaAsli, round($calc, 2));
-                        $voucherIdDipakai = $dbVoucher->id;
-                    }
-                }
-            }
-
-            // Kenakan kode unik hanya pada salah satu order jika checkout gabungan
-            $kodeUnikOrder = 0;
-            if ($kodeUnikDigunakan > 0) {
-                $kodeUnikOrder = $kodeUnikDigunakan;
-                $kodeUnikDigunakan = 0;
-            }
-
-            // Hitung kalkulasi resmi transaksi menggunakan TransactionCalculationService
-            $pricing = \App\Services\TransactionCalculationService::calculateOrderPricing(
-                $subtotalSewaAsli,
-                (float) $ongkir,
-                (float) $potonganVoucher,
-                (int) $kodeUnikOrder
-            );
-
-            $totalHargaVendor = $pricing['total_price'];
-            $totalBayarSemua += $totalHargaVendor;
-
-            $orderId = DB::table('orders')->insertGetId([
-                'user_id' => auth()->id(),
-                'vendor_id' => $vendorId, 
-                'kode_booking' => 'RNT' . strtoupper(uniqid()),
-                'customer_name' => auth()->user()->name ?? 'Customer',
-                'customer_whatsapp' => $nomorWaAman, 
-                'alamat_pengiriman' => $opsi === 'diantar' ? ($request->alamat_customer ?? 'Sesuai Titik GPS') : 'Diambil di Toko',
-                'shipping_address' => $opsi === 'diantar' ? ($request->alamat_customer ?? 'Sesuai Titik GPS') : 'Diambil di Toko',
-                'pin_location' => $opsi === 'diantar' ? ($request->cust_lat . ',' . $request->cust_lon) : null,
-                'metode_pengambilan' => $opsi,
-                'shipping_method' => $opsi,
-                'shipping_fee' => $ongkir,
-                'kode_unik' => $kodeUnikOrder,
-                'tanggal_mulai' => $waktuMulai,
-                'start_rent' => $waktuMulai,      
-                'tanggal_selesai' => $waktuKembali,
-                'end_rent' => $waktuKembali,      
-                'duration_days' => $durasi,
-                'jaminan' => $jaminanTerpilih, 
-                'payment_method' => $metodeInput,
-                'total_biaya' => $totalHargaVendor,
-                'total_price' => $totalHargaVendor,
-                'vendor_earning' => $pricing['vendor_earning'],
-                'rentify_fee' => $pricing['rentify_fee'],
-                
-                // PERUBAHAN: Mencatat data voucher ke database
-                'voucher_id' => $voucherIdDipakai,
-                'potongan_voucher' => $potonganVoucher,
-
-                'status' => $metodeInput === 'COD' ? 'Menunggu Konfirmasi' : 'PENDING_PAYMENT',
-                'created_at' => $waktuSekarang,
-                'updated_at' => $waktuSekarang
-            ]);
-
-            // PERUBAHAN: Menjalankan increment() pada kuota voucher jika voucher dipakai
-            if ($voucherIdDipakai) {
-                Voucher::where('id', $voucherIdDipakai)->increment('kuota_terpakai');
-            }
-
-            $invoiceIds[] = 'INV-' . $orderId;
-
-            foreach ($items as $item) {
-                DB::table('order_items')->insert([
-                    'order_id' => $orderId,
-                    'product_id' => $item->barang_id,
-                    'product_name' => $item->barang->nama,
-                    'price' => $item->barang->harga_sewa_harian * 1.05, 
-                    'quantity' => $item->jumlah,
-                    'created_at' => $waktuSekarang,
-                    'updated_at' => $waktuSekarang
-                ]);
+        // PERUBAHAN KOIN RENTIFY (REWARD PLATFORM ALA SHOPEE)
+        // Hitung total harga sewa murni seluruh produk di keranjang checkout
+        $totalBaseRentalSubtotalAll = 0;
+        foreach ($keranjangPerVendor as $vId => $vendorItems) {
+            $durasiItem = (int) ($request->durasi_sewa[$vId] ?? 1);
+            foreach ($vendorItems as $vItem) {
+                $totalBaseRentalSubtotalAll += ((float) $vItem->barang->harga_sewa_harian * $vItem->jumlah * $durasiItem);
             }
         }
 
-        if (!$isDirectCheckout) {
-            if (session()->has('checkout_selected_ids')) {
-                $selectedSession = session('checkout_selected_ids');
-                $selectedSessionArray = is_array($selectedSession) ? $selectedSession : [$selectedSession];
-                Keranjang::whereIn('id', $selectedSessionArray)->delete();
-                session()->forget('checkout_selected_ids');
-            } else {
-                Keranjang::where('user_id', auth()->id())->delete();
+        $useCoins = $request->boolean('use_coins') || $request->input('use_coins') === '1' || $request->input('use_coins') === 1;
+        $coinService = app(\App\Services\CoinAccountingService::class);
+        $totalApplicableCoins = 0;
+        $totalCoinDiscountRupiah = 0.0;
+
+        if ($useCoins && $userId) {
+            $userIdInt = (int) $userId;
+            $requestedCoins = (int) $request->input('coins_to_use', 0);
+            if ($requestedCoins <= 0) {
+                $requestedCoins = $coinService->getAvailableBalance($userIdInt);
             }
-        } else {
-            session()->forget('checkout_direct_id');
+
+            $coinCalc = $coinService->calculateCheckoutDiscount(
+                $userIdInt,
+                $requestedCoins,
+                (int) $totalBaseRentalSubtotalAll
+            );
+
+            $totalApplicableCoins = (int) ($coinCalc['applicable_coins'] ?? 0);
+            $totalCoinDiscountRupiah = (float) ($coinCalc['discount_rupiah'] ?? 0);
+        }
+
+        $remainingCoinsToDistribute = $totalApplicableCoins;
+        $remainingRupiahToDistribute = $totalCoinDiscountRupiah;
+        $totalVendorBlocks = count($keranjangPerVendor);
+        $currentVendorIndex = 0;
+
+        // BUNGKUS TRANSAKSI MULTI-VENDOR SECARA ATOMIK (All or Nothing)
+        // Jika ada 1 query gagal antar vendor, seluruh pembuatan order & item di-rollback agar keranjang tidak terfragmentasi
+        DB::beginTransaction();
+        try {
+            foreach ($keranjangPerVendor as $vendorId => $items) {
+                $opsi = $request->opsi_pengiriman[$vendorId] ?? 'ambil';
+                $ongkir = (int) ($request->ongkir_vendor[$vendorId] ?? 0);
+                $durasi = (int) ($request->durasi_sewa[$vendorId] ?? 1);
+                $jaminanTerpilih = $request->jaminan[$vendorId] ?? 'KTP'; 
+
+                if ($opsi === 'diantar') {
+                    $latToko = (float) ($items->first()->barang->latitude ?? $items->first()->barang->vendor->latitude ?? 0);
+                    $lonToko = (float) ($items->first()->barang->longitude ?? $items->first()->barang->vendor->longitude ?? 0);
+                    $latCust = (float) $request->cust_lat;
+                    $lonCust = (float) $request->cust_lon;
+
+                    if ($latToko && $lonToko && $latCust && $lonCust) {
+                        $earthRadius = 6371;
+                        $dLat = deg2rad($latToko - $latCust);
+                        $dLon = deg2rad($lonToko - $lonCust);
+                        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($latCust)) * cos(deg2rad($latToko)) * sin($dLon/2) * sin($dLon/2);
+                        $c = 2 * asin(sqrt($a));
+                        $jarakKm = ceil($earthRadius * $c);
+                        
+                        $ongkir = max(4000, $jarakKm * 4000);
+                    } else {
+                        if ($ongkir < 10000) $ongkir = 10000;
+                    }
+                } else {
+                    $ongkir = 0; 
+                }
+                
+                $waktuKembali = $waktuMulai->copy()->addDays($durasi);
+                $subtotalSewa = 0;
+                $subtotalSewaAsli = 0;
+
+                foreach ($items as $item) {
+                    $subtotalSewaAsli += ((float)$item->barang->harga_sewa_harian * $item->jumlah * $durasi);
+                    $hargaMarkup = $item->barang->harga_sewa_harian * 1.05;
+                    $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
+                }
+
+                // PERUBAHAN: Validasi voucher ketat di sisi server (mencegah manipulasi diskon dari client/AJAX)
+                $potonganVoucher = 0;
+                $voucherIdDipakai = null;
+                
+                if (isset($voucherData['vendor_id']) && $voucherData['vendor_id'] == $vendorId && !empty($voucherData['voucher_id'])) {
+                    $vId = (int) $voucherData['voucher_id'];
+                    $dbVoucher = Voucher::where('id', $vId)
+                        ->where('vendor_id', $vendorId)
+                        ->where('is_active', 1)
+                        ->whereDate('tanggal_mulai', '<=', now())
+                        ->whereDate('tanggal_selesai', '>=', now())
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($dbVoucher && $dbVoucher->kuota_terpakai < $dbVoucher->kuota_total) {
+                        if ($subtotalSewaAsli >= (float) $dbVoucher->minimal_belanja) {
+                            if ($dbVoucher->tipe_diskon === 'nominal') {
+                                $calc = (float) $dbVoucher->nilai_diskon;
+                            } else {
+                                $calc = ($subtotalSewaAsli * (float) $dbVoucher->nilai_diskon) / 100;
+                                if (!is_null($dbVoucher->maksimal_diskon) && $calc > (float) $dbVoucher->maksimal_diskon) {
+                                    $calc = (float) $dbVoucher->maksimal_diskon;
+                                }
+                            }
+                            $potonganVoucher = min($subtotalSewaAsli, round($calc, 2));
+                            $voucherIdDipakai = $dbVoucher->id;
+                        }
+                    }
+                }
+
+                // Alokasikan diskon koin secara proporsional ke order toko ini
+                $currentVendorIndex++;
+                $orderCoins = 0;
+                $orderCoinDiscount = 0.0;
+
+                if ($totalApplicableCoins > 0 && $totalBaseRentalSubtotalAll > 0) {
+                    if ($currentVendorIndex === $totalVendorBlocks) {
+                        $orderCoins = $remainingCoinsToDistribute;
+                        $orderCoinDiscount = (float) $remainingRupiahToDistribute;
+                    } else {
+                        $ratio = $subtotalSewaAsli / $totalBaseRentalSubtotalAll;
+                        $orderCoins = min($remainingCoinsToDistribute, (int) floor($totalApplicableCoins * $ratio));
+                        $orderCoinDiscount = (float) ($orderCoins * 100);
+                        $remainingCoinsToDistribute -= $orderCoins;
+                        $remainingRupiahToDistribute -= $orderCoinDiscount;
+                    }
+                }
+
+                // Kenakan kode unik hanya pada salah satu order jika checkout gabungan
+                $kodeUnikOrder = 0;
+                if ($kodeUnikDigunakan > 0) {
+                    $kodeUnikOrder = $kodeUnikDigunakan;
+                    $kodeUnikDigunakan = 0;
+                }
+
+                // Hitung kalkulasi resmi transaksi menggunakan TransactionCalculationService
+                $pricing = \App\Services\TransactionCalculationService::calculateOrderPricing(
+                    $subtotalSewaAsli,
+                    (float) $ongkir,
+                    (float) $potonganVoucher,
+                    (int) $kodeUnikOrder,
+                    (float) $orderCoinDiscount
+                );
+
+                $totalHargaVendor = $pricing['total_price'];
+                $totalBayarSemua += $totalHargaVendor;
+
+                $orderId = DB::table('orders')->insertGetId([
+                    'user_id' => auth()->id(),
+                    'vendor_id' => $vendorId, 
+                    'kode_booking' => 'RNT' . strtoupper(uniqid()),
+                    'customer_name' => auth()->user()->name ?? 'Customer',
+                    'customer_whatsapp' => $nomorWaAman, 
+                    'alamat_pengiriman' => $opsi === 'diantar' ? ($request->alamat_customer ?? 'Sesuai Titik GPS') : 'Diambil di Toko',
+                    'shipping_address' => $opsi === 'diantar' ? ($request->alamat_customer ?? 'Sesuai Titik GPS') : 'Diambil di Toko',
+                    'pin_location' => $opsi === 'diantar' ? ($request->cust_lat . ',' . $request->cust_lon) : null,
+                    'metode_pengambilan' => $opsi,
+                    'shipping_method' => $opsi,
+                    'shipping_fee' => $ongkir,
+                    'kode_unik' => $kodeUnikOrder,
+                    'tanggal_mulai' => $waktuMulai,
+                    'start_rent' => $waktuMulai,      
+                    'tanggal_selesai' => $waktuKembali,
+                    'end_rent' => $waktuKembali,      
+                    'duration_days' => $durasi,
+                    'jaminan' => $jaminanTerpilih, 
+                    'payment_method' => $metodeInput,
+                    'total_biaya' => $totalHargaVendor,
+                    'total_price' => $totalHargaVendor,
+                    'vendor_earning' => $pricing['vendor_earning'],
+                    'rentify_fee' => $pricing['rentify_fee'],
+                    
+                    // PERUBAHAN: Mencatat data voucher ke database
+                    'voucher_id' => $voucherIdDipakai,
+                    'potongan_voucher' => $potonganVoucher,
+
+                    // PERUBAHAN: Mencatat data diskon koin Rentify ke database
+                    'koin_digunakan' => $orderCoins,
+                    'potongan_koin' => $orderCoinDiscount,
+
+                    'status' => $metodeInput === 'COD' ? 'Menunggu Konfirmasi' : 'PENDING_PAYMENT',
+                    'created_at' => $waktuSekarang,
+                    'updated_at' => $waktuSekarang
+                ]);
+
+                // Eksekusi pemotongan saldo koin user secara atomik FIFO jika menggunakan koin
+                if ($orderCoins > 0 && $userId) {
+                    $coinService->spendCoins((int) $userId, $orderCoins, $orderId);
+                }
+
+                // PERUBAHAN: Menjalankan increment() pada kuota voucher jika voucher dipakai
+                if ($voucherIdDipakai) {
+                    Voucher::where('id', $voucherIdDipakai)->increment('kuota_terpakai');
+                }
+
+                $invoiceIds[] = 'INV-' . $orderId;
+
+                foreach ($items as $item) {
+                    DB::table('order_items')->insert([
+                        'order_id' => $orderId,
+                        'product_id' => $item->barang_id,
+                        'product_name' => $item->barang->nama,
+                        'price' => $item->barang->harga_sewa_harian * 1.05, 
+                        'quantity' => $item->jumlah,
+                        'created_at' => $waktuSekarang,
+                        'updated_at' => $waktuSekarang
+                    ]);
+                }
+            }
+
+            if (!$isDirectCheckout) {
+                if (session()->has('checkout_selected_ids')) {
+                    $selectedSession = session('checkout_selected_ids');
+                    $selectedSessionArray = is_array($selectedSession) ? $selectedSession : [$selectedSession];
+                    Keranjang::whereIn('id', $selectedSessionArray)->delete();
+                    session()->forget('checkout_selected_ids');
+                } else {
+                    Keranjang::where('user_id', auth()->id())->delete();
+                }
+            } else {
+                session()->forget('checkout_direct_id');
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('[CheckoutController] Gagal memproses pesanan multi-vendor, transaksi di-rollback: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', '⚠️ Terjadi kesalahan saat memproses pesanan Anda. Seluruh transaksi dibatalkan demi keamanan, silakan coba beberapa saat lagi.');
         }
 
         $metodeInput = $request->input('metode_pembayaran', 'QRIS');
@@ -373,6 +496,8 @@ class CheckoutController extends Controller
         session([
             'metode_pembayaran' => $metodeInput,
             'total_bayar_semua' => $totalBayarSemua,
+            'total_koin_digunakan' => $totalApplicableCoins,
+            'total_potongan_koin' => $totalCoinDiscountRupiah,
             'no_hp' => $nomorWaAman,
             'waktu_pesan' => $waktuSekarang->format('Y-m-d H:i:s'),
             'durasi_sewa_array' => $request->durasi_sewa,

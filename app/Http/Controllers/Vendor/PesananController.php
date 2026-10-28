@@ -75,7 +75,7 @@ class PesananController extends Controller
         $vendorId = Auth::id();
 
         // Wajib menggunakan Model Eloquent (Penyewaan::with) agar relasi 'details' terbaca
-        $pesanan = Penyewaan::with(['details.barang'])->findOrFail($id);
+        $pesanan = Penyewaan::with(['customer', 'details.barang', 'pembayaran'])->findOrFail($id);
 
         // Kita saring khusus barang yang milik vendor yang sedang login
         $details = $pesanan->details->filter(function ($detail) use ($vendorId) {
@@ -115,6 +115,21 @@ class PesananController extends Controller
         // tidak boleh dibatalkan secara sepihak oleh vendor.
         if ($pesanan->status === 'Selesai' && $request->status !== 'Selesai') {
             return back()->with('error', '⚠️ Pesanan yang sudah berstatus Selesai tidak dapat diubah atau dibatalkan sepihak oleh Vendor. Silakan hubungi Admin jika terdapat sengketa/refund.');
+        }
+
+        // Perlindungan Transaksi Online:
+        // Pesanan online (QRIS/E-Wallet/Transfer) WAJIB terverifikasi lunas (via notifikasi HP/MacroDroid atau verifikasi Admin)
+        // sebelum vendor diizinkan menyetujui ('Disetujui'), menyerahkan barang ('Sedang Disewa'), atau menyelesaikan pesanan ('Selesai').
+        $paymentMethod = strtoupper(trim($pesanan->payment_method ?? 'ONLINE'));
+        if ($paymentMethod !== 'COD' && in_array($request->status, ['Disetujui', 'Sedang Disewa', 'Selesai'])) {
+            $pembayaran = DB::table('pembayarans')->where('order_id', $pesanan->id)->first();
+            $isLunas = ($pembayaran && strtoupper(trim($pembayaran->status ?? '')) === 'LUNAS')
+                    || !is_null($pesanan->paid_at)
+                    || ($pembayaran && !is_null($pembayaran->paid_at));
+
+            if (!$isLunas) {
+                return back()->with('error', '⚠️ Pesanan online (QRIS/E-Wallet) belum terverifikasi lunas oleh sistem. Menunggu mutasi masuk via notifikasi HP/MacroDroid atau verifikasi Admin. Anda tidak dapat menyetujui, menyewakan, atau menyelesaikan pesanan sebelum pembayaran dinyatakan Lunas.');
+            }
         }
 
         if ($request->status === 'Selesai' && $pesanan->status !== 'Selesai') {

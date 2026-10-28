@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Barang;
 use App\Models\FotoBarang;
 use App\Services\StorageService;
+use App\Rules\ValidMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class VendorFotoBarangController extends Controller
 {
     /**
-     * Upload foto tambahan (galeri) untuk produk vendor ke disk public
+     * Upload foto tambahan (galeri) untuk produk vendor ke Cloudinary / disk publik
      */
     public function upload(Request $request, $id)
     {
@@ -20,12 +21,12 @@ class VendorFotoBarangController extends Controller
 
         $request->validate([
             'fotos' => 'required|array|min:1',
-            'fotos.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
+            'fotos.*' => ['required', new ValidMedia(102400, true)],
         ]);
 
         $uploadedCount = 0;
         foreach ($request->file('fotos') as $foto) {
-            $fotoPath = StorageService::storePublicFile($foto, 'barang/galeri');
+            $fotoPath = StorageService::storeMedia($foto, 'barang/galeri');
 
             FotoBarang::create([
                 'barang_id' => $barang->id,
@@ -67,7 +68,7 @@ class VendorFotoBarangController extends Controller
     }
 
     /**
-     * Menghapus salah satu foto galeri dari disk public dan database
+     * Menghapus salah satu foto galeri dari Cloudinary / disk publik dan database
      */
     public function destroy($fotoId)
     {
@@ -77,11 +78,7 @@ class VendorFotoBarangController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus foto ini.');
         }
 
-        // Hapus berkas fisik lokal
-        if ($foto->foto_path) {
-            StorageService::deletePublicFile($foto->foto_path);
-        }
-
+        // Event deleting pada FotoBarang akan otomatis menghapus file dari Cloudinary & disk lokal
         $foto->delete();
 
         return back()->with('success', 'Foto galeri berhasil dihapus!');

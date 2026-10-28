@@ -55,15 +55,6 @@
                     <span>Monitor Voucher</span>
                 </a>
 
-                <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Pemasaran & Promosi</div>
-                <a href="{{ route('admin.ai-marketing.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-wand-magic-sparkles text-sky-500 w-5"></i>
-                        <span>AI Marketing</span>
-                    </div>
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-sky-500 text-white">AI</span>
-                </a>
-
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Manajemen Master Data</div>
                 <a href="{{ route('admin.vendors.validation') }}" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
                     <i class="fas fa-user-shield text-slate-400 w-5"></i>
@@ -169,9 +160,9 @@
                 </div>
                 <div class="rentify-card p-5 border border-slate-100 bg-white relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-chart-pie text-4xl text-sky-600"></i></div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Nilai Sewa (Gross)</p>
-                    <p class="text-2xl font-black text-slate-800 mt-1">Rp {{ number_format($stats['total_pendapatan_kotor'], 0, ',', '.') }}</p>
-                    <p class="text-[11px] text-slate-400 mt-1">{{ $stats['transaksi_selesai'] }} pesanan selesai</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Nilai Sewa (GMV)</p>
+                    <p class="text-2xl font-black text-slate-800 mt-1">Rp {{ number_format($stats['total_gmv'], 0, ',', '.') }}</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Kas Masuk Online: <span class="font-bold text-emerald-600">Rp {{ number_format($stats['total_kas_online'], 0, ',', '.') }}</span></p>
                 </div>
                 <div class="rentify-card p-5 border border-slate-100 bg-white relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-truck text-4xl text-indigo-500"></i></div>

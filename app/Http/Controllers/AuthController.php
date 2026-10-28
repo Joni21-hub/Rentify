@@ -63,14 +63,25 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // Cek apakah WA sudah diverifikasi (kecuali admin)
-            if (is_null($user->whatsapp_verified_at) && $user->role !== 'admin') {
+            $nomorWa = $user->role === 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
+
+            // Verifikasi WhatsApp hanya diwajibkan jika:
+            // 1. Akun bukan admin
+            // 2. Akun memiliki nomor WhatsApp terdaftar (!empty($nomorWa))
+            // 3. Nomor WhatsApp belum diverifikasi (is_null($user->whatsapp_verified_at))
+            // 4. Akun BUKAN pengguna Google / Gmail (akun Google menggunakan email terverifikasi sebagai identitas utama)
+            $isGoogleOrEmailCustomer = ($user->role === 'customer' && ($user->google_id || $user->hasRealEmail()));
+            $isVendorNeedingVerification = ($user->role === 'vendor' && !empty($user->whatsapp_vendor) && is_null($user->whatsapp_verified_at));
+            $isCustomerNeedingVerification = ($user->role === 'customer' && !empty($user->whatsapp) && is_null($user->whatsapp_verified_at) && !$isGoogleOrEmailCustomer);
+
+            $needsWaVerification = $user->role !== 'admin' && ($isVendorNeedingVerification || $isCustomerNeedingVerification);
+
+            if ($needsWaVerification) {
                 // Logout sementara karena belum terverifikasi
                 Auth::logout();
                 
                 // Generate OTP baru
                 $otp = rand(100000, 999999);
-                $nomorWa = $user->role == 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
                 
                 session([
                     'otp_user_id' => $user->id,

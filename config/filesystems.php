@@ -77,4 +77,19 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Image Compression Settings (WebP / AVIF)
+    |--------------------------------------------------------------------------
+    |
+    | Target format for compressing uploaded images: 'webp' or 'avif'.
+    | Quality ranges from 1 to 100 (recommended: 80).
+    | Max dimension restricts width/height preserving original aspect ratio.
+    |
+    */
+
+    'image_compression_format' => env('IMAGE_COMPRESSION_FORMAT', 'webp'),
+    'image_compression_quality' => (int) env('IMAGE_COMPRESSION_QUALITY', 100),
+    'image_max_dimension' => (int) env('IMAGE_MAX_DIMENSION', 1920),
+
 ];

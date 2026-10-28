@@ -27,6 +27,28 @@ class Barang extends Model
         'approved_at'       => 'datetime',
     ];
 
+    /**
+     * The "booted" method of the model.
+     * Membersihkan berkas media di Cloudinary dan penyimpanan lokal saat produk dihapus.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Barang $barang) {
+            // 1. Hapus cover photo produk dari Cloudinary atau disk lokal
+            if (!empty($barang->cover_photo)) {
+                \App\Services\StorageService::deleteFile($barang->cover_photo);
+            }
+
+            // 2. Hapus seluruh foto galeri produk dari Cloudinary dan disk lokal
+            foreach ($barang->fotos as $foto) {
+                if (!empty($foto->foto_path)) {
+                    \App\Services\StorageService::deleteFile($foto->foto_path);
+                }
+                $foto->delete();
+            }
+        });
+    }
+
     // ─── Accessors ────────────────────────────────────
 
     /**
@@ -35,6 +57,14 @@ class Barang extends Model
     public function getCoverPhotoUrlAttribute(): string
     {
         return \App\Services\StorageService::getBarangImageUrl($this);
+    }
+
+    /**
+     * Memeriksa apakah berkas cover berupa video
+     */
+    public function getIsCoverVideoAttribute(): bool
+    {
+        return \App\Services\StorageService::isVideoMedia($this->cover_photo);
     }
 
     /**

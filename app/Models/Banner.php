@@ -17,4 +17,16 @@ class Banner extends Model
         'judul_promo',
         'gambar_url',
     ];
+
+    /**
+     * Membersihkan berkas banner di Cloudinary saat banner dihapus.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Banner $banner) {
+            if (!empty($banner->gambar_url)) {
+                \App\Services\StorageService::deleteFile($banner->gambar_url);
+            }
+        });
+    }
 }

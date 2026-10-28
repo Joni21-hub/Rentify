@@ -113,7 +113,10 @@ class MarketplaceController extends Controller
         ]);
 
         $kategoris = Kategori::all();
+        $wishlistIds = Auth::check() 
+            ? \App\Models\Wishlist::where('user_id', Auth::id())->pluck('barang_id')->flip()->toArray() 
+            : [];
 
-        return view('customer.search', compact('barangs', 'kategoris', 'keyword', 'kategoriId'));
+        return view('customer.search', compact('barangs', 'kategoris', 'keyword', 'kategoriId', 'wishlistIds'));
     }
 }

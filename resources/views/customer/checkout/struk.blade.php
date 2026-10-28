@@ -232,6 +232,8 @@
                 $grandDeposit = 0;
                 $grandOngkir = 0;
                 $grandVoucher = 0;
+                $grandKoin = 0;
+                $grandKoinPcs = 0;
                 $grandKodeUnik = 0;
             @endphp
 
@@ -256,6 +258,8 @@
                     if ($orderAsli) {
                         $grandOngkir += (float) ($orderAsli->shipping_fee ?? 0);
                         $grandVoucher += (float) ($orderAsli->potongan_voucher ?? 0);
+                        $grandKoin += (float) ($orderAsli->potongan_koin ?? 0);
+                        $grandKoinPcs += (int) ($orderAsli->koin_digunakan ?? 0);
                         $grandKodeUnik += (int) ($orderAsli->kode_unik ?? 0);
                     }
 
@@ -396,6 +400,13 @@
             <div class="info-row" style="color: #e11d48;">
                 <span style="font-weight: 600;">Potongan Voucher Promo</span> 
                 <span style="font-weight: 800;">- Rp {{ number_format($grandVoucher, 0, ',', '.') }}</span>
+            </div>
+            @endif
+
+            @if($grandKoin > 0)
+            <div class="info-row" style="color: #d97706;">
+                <span style="font-weight: 600;"><i class="fa-solid fa-coins mr-1"></i> Diskon Koin Rentify ({{ number_format($grandKoinPcs) }} Koin)</span> 
+                <span style="font-weight: 800;">- Rp {{ number_format($grandKoin, 0, ',', '.') }}</span>
             </div>
             @endif
 

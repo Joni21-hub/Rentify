@@ -137,6 +137,17 @@
             </span>
             <span>Menunggu pembayaran... Halaman otomatis dialihkan ke struk setelah pembayaran terdeteksi.</span>
         </div>
+
+        <!-- Tombol Konfirmasi Manual (Fallback Jika Webhook Belum Terdeteksi) -->
+        <div class="mt-4 pt-3.5 border-t border-slate-100">
+            <button type="button" id="btn-confirm-payment" onclick="konfirmasiSudahBayar()" class="w-full py-3 px-4 rounded-xl font-bold text-xs md:text-sm text-white bg-sky-600 hover:bg-sky-700 active:scale-[0.98] transition shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Saya Sudah Bayar</span>
+            </button>
+            <p class="text-[11px] text-slate-400 text-center mt-2">
+                Sistem otomatis mengalihkan ke struk saat dana terdeteksi. Klik tombol di atas jika Anda telah mentransfer dan ingin langsung melihat struk.
+            </p>
+        </div>
     </div>
 
     <!-- 4. PETUNJUK PEMBAYARAN -->
@@ -198,6 +209,7 @@
     const qrisPayload = {!! json_encode($qrisPayload ?? '') !!};
     const qrisImageUrl = {!! json_encode($qrisImageUrl ?? '') !!};
     const checkStatusUrl = "{{ route('customer.pembayaran.check_status', $id) }}";
+    const confirmUrl = "{{ route('customer.pembayaran.confirm', $id) }}";
     const simulateUrl = "{{ route('customer.pembayaran.simulate', $id) }}";
     const receiptUrl = "{{ route('customer.struk', $id) }}";
     const csrfToken = "{{ csrf_token() }}";
@@ -345,6 +357,53 @@
         .catch(function(err) {
             console.error(err);
             alert('Terjadi kesalahan saat simulasi.');
+        });
+    };
+
+    // 6. Fungsi Konfirmasi Mandiri Pelanggan (Tombol 'Saya Sudah Bayar')
+    window.konfirmasiSudahBayar = function() {
+        if (isRedirecting) return;
+        const btn = document.getElementById('btn-confirm-payment');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Memverifikasi konfirmasi...</span>';
+        }
+
+        fetch(confirmUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                isRedirecting = true;
+                const statusEl = document.getElementById('status-indicator');
+                if (statusEl) {
+                    statusEl.innerHTML = '<span class="text-emerald-600 font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-500"></i> ' + (data.message || 'Pembayaran berhasil dikonfirmasi!') + '</span>';
+                }
+                setTimeout(function() {
+                    window.location.href = data.redirect_url || receiptUrl;
+                }, 600);
+            } else {
+                alert(data.message || 'Gagal mengonfirmasi pembayaran.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>Saya Sudah Bayar</span>';
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error('Confirm payment error:', err);
+            alert('Terjadi kendala jaringan saat mengonfirmasi. Silakan coba kembali.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>Saya Sudah Bayar</span>';
+            }
         });
     };
 </script>

@@ -55,8 +55,13 @@
                     $fallbackImg = str_contains($namaLower, 'kurs') 
                         ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
                         : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
+                    $isCoverVideo = \App\Services\StorageService::isVideoMedia($barang->cover_photo);
                 @endphp
-                <img src="{{ $coverUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                @if($isCoverVideo)
+                    <video src="{{ $coverUrl }}" class="w-full h-full object-contain rounded-2xl" controls playsinline></video>
+                @else
+                    <img src="{{ $coverUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                @endif
             </div>
 
             @if(isset($barang->fotos) && $barang->fotos->count() > 0)
@@ -64,11 +69,16 @@
                 @php
                     $rawPath = (string)($foto->foto_path ?? $foto->foto ?? $foto->gambar ?? '');
                     $fotoUrl = \App\Services\StorageService::getPublicUrl($rawPath, 'placeholders/placeholder-barang.png');
+                    $isItemVideo = \App\Services\StorageService::isVideoMedia($rawPath);
                 @endphp
                 
                 @if(!empty($rawPath))
                 <div class="swiper-slide flex items-center justify-center p-4">
-                    <img src="{{ $fotoUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                    @if($isItemVideo)
+                        <video src="{{ $fotoUrl }}" class="w-full h-full object-contain rounded-2xl" controls playsinline></video>
+                    @else
+                        <img src="{{ $fotoUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                    @endif
                 </div>
                 @endif
                 @endforeach

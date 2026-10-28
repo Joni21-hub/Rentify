@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Services\StorageService;
+use App\Rules\ValidMedia;
 
 class VendorBarangController extends Controller
 {
@@ -57,19 +58,19 @@ class VendorBarangController extends Controller
             'latitude' => 'required',
             'longitude' => 'required',
             'fotos' => 'required|array|min:1',
-            'fotos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'fotos.*' => ['required', new ValidMedia(102400, true)],
         ]);
 
         $vendorId = Auth::user()->id;
         /** @var array<int, \Illuminate\Http\UploadedFile> $fotos */
         $fotos = $request->file('fotos', []);
 
-        // PENYIMPANAN MEDIA LOKAL MENGGUNAKAN STORAGE DISK PUBLIC
+        // PENYIMPANAN MEDIA CLOUDINARY (100% HD) DENGAN FALLBACK DISK PUBLIK
         $fileCover = $fotos[0] ?? null;
         if (!$fileCover instanceof \Illuminate\Http\UploadedFile) {
             return back()->withErrors(['fotos' => 'Foto cover wajib diunggah.']);
         }
-        $pathCover = StorageService::storePublicFile($fileCover, 'barang');
+        $pathCover = StorageService::storeMedia($fileCover, 'barang');
 
         $barang = Barang::create([
             'vendor_id' => $vendorId,
@@ -92,11 +93,11 @@ class VendorBarangController extends Controller
             'spesifikasi' => $request->input('spesifikasi', []),
         ]);
 
-        // SIMPAN FOTO GALERI TAMBAHAN KE DISK PUBLIC
+        // SIMPAN FOTO GALERI TAMBAHAN KE CLOUDINARY / DISK PUBLIK
         if (count($fotos) > 1) {
             for ($i = 1; $i < count($fotos); $i++) {
                 $foto = $fotos[$i];
-                $pathGaleri = StorageService::storePublicFile($foto, 'barang/galeri');
+                $pathGaleri = StorageService::storeMedia($foto, 'barang/galeri');
                 
                 FotoBarang::create([
                     'barang_id' => $barang->id,
@@ -145,7 +146,7 @@ class VendorBarangController extends Controller
             'latitude' => 'required',
             'longitude' => 'required',
             'fotos' => 'nullable|array',
-            'fotos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'fotos.*' => ['required', new ValidMedia(102400, true)],
         ]);
 
         $updateData = [
@@ -169,10 +170,12 @@ class VendorBarangController extends Controller
         if (!empty($fotos)) {
             $fileCover = $fotos[0] ?? null;
             if ($fileCover instanceof \Illuminate\Http\UploadedFile) {
-                $pathCover = StorageService::storePublicFile($fileCover, 'barang');
+                $pathCover = StorageService::storeMedia($fileCover, 'barang');
 
-                // Hapus cover photo lama jika ada
-                StorageService::deletePublicFile($barang->cover_photo);
+                // Hapus cover photo lama jika ada dari Cloudinary / penyimpanan lokal
+                if ($barang->cover_photo && $barang->cover_photo !== $pathCover) {
+                    StorageService::deleteFile($barang->cover_photo);
+                }
                 $updateData['cover_photo'] = $pathCover;
             }
 
@@ -180,7 +183,7 @@ class VendorBarangController extends Controller
                 for ($i = 1; $i < count($fotos); $i++) {
                     $fotoItem = $fotos[$i] ?? null;
                     if ($fotoItem instanceof \Illuminate\Http\UploadedFile) {
-                        $pathGaleri = StorageService::storePublicFile($fotoItem, 'barang/galeri');
+                        $pathGaleri = StorageService::storeMedia($fotoItem, 'barang/galeri');
                         FotoBarang::create([
                             'barang_id' => $barang->id,
                             'foto_path' => $pathGaleri
@@ -199,12 +202,10 @@ class VendorBarangController extends Controller
     {
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
         
-        // Hapus cover photo dari penyimpanan lokal
-        if ($barang->cover_photo) {
-            StorageService::deletePublicFile($barang->cover_photo);
-        }
-
+        // Hapus barang (Event deleting pada model Barang akan otomatis membersihkan
+        // cover photo dan semua foto galeri terkait dari Cloudinary dan disk penyimpanan)
         $barang->delete();
-        return redirect()->route('vendor.barang.index')->with('success', 'Barang dihapus.');
+
+        return redirect()->route('vendor.barang.index')->with('success', 'Barang dan seluruh fotonya berhasil dihapus.');
     }
 }

@@ -653,11 +653,11 @@
             if (!this.videoEl) return;
             try {
                 const canvas = document.createElement('canvas');
-                canvas.width = 360;
-                canvas.height = 640;
+                canvas.width = 720;
+                canvas.height = 1280;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
-                callback(canvas.toDataURL('image/jpeg', 0.85));
+                callback(canvas.toDataURL('image/jpeg', 0.90));
             } catch (e) {
                 callback('');
             }

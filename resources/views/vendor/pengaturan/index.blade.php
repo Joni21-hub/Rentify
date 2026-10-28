@@ -51,7 +51,7 @@
                     </div>
                 </div>
 
-                <input type="file" name="foto_profil" id="foto_profil_input" class="hidden" accept="image/*" onchange="previewImage(event)">
+                <input type="file" name="foto_profil" id="foto_profil_input" class="hidden" accept="image/*,.heic,.heif,.avif,.webp" onchange="previewImage(event)">
 
                 <div>
                     <h2 class="text-sm sm:text-base font-black text-slate-800">{{ $user->vendor_name ?? 'Nama Toko' }}</h2>
@@ -115,8 +115,33 @@
     </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script>
-    function previewImage(event) {
+    async function previewImage(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        const ext = (file.name || '').split('.').pop().toLowerCase();
+        const mime = file.type || '';
+        if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
+            try {
+                if (typeof heic2any === 'function') {
+                    const convertedBlob = await heic2any({
+                        blob: file,
+                        toType: 'image/jpeg',
+                        quality: 0.9
+                    });
+                    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                    file = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    event.target.files = dt.files;
+                }
+            } catch (err) {
+                console.warn('heic2any failed:', err);
+            }
+        }
+
         const reader = new FileReader();
         reader.onload = function() {
             const preview = document.getElementById('preview_image');
@@ -125,7 +150,7 @@
             preview.classList.remove('hidden');
             if (icon) icon.classList.add('hidden');
         };
-        reader.readAsDataURL(event.target.files[0]);
+        reader.readAsDataURL(file);
     }
 </script>
 @endsection

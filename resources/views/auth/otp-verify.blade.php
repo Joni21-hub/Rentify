@@ -22,7 +22,7 @@
             <h2 class="text-2xl font-extrabold text-sky-500 mb-2">Verifikasi OTP</h2>
             <p class="text-xs text-slate-800/90 mb-6 leading-relaxed">
                 Kami telah mengirimkan 6 digit kode OTP ke WhatsApp <br>
-                <b>{{ substr(session('otp_phone', '08123xxx'), 0, 7) }}xxxx</b>
+                <b>{{ (session('otp_phone') && strlen(session('otp_phone')) >= 7) ? substr(session('otp_phone'), 0, 7) . 'xxxx' : (session('otp_phone') ?? 'nomor WhatsApp Anda') }}</b>
             </p>
 
             @if (session('error'))

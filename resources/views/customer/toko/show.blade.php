@@ -216,7 +216,7 @@
         </div>
 
         @if($barangs->count() > 0)
-            <div class="grid grid-cols-2 gap-3">
+            <div class="columns-2 gap-3 [column-fill:_balance]">
                 @foreach($barangs as $item)
                     @php
                         $coverUrl = $item->cover_photo_url;
@@ -227,11 +227,11 @@
                             : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
                     @endphp
                     <a href="{{ route('customer.barang.show', $item->slug ?? $item->id) }}" 
-                       class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs hover:shadow-md transition flex flex-col">
+                       class="break-inside-avoid mb-3 bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs hover:shadow-md transition flex flex-col">
                         
                         <!-- Gambar Cover -->
-                        <div class="w-full aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                            <img src="{{ $coverUrl }}" alt="{{ $item->nama }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                        <div class="w-full bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                            <img src="{{ $coverUrl }}" alt="{{ $item->nama }}" class="w-full h-auto max-h-[420px] object-cover block" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
 
                             <span class="absolute top-2 left-2 bg-white/90 backdrop-blur-xs text-sky-700 text-[9px] font-extrabold px-2 py-0.5 rounded-md border border-slate-200/60 shadow-2xs">
                                 {{ $item->kategori->nama ?? 'Sewa' }}

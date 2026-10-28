@@ -46,6 +46,48 @@ class Moment extends Model
     ];
 
     /**
+     * Membersihkan berkas video / gambar di Cloudinary saat Moment dihapus.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Moment $moment) {
+            if (!empty($moment->media_url)) {
+                \App\Services\StorageService::deleteFile($moment->media_url);
+            }
+            if (!empty($moment->thumbnail_url)) {
+                \App\Services\StorageService::deleteFile($moment->thumbnail_url);
+            }
+            if (!empty($moment->media_urls) && is_array($moment->media_urls)) {
+                foreach ($moment->media_urls as $url) {
+                    \App\Services\StorageService::deleteFile($url);
+                }
+            }
+        });
+    }
+
+    public function getMediaUrlAttribute(?string $value): ?string
+    {
+        return \App\Services\StorageService::optimizeCloudinaryUrl($value);
+    }
+
+    public function getThumbnailUrlAttribute(?string $value): ?string
+    {
+        return \App\Services\StorageService::optimizeCloudinaryUrl($value);
+    }
+
+    public function getMediaUrlsAttribute($value): ?array
+    {
+        $urls = is_string($value) ? json_decode($value, true) : $value;
+        if (!is_array($urls)) {
+            return $urls;
+        }
+
+        return array_map(function ($u) {
+            return \App\Services\StorageService::optimizeCloudinaryUrl($u);
+        }, $urls);
+    }
+
+    /**
      * Ambil seluruh URL media untuk momen ini (baik tunggal maupun multi-foto carousel).
      */
     public function getAllMediaUrlsAttribute(): array

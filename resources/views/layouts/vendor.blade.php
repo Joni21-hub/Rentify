@@ -66,6 +66,10 @@
                 <span class="w-1.5 h-1.5 rounded-full {{ $vStatus === 'approved' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse' }}"></span>
                 {{ $vStatus === 'approved' ? 'Toko Aktif' : 'Kurasi' }}
             </span>
+            <a href="{{ route('role.switch', 'customer') }}" class="px-2.5 py-1 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 text-sky-300 text-[11px] font-bold transition flex items-center gap-1" title="Beralih ke Katalog Belanja Customer">
+                <i class="fa-solid fa-bag-shopping text-xs"></i>
+                <span>Katalog</span>
+            </a>
             <a href="{{ route('vendor.pengaturan.index') }}" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 transition" title="Pengaturan Toko">
                 <i class="fa-solid fa-gear text-xs"></i>
             </a>
@@ -142,14 +146,6 @@
                 <i class="fa-solid fa-ticket w-5 text-center text-sm"></i> <span>Voucher Diskon Toko</span>
             </a>
 
-            <a href="{{ route('vendor.ai-marketing.index') }}" class="flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.ai-marketing.*') ? 'bg-gradient-to-r from-sky-500/25 to-blue-500/20 text-sky-300 border border-sky-400/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
-                <div class="flex items-center gap-3.5">
-                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-sm text-sky-400"></i>
-                    <span>AI Marketing & Promo</span>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-sky-400 to-cyan-400 text-slate-900 shadow-xs">AI</span>
-            </a>
-
             <div class="my-4 border-t border-white/5"></div>
             <p class="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Toko & Pengaturan</p>
 
@@ -186,7 +182,7 @@
         <!-- Dashboard -->
         <a href="{{ route('vendor.dashboard') }}" class="flex flex-col items-center py-1 px-2 {{ request()->routeIs('vendor.dashboard') ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600' }}">
             <i class="fa-solid fa-chart-pie text-lg"></i>
-            <span class="text-[9px] font-bold mt-0.5">Beranda</span>
+            <span class="text-[9px] font-bold mt-0.5">Dashboard</span>
         </a>
 
         <!-- Produk -->

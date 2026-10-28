@@ -252,3 +252,46 @@ select.rentify-input option {
     border-top: 1px solid rgba(255, 255, 255, 0.4) !important;
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
 }
+
+/* --- SMOOTH CROSS-DOCUMENT VIEW TRANSITIONS LEVEL 2 -------- */
+/* Mengaktifkan transisi dokumen otomatis yang halus dan instan antar tab */
+@view-transition {
+    navigation: auto;
+}
+
+/* Pertahankan bar navigasi bawah agar tidak berkedip atau bergeser saat pindah halaman */
+#bottom-navigation-wrapper,
+#bottom-navigation-bar {
+    view-transition-name: rentify-bottom-nav;
+}
+
+/* Transisi halus konten halaman (cross-fade lembut tanpa kedip putih) */
+::view-transition-old(root) {
+    animation: rentifyPageExit 0.18s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+::view-transition-new(root) {
+    animation: rentifyPageEnter 0.22s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes rentifyPageExit {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.992);
+    }
+}
+
+@keyframes rentifyPageEnter {
+    from {
+        opacity: 0;
+        transform: scale(1.008);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

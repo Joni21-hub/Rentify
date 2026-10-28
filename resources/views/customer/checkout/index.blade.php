@@ -3,7 +3,7 @@
 @section('content')
 <style>
     nav, header, footer { display: none !important; }
-    body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 10px; padding-bottom: 85px;}
+    body { background-color: #f8fafc; font-family: var(--rentify-font, 'Plus Jakarta Sans', sans-serif); padding-top: 10px; padding-bottom: 85px;}
     .checkout-container { max-width: 600px; margin: 0 auto; padding: 0 12px;}
     
     .header-title { font-size: 17px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -36,6 +36,15 @@
         from { transform: translateY(100%); }
         to { transform: translateY(0); }
     }
+
+    /* Toggle Switch Koin Rentify Theme */
+    .switch-koin { position: relative; display: inline-block; width: 44px; height: 24px; margin: 0; cursor: pointer; }
+    .switch-koin input { opacity: 0; width: 0; height: 0; }
+    .slider-koin { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .25s ease-in-out; border-radius: 24px; }
+    .slider-koin:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .25s ease-in-out; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .switch-koin input:checked + .slider-koin { background: linear-gradient(135deg, #38bdf8, #0284c7); box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35); }
+    .switch-koin input:checked + .slider-koin:before { transform: translateX(20px); }
+    .switch-koin input:disabled + .slider-koin { opacity: 0.45; cursor: not-allowed; background-color: #e2e8f0; }
 </style>
 
 <div class="checkout-container">
@@ -256,6 +265,46 @@
             </div>
         </div>
 
+        <!-- PANEL KOIN RENTIFY (REWARD PLATFORM) -->
+        <div class="section-title mt-2">
+            <span style="display: flex; align-items: center; gap: 7px;">
+                <i class="fa-solid fa-coins text-amber-500"></i> Koin Rentify
+            </span>
+            <a href="{{ route('customer.wallet.coins') }}" target="_blank" style="font-size: 11px; font-weight: 700; color: #0284c7; text-decoration: none; display: flex; align-items: center; gap: 3px;">
+                Cek Dompet <i class="fa-solid fa-chevron-right text-[9px]"></i>
+            </a>
+        </div>
+        <div class="clean-card mb-3" id="card-koin-rentify" style="padding: 12px 14px; border: 1.5px solid #bae6fd; background: #ffffff; border-radius: 12px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.05);" onmouseover="this.style.borderColor='#0284c7'" onmouseout="this.style.borderColor='#bae6fd'">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <!-- Coin Icon Rentify Style (Rounded squircle with warm amber accent) -->
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15); border: 1px solid #fde68a;">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span style="font-size: 13.5px; font-weight: 800; color: #0f172a;">Koin Rentify</span>
+                            <span id="badge-saldo-koin" style="font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 1.5px 7px; border-radius: 6px; border: 1px solid #bae6fd;">
+                                {{ number_format($userCoinBalance ?? 0, 0, ',', '.') }} Koin
+                            </span>
+                        </div>
+                        <div id="koin-subtext" style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 2px;">
+                            Memeriksa kelayakan koin...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toggle Switch Ala Rentify Primary -->
+                <div style="display: flex; align-items: center;">
+                    <label class="switch-koin" title="Gunakan Koin Rentify untuk diskon belanja">
+                        <input type="checkbox" id="toggle_use_coins" name="use_coins" value="1" onchange="toggleKoinRentify()">
+                        <span class="slider-koin"></span>
+                    </label>
+                </div>
+            </div>
+            <input type="hidden" name="coins_to_use" id="input_coins_to_use" value="0">
+        </div>
+
         <div class="section-title mt-2">Rincian Pembayaran</div>
         <div class="clean-card mb-4">
             <div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: #475569;">
@@ -264,6 +313,10 @@
             
             <div id="row-diskon" style="display: none; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: #0284c7; font-weight: 800;">
                 <span>Diskon Voucher Toko</span><span id="grand-diskon">- Rp 0</span>
+            </div>
+
+            <div id="row-koin" style="display: none; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: #0284c7; font-weight: 800;">
+                <span><i class="fa-solid fa-coins text-amber-500 mr-1"></i> Diskon Koin Rentify</span><span id="grand-koin">- Rp 0</span>
             </div>
 
             <div style="display: flex; justify-content: space-between; font-size: 13.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 10px; color: #475569;">
@@ -421,8 +474,33 @@
     const formatRp = (angka) => 'Rp ' + Math.round(angka).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     let lokasiCustomer = null;
     
-    // PERUBAHAN: Variabel global untuk menyimpan data diskon aktif
+    // PERUBAHAN: Variabel global untuk menyimpan data diskon voucher & koin
     let diskonAktif = 0;
+    const userCoinBalance = {{ (int) ($userCoinBalance ?? 0) }};
+    let diskonKoinAktif = 0;
+    let applicableCoinsGlobal = 0;
+
+    function toggleKoinRentify() {
+        const toggle = document.getElementById('toggle_use_coins');
+        const inputCoins = document.getElementById('input_coins_to_use');
+        const cardKoin = document.getElementById('card-koin-rentify');
+        if (toggle && toggle.checked && applicableCoinsGlobal > 0) {
+            diskonKoinAktif = applicableCoinsGlobal * 100;
+            if (inputCoins) inputCoins.value = applicableCoinsGlobal;
+            if (cardKoin) {
+                cardKoin.style.borderColor = '#0284c7';
+                cardKoin.style.background = '#f0f9ff';
+            }
+        } else {
+            diskonKoinAktif = 0;
+            if (inputCoins) inputCoins.value = 0;
+            if (cardKoin) {
+                cardKoin.style.borderColor = '#bae6fd';
+                cardKoin.style.background = '#ffffff';
+            }
+        }
+        hitungSemuaTotal();
+    }
 
     function toggleVoucher() {
         const panel = document.getElementById('voucher-panel');
@@ -633,10 +711,77 @@
             rowDiskon.style.display = 'none';
         }
 
+        // Hitung subtotal sewa murni dasar (tanpa markup 5% platform)
+        const subtotalSewaMurni = Math.round(totalSewaSemua / 1.05);
+
+        // Evaluasi kelayakan Koin Rentify (Minimal transaksi sewa Rp 50.000, maks 25% floor kelipatan 100)
+        const toggleKoin = document.getElementById('toggle_use_coins');
+        const koinSubtext = document.getElementById('koin-subtext');
+        const rowKoin = document.getElementById('row-koin');
+        const inputCoins = document.getElementById('input_coins_to_use');
+        const cardKoin = document.getElementById('card-koin-rentify');
+
+        if (subtotalSewaMurni < 50000 || userCoinBalance <= 0) {
+            applicableCoinsGlobal = 0;
+            if (toggleKoin) {
+                toggleKoin.checked = false;
+                toggleKoin.disabled = true;
+            }
+            if (inputCoins) inputCoins.value = 0;
+            diskonKoinAktif = 0;
+            if (cardKoin) {
+                cardKoin.style.borderColor = '#e2e8f0';
+                cardKoin.style.background = '#ffffff';
+            }
+            if (koinSubtext) {
+                if (userCoinBalance <= 0) {
+                    koinSubtext.innerText = 'Saldo Koin Rentify Anda belum tersedia (0 Koin).';
+                } else {
+                    koinSubtext.innerText = 'Minimal sewa produk Rp 50.000 untuk menukarkan koin.';
+                }
+            }
+            if (rowKoin) rowKoin.style.display = 'none';
+        } else {
+            // Formula akuntansi resmi Rentify:
+            // 1 Koin = Rp 100. Diskon maksimal 25% dari subtotal sewa murni, floor kelipatan Rp 100
+            const maxRupiah = Math.floor((subtotalSewaMurni * 0.25) / 100) * 100;
+            const maxAllowedCoins = Math.floor(maxRupiah / 100);
+            applicableCoinsGlobal = Math.min(userCoinBalance, maxAllowedCoins);
+            const nominalDiskonKoin = applicableCoinsGlobal * 100;
+
+            if (toggleKoin) {
+                toggleKoin.disabled = false;
+            }
+            if (koinSubtext) {
+                koinSubtext.innerHTML = `Tukarkan <strong style="color: #0284c7;">${applicableCoinsGlobal.toLocaleString('id-ID')} Koin</strong> <span style="color: #0284c7; font-weight: 800;">[- ${formatRp(nominalDiskonKoin)}]</span>`;
+            }
+
+            if (toggleKoin && toggleKoin.checked) {
+                diskonKoinAktif = nominalDiskonKoin;
+                if (inputCoins) inputCoins.value = applicableCoinsGlobal;
+                if (cardKoin) {
+                    cardKoin.style.borderColor = '#0284c7';
+                    cardKoin.style.background = '#f0f9ff';
+                }
+                if (rowKoin) {
+                    document.getElementById('grand-koin').innerText = "- " + formatRp(diskonKoinAktif);
+                    rowKoin.style.display = 'flex';
+                }
+            } else {
+                diskonKoinAktif = 0;
+                if (inputCoins) inputCoins.value = 0;
+                if (cardKoin) {
+                    cardKoin.style.borderColor = '#bae6fd';
+                    cardKoin.style.background = '#ffffff';
+                }
+                if (rowKoin) rowKoin.style.display = 'none';
+            }
+        }
+
         document.getElementById('grand-ongkir').innerText = formatRp(totalOngkirSemua);
         
         // Mencegah total belanja menjadi minus jika diskon lebih besar
-        const grandTotal = Math.max(0, (totalSewaSemua - diskonAktif)) + totalOngkirSemua;
+        const grandTotal = Math.max(0, (totalSewaSemua - diskonAktif - diskonKoinAktif)) + totalOngkirSemua;
         
         document.getElementById('grand-total').innerText = formatRp(grandTotal);
         document.getElementById('bar-total').innerText = formatRp(grandTotal);

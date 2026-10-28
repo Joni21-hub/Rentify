@@ -589,11 +589,19 @@ class MomentController extends Controller
     protected function uploadMediaToCloudinary($file, string $mediaType): array
     {
         $cloudinaryUrl = config('cloudinary.cloud_url') ?: env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+        $ext = strtolower($file->getClientOriginalExtension() ?: '');
 
         // Lingkungan testing atau bila kredensial Cloudinary belum diatur
         if (app()->environment('testing') || empty($cloudinaryUrl) || str_contains($cloudinaryUrl, 'dummy') || str_contains($cloudinaryUrl, 'test')) {
             try {
-                $path = \App\Services\StorageService::storePublicFile($file, 'moments');
+                if (in_array($ext, ['heic', 'heif'])) {
+                    $filename = \Illuminate\Support\Str::random(40) . '.jpg';
+                    $rawBytes = (string) file_get_contents($file->getRealPath());
+                    \Illuminate\Support\Facades\Storage::disk('public')->put('moments/' . $filename, $rawBytes);
+                    $path = 'moments/' . $filename;
+                } else {
+                    $path = \App\Services\StorageService::storePublicFile($file, 'moments');
+                }
                 $fullUrl = \App\Services\StorageService::getPublicUrl($path);
                 return [
                     'secure_url'    => $fullUrl,
@@ -609,14 +617,18 @@ class MomentController extends Controller
 
         try {
             $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
+            $qualityConfig = (int) config('filesystems.image_compression_quality', env('IMAGE_COMPRESSION_QUALITY', 100));
+            $qualityValue = ($qualityConfig >= 100) ? 'auto:best' : (string) $qualityConfig;
+
             $options = [
                 'folder'        => 'rentify/moments',
                 'resource_type' => $mediaType === 'video' ? 'video' : 'image',
-                'quality'       => 'auto',
-                'fetch_format'  => 'auto',
+                'transformation' => [
+                    'quality'      => $qualityValue,
+                    'fetch_format' => 'auto',
+                ],
             ];
 
-            $ext = strtolower($file->getClientOriginalExtension() ?: '');
             if (in_array($ext, ['heic', 'heif'])) {
                 $options['format'] = 'jpg';
             }

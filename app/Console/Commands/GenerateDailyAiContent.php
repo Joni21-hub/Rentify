@@ -17,6 +17,7 @@ class GenerateDailyAiContent extends Command
     protected $signature = 'rentify:generate-daily-content 
                             {--force-target= : Force target audience (customer or vendor)} 
                             {--date= : Custom date (YYYY-MM-DD)}
+                            {--platform=all : Target platform to publish (all, instagram, tiktok, facebook)}
                             {--publish : Auto-post to configured social media platforms}';
 
     /**
@@ -24,7 +25,7 @@ class GenerateDailyAiContent extends Command
      *
      * @var string
      */
-    protected $description = 'AI Marketing Agent: Otomatis generate ide video Reels/TikTok harian (Hari Ganjil: Customer, Hari Genap: Vendor)';
+    protected $description = 'AI Marketing Agent: Otomatis generate ide video viral & naskah Reels/TikTok/FB harian untuk mempromosikan Rentify';
 
     /**
      * Execute the console command.
@@ -69,20 +70,53 @@ class GenerateDailyAiContent extends Command
                 ]
             );
 
+            // Tampilkan rincian naskah video & teks layar
+            $this->newLine();
+            $this->info("🎬 NASKAH LENGKAP VIDEO PENDEK (15 - 30 DETIK):");
+            if (is_array($post->naskah_video)) {
+                foreach ($post->naskah_video as $scene) {
+                    $detik = $scene['detik'] ?? '';
+                    $adegan = $scene['adegan'] ?? '';
+                    $visual = $scene['visual'] ?? '';
+                    $voice = $scene['voiceover'] ?? '';
+                    $this->line("⏱️  <comment>[{$detik}] {$adegan}</comment>");
+                    $this->line("👁️  Visual : {$visual}");
+                    $this->line("🎙️  Voice  : \"{$voice}\"");
+                    $this->line("-------------------------------------------------");
+                }
+            }
+
+            $this->newLine();
+            $this->info("📱 CAPTION & CALL TO ACTION (CTA):");
+            $this->line($post->caption);
+
             // Auto-publish jika diminta via opsi command atau konfigurasi
-            $shouldPublish = $this->option('publish') || config('rentify_ai.automation.auto_post_instagram') || config('rentify_ai.automation.auto_post_tiktok');
+            $platformOption = strtolower((string)$this->option('platform'));
+            $shouldPublish = $this->option('publish') || config('rentify_ai.automation.auto_post_instagram') || config('rentify_ai.automation.auto_post_tiktok') || config('rentify_ai.automation.auto_post_facebook');
+
             if ($shouldPublish) {
                 $this->newLine();
-                $this->info("🚀 Menjalankan Auto-Post ke Media Sosial...");
+                $this->info("🚀 Menjalankan Auto-Post ke Media Sosial (Target: {$platformOption})...");
 
-                if (config('rentify_ai.automation.auto_post_instagram') || $this->option('publish')) {
-                    $igRes = $aiService->publishToInstagram($post);
-                    $this->line("Instagram: " . ($igRes['success'] ? "<info>OK ({$igRes['id']})</info>" : "<error>{$igRes['message']}</error>"));
+                if ($platformOption === 'all' || $platformOption === 'instagram') {
+                    if (config('rentify_ai.automation.auto_post_instagram') || $this->option('publish')) {
+                        $igRes = $aiService->publishToInstagram($post);
+                        $this->line("📷 Instagram: " . ($igRes['success'] ? "<info>OK ({$igRes['id']})</info>" : "<error>{$igRes['message']}</error>"));
+                    }
                 }
 
-                if (config('rentify_ai.automation.auto_post_tiktok') || $this->option('publish')) {
-                    $ttRes = $aiService->publishToTikTok($post);
-                    $this->line("TikTok: " . ($ttRes['success'] ? "<info>OK ({$ttRes['id']})</info>" : "<error>{$ttRes['message']}</error>"));
+                if ($platformOption === 'all' || $platformOption === 'tiktok') {
+                    if (config('rentify_ai.automation.auto_post_tiktok') || $this->option('publish')) {
+                        $ttRes = $aiService->publishToTikTok($post);
+                        $this->line("🎵 TikTok   : " . ($ttRes['success'] ? "<info>OK ({$ttRes['id']})</info>" : "<error>{$ttRes['message']}</error>"));
+                    }
+                }
+
+                if ($platformOption === 'all' || $platformOption === 'facebook') {
+                    if (config('rentify_ai.automation.auto_post_facebook') || $this->option('publish')) {
+                        $fbRes = $aiService->publishToFacebook($post);
+                        $this->line("👥 Facebook : " . ($fbRes['success'] ? "<info>OK ({$fbRes['id']})</info>" : "<error>{$fbRes['message']}</error>"));
+                    }
                 }
             }
 

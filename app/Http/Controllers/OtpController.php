@@ -18,6 +18,25 @@ class OtpController extends Controller
             return redirect('/login')->with('error', 'Sesi verifikasi tidak valid. Silakan login kembali.');
         }
 
+        $userId = session('otp_user_id');
+        $user = User::find($userId);
+
+        if (!$user instanceof User) {
+            session()->forget(['otp_user_id', 'otp_code', 'otp_phone']);
+            return redirect('/login')->with('error', 'Sesi verifikasi tidak valid. Silakan login kembali.');
+        }
+
+        $nomorWa = $user->role === 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
+        $isGoogleOrEmailCustomer = ($user->role === 'customer' && ($user->google_id || $user->hasRealEmail()));
+
+        // Jika user tidak memiliki nomor WhatsApp atau merupakan akun Google/Gmail,
+        // jangan kunci mereka di halaman verifikasi OTP WhatsApp. Langsung login & redirect.
+        if (empty($nomorWa) || $isGoogleOrEmailCustomer) {
+            session()->forget(['otp_user_id', 'otp_code', 'otp_phone']);
+            Auth::login($user);
+            return (new AuthController())->redirectByRole();
+        }
+
         return view('auth.otp-verify');
     }
 
@@ -27,7 +46,24 @@ class OtpController extends Controller
             'otp' => 'required|numeric|digits:6',
         ]);
 
-        if (!session()->has('otp_user_id') || !session()->has('otp_code')) {
+        if (!session()->has('otp_user_id')) {
+            return redirect('/login')->with('error', 'Sesi OTP Anda telah kedaluwarsa. Silakan login ulang.');
+        }
+
+        $userId = session('otp_user_id');
+        $user = User::find($userId);
+
+        if ($user instanceof User) {
+            $nomorWa = $user->role === 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
+            $isGoogleOrEmailCustomer = ($user->role === 'customer' && ($user->google_id || $user->hasRealEmail()));
+            if (empty($nomorWa) || $isGoogleOrEmailCustomer) {
+                session()->forget(['otp_user_id', 'otp_code', 'otp_phone']);
+                Auth::login($user);
+                return (new AuthController())->redirectByRole();
+            }
+        }
+
+        if (!session()->has('otp_code')) {
             return redirect('/login')->with('error', 'Sesi OTP Anda telah kedaluwarsa. Silakan login ulang.');
         }
 
@@ -140,9 +176,22 @@ class OtpController extends Controller
         RateLimiter::hit($resendKey, $decaySeconds);
 
         $user = User::find($userId);
-        $nomor = session('otp_phone'); // Nomor WA yang dikirimkan OTP (bisa WA user atau WA vendor)
 
-        if ($user && $nomor) {
+        if (!$user instanceof User) {
+            return redirect('/login')->with('error', 'Pengguna tidak ditemukan.');
+        }
+
+        $nomorWa = $user->role === 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
+        $isGoogleOrEmailCustomer = ($user->role === 'customer' && ($user->google_id || $user->hasRealEmail()));
+        if (empty($nomorWa) || $isGoogleOrEmailCustomer) {
+            session()->forget(['otp_user_id', 'otp_code', 'otp_phone']);
+            Auth::login($user);
+            return (new AuthController())->redirectByRole();
+        }
+
+        $nomor = session('otp_phone') ?: $nomorWa; // Nomor WA yang dikirimkan OTP (bisa WA user atau WA vendor)
+
+        if ($nomor) {
             $newOtp = rand(100000, 999999);
             session(['otp_code' => $newOtp]);
 

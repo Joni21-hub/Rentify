@@ -91,6 +91,9 @@ class AiMarketingService
         if ($this->isAiEnabled()) {
             $prompt = <<<PROMPT
 Anda adalah AI Marketing Copywriter profesional untuk platform persewaan online 'Rentify'.
+Slogan Resmi Rentify: "Rentify, sewa gampang, cuan datang!"
+Filosofi Brand: "Apa yang kamu butuhkan, mungkin orang lain punya. Apa yang kamu punya, mungkin orang lain butuhkan. Lebih praktis, lebih hemat, dan sama-sama untung."
+
 Buat copywriting promosi yang persuasif, menarik, dan siap dipublikasikan untuk barang rental berikut:
 - Nama Produk: {$namaProduk}
 - Kategori: {$kategori}
@@ -102,9 +105,9 @@ Buat copywriting promosi yang persuasif, menarik, dan siap dipublikasikan untuk 
 
 Format balasan WAJIB dalam format JSON murni (tanpa pembuka/penutup markdown selain json) dengan key berikut:
 {
-  "whatsapp": "Teks pesan broadcast WhatsApp lengkap dengan emoji dan formatting bold *...*, call-to-action ke link rental",
-  "instagram": "Caption Instagram menarik, dilengkapi hook awal, penjelasan fitur, ajakan booking, dan 8-12 hashtag relevan",
-  "tiktok": "Konsep hook video 3 detik pertama + naskah singkat narasi TikTok/Reels untuk meyakinkan audiens agar menyewa daripada membeli",
+  "whatsapp": "Teks pesan broadcast WhatsApp lengkap dengan emoji dan formatting bold *...*, call-to-action ke link rental, diselipkan slogan/filosofi Rentify",
+  "instagram": "Caption Instagram menarik, dilengkapi hook awal, penjelasan fitur, kutipan filosofi Rentify, ajakan booking, dan hashtag relevan termasuk #SewaGampangCuanDatang #Rentify",
+  "tiktok": "Konsep hook video 3 detik pertama + naskah singkat narasi TikTok/Reels untuk meyakinkan audiens agar menyewa daripada membeli, ditutup punchline: Rentify, sewa gampang cuan datang!",
   "banner": "Kalimat punchline pendek untuk banner promosi (Maks 10 kata) dan Sub-headline (Maks 15 kata)",
   "highlight_benefits": ["Poin keunggulan 1", "Poin keunggulan 2", "Poin keunggulan 3"]
 }
@@ -175,21 +178,25 @@ PROMPT;
                     "📦 Tarif sewa hemat: *{$harga}* / hari\n" .
                     "✅ Kondisi unit bersih, prima, dan siap langsung digunakan.\n" .
                     ($customNote ? "📌 *Catatan:* {$customNote}\n" : "") .
-                    "\n👉 *Amankan slot booking Anda sekarang:* Klik link toko kami di Rentify sebelum jadwal penuh!";
+                    "\n💡 *Ngapain beli baru?* Apa yang Anda butuhkan, orang lain punya. Lebih praktis, lebih hemat, dan sama-sama untung.\n" .
+                    "👉 *Amankan slot booking Anda sekarang:* Klik link toko kami di Rentify sebelum jadwal penuh!\n\n" .
+                    "Rentify — Sewa gampang, cuan datang! 🚀";
 
         $instagram = "{$igHook}\n\n" .
                      "Nggak perlu keluar budget besar untuk beli baru kalau cuma dipakai beberapa kali. Sewa *{$nama}* di Rentify jadi solusi paling hemat & anti ribet!\n\n" .
                      "💎 Tarif sewa bersahabat: *{$harga}/hari*\n" .
                      "👌 Unit terawat, bersih, dan melalui pengecekan berkala.\n" .
                      ($diskon ? "🎁 Promo aktif: {$diskon}\n" : "") .
-                     "\nTap link di bio untuk langsung pesan & cek ketersediaan tanggal! 📲\n\n" .
-                     "{$prodTag} {$katTag} #RentalHemat #RentifyIndonesia #SewaBarang #RentalMudah #SolusiHemat #SewaAja";
+                     "\n\"Apa yang kamu butuhkan, mungkin orang lain punya. Apa yang kamu punya, mungkin orang lain butuhkan. Lebih praktis, lebih hemat, sama-sama untung!\"\n\n" .
+                     "Tap link di bio untuk langsung pesan & cek ketersediaan tanggal! 📲\n\n" .
+                     "Rentify, sewa gampang, cuan datang! ✨\n\n" .
+                     "{$prodTag} {$katTag} #SewaGampangCuanDatang #RentalHemat #RentifyIndonesia #SewaBarang #RentalMudah #SolusiHemat #SewaAja";
 
         $tiktok = "🎬 *Konsep Video:*\n" .
                   "1. [Detik 0-3] *Hook:* {$ttHook}\n" .
                   "2. [Detik 3-10] *Visual:* Tampilkan close-up {$nama} yang mulus dan siap pakai.\n" .
-                  "3. [Detik 10-20] *Narasi:* Ceritakan kemudahan sewa di Rentify tanpa perlu deposit memberatkan, harga cuma {$harga}/hari.\n" .
-                  "4. [Detik 20-30] *Call To Action:* 'Klik keranjang / link di profil buat sewa sekarang!'";
+                  "3. [Detik 10-20] *Narasi:* Butuh barang? Tinggal cari dan sewa di Rentify tanpa beli baru, tarif cuma {$harga}/hari. Apa yang kamu butuhkan, orang lain punya!\n" .
+                  "4. [Detik 20-30] *Call To Action & Punchline:* 'Sewa gampang, cuan datang! Cek keranjang / link di profil sekarang!'";
 
         return [
             'whatsapp' => $whatsapp,
@@ -381,7 +388,7 @@ PROMPT;
         }
 
         $brandName = config('rentify_ai.brand.name', 'Rentify');
-        $webUrl = config('rentify_ai.brand.website_url', env('APP_URL', 'http://localhost:8000'));
+        $webUrl = config('rentify_ai.brand.website_url', 'https://rentify21.my.id');
 
         $generatedData = null;
         $aiSource = 'Smart Heuristic Engine';
@@ -789,5 +796,82 @@ PROMPT;
             Log::error('TikTok Publish Exception: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Exception: ' . $e->getMessage()];
         }
+    }
+
+    /**
+     * Integrasi Publikasi ke Facebook Page Feed API
+     */
+    public function publishToFacebook(AiMarketingPost $post): array
+    {
+        $token = config('rentify_ai.social.facebook.access_token');
+        $pageId = config('rentify_ai.social.facebook.page_id');
+        $graphVersion = config('rentify_ai.social.facebook.graph_version', 'v19.0');
+        $targetUrl = config('rentify_ai.brand.website_url', 'https://rentify21.my.id');
+
+        if (empty($token) || empty($pageId)) {
+            // Mode Simulasi / Siap Pakai (Token belum diisi di .env)
+            $simulatedId = 'FB_' . strtoupper(Str::random(12));
+            $post->update([
+                'posted_to_facebook' => true,
+                'facebook_post_id'   => $simulatedId,
+                'posted_at'          => Carbon::now(),
+                'log_info'           => ($post->log_info ? $post->log_info . "\n" : "") . "Facebook: Siap posting (Simulasi Sandbox - Token belum di-set di .env). ID: {$simulatedId}",
+            ]);
+
+            return [
+                'success' => true,
+                'mode'    => 'sandbox',
+                'id'      => $simulatedId,
+                'message' => 'Simulasi publish Facebook berhasil dicatat. Untuk posting live ke Page, isi FACEBOOK_PAGE_ACCESS_TOKEN dan FACEBOOK_PAGE_ID di .env.'
+            ];
+        }
+
+        try {
+            // Post ke Facebook Page: /{page-id}/feed
+            $response = Http::post("https://graph.facebook.com/{$graphVersion}/{$pageId}/feed", [
+                'message'      => $post->caption,
+                'link'         => $targetUrl,
+                'access_token' => $token,
+            ]);
+
+            if ($response->successful()) {
+                $postId = $response->json('id');
+                $post->update([
+                    'posted_to_facebook' => true,
+                    'facebook_post_id'   => $postId,
+                    'posted_at'          => Carbon::now(),
+                    'log_info'           => ($post->log_info ? $post->log_info . "\n" : "") . "Facebook Post ID: {$postId}",
+                ]);
+
+                return ['success' => true, 'id' => $postId, 'message' => 'Konten berhasil dipublikasikan ke Facebook Page!'];
+            }
+
+            return ['success' => false, 'message' => 'Facebook API Error: ' . $response->body()];
+        } catch (\Throwable $e) {
+            Log::error('Facebook Publish Exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Exception: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Publikasikan Konten ke Semua Platform Media Sosial Terpilih
+     */
+    public function publishToAllPlatforms(AiMarketingPost $post, array $platforms = ['instagram', 'tiktok', 'facebook']): array
+    {
+        $results = [];
+
+        if (in_array('instagram', $platforms)) {
+            $results['instagram'] = $this->publishToInstagram($post);
+        }
+
+        if (in_array('tiktok', $platforms)) {
+            $results['tiktok'] = $this->publishToTikTok($post);
+        }
+
+        if (in_array('facebook', $platforms)) {
+            $results['facebook'] = $this->publishToFacebook($post);
+        }
+
+        return $results;
     }
 }

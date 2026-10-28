@@ -21,34 +21,39 @@ class TransactionCalculationService
      * @param float $shippingFee       Ongkos kirim (100% milik vendor / kurir pengantar)
      * @param float $voucherDiscount   Potongan diskon voucher dari toko vendor
      * @param int   $kodeUnik          Kode unik 3-digit verifikasi otomatis
+     * @param float $coinDiscount      Potongan diskon Koin Hadiah Rentify (disubsidi platform)
      * @return array
      */
     public static function calculateOrderPricing(
         float $subtotalSewaAsli,
         float $shippingFee = 0.0,
         float $voucherDiscount = 0.0,
-        int $kodeUnik = 0
+        int $kodeUnik = 0,
+        float $coinDiscount = 0.0
     ): array {
         $subtotalSewaAsli = max(0, $subtotalSewaAsli);
         $shippingFee = max(0, $shippingFee);
         $voucherDiscount = max(0, $voucherDiscount);
         $kodeUnik = max(0, $kodeUnik);
+        $coinDiscount = max(0, $coinDiscount);
 
-        // Fee platform 5% dihitung dari harga sewa barang murni sebelum diskon voucher
+        // Fee platform 5% dihitung dari harga sewa barang murni sebelum diskon voucher & koin
         $subtotalSewaMarkup = round($subtotalSewaAsli * (1 + self::PLATFORM_FEE_RATE), 2);
         $rentifyFee = round($subtotalSewaMarkup - $subtotalSewaAsli, 2);
 
         // Hak penghasilan vendor: Harga sewa dasar dikurangi diskon voucher toko + ongkir utuh
+        // (Diskon Koin Rentify adalah program loyalitas platform, TIDAK mengurangi hak vendor)
         $vendorEarning = round(max(0, $subtotalSewaAsli - $voucherDiscount) + $shippingFee, 2);
 
-        // Total tagihan akhir pelanggan: (Sewa Markup - Voucher) + Ongkir + Kode Unik
-        $totalCustomer = round(max(0, $subtotalSewaMarkup - $voucherDiscount) + $shippingFee + $kodeUnik, 2);
+        // Total tagihan akhir pelanggan: (Sewa Markup - Voucher - Koin) + Ongkir + Kode Unik
+        $totalCustomer = round(max(0, $subtotalSewaMarkup - $voucherDiscount - $coinDiscount) + $shippingFee + $kodeUnik, 2);
 
         return [
             'subtotal_sewa_asli'   => $subtotalSewaAsli,
             'subtotal_sewa_markup' => $subtotalSewaMarkup,
             'rentify_fee'          => $rentifyFee,
             'potongan_voucher'     => $voucherDiscount,
+            'potongan_koin'        => $coinDiscount,
             'shipping_fee'         => $shippingFee,
             'kode_unik'            => $kodeUnik,
             'vendor_earning'       => $vendorEarning,
@@ -70,6 +75,7 @@ class TransactionCalculationService
         $totalTagihan    = (float) ($obj->total_price ?? $obj->total_biaya ?? 0);
         $shippingFee     = (float) ($obj->shipping_fee ?? 0);
         $voucherDiscount = (float) ($obj->potongan_voucher ?? 0);
+        $coinDiscount    = (float) ($obj->potongan_koin ?? 0);
         $kodeUnik        = (int) ($obj->kode_unik ?? 0);
 
         $storedFee       = (float) ($obj->rentify_fee ?? 0);
@@ -78,12 +84,12 @@ class TransactionCalculationService
         if ($storedFee > 0 && $storedEarning > 0) {
             $rentifyFee    = $storedFee;
             $vendorEarning = $storedEarning;
-            $sewaMarkup    = max(0, $totalTagihan - $shippingFee - $kodeUnik + $voucherDiscount);
+            $sewaMarkup    = max(0, $totalTagihan - $shippingFee - $kodeUnik + $voucherDiscount + $coinDiscount);
             $sewaAsli      = max(0, $sewaMarkup - $rentifyFee);
         } else {
             // Rekonstruksi jika nilai belum pernah tersimpan di database
-            // Sewa markup customer sebelum diskon voucher & tanpa ongkir & kode unik
-            $sewaMarkup = max(0, $totalTagihan - $shippingFee - $kodeUnik + $voucherDiscount);
+            // Sewa markup customer sebelum diskon voucher & koin & tanpa ongkir & kode unik
+            $sewaMarkup = max(0, $totalTagihan - $shippingFee - $kodeUnik + $voucherDiscount + $coinDiscount);
             $sewaAsli   = round($sewaMarkup / (1 + self::PLATFORM_FEE_RATE), 2);
             $rentifyFee = round($sewaMarkup - $sewaAsli, 2);
 
@@ -97,6 +103,7 @@ class TransactionCalculationService
             'rentify_fee'          => $rentifyFee,
             'vendor_earning'       => $vendorEarning,
             'potongan_voucher'     => $voucherDiscount,
+            'potongan_koin'        => $coinDiscount,
             'shipping_fee'         => $shippingFee,
             'kode_unik'            => $kodeUnik,
             'total_biaya'          => $totalTagihan,
@@ -153,9 +160,12 @@ class TransactionCalculationService
             // Hanya mutasikan saldo jika status order belum pernah 'Selesai'
             if (!$isAlreadyCompleted) {
                 if ($paymentMethod === 'COD') {
-                    // Vendor sudah menerima tunai 100% dari customer.
-                    // Sistem mendebit hak komisi platform 5% dari dompet vendor.
-                    $saldoBaru = round($saldoAwal - $rentifyFee, 2);
+                    // Vendor menerima tunai dari customer sebesar tagihan akhir (setelah diskon voucher toko dan koin).
+                    // Hak vendor murni adalah vendor_earning = (sewa dasar - voucher toko + ongkir).
+                    // Platform menagih fee 5% dikurangi kompensasi diskon koin reward platform: (rentify_fee - potongan_koin).
+                    $potonganKoin = (float) ($breakdown['potongan_koin'] ?? 0);
+                    $debitPlatform = round($rentifyFee - $potonganKoin, 2);
+                    $saldoBaru = round($saldoAwal - $debitPlatform, 2);
 
                     // Peringatan batas minus saldo (komisi tertunggak)
                     if ($saldoBaru < -50000) {
@@ -275,9 +285,11 @@ class TransactionCalculationService
             $saldoAwal = (float) $saldoVendor->saldo_aktif;
 
             if ($paymentMethod === 'COD') {
-                // Pada COD, fee 5% sebelumnya didebit dari dompet vendor.
-                // Saat revert/batal, kembalikan fee 5% tersebut ke saldo vendor.
-                $saldoBaru = round($saldoAwal + $rentifyFee, 2);
+                // Pada COD, fee bersih platform sebelumnya didebit ($rentifyFee - $potonganKoin).
+                // Saat revert/batal, kembalikan debit fee bersih tersebut ke saldo vendor.
+                $potonganKoin = (float) ($breakdown['potongan_koin'] ?? 0);
+                $debitPlatform = round($rentifyFee - $potonganKoin, 2);
+                $saldoBaru = round($saldoAwal + $debitPlatform, 2);
             } else {
                 // Pada Online, vendor sebelumnya dikredit vendor_earning.
                 // Saat revert/batal, tarik kembali vendor_earning dari saldo vendor (izinkan minus jika saldo tidak cukup).

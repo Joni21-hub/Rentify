@@ -58,15 +58,6 @@
                     <span>Laporan Keuangan</span>
                 </a>
 
-                <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Pemasaran & Promosi</div>
-                <a href="{{ route('admin.ai-marketing.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-wand-magic-sparkles text-sky-500 w-5"></i>
-                        <span>AI Marketing</span>
-                    </div>
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-sky-500 text-white">AI</span>
-                </a>
-
                 <div class="pt-4 px-4 pb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Komunikasi & CS</div>
                 <a href="{{ route('admin.whatsapp.index') }}" class="flex items-center justify-between px-4 py-3 text-sm font-bold bg-[#e0f2fe] text-[#0369a1] rounded-xl transition duration-200">
                     <div class="flex items-center space-x-3">

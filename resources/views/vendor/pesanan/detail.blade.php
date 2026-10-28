@@ -31,6 +31,13 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="px-4 py-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl flex items-center gap-2.5 text-xs font-bold shadow-xs">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-sm"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
         
         <!-- KOLOM KIRI (2 SPAN): INFO CUSTOMER & BARANG -->
@@ -62,10 +69,32 @@
                     </div>
 
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Metode Bayar</span>
-                        <span class="inline-block px-2 py-0.5 bg-slate-200 text-slate-800 text-xs font-extrabold rounded">
-                            {{ $pesanan->payment_method ?? 'COD' }}
-                        </span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Metode & Status Bayar</span>
+                        @php
+                            $isOnline = strtoupper(trim($pesanan->payment_method ?? 'ONLINE')) !== 'COD';
+                            $isPaidOnline = ($pesanan->pembayaran && strtoupper(trim($pesanan->pembayaran->status ?? '')) === 'LUNAS')
+                                            || !is_null($pesanan->paid_at)
+                                            || ($pesanan->pembayaran && !is_null($pesanan->pembayaran->paid_at));
+                            $isLockedByPayment = $isOnline && !$isPaidOnline;
+                        @endphp
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="inline-block px-2 py-0.5 bg-slate-200 text-slate-800 text-xs font-extrabold rounded">
+                                {{ $pesanan->payment_method ?? 'COD' }}
+                            </span>
+                            @if(!$isOnline)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    Tunai COD
+                                </span>
+                            @elseif($isPaidOnline)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="fa-solid fa-check-circle mr-1"></i> Terverifikasi Lunas
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+                                    <i class="fa-solid fa-clock mr-1"></i> Menunggu Mutasi QRIS
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="p-3 rounded-xl bg-sky-50/60 border border-sky-100 sm:col-span-2">
@@ -141,15 +170,33 @@
                 <span class="text-sm font-black text-slate-800">{{ $pesanan->status }}</span>
             </div>
 
+            @if($isLockedByPayment)
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+                    <div class="flex items-center gap-1.5 font-black text-amber-800">
+                        <i class="fa-solid fa-lock text-amber-600"></i>
+                        <span>Terkunci: Menunggu Pembayaran QRIS</span>
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-amber-700">
+                        Pesanan online belum terverifikasi lunas oleh sistem (MacroDroid/Mutasi Bank). Status belum dapat diubah menjadi <strong>Disetujui</strong> atau <strong>Sedang Disewa</strong> demi melindungi unit barang rental Anda.
+                    </p>
+                </div>
+            @endif
+
             <form action="{{ route('vendor.pesanan.status.update', $pesanan->id) }}" method="POST" class="space-y-3">
                 @csrf
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Ubah Status Menjadi:</label>
                     <select name="status" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         <option value="Menunggu Konfirmasi" {{ $pesanan->status == 'Menunggu Konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
-                        <option value="Disetujui" {{ $pesanan->status == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
-                        <option value="Sedang Disewa" {{ $pesanan->status == 'Sedang Disewa' ? 'selected' : '' }}>Sedang Disewa</option>
-                        <option value="Selesai" {{ $pesanan->status == 'Selesai' ? 'selected' : '' }}>Selesai</option>
+                        <option value="Disetujui" {{ $pesanan->status == 'Disetujui' ? 'selected' : '' }} {{ $isLockedByPayment ? 'disabled' : '' }}>
+                            Disetujui {{ $isLockedByPayment ? '🔒 (Belum Lunas)' : '' }}
+                        </option>
+                        <option value="Sedang Disewa" {{ $pesanan->status == 'Sedang Disewa' ? 'selected' : '' }} {{ $isLockedByPayment ? 'disabled' : '' }}>
+                            Sedang Disewa {{ $isLockedByPayment ? '🔒 (Belum Lunas)' : '' }}
+                        </option>
+                        <option value="Selesai" {{ $pesanan->status == 'Selesai' ? 'selected' : '' }} {{ $isLockedByPayment ? 'disabled' : '' }}>
+                            Selesai {{ $isLockedByPayment ? '🔒 (Belum Lunas)' : '' }}
+                        </option>
                         <option value="Dibatalkan" {{ $pesanan->status == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                     </select>
                 </div>

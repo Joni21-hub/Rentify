@@ -48,9 +48,15 @@ class MutasiService
 
         // 3. Filter jika transaksi keluar (Debit) atau nominal 0
         if ($parsed['tipe'] === 'DB' || $parsed['nominal'] <= 0) {
+            $catatan = 'Diabaikan: Transaksi keluar/debit atau nominal tidak terdeteksi.';
+            if (str_contains($fullText, '[not_text]') || str_contains($fullText, '[not_title]')) {
+                $catatan = 'Peringatan: Teks notifikasi berisi placeholder [not_text]. Pastikan izin Akses Notifikasi (Notification Access) untuk MacroDroid telah diaktifkan di Pengaturan HP Android.';
+                Log::warning('[MutasiService] MacroDroid [not_text] terdeteksi. Izin Akses Notifikasi Android belum aktif.');
+            }
+
             $mutasi->update([
                 'status'  => 'IGNORED',
-                'catatan' => 'Diabaikan: Transaksi keluar/debit atau nominal tidak terdeteksi.',
+                'catatan' => $catatan,
             ]);
 
             return [
@@ -58,7 +64,7 @@ class MutasiService
                 'matched'   => false,
                 'status'    => 'IGNORED',
                 'mutasi_id' => $mutasi->id,
-                'message'   => 'Notifikasi dicatat tetapi diabaikan (bukan dana masuk).',
+                'message'   => $catatan,
             ];
         }
 
@@ -159,7 +165,14 @@ class MutasiService
         }
 
         // Pola 2 (Fallback): Jika tidak ada embel-embel Rp tapi ada angka ribuan setelah kata kunci
-        if ($nominal <= 0 && preg_match('/(?:sebesar|sejumlah|nominal)\s*[:=]?\s*([0-9\.,]+)/i', $content, $m)) {
+        if ($nominal <= 0 && preg_match('/(?:sebesar|sejumlah|nominal|terima|diterima|masuk)\s*[:=]?\s*(?:rp\.?)?\s*([0-9\.,]+)/i', $content, $m)) {
+            $rawNom = preg_replace('/[,.]00$/', '', $m[1]) ?? $m[1];
+            $cleanNom = preg_replace('/[^0-9]/', '', (string) $rawNom) ?? '0';
+            $nominal = (float) $cleanNom;
+        }
+
+        // Pola 3: Format DANA Bisnis / Bank "Uang masuk Rp 10.500" atau "Menerima Rp 10.500" atau "Transfer masuk Rp 10.500"
+        if ($nominal <= 0 && preg_match('/(?:uang masuk|menerima|terima uang|transfer masuk)\s*(?:sebesar)?\s*(?:rp\.?)?\s*([0-9\.,]+)/i', $normalized, $m)) {
             $rawNom = preg_replace('/[,.]00$/', '', $m[1]) ?? $m[1];
             $cleanNom = preg_replace('/[^0-9]/', '', (string) $rawNom) ?? '0';
             $nominal = (float) $cleanNom;

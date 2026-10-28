@@ -185,7 +185,11 @@
                         @foreach($order->items as $item)
                             @php
                                 $itemUlasan = $orderUlasans->firstWhere('barang_id', $item->product_id);
-                                $fotoItemUrl = $item->barang ? $item->barang->cover_photo_url : \App\Services\StorageService::getPublicUrl((string)$item->cover_photo);
+                                $fotoItemUrl = !empty($item->cover_photo) 
+                                    ? \App\Services\StorageService::getPublicUrl((string)$item->cover_photo) 
+                                    : ((isset($item->barang) && !empty($item->barang->cover_photo_url)) 
+                                        ? $item->barang->cover_photo_url 
+                                        : asset('storage/placeholders/placeholder-barang.png'));
                             @endphp
 
                             <!-- Item Box -->
@@ -314,7 +318,11 @@
                             @elseif($isMenungguUlasan)
                                 @php
                                     $firstItem = $order->items->first();
-                                    $firstPhoto = $firstItem && $firstItem->barang ? $firstItem->barang->cover_photo_url : ($firstItem && $firstItem->cover_photo ? \App\Services\StorageService::getPublicUrl((string)$firstItem->cover_photo) : asset('storage/placeholders/placeholder-barang.png'));
+                                    $firstPhoto = ($firstItem && isset($firstItem->barang) && !empty($firstItem->barang->cover_photo_url)) 
+                                        ? $firstItem->barang->cover_photo_url 
+                                        : (($firstItem && !empty($firstItem->cover_photo)) 
+                                            ? \App\Services\StorageService::getPublicUrl((string)$firstItem->cover_photo) 
+                                            : asset('storage/placeholders/placeholder-barang.png'));
                                     $firstItemName = $firstItem ? $firstItem->product_name : 'Barang Rental';
                                     $firstItemId = $firstItem ? $firstItem->product_id : '';
                                     $firstUlasan = $orderUlasans->first();
@@ -328,7 +336,11 @@
                             @elseif($isSelesai)
                                 @php
                                     $firstItem = $order->items->first();
-                                    $firstPhoto = $firstItem && $firstItem->barang ? $firstItem->barang->cover_photo_url : ($firstItem && $firstItem->cover_photo ? \App\Services\StorageService::getPublicUrl((string)$firstItem->cover_photo) : asset('storage/placeholders/placeholder-barang.png'));
+                                    $firstPhoto = ($firstItem && isset($firstItem->barang) && !empty($firstItem->barang->cover_photo_url)) 
+                                        ? $firstItem->barang->cover_photo_url 
+                                        : (($firstItem && !empty($firstItem->cover_photo)) 
+                                            ? \App\Services\StorageService::getPublicUrl((string)$firstItem->cover_photo) 
+                                            : asset('storage/placeholders/placeholder-barang.png'));
                                     $firstItemName = $firstItem ? $firstItem->product_name : 'Barang Rental';
                                     $firstItemId = $firstItem ? ($firstItem->product_id ?? '') : '';
                                 @endphp

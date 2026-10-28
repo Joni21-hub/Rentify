@@ -43,8 +43,9 @@ class AdminLaporanController extends Controller
 
         $allOrders = $query->get();
 
-        // Hitung statistik
-        $totalPendapatanKotor = 0;
+        // Hitung statistik akuntansi presisi
+        $totalGmv = 0;
+        $totalKasOnline = 0;
         $totalFeeRentify = 0;
         $totalOngkir = 0;
         $totalDiskonVoucher = 0;
@@ -56,14 +57,19 @@ class AdminLaporanController extends Controller
             $ong = (float) ($t->shipping_fee ?? 0);
             $tot = (float) ($t->total_price ?? $t->total_biaya ?? 0);
             $pot = (float) ($t->potongan_voucher ?? 0);
+            $method = strtoupper(trim($t->payment_method ?? ''));
 
             if (in_array($st, ['dibatalkan', 'batal', 'cancelled', 'ditolak'])) {
                 $transaksiBatalCount++;
             } elseif ($st === 'selesai') {
                 $transaksiSelesaiCount++;
-                $totalPendapatanKotor += $tot;
+                $totalGmv += $tot;
                 $totalOngkir += $ong;
                 $totalDiskonVoucher += $pot;
+
+                if ($method !== 'COD') {
+                    $totalKasOnline += $tot;
+                }
 
                 $breakdown = TransactionCalculationService::getBreakdownForOrder($t);
                 $totalFeeRentify += $breakdown['rentify_fee'];
@@ -71,13 +77,15 @@ class AdminLaporanController extends Controller
         }
 
         $stats = [
-            'total_transaksi' => $allOrders->count(),
-            'transaksi_selesai' => $transaksiSelesaiCount,
-            'transaksi_batal' => $transaksiBatalCount,
-            'total_pendapatan_kotor' => $totalPendapatanKotor,
-            'total_fee_rentify' => $totalFeeRentify,
-            'total_ongkir' => $totalOngkir,
-            'total_diskon' => $totalDiskonVoucher
+            'total_transaksi'        => $allOrders->count(),
+            'transaksi_selesai'      => $transaksiSelesaiCount,
+            'transaksi_batal'        => $transaksiBatalCount,
+            'total_pendapatan_kotor' => $totalGmv,
+            'total_gmv'              => $totalGmv,
+            'total_kas_online'       => $totalKasOnline,
+            'total_fee_rentify'      => $totalFeeRentify,
+            'total_ongkir'           => $totalOngkir,
+            'total_diskon'           => $totalDiskonVoucher
         ];
 
         return view('admin.laporan.index', compact('allOrders', 'stats', 'startDate', 'endDate', 'statusFilter'));

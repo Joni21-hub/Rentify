@@ -7,15 +7,15 @@
     $isAkun = ($activeTab === 'akun');
 
     $berandaClass = $isBeranda 
-        ? 'text-sky-600 font-black active' 
+        ? 'text-sky-600 font-black active scale-105' 
         : ($isMomen ? 'text-white/60 hover:text-white transition-colors font-bold' : 'text-slate-400 hover:text-sky-600 transition-colors font-bold');
 
     $momenClass = $isMomen 
-        ? 'text-sky-600 font-black active' 
-        : 'text-slate-400 hover:text-sky-600 transition-colors font-bold';
+        ? 'text-sky-400 font-black active scale-105' 
+        : ($isMomen ? 'text-white/60 hover:text-white transition-colors font-bold' : 'text-slate-400 hover:text-sky-600 transition-colors font-bold');
 
     $akunClass = $isAkun 
-        ? 'text-sky-600 font-black active' 
+        ? 'text-sky-600 font-black active scale-105' 
         : ($isMomen ? 'text-white/60 hover:text-white transition-colors font-bold' : 'text-slate-400 hover:text-sky-600 transition-colors font-bold');
 
     // Rute Akun menuju route('customer.account') yang menangani guest & auth (Requirement 1.6 & 6.18)
@@ -23,71 +23,35 @@
         ? route('customer.account') 
         : (\Illuminate\Support\Facades\Route::has('customer.dashboard') ? route('customer.dashboard') : '/account');
 
-    // Pada Momen, bar memiliki transisi aliran air dari normal ke transparan
+    // Desain Bar: Kaca gelap elegan pada Momen, kaca terang frosted pada Beranda/Akun
     $navContainerClass = $isMomen
-        ? 'water-flow-entry bg-black/40 backdrop-blur-2xl border border-white/20 text-white shadow-2xl px-6 py-1.5 transition-all duration-300 transform relative overflow-hidden'
-        : 'rentify-card backdrop-blur-xl border border-white/60 px-7 py-2 shadow-xl shadow-sky-900/10 transition-all duration-300 relative overflow-hidden';
+        ? 'bg-slate-950/85 backdrop-blur-2xl border border-white/20 text-white shadow-2xl px-6 py-2 transition-all duration-300 relative overflow-hidden'
+        : 'rentify-card bg-white/90 backdrop-blur-xl border border-white/80 px-7 py-2 shadow-xl shadow-sky-900/10 transition-all duration-300 relative overflow-hidden';
 @endphp
 
-<!-- CSS: EFEK PERPINDAHAN SEPERTI AIR MENGALIR (WATER-FLOW TRANSITION) & GESTURE SWIPE -->
+<!-- CSS: EFEK PERPINDAHAN SUPER MULUS & GPU ACCELERATION -->
 <style>
-    /* Aliran Gelombang Air Menyeberang Bar */
-    @keyframes waterWaveFlow {
+    /* View Transitions Level 2: Nav Bar tetap terkunci & tidak berkedip */
+    #bottom-navigation-wrapper,
+    #bottom-navigation-bar {
+        view-transition-name: rentify-bottom-nav;
+        will-change: transform;
+        transform: translateZ(0);
+    }
+
+    /* Aliran Gelombang Air Menyeberang Bar (GPU Accelerated) */
+    @keyframes waterWaveFlowGpu {
         0% {
-            transform: translateX(-130%) skewX(-15deg);
-            opacity: 0.95;
+            transform: translate3d(-140%, 0, 0) skewX(-15deg);
+            opacity: 0.9;
         }
-        30% {
+        50% {
             opacity: 1;
         }
-        70% {
-            opacity: 0.85;
-        }
         100% {
-            transform: translateX(140%) skewX(-15deg);
+            transform: translate3d(140%, 0, 0) skewX(-15deg);
             opacity: 0;
         }
-    }
-
-    /* Morfologi Bar: Dari Normal (Kartu Terang Frosted) ke Transparan (Kaca Gelap Jernih) */
-    @keyframes morphNormalToTransparent {
-        0% {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-color: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 10px 25px -5px rgba(3, 105, 161, 0.16);
-            color: #475569;
-        }
-        30% {
-            background-color: rgba(224, 242, 254, 0.82);
-            border-color: rgba(56, 189, 248, 0.65);
-            box-shadow: 0 12px 30px -4px rgba(14, 165, 233, 0.35), 0 0 20px rgba(56, 189, 248, 0.3);
-            color: #0369a1;
-        }
-        65% {
-            background-color: rgba(15, 23, 42, 0.6);
-            border-color: rgba(255, 255, 255, 0.32);
-            color: #f8fafc;
-        }
-        100% {
-            background-color: rgba(0, 0, 0, 0.4);
-            border-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            color: #ffffff;
-        }
-    }
-
-    /* Efek Apung Gelombang Air Pada Tiap Tab (Beranda, Momen, Akun) */
-    @keyframes waterTabBobBeranda {
-        0%, 100% { transform: translateY(0) scale(1); }
-        35% { transform: translateY(-2.5px) scale(1.05); }
-    }
-    @keyframes waterTabBobMomen {
-        0%, 100% { transform: translateY(0) scale(1); }
-        45% { transform: translateY(-4px) scale(1.12); filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85)); }
-    }
-    @keyframes waterTabBobAkun {
-        0%, 100% { transform: translateY(0) scale(1); }
-        55% { transform: translateY(-2.5px) scale(1.05); }
     }
 
     /* Lapisan Gelombang Air (Water-Flow Sheen) */
@@ -97,60 +61,46 @@
         background: linear-gradient(
             105deg,
             transparent 0%,
-            rgba(56, 189, 248, 0.2) 20%,
-            rgba(255, 255, 255, 0.85) 45%,
-            rgba(14, 165, 233, 0.5) 55%,
-            rgba(56, 189, 248, 0.25) 75%,
+            rgba(56, 189, 248, 0.25) 25%,
+            rgba(255, 255, 255, 0.9) 50%,
+            rgba(14, 165, 233, 0.55) 60%,
             transparent 100%
         );
         pointer-events: none;
         z-index: 1;
         opacity: 0;
+        will-change: transform, opacity;
     }
 
-    .water-flow-entry {
-        animation: morphNormalToTransparent 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-
-    .water-flow-entry .water-flow-sheen,
     .water-surge-active .water-flow-sheen {
         opacity: 1;
-        animation: waterWaveFlow 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-
-    .water-flow-entry a[data-tab="beranda"] {
-        animation: waterTabBobBeranda 0.75s ease-out 0.05s;
-    }
-    .water-flow-entry a[data-tab="momen"] {
-        animation: waterTabBobMomen 0.85s ease-out 0.18s;
-    }
-    .water-flow-entry a[data-tab="akun"] {
-        animation: waterTabBobAkun 0.75s ease-out 0.32s;
+        animation: waterWaveFlowGpu 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     /* Indikator Melayang Gestur Swap Kiri-Kanan */
     .rentify-swipe-pill {
         position: fixed;
         top: 50%;
-        transform: translateY(-50%);
+        transform: translateY(-50%) translateZ(0);
         z-index: 9999;
         display: flex;
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
         border-radius: 9999px;
-        background: rgba(15, 23, 42, 0.9);
+        background: rgba(15, 23, 42, 0.92);
         color: #ffffff;
         font-size: 0.75rem;
         font-weight: 800;
         letter-spacing: 0.025em;
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         pointer-events: none;
-        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-        animation: rentifyPillPop 0.25s ease-out;
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        animation: rentifyPillPop 0.2s ease-out;
+        will-change: transform, opacity;
     }
 
     @keyframes rentifyPillPop {
@@ -159,6 +109,9 @@
     }
 </style>
 
+<!-- TOP NATIVE-LIKE LOADING PROGRESS BAR -->
+<div id="rentify-tab-progress" class="fixed top-0 left-0 w-0 h-[2.5px] bg-gradient-to-r from-sky-400 via-sky-500 to-indigo-500 z-[99999] pointer-events-none opacity-0 shadow-[0_0_10px_rgba(56,189,248,0.85)]"></div>
+
 <!-- BOTTOM NAV (3 TAB RAMPING: BERANDA, MOMEN, AKUN) -->
 <div id="bottom-navigation-wrapper" class="md:hidden fixed bottom-2 left-0 w-full z-40 flex justify-center pointer-events-none px-4 transition-all duration-300" style="bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));">
     <nav id="bottom-navigation-bar" class="{{ $navContainerClass }} pointer-events-auto rounded-full flex justify-between items-center gap-9" style="-webkit-backdrop-filter: blur(16px);">
@@ -166,26 +119,54 @@
         <div class="water-flow-sheen pointer-events-none"></div>
 
         <!-- Tab 1: Beranda -->
-        <a href="{{ route('customer.home') }}" data-tab="beranda" class="relative z-10 flex flex-col items-center px-2 py-0.5 {{ $berandaClass }}">
+        <a href="{{ route('customer.home') }}" data-tab="beranda" class="relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 {{ $berandaClass }}">
             <i class="fa-solid fa-house text-[16px] mb-0.5"></i>
             <span class="text-[9px] tracking-tight">Beranda</span>
         </a>
 
         <!-- Tab 2: Momen -->
-        <a href="{{ route('customer.moments') }}" data-tab="momen" class="relative z-10 flex flex-col items-center px-2 py-0.5 {{ $momenClass }}">
+        <a href="{{ route('customer.moments') }}" data-tab="momen" class="relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 {{ $momenClass }}">
             <i class="fa-solid fa-camera text-[16px] mb-0.5"></i>
             <span class="text-[9px] tracking-tight">Momen</span>
         </a>
 
         <!-- Tab 3: Akun -->
-        <a href="{{ $accountUrl }}" data-tab="akun" class="relative z-10 flex flex-col items-center px-2 py-0.5 {{ $akunClass }}">
+        <a href="{{ $accountUrl }}" data-tab="akun" class="relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 {{ $akunClass }}">
             <i class="fa-solid fa-user text-[16px] mb-0.5"></i>
             <span class="text-[9px] tracking-tight">Akun</span>
         </a>
     </nav>
 </div>
 
-<!-- CLIENT-SIDE SCROLL RETENTION & GESTURE SWIPE NAVIGATION MODULE -->
+<!-- SPECULATION RULES API: Prerender & Prefetch Instan di Browser Chromium / Android -->
+<script type="speculationrules">
+{
+  "prerender": [
+    {
+      "source": "list",
+      "urls": [
+        "{{ route('customer.home') }}",
+        "{{ route('customer.moments') }}",
+        "{{ $accountUrl }}"
+      ],
+      "eagerness": "moderate"
+    }
+  ],
+  "prefetch": [
+    {
+      "source": "list",
+      "urls": [
+        "{{ route('customer.home') }}",
+        "{{ route('customer.moments') }}",
+        "{{ $accountUrl }}"
+      ],
+      "eagerness": "conservative"
+    }
+  ]
+}
+</script>
+
+<!-- CLIENT-SIDE ULTRA-SMOOTH NAVIGATION & SCROLL RETENTION -->
 <script>
     if (typeof window.RentifyNavigationStore === 'undefined') {
         window.RentifyNavigationStore = (function() {
@@ -246,8 +227,124 @@
             akun: "{{ $accountUrl }}"
         };
 
+        let isNavigating = false;
+
+        // Smart Prefetch Cache (Fallback untuk Safari / browser tanpa Speculation Rules)
+        window.__rentifyPrefetchedUrls = window.__rentifyPrefetchedUrls || {};
+        function prefetchDocument(url) {
+            if (!url || window.__rentifyPrefetchedUrls[url]) return;
+            try {
+                const link = document.createElement('link');
+                link.rel = 'prefetch';
+                link.href = url;
+                link.as = 'document';
+                document.head.appendChild(link);
+                window.__rentifyPrefetchedUrls[url] = true;
+            } catch (e) {}
+        }
+
+        // Jalankan prefetch di background saat browser idle
+        function scheduleIdlePrefetch() {
+            const targetUrls = Object.values(routes).filter(u => u && !window.location.href.includes(u));
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(() => targetUrls.forEach(prefetchDocument), { timeout: 1500 });
+            } else {
+                setTimeout(() => targetUrls.forEach(prefetchDocument), 800);
+            }
+        }
+
+        function triggerProgressBar() {
+            const bar = document.getElementById('rentify-tab-progress');
+            if (!bar) return;
+            bar.style.transition = 'width 0.28s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease';
+            bar.style.opacity = '1';
+            bar.style.width = '80%';
+        }
+
+        function completeProgressBar() {
+            const bar = document.getElementById('rentify-tab-progress');
+            if (!bar) return;
+            bar.style.transition = 'width 0.12s ease-out, opacity 0.2s ease-out 0.05s';
+            bar.style.width = '100%';
+            setTimeout(() => {
+                bar.style.opacity = '0';
+                setTimeout(() => { bar.style.width = '0%'; }, 200);
+            }, 120);
+        }
+
+        function navigateSmoothly(targetTab, targetUrl, direction) {
+            if (isNavigating || !targetUrl) return;
+            isNavigating = true;
+
+            // Simpan scroll tab asal
+            if (currentTab && window.RentifyNavigationStore) {
+                window.RentifyNavigationStore.saveScrollPosition(currentTab);
+            }
+
+            // Haptic feedback instan pada smartphone
+            if ('vibrate' in navigator) {
+                try { navigator.vibrate(12); } catch (e) {}
+            }
+
+            // Efek air pada bottom bar
+            const navBar = document.getElementById('bottom-navigation-bar');
+            if (targetTab === 'momen' && navBar) {
+                navBar.classList.add('water-surge-active');
+            }
+
+            // Indikator arah geser jika berasal dari swipe gesture
+            if (direction) {
+                if (targetTab === 'beranda') {
+                    showSwipeFeedback('Beranda', 'fa-solid fa-house text-sky-400', 'left');
+                } else if (targetTab === 'momen') {
+                    showSwipeFeedback('Momen', 'fa-solid fa-camera text-sky-400', direction === 'left' ? 'right' : 'left');
+                } else if (targetTab === 'akun') {
+                    showSwipeFeedback('Akun', 'fa-solid fa-user text-sky-400', 'right');
+                }
+            }
+
+            // Jalankan top progress bar
+            triggerProgressBar();
+
+            // Animasi konten keluar dengan hardware acceleration 60fps
+            const mainEl = document.querySelector('main') || document.getElementById('moments-app') || document.body;
+            if (mainEl) {
+                mainEl.style.willChange = 'opacity, transform';
+                mainEl.style.transition = 'transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.14s ease-out';
+                if (direction === 'left') {
+                    mainEl.style.transform = 'translate3d(-20px, 0, 0)';
+                } else if (direction === 'right') {
+                    mainEl.style.transform = 'translate3d(20px, 0, 0)';
+                } else {
+                    mainEl.style.transform = 'translate3d(0, -6px, 0)';
+                }
+                mainEl.style.opacity = '0.72';
+            }
+
+            // Eksekusi navigasi secepat mungkin pada frame berikutnya
+            requestAnimationFrame(() => {
+                window.location.href = targetUrl;
+            });
+        }
+
+        function showSwipeFeedback(label, iconClass, side) {
+            const pill = document.createElement('div');
+            pill.className = 'rentify-swipe-pill';
+            pill.style[side === 'left' ? 'left' : 'right'] = '1.25rem';
+            pill.innerHTML = `<i class="${iconClass}"></i><span>${label}</span>`;
+            document.body.appendChild(pill);
+
+            setTimeout(() => {
+                pill.style.opacity = '0';
+                pill.style.transform = 'translateY(-50%) scale(0.9) translateZ(0)';
+                setTimeout(() => pill.remove(), 200);
+            }, 380);
+        }
+
         function initNavigation() {
-            // 1. Pulihkan posisi scroll
+            completeProgressBar();
+
+            // Pulihkan posisi scroll
             if (currentTab && window.RentifyNavigationStore) {
                 requestAnimationFrame(function() {
                     window.RentifyNavigationStore.restoreScrollPosition(currentTab);
@@ -257,36 +354,29 @@
             const navBar = document.getElementById('bottom-navigation-bar');
             if (!navBar) return;
 
-            // 2. Bersihkan kelas animasi air mengalir setelah selesai berputar
-            navBar.addEventListener('animationend', function cleanupAnimation(e) {
-                if (e.animationName === 'morphNormalToTransparent') {
-                    navBar.classList.remove('water-flow-entry');
-                }
-            });
-
-            // 3. Tangani klik tab dan efek air mengalir saat menuju tab Momen
+            // Sambungkan event listener klik tab
             navBar.querySelectorAll('a[data-tab]').forEach(function(anchor) {
+                const tab = anchor.getAttribute('data-tab');
+                const url = routes[tab];
+
+                // Prefetch saat kursor menyentuh / pointer mendarat
+                anchor.addEventListener('pointerenter', () => prefetchDocument(url), { passive: true });
+                anchor.addEventListener('touchstart', () => prefetchDocument(url), { passive: true });
+
                 anchor.addEventListener('click', function(e) {
-                    const targetTab = anchor.getAttribute('data-tab');
-
-                    if (currentTab && window.RentifyNavigationStore) {
-                        window.RentifyNavigationStore.saveScrollPosition(currentTab);
-                    }
-
-                    if (targetTab === currentTab) {
-                        e.preventDefault();
+                    e.preventDefault();
+                    if (tab === currentTab) {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         return;
                     }
-
-                    // Jika menuju tab Momen, langsung jalankan gelombang air mengalir
-                    if (targetTab === 'momen') {
-                        navBar.classList.add('water-surge-active');
-                    }
+                    navigateSmoothly(tab, url, null);
                 });
             });
 
-            // 4. Inisialisasi gestur Swap Kiri-Kanan (Swipe Navigation Beranda <-> Momen <-> Akun)
+            // Jadwalkan prefetch idle
+            scheduleIdlePrefetch();
+
+            // Inisialisasi gestur Swap Kiri-Kanan
             setupHorizontalSwipeGesture();
         }
 
@@ -295,76 +385,17 @@
             let startY = 0;
             let startTime = 0;
             let isSwiping = false;
-            let isNavigating = false;
 
             function shouldIgnoreTouch(e) {
                 const target = e.target;
                 if (!target) return false;
 
-                // Abaikan jika menyentuh input form, tombol interaktif, link di luar bottom bar
-                if (target.closest('input, textarea, select, button, a:not(#bottom-navigation-bar a)')) {
-                    return true;
-                }
-
-                // Abaikan jika modal atau bottom-sheet drawer sedang terbuka
-                const openOverlay = document.querySelector(
-                    '#comments-drawer:not(.hidden), #upload-modal:not(.hidden), #report-modal:not(.hidden), #guest-auth-modal:not(.hidden), #drawer-settings:not(.hidden)'
-                );
-                if (openOverlay) return true;
-
-                // Abaikan jika menyentuh area carousel/slider horizontal yang bisa di-scroll
-                const horizontalScrollArea = target.closest(
-                    '#banner-slider, .productSwiper, .swiper, .overflow-x-auto, .overflow-x-scroll'
-                );
-                if (horizontalScrollArea) return true;
+                // Abaikan jika menyentuh input form, modal, atau slider horizontal
+                if (target.closest('input, textarea, select, button, a:not(#bottom-navigation-bar a)')) return true;
+                if (document.querySelector('#comments-drawer:not(.hidden), #upload-modal:not(.hidden), #report-modal:not(.hidden), #guest-auth-modal:not(.hidden), #drawer-settings:not(.hidden)')) return true;
+                if (target.closest('#banner-slider, .productSwiper, .swiper, .overflow-x-auto, .overflow-x-scroll')) return true;
 
                 return false;
-            }
-
-            function showSwipeFeedback(label, iconClass, side) {
-                const pill = document.createElement('div');
-                pill.className = 'rentify-swipe-pill';
-                pill.style[side === 'left' ? 'left' : 'right'] = '1.25rem';
-                pill.innerHTML = `<i class="${iconClass}"></i><span>${label}</span>`;
-                document.body.appendChild(pill);
-
-                setTimeout(() => {
-                    pill.style.opacity = '0';
-                    pill.style.transform = 'translateY(-50%) scale(0.9)';
-                    setTimeout(() => pill.remove(), 250);
-                }, 450);
-            }
-
-            function executeSwipeNavigation(targetTab, targetUrl, direction) {
-                if (isNavigating) return;
-                isNavigating = true;
-
-                if (window.RentifyNavigationStore) {
-                    window.RentifyNavigationStore.saveScrollPosition(currentTab);
-                }
-
-                // Tampilkan indikator visual arah geser
-                if (targetTab === 'beranda') {
-                    showSwipeFeedback('Beranda', 'fa-solid fa-house text-sky-400', 'left');
-                } else if (targetTab === 'momen') {
-                    showSwipeFeedback('Momen', 'fa-solid fa-water text-sky-400', direction === 'left' ? 'right' : 'left');
-                    const navBar = document.getElementById('bottom-navigation-bar');
-                    if (navBar) navBar.classList.add('water-surge-active');
-                } else if (targetTab === 'akun') {
-                    showSwipeFeedback('Akun', 'fa-solid fa-user text-sky-400', 'right');
-                }
-
-                // Animasi geser halus pada konten halaman (swap effect)
-                const mainEl = document.querySelector('main') || document.getElementById('moments-app') || document.body;
-                if (mainEl) {
-                    mainEl.style.transition = 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease-out';
-                    mainEl.style.transform = direction === 'left' ? 'translateX(-32px)' : 'translateX(32px)';
-                    mainEl.style.opacity = '0.75';
-                }
-
-                setTimeout(() => {
-                    window.location.href = targetUrl;
-                }, 180);
             }
 
             window.addEventListener('touchstart', function(e) {
@@ -389,29 +420,27 @@
                 const diffY = touch.clientY - startY;
                 const elapsed = Date.now() - startTime;
 
-                // Syarat gestur swap horizontal: jarak minimal 55px, lebih dominan horizontal dibanding vertikal, dan < 750ms
-                if (Math.abs(diffX) >= 55 && Math.abs(diffX) > Math.abs(diffY) * 1.35 && elapsed <= 750) {
+                // Gestur horizontal: jarak minimal 50px, dominan horizontal, dan durasi < 750ms
+                if (Math.abs(diffX) >= 50 && Math.abs(diffX) > Math.abs(diffY) * 1.3 && elapsed <= 750) {
                     if (diffX < 0) {
                         // SWIPE LEFT (Geser ke kiri -> maju ke tab kanan)
                         if (currentTab === 'beranda') {
-                            executeSwipeNavigation('momen', routes.momen, 'left');
+                            navigateSmoothly('momen', routes.momen, 'left');
                         } else if (currentTab === 'momen') {
-                            executeSwipeNavigation('akun', routes.akun, 'left');
+                            navigateSmoothly('akun', routes.akun, 'left');
                         }
                     } else {
                         // SWIPE RIGHT (Geser ke kanan -> mundur ke tab kiri)
                         if (currentTab === 'akun') {
-                            executeSwipeNavigation('momen', routes.momen, 'right');
+                            navigateSmoothly('momen', routes.momen, 'right');
                         } else if (currentTab === 'momen') {
-                            executeSwipeNavigation('beranda', routes.beranda, 'right');
+                            navigateSmoothly('beranda', routes.beranda, 'right');
                         }
                     }
                 }
             }, { passive: true });
 
-            window.addEventListener('touchcancel', function() {
-                isSwiping = false;
-            }, { passive: true });
+            window.addEventListener('touchcancel', () => { isSwiping = false; }, { passive: true });
         }
 
         if (document.readyState === 'loading') {
