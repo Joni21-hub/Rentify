@@ -664,6 +664,99 @@
         }
 
         /**
+         * Menggabungkan foto dengan CSS filter dan stiker/teks overlay ke dalam canvas.
+         */
+        async bakePhotoWithOverlays() {
+            if (this.mediaType !== 'photo' || !this.mediaBlob) {
+                return this.mediaBlob;
+            }
+
+            // Jika tidak ada filter atau overlay, gunakan berkas asli langsung
+            const hasFilter = this.activeFilter && this.activeFilter !== 'normal';
+            const hasOverlays = this.overlays && this.overlays.length > 0;
+            if (!hasFilter && !hasOverlays) {
+                return this.mediaBlob;
+            }
+
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                const sourceUrl = this.mediaUrl || URL.createObjectURL(this.mediaBlob);
+
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth || 1080;
+                        canvas.height = img.naturalHeight || 1920;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return resolve(this.mediaBlob);
+
+                        // Terapkan CSS filter bila ada
+                        const filterPreset = this.filterPresets[this.activeFilter];
+                        if (filterPreset && filterPreset.css && filterPreset.css !== 'none') {
+                            ctx.filter = filterPreset.css;
+                        }
+
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        ctx.filter = 'none';
+
+                        // Render teks & stiker overlay
+                        if (hasOverlays) {
+                            const scale = canvas.width / (this.overlayContainer?.clientWidth || canvas.width);
+                            this.overlays.forEach((item) => {
+                                const x = (item.x / 100) * canvas.width;
+                                const y = (item.y / 100) * canvas.height;
+
+                                if (item.type === 'text') {
+                                    const fontSize = Math.max(16, Math.round((item.size || 18) * scale));
+                                    ctx.font = `bold ${fontSize}px sans-serif`;
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+
+                                    const textMetrics = ctx.measureText(item.text);
+                                    const padX = 14 * scale;
+                                    const padY = 8 * scale;
+                                    const rectW = textMetrics.width + padX * 2;
+                                    const rectH = fontSize + padY * 2;
+
+                                    if (item.bgColor && item.bgColor !== 'transparent') {
+                                        ctx.fillStyle = item.bgColor;
+                                        ctx.beginPath();
+                                        if (ctx.roundRect) {
+                                            ctx.roundRect(x - rectW / 2, y - rectH / 2, rectW, rectH, 10 * scale);
+                                        } else {
+                                            ctx.rect(x - rectW / 2, y - rectH / 2, rectW, rectH);
+                                        }
+                                        ctx.fill();
+                                    }
+
+                                    ctx.fillStyle = item.color || '#ffffff';
+                                    ctx.fillText(item.text, x, y);
+                                } else if (item.type === 'sticker') {
+                                    const fontSize = Math.max(24, Math.round((item.size || 38) * scale));
+                                    ctx.font = `${fontSize}px sans-serif`;
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.fillText(item.emoji, x, y);
+                                }
+                            });
+                        }
+
+                        canvas.toBlob((blob) => {
+                            resolve(blob || this.mediaBlob);
+                        }, 'image/jpeg', 0.95);
+                    } catch (bakeErr) {
+                        console.warn('Gagal bake overlay foto, gunakan blob asli:', bakeErr);
+                        resolve(this.mediaBlob);
+                    }
+                };
+
+                img.onerror = () => resolve(this.mediaBlob);
+                img.src = sourceUrl;
+            });
+        }
+
+        /**
          * Kirim postingan ke backend POST /api/moments
          */
         async submitPublish(event) {
@@ -678,7 +771,7 @@
 
             if (submitBtn) submitBtn.disabled = true;
             if (spinner) spinner.classList.remove('hidden');
-            if (btnText) btnText.textContent = 'Mengunggah Momen...';
+            if (btnText) btnText.textContent = 'Memproses & Mengunggah...';
             if (progressContainer) progressContainer.classList.remove('hidden');
 
             const caption = document.getElementById('publish-caption-input')?.value || '';
@@ -688,19 +781,37 @@
                 selectedProductIds.push(parseInt(selectedProductSelect.value, 10));
             }
 
+            // Siapkan file yang siap diunggah (bake overlay foto bila perlu)
+            let finalMediaBlob = this.mediaBlob;
+            if (this.mediaType === 'photo' && (!this.mediaBlobs || this.mediaBlobs.length <= 1)) {
+                try {
+                    finalMediaBlob = await this.bakePhotoWithOverlays();
+                } catch (e) {
+                    finalMediaBlob = this.mediaBlob;
+                }
+            }
+
             // Siapkan FormData
             const formData = new FormData();
+            const mediaTypeToSend = (this.mediaType === 'video') ? 'video' : 'image';
+
             if (this.mediaType === 'photo' && this.mediaBlobs && this.mediaBlobs.length > 1) {
-                // Multi-photo upload
+                // Multi-photo upload (Carousel)
                 this.mediaBlobs.forEach((blob, idx) => {
                     formData.append(`media[${idx}]`, blob, `moment_${Date.now()}_${idx}.jpg`);
                 });
                 formData.append('media_type', 'image');
             } else {
-                const ext = (this.mediaType === 'video') ? 'mp4' : 'jpg';
+                const mimeType = (finalMediaBlob && finalMediaBlob.type) ? finalMediaBlob.type.toLowerCase() : '';
+                let ext = 'jpg';
+                if (this.mediaType === 'video') {
+                    ext = mimeType.includes('webm') ? 'webm' : 'mp4';
+                } else if (mimeType.includes('png')) {
+                    ext = 'png';
+                }
                 const filename = `moment_${Date.now()}.${ext}`;
-                formData.append('media', this.mediaBlob, filename);
-                formData.append('media_type', this.mediaType);
+                formData.append('media', finalMediaBlob, filename);
+                formData.append('media_type', mediaTypeToSend);
             }
             formData.append('caption', caption);
 
@@ -714,20 +825,22 @@
             });
 
             // Simulasi progress upload smooth
-            let currentPct = 10;
+            let currentPct = 15;
             const progressInterval = setInterval(() => {
                 if (currentPct < 90) {
-                    currentPct += 8;
+                    currentPct += 7;
                     if (progressBar) progressBar.style.width = `${currentPct}%`;
                     if (progressPercent) progressPercent.textContent = `${currentPct}%`;
                 }
             }, 300);
 
             try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                 const response = await fetch('/api/moments', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: formData
                 });
@@ -736,7 +849,7 @@
                 if (progressBar) progressBar.style.width = '100%';
                 if (progressPercent) progressPercent.textContent = '100%';
 
-                const result = await response.json();
+                const result = await response.json().catch(() => ({}));
 
                 if (response.ok && result.success) {
                     if (window.swalRentify) {
@@ -750,9 +863,13 @@
                     }
                     window.location.href = '/moments';
                 } else {
-                    const msg = result.message || 'Gagal membagikan momen.';
+                    let errorMsg = result.message || 'Gagal membagikan momen.';
+                    if (result.errors) {
+                        const errorDetails = Object.values(result.errors).flat().join('<br>');
+                        if (errorDetails) errorMsg += `<br><span class="text-xs text-rose-500">${errorDetails}</span>`;
+                    }
                     if (window.swalRentify) {
-                        window.swalRentify.fire({ icon: 'error', title: 'Gagal Unggah', text: msg });
+                        window.swalRentify.fire({ icon: 'error', title: 'Gagal Unggah', html: errorMsg });
                     }
                     if (submitBtn) submitBtn.disabled = false;
                     if (spinner) spinner.classList.add('hidden');
@@ -763,7 +880,7 @@
                 clearInterval(progressInterval);
                 console.error('Error saat upload momen:', err);
                 if (window.swalRentify) {
-                    window.swalRentify.fire({ icon: 'error', text: 'Terjadi kesalahan jaringan saat mengunggah.' });
+                    window.swalRentify.fire({ icon: 'error', title: 'Kesalahan Jaringan', text: 'Terjadi gangguan saat mengunggah momen. Silakan periksa koneksi internet Anda.' });
                 }
                 if (submitBtn) submitBtn.disabled = false;
                 if (spinner) spinner.classList.add('hidden');

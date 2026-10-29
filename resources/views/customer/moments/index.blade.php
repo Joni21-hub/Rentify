@@ -51,7 +51,7 @@
 @endpush
 
 @section('content')
-<div class="fixed inset-0 w-full h-[100dvh] bg-black overflow-hidden select-none" id="moments-app">
+<div id="rentify-page-content" data-tab="momen" class="fixed inset-0 w-full h-[100dvh] bg-black overflow-hidden select-none" id="moments-app">
 
     <!-- MAIN VERTICAL SNAP FEED (TikTok / IG Reels Fullscreen Experience) -->
     <main 
@@ -301,9 +301,10 @@
         </div>
     </div>
 
+    </div> <!-- END WRAPPER KONTEN TAB MOMEN -->
+
     <!-- BOTTOM NAV (3 TAB RAMPING: BERANDA, MOMEN AKTIF, AKUN) -->
     <x-bottom-navigation-bar active="momen" />
-</div>
 
 <!-- ============================================================== -->
 <!-- JAVASCRIPT: FEED LOGIC, FULLSCREEN SNAP REELS, AUDIO & GESTURES -->
@@ -360,17 +361,49 @@
         });
     }, { threshold: [0.6] });
 
-    document.addEventListener("DOMContentLoaded", function () {
-        loadFeedBatch(true);
-        setupInfiniteScroll();
-        setupNavBarScrollBehavior();
-        setupHorizontalSwipeNavigation();
+    // Expose controller global untuk transisi mulus antar-tab tanpa reload
+    window.RentifyMoments = {
+        pause: function() {
+            if (currentPlayingVideo) {
+                try { currentPlayingVideo.pause(); } catch(e){}
+            }
+            document.querySelectorAll('#moments-app video').forEach(v => {
+                try { v.pause(); } catch(e){}
+            });
+        },
+        resume: function() {
+            if (currentPlayingVideo) {
+                try { currentPlayingVideo.play().catch(() => {}); } catch(e){}
+            } else {
+                const firstVideo = document.querySelector('#feed-container video');
+                if (firstVideo) {
+                    try { firstVideo.play().catch(() => {}); } catch(e){}
+                }
+            }
+        },
+        init: function() {
+            if (window.__momentsInitialized) {
+                window.RentifyMoments.resume();
+                return;
+            }
+            window.__momentsInitialized = true;
+            loadFeedBatch(true);
+            setupInfiniteScroll();
+            setupNavBarScrollBehavior();
+            setupHorizontalSwipeNavigation();
 
-        // Cek URL parameter ?upload=1
-        if (new URLSearchParams(window.location.search).get('upload') === '1') {
-            handleFabClick();
+            // Cek URL parameter ?upload=1
+            if (new URLSearchParams(window.location.search).get('upload') === '1') {
+                handleFabClick();
+            }
         }
-    });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener("DOMContentLoaded", window.RentifyMoments.init);
+    } else {
+        window.RentifyMoments.init();
+    }
 
     /**
      * Memuat kumpulan momen dari endpoint API.
@@ -384,15 +417,21 @@
         }
 
         try {
-            let url = '/api/moments?limit=8';
-            if (nextCursor) {
-                url += `&cursor=${encodeURIComponent(nextCursor)}`;
-            }
+            let result = null;
+            // Gunakan pre-cache jika tersedia dari prefetch idle tab bar
+            if (isInitial && window.__rentifyInitialMomentsCache) {
+                result = window.__rentifyInitialMomentsCache;
+            } else {
+                let url = '/api/moments?limit=8';
+                if (nextCursor) {
+                    url += `&cursor=${encodeURIComponent(nextCursor)}`;
+                }
 
-            const response = await fetch(url, {
-                headers: { 'Accept': 'application/json' }
-            });
-            const result = await response.json();
+                const response = await fetch(url, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                result = await response.json();
+            }
 
             if (result.success) {
                 if (isInitial) {

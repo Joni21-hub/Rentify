@@ -15,6 +15,19 @@ class StoreMomentRequest extends FormRequest
     }
 
     /**
+     * Prepare inputs for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('media_type')) {
+            $type = strtolower((string) $this->input('media_type'));
+            if ($type === 'photo') {
+                $this->merge(['media_type' => 'image']);
+            }
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array
@@ -70,7 +83,7 @@ class StoreMomentRequest extends FormRequest
                 },
             ],
             'media.*' => ['nullable'],
-            'media_type' => ['nullable', 'string', 'in:image,video'],
+            'media_type' => ['nullable', 'string', 'in:image,video,photo'],
             'video_duration_seconds' => ['nullable', 'numeric', 'min:0'],
             'caption' => ['nullable', 'string', 'max:1000'],
             'product_ids' => ['nullable', 'array', 'max:3'],

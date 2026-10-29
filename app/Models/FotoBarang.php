@@ -12,6 +12,11 @@ class FotoBarang extends Model
     protected $table = 'foto_barangs';
     protected $guarded = ['id'];
 
+    protected $appends = [
+        'foto_url',
+        'is_video',
+    ];
+
     /**
      * Membersihkan berkas fisik di Cloudinary / disk lokal saat foto galeri dihapus.
      */

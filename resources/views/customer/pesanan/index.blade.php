@@ -295,22 +295,37 @@
                     </div>
 
                     <!-- Footer Card: Action Buttons (Tema Rentify Standard) -->
-                    <div class="p-3.5 bg-white/70 backdrop-blur-md border-t border-slate-100/80 flex items-center justify-between gap-2">
-                        <a href="{{ $linkWa }}" target="_blank" class="px-3.5 py-2 rounded-2xl bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-extrabold text-xs flex items-center gap-1.5 border border-slate-200/80 shadow-xs transition active:scale-95">
-                            <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i>
-                            <span>Chat Toko</span>
-                        </a>
+                    <div class="p-3.5 bg-white/70 backdrop-blur-md border-t border-slate-100/80 flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <a href="{{ $linkWa }}" target="_blank" class="px-3.5 py-2 rounded-2xl bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-extrabold text-xs flex items-center gap-1.5 border border-slate-200/80 shadow-xs transition active:scale-95">
+                                <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i>
+                                <span>Chat Toko</span>
+                            </a>
+
+                            @if($order->shipping_method === 'ambil')
+                                @php
+                                    $firstItemWithLoc = $order->items->first();
+                                    $linkMapsFooter = ($firstItemWithLoc && $firstItemWithLoc->latitude && $firstItemWithLoc->longitude) 
+                                        ? "https://maps.google.com/?q={$firstItemWithLoc->latitude},{$firstItemWithLoc->longitude}" 
+                                        : "https://maps.google.com/?q=" . urlencode($firstItemWithLoc->alamat_toko ?? '');
+                                @endphp
+                                <a href="{{ $linkMapsFooter }}" target="_blank" class="px-3.5 py-2 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-extrabold text-xs flex items-center gap-1.5 border border-sky-200/80 shadow-xs transition active:scale-95" title="Buka Titik Lokasi Toko di Google Maps">
+                                    <i class="fa-solid fa-location-dot text-sky-600 text-xs"></i>
+                                    <span>Maps Toko</span>
+                                </a>
+                            @endif
+                        </div>
 
                         <div class="flex items-center gap-2">
-                            @if($order->status === 'Menunggu Pembayaran')
+                            @if($order->status === 'Menunggu Pembayaran' || $order->status === 'PENDING_PAYMENT')
                                 <a href="{{ route('customer.qris', 'INV-' . $order->id) }}" class="px-4 py-2 rounded-2xl bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm shadow-sky-500/20 active:scale-95 transition">
                                     <i class="fa-solid fa-credit-card text-xs"></i>
                                     <span>Bayar Sekarang</span>
                                 </a>
-                            @elseif(!$isSelesai && !$isMenungguUlasan && !$isDibatalkan)
-                                <form action="{{ route('customer.pesanan.selesai', $order->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang sudah diterima dan ingin menyelesaikan pesanan ini?');">
+                            @elseif(in_array($order->status, ['Sedang Disewa', 'Berjalan']))
+                                <form action="{{ route('customer.pesanan.selesai', $order->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang sudah diterima & selesai disewa?');">
                                     @csrf
-                                    <button type="submit" class="px-4 py-2 rounded-2xl bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm shadow-sky-500/20 active:scale-95 transition">
+                                    <button type="submit" class="px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm shadow-emerald-500/20 active:scale-95 transition">
                                         <i class="fa-solid fa-check text-xs"></i>
                                         <span>Selesaikan Pesanan</span>
                                     </button>

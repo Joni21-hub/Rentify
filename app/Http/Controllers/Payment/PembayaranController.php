@@ -120,6 +120,14 @@ class PembayaranController extends Controller
             ], 403);
         }
 
+        // Perlindungan Transaksi: Pembayaran QRIS diverifikasi otomatis oleh webhook mutasi, tidak boleh dikonfirmasi mandiri oleh customer tanpa mutasi
+        if (!$isAdmin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran QRIS diverifikasi otomatis oleh sistem melalui deteksi mutasi. Halaman akan otomatis beralih setelah dana terdeteksi.'
+            ], 400);
+        }
+
         DB::table('orders')->whereIn('id', $orderIds)->update([
             'status'         => 'Menunggu Konfirmasi',
             'payment_method' => 'QRIS',

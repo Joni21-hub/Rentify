@@ -132,6 +132,11 @@ class PesananController extends Controller
             return redirect()->back()->with('error', 'Pesanan ini sudah selesai sebelumnya.');
         }
 
+        // Perlindungan Transaksi: Customer hanya dapat menyelesaikan pesanan jika barang sudah diterima dan sedang dalam masa sewa aktif
+        if (!in_array($order->status, ['Sedang Disewa', 'Berjalan'])) {
+            return redirect()->back()->with('error', 'Pesanan hanya dapat diselesaikan setelah barang diterima dari toko dan berstatus Sedang Disewa.');
+        }
+
         try {
             \App\Services\TransactionCalculationService::settleOrderCompletion($id);
 

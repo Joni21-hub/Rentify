@@ -78,6 +78,9 @@
 
 <body class="min-h-screen text-slate-800 pb-28 md:pb-12 bg-flowing overflow-x-hidden w-full max-w-full">
 
+    <!-- WRAPPER KONTEN TAB AKUN (UNTUK SMOOTH TAB SWAPPING) -->
+    <div id="rentify-page-content" data-tab="akun" class="w-full min-h-screen">
+
     <!-- ===== DESKTOP TOP NAVBAR (HIDDEN ON MOBILE) ===== -->
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/60">
         <div class="max-w-5xl mx-auto w-full px-6 py-3 flex items-center justify-between gap-4">
@@ -718,6 +721,7 @@
             </form>
         </div>
     </div>
+    </div> <!-- END WRAPPER KONTEN TAB AKUN -->
 
     <!-- ============================================================== -->
     <!-- 5. BOTTOM NAV (3 TAB RAMPING: BERANDA, MOMEN, AKUN) -->

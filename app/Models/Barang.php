@@ -11,11 +11,17 @@ class Barang extends Model
 
     protected $table = 'barang';
 
-   protected $fillable = [
-    'vendor_id', 'kategori_id', 'nama', 'slug', 'deskripsi', 
-    'harga_sewa_harian', 'deposit', 'denda_per_hari', 'kondisi', 
-    'stok_total', 'status', 'is_approved', 'cover_photo',
-    'is_delivery_supported', 'alamat', 'latitude', 'longitude', 'spesifikasi'
+    protected $fillable = [
+        'vendor_id', 'kategori_id', 'nama', 'slug', 'deskripsi', 
+        'harga_sewa_harian', 'deposit', 'denda_per_hari', 'kondisi', 
+        'stok_total', 'status', 'status_barang', 'is_approved', 'approved_at', 'cover_photo',
+        'is_delivery_supported', 'alamat', 'latitude', 'longitude', 'spesifikasi'
+    ];
+
+    protected $appends = [
+        'cover_photo_url',
+        'is_cover_video',
+        'harga_sewa_customer',
     ];
 
     protected $casts = [
@@ -259,5 +265,128 @@ class Barang extends Model
         return $this->stokCabang
                     ->where('cabang_id', $cabangId)
                     ->first()?->stok_tersedia ?? 0;
+    }
+
+    /**
+     * Menghitung tanggal-tanggal di mana stok barang ini sudah habis / penuh dibooking.
+     * Sesuai aturan: jika total akumulasi unit yang disewa pada tanggal tersebut >= stok_total,
+     * maka tanggal tersebut berstatus FULL BOOKED (ditampilkan dengan efek glass di kalender).
+     *
+     * @param int $horizonDays Jumlah hari ke depan yang dicek (default 120 hari)
+     * @return array List tanggal 'YYYY-MM-DD' yang penuh dibooking
+     */
+    public function getFullyBookedDates(int $horizonDays = 120): array
+    {
+        $stokTotal = (int) ($this->stok_total ?? 0);
+        if ($stokTotal <= 0) {
+            return [];
+        }
+
+        $today = now()->startOfDay();
+        $horizon = now()->copy()->addDays($horizonDays)->endOfDay();
+
+        $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.product_id', $this->id)
+            ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED'])
+            ->where(function ($query) use ($today) {
+                $todayDate = $today->toDateString();
+                $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
+                      ->orWhereDate('orders.end_rent', '>=', $todayDate);
+            })
+            ->select([
+                'order_items.quantity',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+            ])
+            ->get();
+
+        $dailyUsage = [];
+
+        foreach ($activeBookings as $booking) {
+            if (!$booking->start_rent_time || !$booking->end_rent_time) {
+                continue;
+            }
+
+            $orderStart = \Carbon\Carbon::parse($booking->start_rent_time)->startOfDay();
+            $orderEnd = \Carbon\Carbon::parse($booking->end_rent_time)->startOfDay();
+            $qty = max(1, (int) $booking->quantity);
+
+            $curr = $orderStart->copy();
+            while ($curr->lte($orderEnd)) {
+                if ($curr->gte($today) && $curr->lte($horizon)) {
+                    $key = $curr->format('Y-m-d');
+                    $dailyUsage[$key] = ($dailyUsage[$key] ?? 0) + $qty;
+                }
+                $curr->addDay();
+            }
+        }
+
+        $fullyBooked = [];
+        foreach ($dailyUsage as $dateKey => $usedQty) {
+            if ($usedQty >= $stokTotal) {
+                $fullyBooked[] = $dateKey;
+            }
+        }
+
+        return array_values(array_unique($fullyBooked));
+    }
+
+    /**
+     * Ringkasan stok harian (terpakai, sisa, status) untuk rentang waktu ke depan.
+     */
+    public function getBookedDatesInfo(int $horizonDays = 120): array
+    {
+        $stokTotal = (int) ($this->stok_total ?? 0);
+        $today = now()->startOfDay();
+        $horizon = now()->copy()->addDays($horizonDays)->endOfDay();
+
+        $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.product_id', $this->id)
+            ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED'])
+            ->where(function ($query) use ($today) {
+                $todayDate = $today->toDateString();
+                $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
+                      ->orWhereDate('orders.end_rent', '>=', $todayDate);
+            })
+            ->select([
+                'order_items.quantity',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+            ])
+            ->get();
+
+        $dailyUsage = [];
+        foreach ($activeBookings as $booking) {
+            if (!$booking->start_rent_time || !$booking->end_rent_time) {
+                continue;
+            }
+            $orderStart = \Carbon\Carbon::parse($booking->start_rent_time)->startOfDay();
+            $orderEnd = \Carbon\Carbon::parse($booking->end_rent_time)->startOfDay();
+            $qty = max(1, (int) $booking->quantity);
+
+            $curr = $orderStart->copy();
+            while ($curr->lte($orderEnd)) {
+                if ($curr->gte($today) && $curr->lte($horizon)) {
+                    $key = $curr->format('Y-m-d');
+                    $dailyUsage[$key] = ($dailyUsage[$key] ?? 0) + $qty;
+                }
+                $curr->addDay();
+            }
+        }
+
+        $info = [];
+        foreach ($dailyUsage as $dateKey => $usedQty) {
+            $remaining = max(0, $stokTotal - $usedQty);
+            $info[$dateKey] = [
+                'used' => $usedQty,
+                'total' => $stokTotal,
+                'remaining' => $remaining,
+                'is_full' => $usedQty >= $stokTotal,
+            ];
+        }
+
+        return $info;
     }
 }

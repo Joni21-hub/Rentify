@@ -374,6 +374,10 @@ class StorageService
         string $folder = 'rentify/barang',
         array $options = []
     ): ?string {
+        if (app()->environment('testing')) {
+            return null;
+        }
+
         $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
         if (!$cloudinaryUrl) {
             return null;

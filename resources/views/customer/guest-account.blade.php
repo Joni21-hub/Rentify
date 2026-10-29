@@ -19,6 +19,9 @@
 
 <body class="min-h-screen text-slate-800 pb-28 md:pb-12 bg-flowing overflow-x-hidden w-full max-w-full">
 
+    <!-- WRAPPER KONTEN TAB AKUN GUEST (UNTUK SMOOTH TAB SWAPPING) -->
+    <div id="rentify-page-content" data-tab="akun" class="w-full min-h-screen">
+
     <!-- ===== DESKTOP TOP NAVBAR ===== -->
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div class="max-w-5xl mx-auto w-full px-6 py-3 flex items-center justify-between gap-4">
@@ -144,6 +147,7 @@
         </div>
 
     </main>
+    </div> <!-- END WRAPPER KONTEN TAB AKUN GUEST -->
 
     <!-- ===== BOTTOM NAVIGATION BAR (3 TABS: BERANDA, MOMEN, AKUN) ===== -->
     <x-bottom-navigation-bar active="akun" />

@@ -258,8 +258,13 @@ class MomentController extends Controller
             $ext = strtolower($file->getClientOriginalExtension() ?: '');
 
             $mediaType = (str_starts_with($mime, 'video/') || in_array($ext, $videoExtensions)) ? 'video' : 'image';
-            if ($request->filled('media_type') && in_array($request->input('media_type'), ['image', 'video'])) {
-                $mediaType = $request->input('media_type');
+            if ($request->filled('media_type')) {
+                $requestedType = strtolower((string) $request->input('media_type'));
+                if (in_array($requestedType, ['image', 'photo'], true)) {
+                    $mediaType = 'image';
+                } elseif ($requestedType === 'video') {
+                    $mediaType = 'video';
+                }
             }
 
             // Upload media ke Cloudinary dengan optimasi f_auto, q_auto dan fallback HEIC
@@ -623,11 +628,14 @@ class MomentController extends Controller
             $options = [
                 'folder'        => 'rentify/moments',
                 'resource_type' => $mediaType === 'video' ? 'video' : 'image',
-                'transformation' => [
+            ];
+
+            if ($mediaType !== 'video') {
+                $options['transformation'] = [
                     'quality'      => $qualityValue,
                     'fetch_format' => 'auto',
-                ],
-            ];
+                ];
+            }
 
             if (in_array($ext, ['heic', 'heif'])) {
                 $options['format'] = 'jpg';

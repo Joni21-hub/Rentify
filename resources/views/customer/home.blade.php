@@ -74,6 +74,9 @@
 </head>
 <body class="text-slate-800 antialiased bg-slate-50/50">
 
+    <!-- WRAPPER KONTEN TAB BERANDA (UNTUK SMOOTH TAB SWAPPING) -->
+    <div id="rentify-page-content" data-tab="beranda" class="w-full min-h-screen">
+
     <!-- ===== TOP NAVBAR (DESKTOP ONLY) ===== -->
     <header class="hidden md:block bg-white/90 backdrop-blur-md border-b border-slate-100/80 shadow-2xs sticky top-0 z-50">
         <div class="max-w-7xl mx-auto w-full px-6 py-3 flex items-center gap-5">
@@ -474,17 +477,19 @@
             @endif
         </section>
     </main>
+    </div> <!-- END WRAPPER KONTEN TAB BERANDA -->
 
     <!-- BOTTOM NAV (MOBILE ONLY - 3 TAB RESMI) -->
     <x-bottom-navigation-bar active="beranda" />
 
     <!-- SCRIPT BANNER SLIDER & AUTO-DETECT LOCATION -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        function initHomeScripts() {
             // 1. BANNER SLIDER AUTO-SLIDE
             const slider = document.getElementById('banner-slider');
             const dots = document.querySelectorAll('.banner-dot');
-            if (slider && slider.children.length > 1) {
+            if (slider && slider.children.length > 1 && !slider.dataset.sliderInit) {
+                slider.dataset.sliderInit = "true";
                 const slides = Array.from(slider.children);
                 const totalSlides = slides.length;
                 let currentSlide = 0;
@@ -566,7 +571,13 @@
 
                 startAutoSlide();
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener("DOMContentLoaded", initHomeScripts);
+        } else {
+            initHomeScripts();
+        }
 
         // 2. AUTO-DETECT GPS LOCATION (SMOOTH & INSTANT)
         function autoDetectLocation() {

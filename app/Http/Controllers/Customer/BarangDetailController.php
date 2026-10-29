@@ -50,6 +50,27 @@ public function show($slug)
             }
         }
 
-        return view('customer.barang-detail', compact('barang'));
+        $fullyBookedDates = $barang->getFullyBookedDates();
+        $bookedDatesInfo = $barang->getBookedDatesInfo();
+
+        return view('customer.barang-detail', compact('barang', 'fullyBookedDates', 'bookedDatesInfo'));
+    }
+
+    /**
+     * API Endpoint ringan untuk mendapatkan daftar tanggal penuh sewa per barang
+     */
+    public function getBookedDates($id)
+    {
+        $barang = Barang::find($id);
+        if (!$barang) {
+            return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'stok_total' => (int) $barang->stok_total,
+            'fully_booked_dates' => $barang->getFullyBookedDates(),
+            'booked_info' => $barang->getBookedDatesInfo(),
+        ]);
     }
 }

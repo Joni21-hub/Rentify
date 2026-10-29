@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Barang;
 use App\Models\Banner;
 use App\Models\User;
+use App\Models\Kategori;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -18,12 +20,13 @@ class AdminDashboardController extends Controller
     public function index()
     {
         $banners = Banner::latest()->get();
-        $pendingBarangs = Barang::with(['vendor', 'kategori'])->where('status_barang', 'pending')->latest()->get();
+        $pendingBarangs = Barang::with(['vendor', 'kategori', 'fotos'])->where('status_barang', 'pending')->latest()->get();
         $pendingVendors = User::where('role', 'vendor')->where('vendor_status', 'pending')->latest()->get();
 
-        $allBarangs = Barang::with(['vendor', 'kategori'])->latest()->get();
+        $allBarangs = Barang::with(['vendor', 'kategori', 'fotos'])->latest()->get();
         $allVendors = User::where('role', 'vendor')->latest()->get();
         $allCustomers = User::where('role', 'customer')->latest()->get();
+        $kategoris = Kategori::where('is_active', 1)->orderBy('nama')->get();
         
         $allTransaksi = DB::table('orders')->orderBy('created_at', 'desc')->get();
 
@@ -37,30 +40,95 @@ class AdminDashboardController extends Controller
         }
 
         // --- FITUR BARU: AMBIL DATA VOUCHER UNTUK PEMANTAUAN ADMIN ---
-        // Menggunakan DB facade agar kebal dari error meskipun Model Voucher belum di-import
-        $allVouchers = DB::table('vouchers')
-            ->leftJoin('users', 'vouchers.vendor_id', '=', 'users.id')
-            ->select('vouchers.*', 'users.vendor_name as vendor_name_rel')
-            ->orderBy('vouchers.id', 'desc')
+        $allVouchers = Voucher::with('vendor')->latest()->get();
+
+        // --- PUSAT NOTIFIKASI & FEED AKTIVITAS TERPADU (GOD-MODE) ---
+        $pendingWithdrawals = DB::table('withdrawals')
+            ->leftJoin('users', 'withdrawals.vendor_id', '=', 'users.id')
+            ->where('withdrawals.status', 'pending')
+            ->select('withdrawals.*', 'users.vendor_name', 'users.name as owner_name')
+            ->orderBy('withdrawals.created_at', 'desc')
             ->get();
-            
-        // Memanipulasi objek agar terbaca oleh Blade UI ($v->vendor->vendor_name)
-        foreach ($allVouchers as $v) {
-            $v->vendor = (object)['vendor_name' => $v->vendor_name_rel];
+
+        $pendingPembayarans = DB::table('pembayarans')
+            ->where('status', 'pending')
+            ->count();
+
+        // Koleksi Aktivitas Masuk Real-Time
+        $activityAlerts = collect();
+
+        foreach ($pendingBarangs as $pb) {
+            $activityAlerts->push([
+                'id' => 'brg_' . $pb->id,
+                'type' => 'barang',
+                'title' => 'Pengajuan Produk Baru',
+                'item_name' => $pb->nama,
+                'sender' => $pb->vendor?->vendor_name ?? 'Vendor',
+                'owner' => $pb->vendor?->name ?? '-',
+                'badge' => 'Kurasi Produk',
+                'badge_color' => 'bg-amber-100 text-amber-800 border-amber-200',
+                'icon' => 'fa-boxes',
+                'icon_bg' => 'bg-amber-50 text-amber-600',
+                'time' => $pb->created_at,
+                'payload' => $pb,
+            ]);
         }
+
+        foreach ($pendingVendors as $pv) {
+            $activityAlerts->push([
+                'id' => 'vnd_' . $pv->id,
+                'type' => 'vendor',
+                'title' => 'Pendaftaran Vendor Baru',
+                'item_name' => $pv->vendor_name ?? 'Toko Baru',
+                'sender' => $pv->name ?? 'Calon Mitra',
+                'owner' => $pv->email ?? '-',
+                'badge' => 'Validasi Toko',
+                'badge_color' => 'bg-purple-100 text-purple-800 border-purple-200',
+                'icon' => 'fa-store',
+                'icon_bg' => 'bg-purple-50 text-purple-600',
+                'time' => $pv->created_at,
+                'payload' => $pv,
+            ]);
+        }
+
+        foreach ($pendingWithdrawals as $pw) {
+            $activityAlerts->push([
+                'id' => 'wd_' . $pw->id,
+                'type' => 'withdrawal',
+                'title' => 'Permintaan Tarik Saldo',
+                'item_name' => 'Rp ' . number_format($pw->nominal, 0, ',', '.'),
+                'sender' => $pw->vendor_name ?? $pw->owner_name ?? 'Vendor',
+                'owner' => ($pw->nama_bank_ewallet ?? 'Bank') . ' - ' . ($pw->nomor_rekening ?? ''),
+                'badge' => 'Pencairan Dana',
+                'badge_color' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                'icon' => 'fa-money-bill-transfer',
+                'icon_bg' => 'bg-emerald-50 text-emerald-600',
+                'time' => $pw->created_at ? \Carbon\Carbon::parse($pw->created_at) : now(),
+                'payload' => $pw,
+            ]);
+        }
+
+        // Urutkan feed aktivitas berdasarkan tanggal terbaru
+        $activityAlerts = $activityAlerts->sortByDesc(function ($item) {
+            return $item['time'] ? \Carbon\Carbon::parse($item['time'])->timestamp : 0;
+        })->values();
 
         $stats = [
             'total_pending' => $pendingBarangs->count(),
             'total_disetujui' => Barang::where('status_barang', 'disetujui')->count(),
+            'total_ditolak' => Barang::where('status_barang', 'ditolak')->count(),
             'total_banner' => $banners->count(),
             'total_pending_vendor' => $pendingVendors->count(),
+            'total_pending_withdrawals' => $pendingWithdrawals->count(),
             'total_customer' => $allCustomers->count(),
-            'total_vendor_total' => $allVendors->count()
+            'total_vendor_total' => $allVendors->count(),
+            'total_unread_alerts' => $pendingBarangs->count() + $pendingVendors->count() + $pendingWithdrawals->count() + $pendingPembayarans
         ];
 
         return view('admin.dashboard', compact(
             'banners', 'pendingBarangs', 'pendingVendors', 
-            'allBarangs', 'allVendors', 'allCustomers', 'stats', 'allTransaksi', 'allVouchers'
+            'allBarangs', 'allVendors', 'allCustomers', 'stats', 
+            'allTransaksi', 'allVouchers', 'kategoris', 'pendingWithdrawals', 'activityAlerts'
         ));
     }
 

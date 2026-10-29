@@ -40,6 +40,7 @@ Route::name('customer.')->group(function () {
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
     
     Route::get('/customer/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
+    Route::get('/customer/barang/{id}/booked-dates', [BarangDetailController::class, 'getBookedDates'])->name('barang.booked_dates');
     
     // Rute Profil Toko Publik (Katalog Barang Toko & Voucher)
     Route::get('/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show'])->name('toko.show');
@@ -119,6 +120,8 @@ Route::prefix('admin')->name('admin.')
     Route::resource('users', AdminUserController::class);
     Route::resource('vendors', AdminVendorController::class);
     Route::patch('vendors/{id}/verify', [AdminVendorController::class, 'verify'])->name('vendors.verify');
+    Route::patch('barang/{id}/quick-stock', [AdminBarangController::class, 'quickStock'])->name('barang.quickStock');
+    Route::delete('barang/{id}/fotos/{fotoId}', [AdminBarangController::class, 'destroyFoto'])->name('barang.fotos.destroy');
     Route::resource('barang', AdminBarangController::class)->except(['approve', 'reject']);
     Route::resource('kategori', AdminKategoriController::class);
     Route::resource('cabang', AdminCabangController::class);

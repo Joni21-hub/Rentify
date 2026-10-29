@@ -18,7 +18,7 @@
         ? 'text-sky-600 font-black active scale-105' 
         : ($isMomen ? 'text-white/60 hover:text-white transition-colors font-bold' : 'text-slate-400 hover:text-sky-600 transition-colors font-bold');
 
-    // Rute Akun menuju route('customer.account') yang menangani guest & auth (Requirement 1.6 & 6.18)
+    // Rute Akun menuju route('customer.account') yang menangani guest & auth
     $accountUrl = \Illuminate\Support\Facades\Route::has('customer.account') 
         ? route('customer.account') 
         : (\Illuminate\Support\Facades\Route::has('customer.dashboard') ? route('customer.dashboard') : '/account');
@@ -77,35 +77,41 @@
         animation: waterWaveFlowGpu 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Indikator Melayang Gestur Swap Kiri-Kanan */
-    .rentify-swipe-pill {
-        position: fixed;
-        top: 50%;
-        transform: translateY(-50%) translateZ(0);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        background: rgba(15, 23, 42, 0.92);
-        color: #ffffff;
-        font-size: 0.75rem;
-        font-weight: 800;
-        letter-spacing: 0.025em;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-        pointer-events: none;
-        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-        animation: rentifyPillPop 0.2s ease-out;
+    /* GPU-Accelerated Smooth Tab Transition Classes */
+    .rentify-tab-page {
+        width: 100%;
+        min-height: 100vh;
         will-change: transform, opacity;
     }
 
-    @keyframes rentifyPillPop {
-        0% { transform: translateY(-50%) scale(0.85); opacity: 0; }
-        100% { transform: translateY(-50%) scale(1); opacity: 1; }
+    .rentify-slide-out-left {
+        animation: rentifySlideOutLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+    .rentify-slide-in-right {
+        animation: rentifySlideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+    .rentify-slide-out-right {
+        animation: rentifySlideOutRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+    .rentify-slide-in-left {
+        animation: rentifySlideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes rentifySlideOutLeft {
+        0% { transform: translate3d(0, 0, 0); opacity: 1; }
+        100% { transform: translate3d(-32px, 0, 0); opacity: 0; }
+    }
+    @keyframes rentifySlideInRight {
+        0% { transform: translate3d(32px, 0, 0); opacity: 0; }
+        100% { transform: translate3d(0, 0, 0); opacity: 1; }
+    }
+    @keyframes rentifySlideOutRight {
+        0% { transform: translate3d(0, 0, 0); opacity: 1; }
+        100% { transform: translate3d(32px, 0, 0); opacity: 0; }
+    }
+    @keyframes rentifySlideInLeft {
+        0% { transform: translate3d(-32px, 0, 0); opacity: 0; }
+        100% { transform: translate3d(0, 0, 0); opacity: 1; }
     }
 </style>
 
@@ -138,127 +144,30 @@
     </nav>
 </div>
 
-<!-- SPECULATION RULES API: Prerender & Prefetch Instan di Browser Chromium / Android -->
-<script type="speculationrules">
-{
-  "prerender": [
-    {
-      "source": "list",
-      "urls": [
-        "{{ route('customer.home') }}",
-        "{{ route('customer.moments') }}",
-        "{{ $accountUrl }}"
-      ],
-      "eagerness": "moderate"
-    }
-  ],
-  "prefetch": [
-    {
-      "source": "list",
-      "urls": [
-        "{{ route('customer.home') }}",
-        "{{ route('customer.moments') }}",
-        "{{ $accountUrl }}"
-      ],
-      "eagerness": "conservative"
-    }
-  ]
-}
-</script>
-
-<!-- CLIENT-SIDE ULTRA-SMOOTH NAVIGATION & SCROLL RETENTION -->
+<!-- CLIENT-SIDE ULTRA-SMOOTH INSTANT TAB ENGINE & HARDWARE-ACCELERATED SWAPPING -->
 <script>
-    if (typeof window.RentifyNavigationStore === 'undefined') {
-        window.RentifyNavigationStore = (function() {
-            const STORAGE_KEY = 'rentify_tab_scroll_positions';
-
-            function getStore() {
-                try {
-                    const data = sessionStorage.getItem(STORAGE_KEY);
-                    return data ? JSON.parse(data) : {};
-                } catch (e) {
-                    return {};
-                }
-            }
-
-            function setStore(data) {
-                try {
-                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                } catch (e) {}
-            }
-
-            function saveScrollPosition(tabName) {
-                if (!tabName) return;
-                const store = getStore();
-                store[tabName] = {
-                    scrollX: window.scrollX || window.pageXOffset || 0,
-                    scrollY: window.scrollY || window.pageYOffset || 0,
-                    timestamp: Date.now()
-                };
-                setStore(store);
-            }
-
-            function restoreScrollPosition(tabName) {
-                if (!tabName) return;
-                const store = getStore();
-                const pos = store[tabName];
-                if (pos && typeof pos.scrollY === 'number') {
-                    window.scrollTo({
-                        left: pos.scrollX || 0,
-                        top: pos.scrollY || 0,
-                        behavior: 'instant'
-                    });
-                }
-            }
-
-            return {
-                saveScrollPosition: saveScrollPosition,
-                restoreScrollPosition: restoreScrollPosition,
-                getStore: getStore
-            };
-        })();
-    }
-
     (function() {
-        const currentTab = "{{ $activeTab }}";
+        const currentActiveTab = "{{ $activeTab }}";
         const routes = {
             beranda: "{{ route('customer.home') }}",
             momen: "{{ route('customer.moments') }}",
             akun: "{{ $accountUrl }}"
         };
+        const TAB_ORDER = { beranda: 0, momen: 1, akun: 2 };
 
-        let isNavigating = false;
+        // Pastikan store & cache global tersedia
+        window.__rentifyTabs = window.__rentifyTabs || {};
+        window.__rentifyInitialMomentsCache = window.__rentifyInitialMomentsCache || null;
 
-        // Smart Prefetch Cache (Fallback untuk Safari / browser tanpa Speculation Rules)
-        window.__rentifyPrefetchedUrls = window.__rentifyPrefetchedUrls || {};
-        function prefetchDocument(url) {
-            if (!url || window.__rentifyPrefetchedUrls[url]) return;
-            try {
-                const link = document.createElement('link');
-                link.rel = 'prefetch';
-                link.href = url;
-                link.as = 'document';
-                document.head.appendChild(link);
-                window.__rentifyPrefetchedUrls[url] = true;
-            } catch (e) {}
-        }
-
-        // Jalankan prefetch di background saat browser idle
-        function scheduleIdlePrefetch() {
-            const targetUrls = Object.values(routes).filter(u => u && !window.location.href.includes(u));
-            if ('requestIdleCallback' in window) {
-                requestIdleCallback(() => targetUrls.forEach(prefetchDocument), { timeout: 1500 });
-            } else {
-                setTimeout(() => targetUrls.forEach(prefetchDocument), 800);
-            }
-        }
+        let currentTab = currentActiveTab;
+        let isSwitching = false;
 
         function triggerProgressBar() {
             const bar = document.getElementById('rentify-tab-progress');
             if (!bar) return;
             bar.style.transition = 'width 0.28s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease';
             bar.style.opacity = '1';
-            bar.style.width = '80%';
+            bar.style.width = '75%';
         }
 
         function completeProgressBar() {
@@ -272,134 +181,295 @@
             }, 120);
         }
 
-        function navigateSmoothly(targetTab, targetUrl, direction) {
-            if (isNavigating || !targetUrl) return;
-            isNavigating = true;
-
-            // Simpan scroll tab asal
-            if (currentTab && window.RentifyNavigationStore) {
-                window.RentifyNavigationStore.saveScrollPosition(currentTab);
+        // Daftarkan tab saat ini ke memori
+        function registerCurrentTab() {
+            const pageContent = document.getElementById('rentify-page-content');
+            if (pageContent) {
+                pageContent.id = 'rentify-page-content-' + currentTab;
+                window.__rentifyTabs[currentTab] = {
+                    element: pageContent,
+                    title: document.title,
+                    scrollY: window.scrollY || window.pageYOffset || 0
+                };
             }
-
-            // Haptic feedback instan pada smartphone
-            if ('vibrate' in navigator) {
-                try { navigator.vibrate(12); } catch (e) {}
-            }
-
-            // Efek air pada bottom bar
-            const navBar = document.getElementById('bottom-navigation-bar');
-            if (targetTab === 'momen' && navBar) {
-                navBar.classList.add('water-surge-active');
-            }
-
-            // Indikator arah geser jika berasal dari swipe gesture
-            if (direction) {
-                if (targetTab === 'beranda') {
-                    showSwipeFeedback('Beranda', 'fa-solid fa-house text-sky-400', 'left');
-                } else if (targetTab === 'momen') {
-                    showSwipeFeedback('Momen', 'fa-solid fa-camera text-sky-400', direction === 'left' ? 'right' : 'left');
-                } else if (targetTab === 'akun') {
-                    showSwipeFeedback('Akun', 'fa-solid fa-user text-sky-400', 'right');
-                }
-            }
-
-            // Jalankan top progress bar
-            triggerProgressBar();
-
-            // Animasi konten keluar dengan hardware acceleration 60fps
-            const mainEl = document.querySelector('main') || document.getElementById('moments-app') || document.body;
-            if (mainEl) {
-                mainEl.style.willChange = 'opacity, transform';
-                mainEl.style.transition = 'transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.14s ease-out';
-                if (direction === 'left') {
-                    mainEl.style.transform = 'translate3d(-20px, 0, 0)';
-                } else if (direction === 'right') {
-                    mainEl.style.transform = 'translate3d(20px, 0, 0)';
-                } else {
-                    mainEl.style.transform = 'translate3d(0, -6px, 0)';
-                }
-                mainEl.style.opacity = '0.72';
-            }
-
-            // Eksekusi navigasi secepat mungkin pada frame berikutnya
-            requestAnimationFrame(() => {
-                window.location.href = targetUrl;
-            });
         }
 
-        function showSwipeFeedback(label, iconClass, side) {
-            const pill = document.createElement('div');
-            pill.className = 'rentify-swipe-pill';
-            pill.style[side === 'left' ? 'left' : 'right'] = '1.25rem';
-            pill.innerHTML = `<i class="${iconClass}"></i><span>${label}</span>`;
-            document.body.appendChild(pill);
-
-            setTimeout(() => {
-                pill.style.opacity = '0';
-                pill.style.transform = 'translateY(-50%) scale(0.9) translateZ(0)';
-                setTimeout(() => pill.remove(), 200);
-            }, 380);
-        }
-
-        function initNavigation() {
-            completeProgressBar();
-
-            // Pulihkan posisi scroll
-            if (currentTab && window.RentifyNavigationStore) {
-                requestAnimationFrame(function() {
-                    window.RentifyNavigationStore.restoreScrollPosition(currentTab);
+        // Prefetch tab di background saat idle
+        async function prefetchTab(tabKey) {
+            if (window.__rentifyTabs[tabKey] || !routes[tabKey]) return;
+            try {
+                const res = await fetch(routes[tabKey], {
+                    headers: { 'X-Rentify-Prefetch': '1', 'Accept': 'text/html' }
                 });
-            }
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const contentEl = doc.getElementById('rentify-page-content');
+                if (!contentEl) return;
 
+                contentEl.id = 'rentify-page-content-' + tabKey;
+                contentEl.style.display = 'none';
+
+                const navWrapper = document.getElementById('bottom-navigation-wrapper');
+                if (navWrapper && navWrapper.parentNode) {
+                    navWrapper.parentNode.insertBefore(contentEl, navWrapper);
+                } else {
+                    document.body.appendChild(contentEl);
+                }
+
+                window.__rentifyTabs[tabKey] = {
+                    element: contentEl,
+                    title: doc.title,
+                    scrollY: 0
+                };
+
+                // Sisipkan dan jalankan skrip inline esensial
+                doc.querySelectorAll('script').forEach(oldScript => {
+                    if (oldScript.src) {
+                        if (!document.querySelector(`script[src="${oldScript.src}"]`)) {
+                            const s = document.createElement('script');
+                            s.src = oldScript.src;
+                            document.body.appendChild(s);
+                        }
+                    } else if (
+                        oldScript.textContent.includes('window.RentifyMoments') || 
+                        oldScript.textContent.includes('initHomeScripts') || 
+                        oldScript.textContent.includes('switchTab')
+                    ) {
+                        const s = document.createElement('script');
+                        s.textContent = oldScript.textContent;
+                        document.body.appendChild(s);
+                    }
+                });
+
+                // Pre-cache feed Momen dari API agar saat tab Momen dibuka tidak ada skeleton/spinner
+                if (tabKey === 'momen' && !window.__rentifyInitialMomentsCache) {
+                    fetch('/api/moments?limit=8', { headers: { 'Accept': 'application/json' } })
+                        .then(r => r.json())
+                        .then(data => { window.__rentifyInitialMomentsCache = data; })
+                        .catch(() => {});
+                }
+            } catch (e) {
+                // Background prefetch gagal silently, tidak mengganggu navigasi normal
+            }
+        }
+
+        function scheduleBackgroundPrefetch() {
+            const tabsToPrefetch = ['beranda', 'momen', 'akun'].filter(t => t !== currentTab);
+            const run = () => tabsToPrefetch.forEach(t => prefetchTab(t));
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(run, { timeout: 1200 });
+            } else {
+                setTimeout(run, 350);
+            }
+        }
+
+        function updateBottomNavVisuals(targetTab) {
             const navBar = document.getElementById('bottom-navigation-bar');
             if (!navBar) return;
 
-            // Sambungkan event listener klik tab
-            navBar.querySelectorAll('a[data-tab]').forEach(function(anchor) {
-                const tab = anchor.getAttribute('data-tab');
-                const url = routes[tab];
+            const isTargetMomen = (targetTab === 'momen');
 
-                // Prefetch saat kursor menyentuh / pointer mendarat
-                anchor.addEventListener('pointerenter', () => prefetchDocument(url), { passive: true });
-                anchor.addEventListener('touchstart', () => prefetchDocument(url), { passive: true });
+            if (isTargetMomen) {
+                navBar.className = 'bg-slate-950/85 backdrop-blur-2xl border border-white/20 text-white shadow-2xl px-6 py-2 transition-all duration-300 relative overflow-hidden pointer-events-auto rounded-full flex justify-between items-center gap-9';
+                navBar.classList.add('water-surge-active');
+                setTimeout(() => navBar.classList.remove('water-surge-active'), 500);
+            } else {
+                navBar.className = 'rentify-card bg-white/90 backdrop-blur-xl border border-white/80 px-7 py-2 shadow-xl shadow-sky-900/10 transition-all duration-300 relative overflow-hidden pointer-events-auto rounded-full flex justify-between items-center gap-9';
+            }
 
-                anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (tab === currentTab) {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        return;
-                    }
-                    navigateSmoothly(tab, url, null);
-                });
+            navBar.querySelectorAll('a[data-tab]').forEach(a => {
+                const tab = a.getAttribute('data-tab');
+                const isActive = (tab === targetTab);
+
+                if (isActive) {
+                    a.className = isTargetMomen 
+                        ? 'relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 text-sky-400 font-black active scale-105' 
+                        : 'relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 text-sky-600 font-black active scale-105';
+                } else {
+                    a.className = isTargetMomen
+                        ? 'relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 text-white/60 hover:text-white transition-colors font-bold'
+                        : 'relative z-10 flex flex-col items-center px-2 py-0.5 transition-transform duration-200 text-slate-400 hover:text-sky-600 transition-colors font-bold';
+                }
             });
-
-            // Jadwalkan prefetch idle
-            scheduleIdlePrefetch();
-
-            // Inisialisasi gestur Swap Kiri-Kanan
-            setupHorizontalSwipeGesture();
         }
 
+        function updateBodyTheme(targetTab) {
+            if (targetTab === 'momen') {
+                document.documentElement.style.backgroundColor = '#000000';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.backgroundColor = '#000000';
+                document.body.style.background = '#000000';
+                document.body.style.overflow = 'hidden';
+            } else if (targetTab === 'akun') {
+                document.documentElement.style.backgroundColor = '';
+                document.documentElement.style.overflow = 'auto';
+                document.body.style.background = 'radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%) fixed';
+                document.body.style.backgroundColor = '';
+                document.body.style.overflow = 'auto';
+            } else {
+                document.documentElement.style.backgroundColor = '';
+                document.documentElement.style.overflow = 'auto';
+                document.body.style.background = '#f8fafc';
+                document.body.style.backgroundColor = '#f8fafc';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function executeTabSwap(targetTab, direction) {
+            const currentEl = window.__rentifyTabs[currentTab]?.element;
+            const targetData = window.__rentifyTabs[targetTab];
+            const targetEl = targetData?.element;
+
+            if (!currentEl || !targetEl) {
+                isSwitching = false;
+                window.location.href = routes[targetTab];
+                return;
+            }
+
+            const outClass = (direction === 'left') ? 'rentify-slide-out-left' : 'rentify-slide-out-right';
+            const inClass = (direction === 'left') ? 'rentify-slide-in-right' : 'rentify-slide-in-left';
+
+            // Bersihkan sisa kelas animasi
+            targetEl.classList.remove('rentify-slide-out-left', 'rentify-slide-out-right', 'rentify-slide-in-left', 'rentify-slide-in-right');
+            targetEl.style.display = 'block';
+            targetEl.classList.add(inClass);
+
+            currentEl.classList.remove('rentify-slide-out-left', 'rentify-slide-out-right', 'rentify-slide-in-left', 'rentify-slide-in-right');
+            currentEl.classList.add(outClass);
+
+            // Perbarui visual bar & tema warna
+            updateBottomNavVisuals(targetTab);
+            updateBodyTheme(targetTab);
+
+            // Perbarui URL browser & title tanpa reload
+            if (window.history && window.history.pushState) {
+                window.history.pushState({ tab: targetTab }, targetData.title || document.title, routes[targetTab]);
+            }
+            if (targetData.title) {
+                document.title = targetData.title;
+            }
+
+            // Selesai transisi geser (220ms GPU)
+            setTimeout(() => {
+                currentEl.style.display = 'none';
+                currentEl.classList.remove(outClass);
+                targetEl.classList.remove(inClass);
+
+                // Pulihkan scroll / inisialisasi media tab
+                if (targetTab === 'momen') {
+                    window.scrollTo(0, 0);
+                    if (window.RentifyMoments && typeof window.RentifyMoments.init === 'function') {
+                        window.RentifyMoments.init();
+                    } else if (window.RentifyMoments && typeof window.RentifyMoments.resume === 'function') {
+                        window.RentifyMoments.resume();
+                    }
+                } else {
+                    const savedY = targetData.scrollY || 0;
+                    window.scrollTo({ top: savedY, behavior: 'instant' });
+                    if (targetTab === 'beranda' && typeof window.initHomeScripts === 'function') {
+                        window.initHomeScripts();
+                    }
+                }
+
+                currentTab = targetTab;
+                isSwitching = false;
+            }, 220);
+        }
+
+        function switchToTab(targetTab, forcedDirection) {
+            if (!targetTab || !routes[targetTab]) return;
+            if (targetTab === currentTab) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            if (isSwitching) return;
+            isSwitching = true;
+
+            // Haptic feedback instan
+            if ('vibrate' in navigator) {
+                try { navigator.vibrate(10); } catch(e){}
+            }
+
+            const direction = forcedDirection || (TAB_ORDER[targetTab] > TAB_ORDER[currentTab] ? 'left' : 'right');
+
+            // Simpan scroll tab asal
+            if (window.__rentifyTabs[currentTab]) {
+                window.__rentifyTabs[currentTab].scrollY = window.scrollY || window.pageYOffset || 0;
+            }
+
+            // Hentikan video & audio jika meninggalkan Momen
+            if (currentTab === 'momen') {
+                if (window.RentifyMoments && typeof window.RentifyMoments.pause === 'function') {
+                    window.RentifyMoments.pause();
+                } else {
+                    document.querySelectorAll('#moments-app video').forEach(v => {
+                        try { v.pause(); } catch(e){}
+                    });
+                }
+            }
+
+            const targetData = window.__rentifyTabs[targetTab];
+
+            // Jika tab target belum ada di memory cache (misal disentuh sangat cepat)
+            if (!targetData || !targetData.element) {
+                triggerProgressBar();
+                fetch(routes[targetTab], { headers: { 'Accept': 'text/html' } })
+                    .then(res => res.text())
+                    .then(html => {
+                        completeProgressBar();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const contentEl = doc.getElementById('rentify-page-content');
+                        if (contentEl) {
+                            contentEl.id = 'rentify-page-content-' + targetTab;
+                            contentEl.style.display = 'none';
+                            const navWrapper = document.getElementById('bottom-navigation-wrapper');
+                            if (navWrapper && navWrapper.parentNode) {
+                                navWrapper.parentNode.insertBefore(contentEl, navWrapper);
+                            } else {
+                                document.body.appendChild(contentEl);
+                            }
+                            window.__rentifyTabs[targetTab] = {
+                                element: contentEl,
+                                title: doc.title,
+                                scrollY: 0
+                            };
+                            executeTabSwap(targetTab, direction);
+                        } else {
+                            window.location.href = routes[targetTab];
+                        }
+                    })
+                    .catch(() => {
+                        window.location.href = routes[targetTab];
+                    });
+                return;
+            }
+
+            executeTabSwap(targetTab, direction);
+        }
+
+        // Penanganan Gestur Horizontal Swipe yang Simple & Mulus Tanpa Beban
         function setupHorizontalSwipeGesture() {
             let startX = 0;
             let startY = 0;
             let startTime = 0;
             let isSwiping = false;
 
-            function shouldIgnoreTouch(e) {
-                const target = e.target;
-                if (!target) return false;
-
-                // Abaikan jika menyentuh input form, modal, atau slider horizontal
-                if (target.closest('input, textarea, select, button, a:not(#bottom-navigation-bar a)')) return true;
+            function shouldIgnore(e) {
+                const t = e.target;
+                if (!t) return false;
+                // Form input atau tombol
+                if (t.closest('input, textarea, select, button, a:not(#bottom-navigation-bar a)')) return true;
+                // Modal atau sheet aktif
                 if (document.querySelector('#comments-drawer:not(.hidden), #upload-modal:not(.hidden), #report-modal:not(.hidden), #guest-auth-modal:not(.hidden), #drawer-settings:not(.hidden)')) return true;
-                if (target.closest('#banner-slider, .productSwiper, .swiper, .overflow-x-auto, .overflow-x-scroll')) return true;
-
+                // Carousel foto atau slider horizontal
+                if (t.closest('.carousel-track, #carousel-wrap, #banner-slider, .productSwiper, .swiper, .overflow-x-auto, .overflow-x-scroll')) return true;
                 return false;
             }
 
             window.addEventListener('touchstart', function(e) {
-                if (e.touches.length !== 1 || shouldIgnoreTouch(e)) {
+                if (e.touches.length !== 1 || shouldIgnore(e)) {
                     isSwiping = false;
                     return;
                 }
@@ -410,7 +480,7 @@
             }, { passive: true });
 
             window.addEventListener('touchend', function(e) {
-                if (!isSwiping || isNavigating) return;
+                if (!isSwiping || isSwitching) return;
                 isSwiping = false;
 
                 const touch = e.changedTouches[0];
@@ -420,21 +490,21 @@
                 const diffY = touch.clientY - startY;
                 const elapsed = Date.now() - startTime;
 
-                // Gestur horizontal: jarak minimal 50px, dominan horizontal, dan durasi < 750ms
-                if (Math.abs(diffX) >= 50 && Math.abs(diffX) > Math.abs(diffY) * 1.3 && elapsed <= 750) {
+                // Gestur swap sederhana: jarak horizontal minimal 40px, dominan horizontal, dan < 600ms
+                if (Math.abs(diffX) >= 40 && Math.abs(diffX) > Math.abs(diffY) * 1.2 && elapsed <= 600) {
                     if (diffX < 0) {
-                        // SWIPE LEFT (Geser ke kiri -> maju ke tab kanan)
+                        // SWIPE KIRI -> Tab berikutnya
                         if (currentTab === 'beranda') {
-                            navigateSmoothly('momen', routes.momen, 'left');
+                            switchToTab('momen', 'left');
                         } else if (currentTab === 'momen') {
-                            navigateSmoothly('akun', routes.akun, 'left');
+                            switchToTab('akun', 'left');
                         }
                     } else {
-                        // SWIPE RIGHT (Geser ke kanan -> mundur ke tab kiri)
+                        // SWIPE KANAN -> Tab sebelumnya
                         if (currentTab === 'akun') {
-                            navigateSmoothly('momen', routes.momen, 'right');
+                            switchToTab('momen', 'right');
                         } else if (currentTab === 'momen') {
-                            navigateSmoothly('beranda', routes.beranda, 'right');
+                            switchToTab('beranda', 'right');
                         }
                     }
                 }
@@ -443,16 +513,51 @@
             window.addEventListener('touchcancel', () => { isSwiping = false; }, { passive: true });
         }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initNavigation);
-        } else {
-            initNavigation();
+        // Inisialisasi event listener tab navigation bar
+        function initNavBarEvents() {
+            registerCurrentTab();
+
+            const navBar = document.getElementById('bottom-navigation-bar');
+            if (navBar) {
+                navBar.querySelectorAll('a[data-tab]').forEach(function(anchor) {
+                    const tab = anchor.getAttribute('data-tab');
+                    anchor.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        switchToTab(tab);
+                    });
+                });
+            }
+
+            setupHorizontalSwipeGesture();
+            scheduleBackgroundPrefetch();
         }
 
-        window.addEventListener('beforeunload', function() {
-            if (currentTab && window.RentifyNavigationStore) {
-                window.RentifyNavigationStore.saveScrollPosition(currentTab);
+        // Tangani navigasi History Back / Forward browser Android & iOS
+        window.addEventListener('popstate', function(e) {
+            let tab = e.state?.tab;
+            if (!tab) {
+                const path = window.location.pathname;
+                if (path.includes('moment')) tab = 'momen';
+                else if (path.includes('account') || path.includes('dashboard')) tab = 'akun';
+                else tab = 'beranda';
+            }
+            if (tab && tab !== currentTab) {
+                const direction = TAB_ORDER[tab] > TAB_ORDER[currentTab] ? 'left' : 'right';
+                switchToTab(tab, direction);
             }
         });
+
+        // Eksekusi inisialisasi
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNavBarEvents);
+        } else {
+            initNavBarEvents();
+        }
+
+        // Ekspos ke window untuk kebutuhan integrasi
+        window.RentifyTabEngine = {
+            switchTo: switchToTab,
+            getCurrentTab: () => currentTab
+        };
     })();
 </script>

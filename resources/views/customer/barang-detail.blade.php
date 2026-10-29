@@ -25,6 +25,48 @@
         100% { transform: scale(1); }
     }
     .animate-pop-badge { animation: popBadge 0.3s ease-out; }
+
+    /* Glassmorphism styling untuk tanggal yang penuh dibooking (Rentify Theme) */
+    .rentify-date-glass {
+        background: rgba(226, 232, 240, 0.45) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.85) !important;
+        box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.95), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+        color: #94a3b8 !important;
+        font-weight: 700 !important;
+        position: relative;
+        cursor: pointer !important;
+        user-select: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .rentify-date-glass:hover {
+        background: rgba(203, 213, 225, 0.65) !important;
+        border-color: rgba(244, 63, 94, 0.5) !important;
+        transform: translateY(-1px) scale(0.97);
+    }
+    .rentify-date-glass:active {
+        transform: scale(0.92);
+    }
+    .rentify-date-glass::after {
+        content: '';
+        position: absolute;
+        top: 2.5px;
+        right: 2.5px;
+        width: 4.5px;
+        height: 4.5px;
+        border-radius: 50%;
+        background: #f43f5e;
+        opacity: 0.9;
+    }
+    @keyframes rentifyMicroShake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-3px); }
+        40%, 80% { transform: translateX(3px); }
+    }
+    .animate-micro-shake {
+        animation: rentifyMicroShake 0.3s ease-in-out;
+    }
 </style>
 
 <div class="detail-container shadow-sm relative">
@@ -654,16 +696,102 @@
 </div>
 
 <div id="booking-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-    <div class="rentify-card w-full max-w-sm overflow-hidden transform scale-100 transition-all">
-        <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative">
+    <div class="rentify-card w-full max-w-sm max-h-[92vh] overflow-y-auto transform scale-100 transition-all shadow-2xl">
+        <div class="bg-gradient-to-r from-sky-400 to-sky-600 px-6 py-5 relative sticky top-0 z-10">
             <h3 class="text-white font-black text-[17px] flex items-center gap-2">
                 <i class="fa-regular fa-calendar-check text-xl"></i> Atur Jadwal Sewa
             </h3>
             <p class="text-sky-100 text-xs font-medium mt-1">Tentukan tanggal mulai dan lama pemakaian.</p>
         </div>
         <div class="p-6">
-            <label class="block text-[13px] font-bold text-slate-700 mb-2">Tanggal Mulai <span class="text-rose-500">*</span></label>
-            <input type="date" id="modal-date" required class="rentify-input w-full px-4 py-2.5 text-sm font-bold text-sky-700 focus:outline-none mb-4 transition">
+            <!-- PILIH TANGGAL MULAI DENGAN KALENDER INTERAKTIF RENTIFY -->
+            <div class="relative mb-4">
+                <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                    <span>Tanggal Mulai <span class="text-rose-500">*</span></span>
+                    <span id="cal-selected-badge" class="hidden text-[10px] font-extrabold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
+                        Terpilih
+                    </span>
+                </label>
+
+                <!-- Trigger Input Menampilkan Tanggal Terpilih -->
+                <button type="button" id="btn-toggle-calendar" class="w-full flex items-center justify-between px-3.5 py-2.5 bg-white border-2 border-slate-200 rounded-xl hover:border-sky-400 focus:border-sky-500 focus:outline-none transition group text-left shadow-xs">
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-500 flex items-center justify-center flex-shrink-0 group-hover:bg-sky-500 group-hover:text-white transition-colors">
+                            <i class="fa-regular fa-calendar-days text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight">Jadwal Mulai</p>
+                            <p id="display-selected-date" class="text-sm font-bold text-slate-400 group-hover:text-sky-600 transition truncate">
+                                Pilih tanggal sewa...
+                            </p>
+                        </div>
+                    </div>
+                    <i id="cal-chevron" class="fa-solid fa-chevron-up text-xs text-slate-400 group-hover:text-sky-500 transition-transform duration-200"></i>
+                </button>
+
+                <!-- Input Hidden untuk Menyimpan Nilai YYYY-MM-DD ke Form -->
+                <input type="hidden" id="modal-date" required value="">
+
+                <!-- FLOATING MINI TOAST PERINGATAN RENTIFY (KECIL & MINIMALIS) -->
+                <div id="cal-mini-alert" class="hidden pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-md text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-2xl border border-white/20 transition-all duration-200 opacity-0 transform -translate-y-2 whitespace-nowrap">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                    <span id="cal-mini-alert-text">Full sudah di booking</span>
+                </div>
+
+                <!-- BOX KALENDER INTERAKTIF RENTIFY -->
+                <div id="rentify-calendar-box" class="mt-2.5 p-3.5 bg-gradient-to-b from-white to-sky-50/40 rounded-2xl border border-sky-100 shadow-sm transition-all duration-200">
+                    
+                    <!-- Header Bulan & Tahun + Navigasi -->
+                    <div class="flex items-center justify-between mb-2.5 px-0.5">
+                        <button type="button" id="cal-btn-prev" class="w-7 h-7 rounded-lg bg-white hover:bg-sky-50 text-slate-600 hover:text-sky-600 border border-slate-200 hover:border-sky-300 flex items-center justify-center text-xs transition active:scale-95 shadow-2xs" aria-label="Bulan Sebelumnya">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        </button>
+                        
+                        <div class="text-center">
+                            <h4 id="cal-month-year" class="text-xs font-black text-slate-800 tracking-wide uppercase">
+                                Bulan Tahun
+                            </h4>
+                        </div>
+
+                        <button type="button" id="cal-btn-next" class="w-7 h-7 rounded-lg bg-white hover:bg-sky-50 text-slate-600 hover:text-sky-600 border border-slate-200 hover:border-sky-300 flex items-center justify-center text-xs transition active:scale-95 shadow-2xs" aria-label="Bulan Berikutnya">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Baris Nama Hari -->
+                    <div class="grid grid-cols-7 gap-1 mb-1.5 text-center">
+                        <span class="text-[10px] font-extrabold text-rose-500">Min</span>
+                        <span class="text-[10px] font-bold text-slate-400">Sen</span>
+                        <span class="text-[10px] font-bold text-slate-400">Sel</span>
+                        <span class="text-[10px] font-bold text-slate-400">Rab</span>
+                        <span class="text-[10px] font-bold text-slate-400">Kam</span>
+                        <span class="text-[10px] font-bold text-slate-400">Jum</span>
+                        <span class="text-[10px] font-bold text-slate-400">Sab</span>
+                    </div>
+
+                    <!-- Grid Tanggal Dinamis -->
+                    <div id="cal-days-grid" class="grid grid-cols-7 gap-1 text-center">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Legend / Keterangan Ringkas -->
+                    <div class="flex items-center justify-between text-[10px] text-slate-500 pt-2.5 mt-2.5 border-t border-slate-100 px-1 font-medium">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-sky-400 to-sky-600 inline-block shadow-2xs"></span>
+                            <span class="text-slate-600 font-bold">Dipilih</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-md bg-white border border-slate-300 inline-block"></span>
+                            <span>Tersedia</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-md rentify-date-glass inline-block border border-slate-300/70"></span>
+                            <span class="text-slate-500 font-bold">Penuh (Glass)</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
 
             <label class="block text-[13px] font-bold text-slate-700 mb-2">Jam Pengambilan/Pengantaran <span class="text-rose-500">*</span></label>
             <select id="modal-time" required class="rentify-input w-full px-4 py-2.5 text-sm font-bold text-sky-700 focus:outline-none mb-4 transition">
@@ -723,13 +851,199 @@
         const btnConfirmModal = document.getElementById('btn-confirm-modal');
         const formSewaSekarang = document.getElementById('form-sewa-sekarang');
 
-        if(btnSewaSekarang) {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('modal-date').setAttribute('min', today);
+        // =====================================================================
+        // KALENDER INTERAKTIF RENTIFY & DETEKSI TANGGAL PENUH (GLASS DESIGN)
+        // =====================================================================
+        const fullyBookedList = @json($fullyBookedDates ?? []);
+        const totalStokBarang = {{ (int) ($barang->stok_total ?? 0) }};
 
+        const rentifyCalendarBox = document.getElementById('rentify-calendar-box');
+        const calBtnPrev = document.getElementById('cal-btn-prev');
+        const calBtnNext = document.getElementById('cal-btn-next');
+        const calMonthYear = document.getElementById('cal-month-year');
+        const calDaysGrid = document.getElementById('cal-days-grid');
+        const modalDateInput = document.getElementById('modal-date');
+        const displaySelectedDate = document.getElementById('display-selected-date');
+        const calSelectedBadge = document.getElementById('cal-selected-badge');
+        const calMiniAlert = document.getElementById('cal-mini-alert');
+        const calMiniAlertText = document.getElementById('cal-mini-alert-text');
+        const btnToggleCalendar = document.getElementById('btn-toggle-calendar');
+        const calChevron = document.getElementById('cal-chevron');
+
+        const realNow = new Date();
+        const currentRealYear = realNow.getFullYear();
+        const currentRealMonth = realNow.getMonth();
+        const currentRealDay = realNow.getDate();
+
+        let viewYear = currentRealYear;
+        let viewMonth = currentRealMonth;
+        let selectedDateStr = '';
+        let miniAlertTimer = null;
+
+        const namaBulan = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        const namaHari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        function showMiniAlert(msg) {
+            if (!calMiniAlert) return;
+            if (miniAlertTimer) clearTimeout(miniAlertTimer);
+            if (calMiniAlertText) calMiniAlertText.textContent = msg;
+
+            calMiniAlert.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                calMiniAlert.classList.remove('opacity-0', '-translate-y-2');
+                calMiniAlert.classList.add('opacity-100', 'translate-y-0');
+            });
+
+            miniAlertTimer = setTimeout(() => {
+                calMiniAlert.classList.remove('opacity-100', 'translate-y-0');
+                calMiniAlert.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => {
+                    calMiniAlert.classList.add('hidden');
+                }, 250);
+            }, 2300);
+        }
+
+        function formatDisplayDate(dateStr) {
+            const parts = dateStr.split('-');
+            const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            const dayName = namaHari[d.getDay()];
+            const dayNum = d.getDate();
+            const monthName = namaBulan[d.getMonth()].substring(0, 3);
+            const yearNum = d.getFullYear();
+            return `${dayName}, ${dayNum} ${monthName} ${yearNum}`;
+        }
+
+        function renderCalendar() {
+            if (!calDaysGrid || !calMonthYear) return;
+
+            calMonthYear.textContent = `${namaBulan[viewMonth]} ${viewYear}`;
+
+            if (viewYear < currentRealYear || (viewYear === currentRealYear && viewMonth <= currentRealMonth)) {
+                calBtnPrev.disabled = true;
+                calBtnPrev.classList.add('opacity-40', 'cursor-not-allowed');
+            } else {
+                calBtnPrev.disabled = false;
+                calBtnPrev.classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+
+            calDaysGrid.innerHTML = '';
+
+            const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+            const totalDays = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'w-full aspect-square';
+                calDaysGrid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isPast = (viewYear < currentRealYear) || 
+                               (viewYear === currentRealYear && viewMonth < currentRealMonth) ||
+                               (viewYear === currentRealYear && viewMonth === currentRealMonth && day < currentRealDay);
+
+                const isFull = fullyBookedList.includes(dayStr);
+                const isSelected = (dayStr === selectedDateStr);
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = day;
+
+                if (isPast) {
+                    btn.className = 'w-full aspect-square flex items-center justify-center text-[11px] font-medium text-slate-300 rounded-xl cursor-not-allowed select-none opacity-40';
+                    btn.disabled = true;
+                } else if (isFull) {
+                    // TANGGAL PENUH: EFEK GLASS & PERINGATAN KECIL MINIMALIS SAAT DIKLIK (SESUAI PERMINTAAN USER)
+                    btn.className = 'w-full aspect-square flex items-center justify-center text-[11px] rounded-xl rentify-date-glass';
+                    btn.setAttribute('aria-label', `Tanggal ${day} ${namaBulan[viewMonth]} sudah penuh dibooking`);
+                    btn.setAttribute('title', 'Full sudah di booking');
+
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        btn.classList.add('animate-micro-shake');
+                        setTimeout(() => btn.classList.remove('animate-micro-shake'), 320);
+                        showMiniAlert('Full sudah di booking');
+                    });
+                } else {
+                    // TANGGAL TERSEDIA
+                    if (isSelected) {
+                        btn.className = 'w-full aspect-square flex items-center justify-center text-[11px] font-black rounded-xl bg-gradient-to-r from-sky-400 to-sky-600 text-white shadow-[0_3px_10px_rgba(14,165,233,0.45)] border border-sky-400 scale-105 transition active:scale-95';
+                    } else {
+                        btn.className = 'w-full aspect-square flex items-center justify-center text-[11px] font-bold text-slate-700 rounded-xl hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 border border-transparent transition active:scale-95 bg-white';
+                    }
+
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        selectedDateStr = dayStr;
+                        if (modalDateInput) modalDateInput.value = dayStr;
+                        if (displaySelectedDate) {
+                            displaySelectedDate.textContent = formatDisplayDate(dayStr);
+                            displaySelectedDate.classList.remove('text-slate-400');
+                            displaySelectedDate.classList.add('text-sky-700', 'font-black');
+                        }
+                        if (calSelectedBadge) calSelectedBadge.classList.remove('hidden');
+
+                        renderCalendar();
+                    });
+                }
+
+                calDaysGrid.appendChild(btn);
+            }
+        }
+
+        if (calBtnPrev) {
+            calBtnPrev.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (viewMonth === 0) {
+                    viewMonth = 11;
+                    viewYear--;
+                } else {
+                    viewMonth--;
+                }
+                renderCalendar();
+            });
+        }
+
+        if (calBtnNext) {
+            calBtnNext.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (viewMonth === 11) {
+                    viewMonth = 0;
+                    viewYear++;
+                } else {
+                    viewMonth++;
+                }
+                renderCalendar();
+            });
+        }
+
+        if (btnToggleCalendar && rentifyCalendarBox && calChevron) {
+            let isCalendarOpen = true;
+            btnToggleCalendar.addEventListener('click', function(e) {
+                e.preventDefault();
+                isCalendarOpen = !isCalendarOpen;
+                if (isCalendarOpen) {
+                    rentifyCalendarBox.classList.remove('hidden');
+                    calChevron.classList.remove('fa-chevron-down');
+                    calChevron.classList.add('fa-chevron-up');
+                } else {
+                    rentifyCalendarBox.classList.add('hidden');
+                    calChevron.classList.remove('fa-chevron-up');
+                    calChevron.classList.add('fa-chevron-down');
+                }
+            });
+        }
+
+        if(btnSewaSekarang) {
             btnSewaSekarang.addEventListener('click', function(e) {
                 e.preventDefault();
                 bookingModal.classList.remove('hidden');
+                renderCalendar();
             });
 
             btnCloseModal.addEventListener('click', function() {
@@ -739,11 +1053,46 @@
             btnConfirmModal.addEventListener('click', function() {
                 const date = document.getElementById('modal-date').value;
                 const time = document.getElementById('modal-time').value;
-                const durasi = document.getElementById('modal-durasi').value;
+                const durasi = parseInt(document.getElementById('modal-durasi').value) || 1;
 
-                if(!date) { alert('⚠️ Silakan pilih Tanggal Mulai!'); return; }
-                if(!time) { alert('⚠️ Silakan pilih Jam Pengambilan!'); return; }
-                if(!durasi || durasi < 1) { alert('⚠️ Durasi minimal 1 hari!'); return; }
+                if(!date) {
+                    showMiniAlert('⚠️ Silakan pilih Tanggal Mulai!');
+                    return;
+                }
+                if(fullyBookedList.includes(date)) {
+                    showMiniAlert('Full sudah di booking');
+                    return;
+                }
+                if(!time) {
+                    alert('⚠️ Silakan pilih Jam Pengambilan!');
+                    return;
+                }
+                if(!durasi || durasi < 1) {
+                    alert('⚠️ Durasi minimal 1 hari!');
+                    return;
+                }
+
+                // Cek bentrok durasi sewa jika menabrak tanggal yang penuh
+                let isConflict = false;
+                let conflictDate = '';
+                const parts = date.split('-');
+                const startD = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+
+                for (let i = 0; i < durasi; i++) {
+                    const nextD = new Date(startD);
+                    nextD.setDate(nextD.getDate() + i);
+                    const chkStr = `${nextD.getFullYear()}-${String(nextD.getMonth() + 1).padStart(2, '0')}-${String(nextD.getDate()).padStart(2, '0')}`;
+                    if (fullyBookedList.includes(chkStr)) {
+                        isConflict = true;
+                        conflictDate = chkStr;
+                        break;
+                    }
+                }
+
+                if (isConflict) {
+                    showMiniAlert(`⚠️ Tanggal ${conflictDate} pada durasi sewa sudah penuh dibooking!`);
+                    return;
+                }
 
                 document.getElementById('direct-start-date').value = date;
                 document.getElementById('direct-start-time').value = time;
