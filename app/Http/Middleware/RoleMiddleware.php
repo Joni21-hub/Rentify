@@ -20,6 +20,18 @@ class RoleMiddleware
             return $next($request);
         }
 
+        // 1b. Jika sedang dalam mode kelola toko (impersonate) dan mengakses rute admin, kembalikan ke sesi admin secara otomatis
+        if (session()->has('admin_impersonator_id') && in_array('admin', $roles)) {
+            /** @var \App\Models\User|null $admin */
+            $admin = \App\Models\User::find(session('admin_impersonator_id'));
+            if ($admin instanceof \App\Models\User && $admin->role === 'admin') {
+                session()->forget('admin_impersonator_id');
+                \Illuminate\Support\Facades\Auth::login($admin);
+                session(['active_role' => 'admin']);
+                return $next($request);
+            }
+        }
+
         // 2. Jika rute meminta role 'customer', semua pengguna non-admin diizinkan
         if (in_array('customer', $roles) && $user->isCustomer()) {
             if (session('active_role') !== 'customer') {

@@ -394,10 +394,14 @@
                                     @forelse($pendingVendors as $vendor)
                                     <tr class="hover:bg-slate-50/50 transition">
                                         <td class="p-4 pl-6">
-                                            <p class="font-bold text-slate-800 text-sm">{{ $vendor->vendor_name ?? '-' }}</p>
+                                            <a href="{{ route('admin.vendors.impersonate', $vendor->id) }}" class="font-bold text-slate-800 text-sm hover:text-purple-600 hover:underline flex items-center gap-1.5" title="Klik untuk Masuk ke Dashboard Toko Ini">
+                                                <span>{{ $vendor->vendor_name ?? '-' }}</span>
+                                                <i class="fas fa-door-open text-xs text-purple-500"></i>
+                                            </a>
                                             <p class="text-[10px] text-slate-400">{{ $vendor->name }} • {{ $vendor->email }}</p>
                                         </td>
                                         <td class="p-4 text-center space-x-1">
+                                            <a href="{{ route('admin.vendors.impersonate', $vendor->id) }}" class="bg-purple-100 hover:bg-purple-200 text-purple-800 p-2 rounded-lg transition inline-block text-xs" title="Masuk & Kelola Toko Ini"><i class="fas fa-door-open"></i></a>
                                             <button onclick="openVendorModal('{{ json_encode($vendor) ?: '{}' }}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 p-2 rounded-lg transition" title="Lihat Detail"><i class="fas fa-eye"></i></button>
                                             <form action="/admin/vendors/{{ $vendor->id }}/approve-validation" method="POST" class="inline">
                                                 @csrf <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 p-2 rounded-lg transition" title="Setuju"><i class="fas fa-check"></i></button>
@@ -582,7 +586,15 @@
                                         <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded mt-0.5 inline-block produk-kategori">{{ $p->kategori?->nama ?? 'Tanpa Kategori' }}</span>
                                     </td>
                                     <td class="p-4">
-                                        <p class="font-semibold text-[#0369a1] produk-vendor"><i class="fas fa-store text-slate-300 mr-1"></i> {{ $p->vendor?->vendor_name ?? 'Umum' }}</p>
+                                        @if($p->vendor_id)
+                                        <a href="{{ route('admin.vendors.impersonate', $p->vendor_id) }}" class="font-semibold text-[#0369a1] hover:text-sky-700 hover:underline inline-flex items-center gap-1 group produk-vendor" title="Masuk ke Dashboard Toko Ini">
+                                            <i class="fas fa-store text-slate-300 group-hover:text-[#0369a1] transition mr-1"></i>
+                                            <span>{{ $p->vendor?->vendor_name ?? 'Umum' }}</span>
+                                            <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
+                                        </a>
+                                        @else
+                                        <p class="font-semibold text-slate-500 produk-vendor"><i class="fas fa-store text-slate-300 mr-1"></i> Umum</p>
+                                        @endif
                                         <div class="flex items-center space-x-2 text-[10px] text-slate-400 mt-0.5">
                                             <span>{{ $p->vendor?->name }}</span>
                                             @if($p->vendor?->whatsapp_vendor)
@@ -813,14 +825,24 @@
                                     <th class="p-4">Identitas Pemilik</th>
                                     <th class="p-4">Kontak (Email/WA)</th>
                                     <th class="p-4 text-center">Lisensi</th>
-                                    <th class="p-4 text-center">Blokir / Banned</th>
+                                    <th class="p-4 text-center">Kelola & Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($allVendors as $v)
                                 <tr class="hover:bg-slate-50/60 transition tab-vendor-row">
-                                    <td class="p-4 pl-6 font-black text-slate-800 tab-vendor-shop">
-                                        <i class="fas fa-store-alt text-[#0369a1] text-lg mr-2 align-middle"></i> {{ $v->vendor_name ?? '-' }}
+                                    <td class="p-4 pl-6 tab-vendor-shop">
+                                        <a href="{{ route('admin.vendors.impersonate', $v->id) }}" class="font-black text-slate-800 hover:text-[#0369a1] hover:underline flex items-center group gap-2.5" title="Klik untuk Masuk ke Dashboard Toko Ini">
+                                            <div class="w-8 h-8 rounded-lg bg-sky-50 text-[#0369a1] flex items-center justify-center font-bold text-sm group-hover:scale-105 transition shrink-0">
+                                                <i class="fas fa-store-alt"></i>
+                                            </div>
+                                            <div>
+                                                <span class="block text-sm leading-tight">{{ $v->vendor_name ?? '-' }}</span>
+                                                <span class="text-[10px] text-sky-600 font-bold flex items-center gap-1 mt-0.5 group-hover:underline">
+                                                    <i class="fas fa-door-open"></i> Masuk Toko &rarr;
+                                                </span>
+                                            </div>
+                                        </a>
                                     </td>
                                     <td class="p-4 font-bold text-slate-600 tab-vendor-owner">{{ $v->name }}</td>
                                     <td class="p-4">
@@ -837,17 +859,22 @@
                                         @endif
                                     </td>
                                     <td class="p-4 text-center">
-                                        @if($v->vendor_status == 'approved')
-                                            <form action="/admin/vendors/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Banned sementara vendor ini?\n\nSemua produk mereka akan disembunyikan otomatis dari pelanggan.')">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="bg-amber-50 hover:bg-amber-500 hover:text-white text-amber-600 px-3 py-1.5 rounded-lg font-bold transition shadow-sm text-xs" title="Banned Sementara"><i class="fas fa-user-clock mr-1"></i> Banned</button>
-                                            </form>
-                                        @elseif($v->vendor_status == 'suspended')
-                                            <form action="/admin/vendors/{{ $v->id }}/activate" method="POST" onsubmit="return confirm('Buka banned vendor ini?\n\nProduk mereka akan kembali tampil di halaman pelanggan.')">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 px-3 py-1.5 rounded-lg font-bold transition shadow-sm text-xs" title="Buka Banned"><i class="fas fa-unlock-keyhole mr-1"></i> Buka</button>
-                                            </form>
-                                        @endif
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="{{ route('admin.vendors.impersonate', $v->id) }}" class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-xs transition flex items-center gap-1.5 whitespace-nowrap active:scale-95" title="Masuk & Kelola Toko Ini">
+                                                <i class="fas fa-door-open"></i> Masuk Toko
+                                            </a>
+                                            @if($v->vendor_status == 'approved')
+                                                <form action="/admin/vendors/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Banned sementara vendor ini?\n\nSemua produk mereka akan disembunyikan otomatis dari pelanggan.')">
+                                                    @csrf @method('PATCH')
+                                                    <button type="submit" class="bg-amber-50 hover:bg-amber-500 hover:text-white text-amber-600 px-2.5 py-1.5 rounded-lg font-bold transition shadow-xs text-xs" title="Banned Sementara"><i class="fas fa-user-clock"></i></button>
+                                                </form>
+                                            @elseif($v->vendor_status == 'suspended')
+                                                <form action="/admin/vendors/{{ $v->id }}/activate" method="POST" onsubmit="return confirm('Buka banned vendor ini?\n\nProduk mereka akan kembali tampil di halaman pelanggan.')">
+                                                    @csrf @method('PATCH')
+                                                    <button type="submit" class="bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 px-2.5 py-1.5 rounded-lg font-bold transition shadow-xs text-xs" title="Buka Banned"><i class="fas fa-unlock-keyhole"></i></button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -1056,6 +1083,11 @@
                 <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><span class="block text-[9px] font-black tracking-widest text-slate-400 mb-1">IDENTITAS PEMILIK SAH:</span><span id="vd_owner" class="text-sm text-slate-800 font-bold"></span></div>
                 <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><span class="block text-[9px] font-black tracking-widest text-slate-400 mb-1">EMAIL TERDAFTAR:</span><span id="vd_email" class="text-sm text-slate-600 font-mono"></span></div>
                 <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><span class="block text-[9px] font-black tracking-widest text-slate-400 mb-1">WHATSAPP TOKO (AKTIF):</span><span id="vd_wa" class="text-emerald-600 font-black text-sm"></span></div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+                <a id="vd_btn_enter" href="#" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-center text-xs shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fas fa-door-open"></i> Masuk & Kelola Dashboard Toko
+                </a>
             </div>
         </div>
     </div>
@@ -1510,6 +1542,10 @@
             document.getElementById('vd_owner').innerText = data.name || '-';
             document.getElementById('vd_email').innerText = data.email || '-';
             document.getElementById('vd_wa').innerText = data.whatsapp_vendor || '-';
+            const enterBtn = document.getElementById('vd_btn_enter');
+            if (enterBtn && data.id) {
+                enterBtn.href = '/admin/vendors/' + data.id + '/impersonate';
+            }
             document.getElementById('vendorModal').classList.remove('hidden');
         }
         function closeVendorModal() { document.getElementById('vendorModal').classList.add('hidden'); }

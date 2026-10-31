@@ -34,7 +34,7 @@
         <!-- Header Logo -->
         <div class="text-center mb-8">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-2 mb-3">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-10 object-contain" alt="Rentify">
+                <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" class="h-10 w-auto object-contain" alt="Rentify">
                 <span class="text-3xl font-black text-sky-600 tracking-tight">Rentify<span class="text-amber-500">.</span></span>
             </a>
             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Halo, {{ $user->name }}! 👋</h1>

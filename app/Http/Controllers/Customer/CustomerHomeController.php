@@ -13,9 +13,15 @@ class CustomerHomeController extends Controller
 {
     public function index()
     {
-        // 1. Jika belum login (Guest/Pengunjung), tampilkan halaman perkenalan web Rentify (Landing Page)
-        if (!Auth::check()) {
-            return view('customer.welcome');
+        // 1. Jika belum login (Guest/Pengunjung) atau parameter pratinjau landing diminta, tampilkan halaman perkenalan web Rentify (Landing Page)
+        if (!Auth::check() || request()->has('landing')) {
+            $totalBarang = Barang::where('status_barang', 'disetujui')->count();
+            $totalVendor = \App\Models\User::where('role', 'vendor')->orWhereNotNull('vendor_name')->count();
+            $kategoris = Kategori::where('is_active', 1)->get();
+            $avgRating = round(\App\Models\Ulasan::avg('rating') ?: 4.9, 1);
+            $totalReviews = \App\Models\Ulasan::count() ?: 128;
+
+            return view('customer.welcome', compact('totalBarang', 'totalVendor', 'kategoris', 'avgRating', 'totalReviews'));
         }
 
         $user = Auth::user();
@@ -37,6 +43,12 @@ class CustomerHomeController extends Controller
             $lat1 = $user->latitude;
             $lon1 = $user->longitude;
         }
+
+        $userRadius = session('user_radius');
+        if (Auth::check() && Auth::user()->radius) {
+            $userRadius = Auth::user()->radius;
+        }
+        $userRadius = max(5, min(50, (float) ($userRadius ?: 50)));
 
         $banners = Banner::all();
         $kategoris = Kategori::where('is_active', 1)->get();
@@ -75,8 +87,8 @@ class CustomerHomeController extends Controller
                 $c = 2 * asin(sqrt($a));
                 $jarak = $earthRadius * $c;
 
-                // Tampilkan barang yang berjarak maksimal 50 KM
-                if ($jarak <= 50) {
+                // Tampilkan barang yang berjarak maksimal sesuai radius (5 - 50 KM)
+                if ($jarak <= $userRadius) {
                     $barang->jarak = $jarak; 
                     $daftarBarang->push($barang);
                 }
@@ -109,6 +121,7 @@ class CustomerHomeController extends Controller
             'banners' => $banners,
             'butuhLokasi' => $butuhLokasi,
             'hasLokasi' => $hasLokasi,
+            'userRadius' => $userRadius,
             'rekomendasiBarang' => $rekomendasiBarang,
             'kategoris' => $kategoris,
             'wishlistIds' => $wishlistIds
@@ -120,7 +133,19 @@ class CustomerHomeController extends Controller
      */
     public function about()
     {
-        return view('customer.welcome');
+        $totalBarang = Barang::where('status_barang', 'disetujui')->count();
+        $totalVendor = \App\Models\User::where('role', 'vendor')->orWhereNotNull('vendor_name')->count();
+        $previewBarangs = Barang::with(['vendor', 'kategori'])
+            ->where('status_barang', 'disetujui')
+            ->whereHas('vendor', function ($q) {
+                $q->where('vendor_status', '!=', 'suspended')->orWhereNull('vendor_status');
+            })
+            ->latest()
+            ->take(8)
+            ->get();
+        $kategoris = Kategori::where('is_active', 1)->get();
+
+        return view('customer.welcome', compact('totalBarang', 'totalVendor', 'previewBarangs', 'kategoris'));
     }
 
     // PERBAIKAN: Fungsi show kini mendukung SLUG, memblokir toko Banned, dan memakai logika lokasi Tamu/Member Anda

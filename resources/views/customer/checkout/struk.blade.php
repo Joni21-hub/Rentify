@@ -145,10 +145,11 @@
             
             <!-- Logo & Brand Header -->
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" 
+                <img src="{{ asset('images/logo.png') }}" 
+                     onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'"
                      alt="Rentify" 
                      crossorigin="anonymous"
-                     style="height: 34px; width: 34px; object-fit: contain;">
+                     style="height: 36px; width: 36px; object-fit: contain;">
                 <span style="font-size: 22px; font-weight: 900; color: #0284c7; letter-spacing: -0.5px;">Rentify</span>
             </div>
             

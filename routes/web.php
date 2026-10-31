@@ -38,6 +38,8 @@ Route::name('customer.')->group(function () {
     Route::get('/moments', [\App\Http\Controllers\Customer\MomentPageController::class, 'index'])->name('moments');
     Route::get('/moments/create', [\App\Http\Controllers\Customer\MomentPageController::class, 'create'])->name('moments.create');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');
+    Route::get('/kategori/{id}', [MarketplaceController::class, 'kategori'])->name('kategori');
+    Route::get('/customer/kategori/{id}', [MarketplaceController::class, 'kategori']);
     
     Route::get('/customer/barang/{slug}', [BarangDetailController::class, 'show'])->name('barang.show');
     Route::get('/customer/barang/{id}/booked-dates', [BarangDetailController::class, 'getBookedDates'])->name('barang.booked_dates');
@@ -101,6 +103,11 @@ Route::middleware('auth')->group(function () {
 Route::get('/admin/vendors-validation', [AdminVendorController::class, 'validasiVendor'])->name('admin.vendors.validation');
 Route::post('/admin/vendors/{id}/approve-validation', [AdminVendorController::class, 'approveVendor'])->name('admin.vendors.approve-validation');
 Route::post('/admin/vendors/{id}/reject-validation', [AdminVendorController::class, 'rejectVendor'])->name('admin.vendors.reject');
+
+// Admin Masuk ke Toko Vendor (Impersonate & Leave)
+Route::get('/admin/vendors/{id}/impersonate', [AdminVendorController::class, 'impersonate'])->middleware('auth')->name('admin.vendors.impersonate');
+Route::post('/admin/vendors/{id}/impersonate', [AdminVendorController::class, 'impersonate'])->middleware('auth');
+Route::get('/admin/impersonate/leave', [AdminVendorController::class, 'leaveImpersonate'])->middleware('auth')->name('admin.impersonate.leave');
 
 Route::prefix('admin')->name('admin.')
     ->middleware(['auth', 'role:admin'])
@@ -187,6 +194,7 @@ Route::prefix('vendor')->name('vendor.')
     Route::post('barang/{id}/fotos', [VendorFotoBarangController::class, 'upload'])->name('barang.fotos.upload');
     Route::patch('barang/{id}/fotos/{foto}/cover', [VendorFotoBarangController::class, 'setCover'])->name('barang.fotos.cover');
     Route::delete('fotos/{foto}', [VendorFotoBarangController::class, 'destroy'])->name('fotos.destroy');
+    Route::post('barang/{id}/generate-copywriting', [VendorBarangController::class, 'generateMarketingCopywriting'])->name('barang.marketing_copywriting');
 
     Route::get('stok', [VendorStokCabangController::class, 'index'])->name('stok');
     Route::put('stok', [VendorStokCabangController::class, 'update'])->name('stok.update');

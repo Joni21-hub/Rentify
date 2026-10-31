@@ -186,7 +186,10 @@
                                             <i class="fas fa-store"></i>
                                         </div>
                                         <div>
-                                            <p class="font-bold text-slate-800 text-sm vendor-shop">{{ $vendor->vendor_name ?? '-' }}</p>
+                                            <a href="{{ route('admin.vendors.impersonate', $vendor->id) }}" class="font-bold text-slate-800 text-sm hover:text-[#0369a1] hover:underline flex items-center gap-1.5 vendor-shop" title="Masuk ke Dashboard Toko Ini">
+                                                <span>{{ $vendor->vendor_name ?? '-' }}</span>
+                                                <i class="fas fa-arrow-up-right-from-square text-[10px] text-[#0369a1]"></i>
+                                            </a>
                                             <p class="text-[11px] text-slate-500 vendor-owner"><i class="far fa-user text-slate-400 mr-1"></i>{{ $vendor->name }}</p>
                                         </div>
                                     </div>
@@ -221,6 +224,9 @@
                                 </td>
                                 <td class="p-4 text-center">
                                     <div class="flex items-center justify-center space-x-2">
+                                        <a href="{{ route('admin.vendors.impersonate', $vendor->id) }}" class="bg-[#0369a1] hover:bg-sky-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95 whitespace-nowrap" title="Masuk ke Dashboard Toko Ini">
+                                            <i class="fas fa-door-open"></i> Masuk Toko
+                                        </a>
                                         @if(($vendor->vendor_status ?? 'pending') === 'pending')
                                             <!-- Setujui -->
                                             <form action="{{ route('admin.vendors.approve-validation', $vendor->id) }}" method="POST" onsubmit="return confirm('Setujui pendaftaran Vendor {{ $vendor->vendor_name }}?')">
@@ -237,7 +243,7 @@
                                                 </button>
                                             </form>
                                         @elseif($vendor->vendor_status === 'approved')
-                                            <span class="text-emerald-600 font-bold text-xs flex items-center justify-center">
+                                            <span class="text-emerald-600 font-bold text-xs flex items-center justify-center bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
                                                 <i class="fas fa-badge-check mr-1"></i> Mitra Sah
                                             </span>
                                         @elseif($vendor->vendor_status === 'rejected')

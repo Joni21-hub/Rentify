@@ -9,13 +9,25 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472672/20260719_122056_0000_e3zh3h.png",
+      "src": "/favicon-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png",
+      "src": "/favicon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387476/20260719_122056_0000_e3zh3h.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387474/logolimaduabelas_gjelaz.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"

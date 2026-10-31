@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Voucher;
+use App\Services\AiMarketingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -11,10 +12,12 @@ use Illuminate\Support\Str;
 class VendorVoucherController extends Controller
 {
     // 1. Menampilkan halaman daftar voucher dan form pembuatannya
-    public function index()
+    public function index(AiMarketingService $aiMarketingService)
     {
-        $vouchers = Voucher::where('vendor_id', Auth::id())->latest()->get();
-        return view('vendor.voucher.index', compact('vouchers'));
+        $vendorId = (int) Auth::id();
+        $vouchers = Voucher::where('vendor_id', $vendorId)->latest()->get();
+        $promoAudit = $aiMarketingService->auditAndRecommendPromos($vendorId);
+        return view('vendor.voucher.index', compact('vouchers', 'promoAudit'));
     }
 
     // 2. Memproses penyimpanan voucher baru ke database

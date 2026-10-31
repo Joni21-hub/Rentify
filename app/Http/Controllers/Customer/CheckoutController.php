@@ -628,27 +628,39 @@ class CheckoutController extends Controller
             'updated_at'          => now(),
         ]);
 
+        $orderItems = DB::table('order_items')
+            ->leftJoin('barang', 'order_items.product_id', '=', 'barang.id')
+            ->whereIn('order_items.order_id', $orderIds)
+            ->select('order_items.*', 'barang.nama as barang_nama', 'barang.cover_photo')
+            ->get();
+
+        $paymentExpiredAt = !empty($firstOrder->payment_expired_at)
+            ? Carbon::parse($firstOrder->payment_expired_at)
+            : (!empty($firstOrder->created_at) ? Carbon::parse($firstOrder->created_at)->addHours(24) : now()->addHours(24));
+
         return view('customer.checkout.qris', [
-            'id'              => $id,
-            'total'           => $total,
-            'subtotal'        => $subtotal,
-            'kodeUnik'        => $totalKodeUnik,
-            'orders'          => $orders,
-            'orderReference'  => $orderReference,
-            'midtransOrderId' => $orderReference,
-            'channelCode'     => $channelCode,
-            'bankName'        => 'QRIS',
-            'bankLogo'        => 'QRIS',
-            'bankColor'       => '#e11d48',
-            'kodePembayaran'  => $orderReference,
-            'qrisPayload'     => $qrisPayload,
-            'qrisImageUrl'    => $qrisImageUrl,
-            'merchantName'    => $merchantName,
-            'merchantNmid'    => $merchantNmid,
-            'acquirer'        => $acquirer,
-            'snapToken'       => null,
-            'snapError'       => null,
-            'gopayDeeplink'   => null,
+            'id'               => $id,
+            'total'            => $total,
+            'subtotal'         => $subtotal,
+            'kodeUnik'         => $totalKodeUnik,
+            'orders'           => $orders,
+            'orderItems'       => $orderItems,
+            'paymentExpiredAt' => $paymentExpiredAt,
+            'orderReference'   => $orderReference,
+            'midtransOrderId'  => $orderReference,
+            'channelCode'      => $channelCode,
+            'bankName'         => 'QRIS',
+            'bankLogo'         => 'QRIS',
+            'bankColor'        => '#e11d48',
+            'kodePembayaran'   => $orderReference,
+            'qrisPayload'      => $qrisPayload,
+            'qrisImageUrl'     => $qrisImageUrl,
+            'merchantName'     => $merchantName,
+            'merchantNmid'     => $merchantNmid,
+            'acquirer'         => $acquirer,
+            'snapToken'        => null,
+            'snapError'        => null,
+            'gopayDeeplink'    => null,
         ]);
     }
 

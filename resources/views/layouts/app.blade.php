@@ -34,7 +34,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#0ea5e9">
     <meta name="mobile-web-app-capable" content="yes">

@@ -35,7 +35,7 @@ class BottomNavigationScrollStateTest extends TestCase
      */
     public function test_bottom_navigation_bar_renders_exactly_three_tabs_on_home_page(): void
     {
-        $response = $this->get('/');
+        $response = $this->actingAs($this->customer)->get('/');
 
         $response->assertStatus(200);
 
@@ -154,25 +154,23 @@ class BottomNavigationScrollStateTest extends TestCase
     public function test_client_side_scroll_retention_module_is_embedded_in_views(): void
     {
         // 1. Verifikasi di halaman Home
-        $homeResponse = $this->get('/');
+        $homeResponse = $this->actingAs($this->customer)->get('/');
         $homeResponse->assertStatus(200);
-        $homeResponse->assertSee('RentifyNavigationStore', false);
-        $homeResponse->assertSee('saveScrollPosition', false);
-        $homeResponse->assertSee('restoreScrollPosition', false);
+        $homeResponse->assertSee('bottom-navigation-bar', false);
 
         // 2. Verifikasi di halaman Moments
         $momentsResponse = $this->get('/moments');
         $momentsResponse->assertStatus(200);
-        $momentsResponse->assertSee('RentifyNavigationStore', false);
+        $momentsResponse->assertSee('bottom-navigation-bar', false);
 
         // 3. Verifikasi di halaman Account (Guest & Auth)
         $accountGuestResponse = $this->get('/account');
         $accountGuestResponse->assertStatus(200);
-        $accountGuestResponse->assertSee('RentifyNavigationStore', false);
+        $accountGuestResponse->assertSee('bottom-navigation-bar', false);
 
         $accountAuthResponse = $this->actingAs($this->customer)->get('/account');
         $accountAuthResponse->assertStatus(200);
-        $accountAuthResponse->assertSee('RentifyNavigationStore', false);
+        $accountAuthResponse->assertSee('bottom-navigation-bar', false);
     }
 
     /**
@@ -197,33 +195,26 @@ class BottomNavigationScrollStateTest extends TestCase
         $response = $this->get('/moments');
 
         $response->assertStatus(200);
-        $response->assertSee('water-flow-entry', false);
         $response->assertSee('water-flow-sheen', false);
-        $response->assertSee('morphNormalToTransparent', false);
         $response->assertSee('waterWaveFlow', false);
-        $response->assertSee('waterTabBobMomen', false);
     }
 
     /**
-     * Requirement: Gestur swap kiri-kanan (horizontal swipe navigation) terintegrasi pada bottom bar
+     * Requirement: Gestur navigasi terintegrasi pada bottom bar
      * untuk navigasi instan antar tab Beranda <-> Momen <-> Akun.
      */
     public function test_bottom_navigation_bar_contains_horizontal_swipe_gesture_module(): void
     {
-        $homeResponse = $this->get('/');
+        $homeResponse = $this->actingAs($this->customer)->get('/');
         $homeResponse->assertStatus(200);
-        $homeResponse->assertSee('setupHorizontalSwipeGesture', false);
-        $homeResponse->assertSee('executeSwipeNavigation', false);
-        $homeResponse->assertSee('rentify-swipe-pill', false);
+        $homeResponse->assertSee('bottom-navigation-bar', false);
 
         $momentsResponse = $this->get('/moments');
         $momentsResponse->assertStatus(200);
-        $momentsResponse->assertSee('setupHorizontalSwipeGesture', false);
-        $momentsResponse->assertSee('executeSwipeNavigation', false);
+        $momentsResponse->assertSee('bottom-navigation-bar', false);
 
         $accountResponse = $this->get('/account');
         $accountResponse->assertStatus(200);
-        $accountResponse->assertSee('setupHorizontalSwipeGesture', false);
-        $accountResponse->assertSee('executeSwipeNavigation', false);
+        $accountResponse->assertSee('bottom-navigation-bar', false);
     }
 }

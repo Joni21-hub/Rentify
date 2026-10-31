@@ -26,7 +26,7 @@
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div class="max-w-5xl mx-auto w-full px-6 py-3 flex items-center justify-between gap-4">
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
+                <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" class="h-8 w-auto object-contain" alt="Logo">
                 <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
             <div class="flex items-center gap-3">

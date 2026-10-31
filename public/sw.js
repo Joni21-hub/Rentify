@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rentify-pwa-v9-default-qris';
+const CACHE_NAME = 'rentify-pwa-v10-new-logo';
 
 // File statis ringan yang di-cache saat install
 const urlsToCache = [

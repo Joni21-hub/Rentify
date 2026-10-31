@@ -1,5 +1,19 @@
 @extends('layouts.app')
 
+@push('head')
+    <!-- Open Graph & Social Share Preview -->
+    <meta property="og:type" content="product">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="Rentify">
+    <meta property="og:title" content="Sewa {{ $barang->nama }} — Rentify">
+    <meta property="og:description" content="Sewa {{ $barang->nama }} murah mulai Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}/hari di Rentify. Sewa gampang, cuan datang!">
+    <meta property="og:image" content="{{ $barang->cover_photo_url }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sewa {{ $barang->nama }} — Rentify">
+    <meta name="twitter:description" content="Sewa {{ $barang->nama }} murah mulai Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}/hari di Rentify.">
+    <meta name="twitter:image" content="{{ $barang->cover_photo_url }}">
+@endpush
+
 @section('content')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -74,6 +88,11 @@
     <a href="{{ url()->previous() }}" class="absolute top-4 left-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition">
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
+
+    <!-- TOMBOL BAGIKAN / SHARE PRODUK (VIRAL MARKETING) -->
+    <button type="button" onclick="openShareSheet()" class="absolute top-4 right-14 z-20 w-8 h-8 bg-black/35 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/55 transition active:scale-95 group" aria-label="Bagikan Produk">
+        <i class="fa-solid fa-share-nodes text-xs group-hover:scale-110 transition-transform"></i>
+    </button>
 
     <!-- TOMBOL KERANJANG HEADER DENGAN BADGE -->
     <a href="{{ route('customer.keranjang') }}" id="btn-header-cart" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/35 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/55 transition active:scale-95 group" aria-label="Keranjang Belanja">
@@ -165,6 +184,34 @@
                 Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[12px] font-normal text-slate-400">/hari</span>
             </div>
         @endif
+
+        <!-- SHOPIFY-STYLE MARKETING CONVERSION BADGES -->
+        <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-[10.5px] font-bold border border-amber-200/80">
+                <i class="fa-solid fa-fire text-amber-500"></i>
+                <span>Sedang banyak dilihat hari ini</span>
+            </span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[10.5px] font-bold border border-emerald-200/80">
+                <i class="fa-solid fa-piggy-bank text-emerald-500"></i>
+                <span>Hemat s/d 90% vs Beli Baru</span>
+            </span>
+        </div>
+
+        <!-- 3 SHOPIFY TRUST PILLARS -->
+        <div class="mt-3 grid grid-cols-3 gap-1.5 pt-1 text-[10px] text-slate-500">
+            <div class="flex items-center gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                <i class="fa-solid fa-circle-check text-sky-500 text-[11px]"></i>
+                <span class="font-semibold leading-tight">Unit Teruji & Bersih</span>
+            </div>
+            <div class="flex items-center gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                <i class="fa-solid fa-shield-halved text-emerald-500 text-[11px]"></i>
+                <span class="font-semibold leading-tight">Garansi Uang Kembali</span>
+            </div>
+            <div class="flex items-center gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                <i class="fa-solid fa-qrcode text-indigo-500 text-[11px]"></i>
+                <span class="font-semibold leading-tight">Escrow QRIS Aman</span>
+            </div>
+        </div>
 
         @if($stokNyata <= 0)
             <div class="mt-3 bg-rose-50 border border-rose-200 text-rose-600 px-3 py-2 rounded-lg text-[11.5px] font-bold flex items-center gap-2">
@@ -515,6 +562,16 @@
                 <span class="flex items-center gap-1">Kunjungi Toko <i class="fa-solid fa-arrow-right text-[9px]"></i></span>
             </div>
         </a>
+        @if(Auth::check() && (Auth::user()->role === 'admin' || session()->has('admin_impersonator_id')))
+        <div class="mt-2.5 p-2.5 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-between">
+            <span class="text-[11px] font-bold text-purple-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-crown text-amber-500"></i> Mode Admin
+            </span>
+            <a href="{{ route('admin.vendors.impersonate', $barang->vendor_id) }}" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition flex items-center gap-1">
+                <i class="fa-solid fa-door-open"></i> Kelola Toko Ini
+            </a>
+        </div>
+        @endif
         <p class="text-[10px] text-slate-400 text-center mt-2 font-medium">*Titik Maps akurat & alamat lengkap akan diberikan di struk pesanan.</p>
     </div>
 
@@ -1260,5 +1317,105 @@
             });
         }
     });
+
+    function openShareSheet() {
+        const modal = document.getElementById('modalShareSheet');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeShareSheet() {
+        const modal = document.getElementById('modalShareSheet');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function copyShareLink() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            const btnText = document.getElementById('btnCopyText');
+            btnText.innerText = 'Tersalin ✓';
+            setTimeout(() => {
+                btnText.innerText = 'Salin Tautan';
+                closeShareSheet();
+            }, 1200);
+        }).catch(() => {
+            prompt('Salin tautan ini:', url);
+        });
+    }
+
+    function triggerNativeShare() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Sewa {{ addslashes($barang->nama) }} di Rentify',
+                text: 'Sewa {{ addslashes($barang->nama) }} hemat cuma Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}/hari di Rentify!',
+                url: window.location.href,
+            }).catch(() => {});
+        } else {
+            copyShareLink();
+        }
+    }
 </script>
+
+<!-- ============================================================== -->
+<!-- BOTTOM SHEET / MODAL SHARE PRODUK (VIRAL REFERRAL) -->
+<!-- ============================================================== -->
+<div id="modalShareSheet" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-share-nodes"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-black text-slate-800">Bagikan Produk</h3>
+                    <p class="text-[10px] text-slate-400">Rekomendasikan sewa hemat ke teman atau grup</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeShareSheet()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Mini Preview Produk -->
+        <div class="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
+            <div class="w-12 h-12 rounded-xl bg-white overflow-hidden shrink-0 border border-slate-200">
+                <img src="{{ $barang->cover_photo_url }}" class="w-full h-full object-cover" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ asset('storage/placeholders/placeholder-barang.png') }}';">
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-xs font-black text-slate-800 truncate">{{ $barang->nama }}</h4>
+                <p class="text-[11px] font-black text-sky-600 mt-0.5">
+                    Rp{{ number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[9px] font-normal text-slate-400">/hari</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Tombol Aksi Share -->
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <a href="https://api.whatsapp.com/send?text={{ rawurlencode('Halo! Cek sewa ' . $barang->nama . ' di Rentify, tarif hemat cuma Rp' . number_format($barang->harga_sewa_customer ?? $barang->harga_sewa_harian, 0, ',', '.') . '/hari. Sewa gampang, cuan datang! ' . url()->current()) }}" 
+               target="_blank" 
+               class="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs shadow-xs transition active:scale-95">
+                <i class="fa-brands fa-whatsapp text-sm"></i>
+                <span>WhatsApp</span>
+            </a>
+
+            <button type="button" 
+                    onclick="copyShareLink()" 
+                    id="btnCopyLink"
+                    class="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-slate-800 hover:bg-slate-900 text-white font-black text-xs shadow-xs transition active:scale-95">
+                <i class="fa-regular fa-copy text-sm"></i>
+                <span id="btnCopyText">Salin Tautan</span>
+            </button>
+        </div>
+
+        <!-- Native Share API jika didukung HP -->
+        <button type="button" 
+                id="btnNativeShare"
+                onclick="triggerNativeShare()" 
+                class="w-full py-2.5 px-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-ellipsis"></i>
+            <span>Bagikan ke Aplikasi Lain</span>
+        </button>
+    </div>
+</div>
 @endsection

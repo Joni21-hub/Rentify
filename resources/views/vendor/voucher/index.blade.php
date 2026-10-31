@@ -1,5 +1,12 @@
 @extends('layouts.vendor')
 
+@php
+    /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\Voucher> $vouchers */
+    /** @var array $promoAudit */
+    $vouchers = $vouchers ?? collect();
+    $promoAudit = $promoAudit ?? [];
+@endphp
+
 @section('title', 'Voucher Toko — Vendor Rentify')
 
 @section('content')
@@ -31,6 +38,57 @@
         </div>
     @endif
 
+    @if(isset($promoAudit['recommendations']) && count($promoAudit['recommendations']) > 0)
+        <!-- PANEL REKOMENDASI AUTO-PROMOSI CERDAS (AI MARKETING ENGINE) -->
+        <div class="bg-gradient-to-r from-amber-500/10 via-sky-500/10 to-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-amber-200/80 shadow-xs space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/40 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xs sm:text-sm font-black text-slate-800">Rekomendasi Auto-Promosi Cerdas</h2>
+                        <p class="text-[11px] text-slate-500">Ditemukan {{ count($promoAudit['recommendations']) }} barang butuh dorongan diskon agar cepat disewa kembali</p>
+                    </div>
+                </div>
+                <span class="text-[10px] font-black text-amber-700 bg-amber-100/70 px-2.5 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto">
+                    Smart Marketing Assistant
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                @foreach($promoAudit['recommendations'] as $rec)
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between gap-3 hover:border-sky-300 transition group">
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1">
+                                <span class="text-[9px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md truncate">
+                                    {{ $rec['kategori'] }}
+                                </span>
+                                <span class="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                                    Diskon {{ $rec['nilai_diskon'] }}%
+                                </span>
+                            </div>
+                            <h3 class="text-xs font-black text-slate-800 line-clamp-1">{{ $rec['nama_barang'] }}</h3>
+                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">{{ $rec['alasan_urgensi'] }}</p>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <span class="font-mono text-[10px] font-black text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
+                                {{ $rec['kode_voucher'] }}
+                            </span>
+                            <button type="button" 
+                                onclick="applyPromoRecommendation({{ (string) json_encode($rec) }})"
+                                class="px-3 py-1.5 bg-sky-50 hover:bg-sky-500 text-sky-600 hover:text-white rounded-xl text-[10px] font-black transition active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
+                                <span>Terapkan</span>
+                            </button>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
         
         <!-- KOLOM KIRI: Form Buat Voucher (Compact & Touch-Friendly) -->
@@ -45,7 +103,7 @@
                     
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Kode Voucher</label>
-                        <input type="text" name="kode_voucher" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-800 uppercase focus:outline-none focus:border-sky-500 shadow-xs" placeholder="RENTALHEMAT">
+                        <input type="text" name="kode_voucher" id="input_kode_voucher" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-800 uppercase focus:outline-none focus:border-sky-500 shadow-xs" placeholder="RENTALHEMAT">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
@@ -58,7 +116,7 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Nilai Diskon</label>
-                            <input type="number" name="nilai_diskon" required min="1" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs" placeholder="10000">
+                            <input type="number" name="nilai_diskon" id="input_nilai_diskon" required min="1" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs" placeholder="10000">
                         </div>
                     </div>
 
@@ -70,22 +128,22 @@
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Min. Belanja</label>
-                            <input type="number" name="minimal_belanja" required min="0" value="0" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
+                            <input type="number" name="minimal_belanja" id="input_minimal_belanja" required min="0" value="0" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Kuota</label>
-                            <input type="number" name="kuota_total" required min="1" value="50" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
+                            <input type="number" name="kuota_total" id="input_kuota_total" required min="1" value="50" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Mulai</label>
-                            <input type="date" name="tanggal_mulai" required min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
+                            <input type="date" name="tanggal_mulai" id="input_tanggal_mulai" required min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Selesai</label>
-                            <input type="date" name="tanggal_selesai" required min="{{ date('Y-m-d') }}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
+                            <input type="date" name="tanggal_selesai" id="input_tanggal_selesai" required min="{{ date('Y-m-d') }}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-800 focus:outline-none focus:border-sky-500 shadow-xs">
                         </div>
                     </div>
 
@@ -173,6 +231,28 @@
             input.required = false;
             input.value = '';
         }
+    }
+
+    function applyPromoRecommendation(rec) {
+        document.getElementById('input_kode_voucher').value = rec.kode_voucher;
+        document.getElementById('tipe_diskon').value = rec.tipe_diskon;
+        toggleMaksimalDiskon();
+        document.getElementById('input_nilai_diskon').value = rec.nilai_diskon;
+        if (rec.maksimal_diskon) {
+            document.getElementById('maksimal_diskon').value = rec.maksimal_diskon;
+        }
+        document.getElementById('input_minimal_belanja').value = rec.minimal_belanja;
+        document.getElementById('input_kuota_total').value = 30;
+        
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + (rec.durasi_hari || 7));
+        
+        document.getElementById('input_tanggal_mulai').value = today.toISOString().split('T')[0];
+        document.getElementById('input_tanggal_selesai').value = nextWeek.toISOString().split('T')[0];
+        
+        document.getElementById('input_kode_voucher').focus();
+        document.getElementById('input_kode_voucher').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 </script>
 @endsection

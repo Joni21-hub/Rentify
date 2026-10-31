@@ -38,6 +38,37 @@
 
 <div class="store-container relative">
 
+    @if(Auth::check() && (Auth::user()->role === 'admin' || session()->has('admin_impersonator_id')))
+    <!-- ADMIN BAR UNTUK MASUK KE DASHBOARD VENDOR -->
+    <div class="bg-gradient-to-r from-purple-800 to-indigo-900 text-white px-4 py-2.5 flex items-center justify-between text-xs shadow-md sticky top-0 z-40 border-b border-purple-500/30">
+        <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-md bg-amber-400 text-slate-900 flex items-center justify-center font-black text-xs shrink-0">
+                <i class="fa-solid fa-crown"></i>
+            </span>
+            <div>
+                <span class="font-extrabold text-amber-300">Mode Admin:</span>
+                <span class="font-medium text-white/90">Etalase {{ $vendor->vendor_name }}</span>
+            </div>
+        </div>
+        <a href="{{ route('admin.vendors.impersonate', $vendor->id) }}" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-1.5 rounded-lg text-xs shadow transition flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
+            <i class="fa-solid fa-door-open"></i>
+            <span>Masuk Dashboard Toko</span>
+        </a>
+    </div>
+    @elseif(Auth::check() && Auth::id() === $vendor->id)
+    <!-- OWNER BAR UNTUK MASUK KE DASHBOARD TOKO SENDIRI -->
+    <div class="bg-gradient-to-r from-sky-700 to-blue-800 text-white px-4 py-2 flex items-center justify-between text-xs shadow-md sticky top-0 z-40">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-store text-sky-300"></i>
+            <span class="font-medium text-white/95">Ini adalah profil publik toko Anda.</span>
+        </div>
+        <a href="{{ route('vendor.dashboard') }}" class="bg-white hover:bg-sky-50 text-sky-800 font-extrabold px-3 py-1 rounded-lg text-xs shadow transition flex items-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Buka Dashboard Toko</span>
+        </a>
+    </div>
+    @endif
+
     <!-- TOP BAR -->
     <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between shadow-xs">
         <a href="{{ url()->previous() }}" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition">

@@ -33,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'latitude',
         'longitude',
         'alamat_lengkap',
+        'radius',
         'foto_profil',
         'bio',
         'jenis_kelamin',

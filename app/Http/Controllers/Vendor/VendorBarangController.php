@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Services\StorageService;
 use App\Rules\ValidMedia;
+use App\Services\AiMarketingService;
 
 class VendorBarangController extends Controller
 {
@@ -207,5 +208,33 @@ class VendorBarangController extends Controller
         $barang->delete();
 
         return redirect()->route('vendor.barang.index')->with('success', 'Barang dan seluruh fotonya berhasil dihapus.');
+    }
+
+    /**
+     * Generate Copywriting Iklan & Promosi Produk untuk Vendor via AI / Smart Heuristic
+     */
+    public function generateMarketingCopywriting(Request $request, $id, AiMarketingService $aiMarketingService)
+    {
+        $barang = Barang::with('kategori')->where('vendor_id', Auth::user()->id)->findOrFail($id);
+
+        $tone = $request->input('tone', 'fomo');
+        $customNote = $request->input('custom_note');
+        $diskon = $request->input('diskon');
+
+        $productData = [
+            'nama'        => $barang->nama,
+            'kategori'    => $barang->kategori->nama ?? 'Umum',
+            'harga_sewa'  => $barang->harga_sewa_harian,
+            'deskripsi'   => $barang->deskripsi,
+            'diskon'      => $diskon,
+        ];
+
+        $copywriting = $aiMarketingService->generateCopywriting($productData, 'all', $tone, $customNote);
+
+        return response()->json([
+            'success'     => true,
+            'barang_nama' => $barang->nama,
+            'data'        => $copywriting,
+        ]);
     }
 }

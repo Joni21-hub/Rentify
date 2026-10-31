@@ -47,6 +47,35 @@
 </head>
 <body class="font-sans text-slate-800 antialiased overflow-x-hidden min-h-screen flex flex-col">
 
+    @if(session()->has('admin_impersonator_id'))
+    <!-- ========================================== -->
+    <!-- GOD-MODE IMPERSONATION BANNER (ADMIN MODE) -->
+    <!-- ========================================== -->
+    <div class="bg-gradient-to-r from-purple-700 via-indigo-700 to-sky-700 text-white px-4 py-2.5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sticky top-0 z-50 border-b border-white/20">
+        <div class="flex items-center gap-2.5 text-xs text-center sm:text-left">
+            <span class="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                <i class="fa-solid fa-crown"></i>
+            </span>
+            <div>
+                <span class="font-black uppercase tracking-wider text-amber-300">Mode Kelola Toko (Administrator):</span>
+                <span class="font-medium text-white/95 ml-1">
+                    Anda sedang mengelola toko <strong>{{ Auth::user()->vendor_name ?? Auth::user()->name }}</strong>. Seluruh perubahan data toko & pesanan langsung aktif secara riil.
+                </span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('customer.toko.show', Auth::id()) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-eye text-xs"></i>
+                <span>Lihat Etalase</span>
+            </a>
+            <a href="{{ route('admin.impersonate.leave') }}" class="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                <span>Keluar & Kembali ke Admin</span>
+            </a>
+        </div>
+    </div>
+    @endif
+
     <!-- ========================================== -->
     <!-- 1. MOBILE TOP NAVBAR (< lg) -->
     <!-- ========================================== -->
@@ -56,7 +85,7 @@
                 <i class="fa-solid fa-bars-staggered text-sm"></i>
             </button>
             <a href="{{ route('vendor.dashboard') }}" class="flex items-center gap-2">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo" class="h-7 w-auto object-contain">
+                <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" alt="Logo" class="h-7 w-auto object-contain">
                 <span class="text-base font-black tracking-tight text-white">Rentify<span class="text-sky-400">.</span></span>
             </a>
         </div>
@@ -85,7 +114,7 @@
         <!-- Drawer Header -->
         <div class="h-20 flex items-center justify-between px-6 border-b border-white/10">
             <a href="{{ url('/') }}" class="flex items-center gap-3">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" alt="Logo Rentify" class="h-9 w-auto object-contain">
+                <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" alt="Logo Rentify" class="h-9 w-auto object-contain">
                 <span class="text-2xl font-black text-white tracking-tight">Rentify<span class="text-sky-500">.</span></span>
             </a>
             <button type="button" onclick="toggleDrawer()" class="lg:hidden text-slate-400 hover:text-white p-2">
@@ -156,6 +185,11 @@
 
         <!-- Footer Sidebar (Beralih Mode & Logout) -->
         <div class="p-4 border-t border-white/10 bg-navydark/50 space-y-2">
+            @if(session()->has('admin_impersonator_id'))
+            <a href="{{ route('admin.impersonate.leave') }}" class="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs font-extrabold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 rounded-xl transition-all shadow-sm">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Kembali ke Dashboard Admin
+            </a>
+            @endif
             <a href="{{ route('role.switch', 'customer') }}" class="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs font-bold text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/20 rounded-xl transition-all">
                 <svg class="w-4 h-4 stroke-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Beralih ke Mode Customer
             </a>

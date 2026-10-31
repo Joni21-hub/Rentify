@@ -85,7 +85,7 @@
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/60">
         <div class="max-w-5xl mx-auto w-full px-6 py-3 flex items-center justify-between gap-4">
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2 flex-shrink-0">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
+                <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" class="h-8 w-auto object-contain" alt="Logo">
                 <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
             <nav class="flex items-center gap-2">
@@ -681,18 +681,46 @@
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1.5">Lainnya</p>
                 <div class="space-y-1.5">
                     <!-- Mode Toko / Vendor -->
-                    <a href="{{ route('vendor.dashboard') }}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-sky-50 text-slate-700 transition group">
+                    @if(Auth::check() && Auth::user()->isVendor())
+                    <a href="{{ route('role.switch', 'vendor') }}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-sky-50 text-slate-700 transition group">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-sm">
                                 <i class="fa-solid fa-store"></i>
                             </div>
                             <div>
-                                <span class="font-bold text-xs text-slate-800 block">Beralih ke Mode Toko</span>
-                                <span class="text-[10px] text-slate-400">Kelola barang rental toko Anda</span>
+                                <span class="font-bold text-xs text-slate-800 block">Beralih ke Toko Saya</span>
+                                <span class="text-[10px] text-slate-400">{{ Auth::user()->vendor_name ?? 'Kelola barang rental toko Anda' }}</span>
                             </div>
                         </div>
                         <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 transition"></i>
                     </a>
+                    @elseif(Auth::check() && (Auth::user()->role === 'admin' || session()->has('admin_impersonator_id')))
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-purple-50 text-slate-700 transition group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-xs text-slate-800 block">Dashboard Administrator</span>
+                                <span class="text-[10px] text-slate-400">Pusat kendali sistem & mitra vendor</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-purple-600 transition"></i>
+                    </a>
+                    @else
+                    <a href="{{ route('vendor.register') }}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-emerald-50 text-slate-700 transition group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-store"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-xs text-slate-800 block">Buka Toko Rental</span>
+                                <span class="text-[10px] text-slate-400">Daftarkan bisnis rental Anda secara gratis</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-emerald-600 transition"></i>
+                    </a>
+                    @endif
 
                     <!-- WhatsApp CS Help Center -->
                     <a href="https://wa.me/6283183494835?text=Halo%20Tim%20Rentify,%20saya%20butuh%20bantuan" target="_blank" rel="noopener" class="flex items-center justify-between p-3 rounded-2xl hover:bg-emerald-50 text-slate-700 transition group">

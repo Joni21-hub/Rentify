@@ -14,7 +14,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#0ea5e9">
     <meta name="mobile-web-app-capable" content="yes">
@@ -26,13 +26,13 @@
     <meta property="og:site_name" content="Rentify">
     <meta property="og:title" content="Rentify - Platform Marketplace Rental Barang & Alat Terpercaya">
     <meta property="og:description" content="Sewa kamera, alat camping, kendaraan, elektronik & perlengkapan terbaik dengan mudah, cepat, dan aman di Rentify.">
-    <meta property="og:image" content="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png">
+    <meta property="og:image" content="https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387474/logolimaduabelas_gjelaz.png">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Rentify - Platform Penyewaan Barang & Alat Terpercaya">
     <meta name="twitter:description" content="Platform marketplace sewa kamera, camping, kendaraan & elektronik terpercaya.">
-    <meta name="twitter:image" content="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png">
+    <meta name="twitter:image" content="https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387474/logolimaduabelas_gjelaz.png">
 
     <!-- Schema.org JSON-LD Structured Data untuk Google Search -->
     <script type="application/ld+json">
@@ -56,7 +56,7 @@
           "@id": "{{ url('/') }}/#organization",
           "name": "Rentify",
           "url": "{{ url('/') }}",
-          "logo": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1784472853/logolimaduabelas_gjelaz.png"
+          "logo": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387474/logolimaduabelas_gjelaz.png"
         }
       ]
     }
@@ -77,12 +77,13 @@
     <!-- WRAPPER KONTEN TAB BERANDA (UNTUK SMOOTH TAB SWAPPING) -->
     <div id="rentify-page-content" data-tab="beranda" class="w-full min-h-screen">
 
+
     <!-- ===== TOP NAVBAR (DESKTOP ONLY) ===== -->
     <header class="hidden md:block bg-white/90 backdrop-blur-md border-b border-slate-100/80 shadow-2xs sticky top-0 z-50">
         <div class="max-w-7xl mx-auto w-full px-6 py-3 flex items-center gap-5">
             <!-- Logo -->
             <a href="{{ route('customer.home') }}" class="flex items-center gap-2.5 flex-shrink-0 hover:opacity-95 transition">
-                <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-9 object-contain" alt="Rentify Logo">
+                <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" class="h-9 w-auto object-contain" alt="Rentify Logo">
                 <span class="text-2xl font-black text-sky-500 tracking-tighter">Rentify</span>
             </a>
 
@@ -141,7 +142,7 @@
     <!-- ===== TOP NAVBAR (MOBILE ONLY) ===== -->
     <header class="md:hidden sticky top-0 z-50 px-3.5 pt-2.5 pb-2 flex gap-2.5 items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
         <a href="{{ route('customer.home') }}" class="flex-shrink-0 flex items-center gap-1.5 hover:opacity-90 transition">
-            <img src="https://res.cloudinary.com/fnf8f1pm/image/upload/v1784199454/gambar_logo_trerjo.png" class="h-8 object-contain" alt="Logo">
+            <img src="{{ asset('images/logo.png') }}" onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'" class="h-8 w-auto object-contain" alt="Logo">
             <span class="text-xl font-black text-sky-500 tracking-tighter">Rentify</span>
         </a>
         <a href="{{ route('customer.search') }}" class="flex-1 flex items-center bg-slate-100 hover:bg-slate-200/80 rounded-full px-3.5 py-2 text-slate-400 text-xs border border-slate-200/60 shadow-2xs transition">
@@ -215,113 +216,95 @@
         </section>
 
 
-        <!-- ===== ETALASE KATEGORI UTAMA (RINGKAS & PROPORSIONAL) ===== -->
+        <!-- ===== ETALASE KATEGORI UTAMA (MONOKROM BIRU LANGIT #0EA6E9) ===== -->
         <section class="mb-4 px-3 sm:px-4 md:px-0">
             <div class="bg-white rounded-2xl p-2.5 sm:p-3 shadow-2xs border border-slate-100">
                 @php
                     $categoryMeta = [
                         'have fun' => [
-                            'icon' => 'fa-solid fa-guitar',
-                            'bg' => 'bg-gradient-to-br from-indigo-50 to-purple-100/70',
-                            'border' => 'border-indigo-200/60',
-                            'text' => 'text-indigo-600',
-                            'badge' => 'HOT',
-                            'badge_grad' => 'from-indigo-500 to-purple-600',
                             'line1' => 'Peralatan',
                             'line2' => 'Have Fun',
+                            'svg' => '<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 10.5l3-3"/><path d="M11.5 13.5l3-3"/><path d="M17 7l2.5-2.5a1 1 0 0 0 0-1.4l-.6-.6a1 1 0 0 0-1.4 0l-2.5 2.5"/><path d="M14 14a3 3 0 0 0-4-4l-5.5 5.5a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0l5.5-5.5z"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
                         ],
                         'outdoor' => [
-                            'icon' => 'fa-solid fa-campground',
-                            'bg' => 'bg-gradient-to-br from-emerald-50 to-teal-100/70',
-                            'border' => 'border-emerald-200/60',
-                            'text' => 'text-emerald-600',
-                            'badge' => 'CAMP',
-                            'badge_grad' => 'from-emerald-500 to-teal-600',
                             'line1' => 'Outdoor &',
                             'line2' => 'Camping',
+                            'svg' => '<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20L12 4L5 20h14z"/><path d="m12 14-3 6"/><path d="m12 14 3 6"/><path d="M3 20h18"/></svg>',
                         ],
                         'elektronik' => [
-                            'icon' => 'fa-solid fa-camera',
-                            'bg' => 'bg-gradient-to-br from-sky-50 to-blue-100/70',
-                            'border' => 'border-sky-200/60',
-                            'text' => 'text-sky-600',
-                            'badge' => 'GADGET',
-                            'badge_grad' => 'from-sky-500 to-blue-600',
                             'line1' => 'Kamera &',
                             'line2' => 'Elektronik',
+                            'svg' => '<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
                         ],
                         'kendaraan' => [
-                            'icon' => 'fa-solid fa-car-side',
-                            'bg' => 'bg-gradient-to-br from-amber-50 to-orange-100/70',
-                            'border' => 'border-amber-200/60',
-                            'text' => 'text-amber-600',
-                            'badge' => 'RENTAL',
-                            'badge_grad' => 'from-amber-500 to-orange-500',
                             'line1' => 'Rental',
                             'line2' => 'Kendaraan',
+                            'svg' => '<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>',
                         ],
                         'kos' => [
-                            'icon' => 'fa-solid fa-house-chimney-window',
-                            'bg' => 'bg-gradient-to-br from-rose-50 to-pink-100/70',
-                            'border' => 'border-rose-200/60',
-                            'text' => 'text-rose-600',
-                            'badge' => 'KOST',
-                            'badge_grad' => 'from-rose-500 to-pink-600',
                             'line1' => 'Kos &',
                             'line2' => 'Kamar',
+                            'svg' => '<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
                         ],
                     ];
+
+                    $defaultSvg = '<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
 
                     $kategorisList = $kategoris ?? collect();
                 @endphp
 
-                <!-- 5 Kategori Row Simetris, Ringkas & Proporsional -->
+                <!-- 5 Kategori Row Simetris & Minimalis Monokrom -->
                 <div class="grid grid-cols-5 gap-1 sm:gap-2">
                     @foreach($kategorisList as $cat)
                         @php
                             $namaLow = strtolower($cat->nama);
-                            $metaKey = 'have fun';
+                            $metaKey = null;
                             foreach (['kos', 'kendaraan', 'elektronik', 'outdoor', 'have fun'] as $kKey) {
                                 if (str_contains($namaLow, $kKey)) { $metaKey = $kKey; break; }
                             }
-                            $meta = $categoryMeta[$metaKey] ?? $categoryMeta['have fun'];
+                            $meta = $metaKey && isset($categoryMeta[$metaKey]) ? $categoryMeta[$metaKey] : null;
 
-                            $line1 = $meta['line1'];
-                            $line2 = $meta['line2'];
-                            if (!isset($categoryMeta[$metaKey])) {
+                            if ($meta) {
+                                $line1 = $meta['line1'];
+                                $line2 = $meta['line2'];
+                                $svgIcon = $meta['svg'];
+                            } else {
                                 $words = explode(' ', $cat->nama, 2);
                                 $line1 = $words[0] ?? $cat->nama;
                                 $line2 = $words[1] ?? '';
+                                $svgIcon = $defaultSvg;
                             }
                         @endphp
-                        <a href="{{ route('customer.search', ['kategori' => $cat->id]) }}" 
-                           class="group flex flex-col items-center text-center p-0.5 sm:p-1 rounded-xl hover:bg-slate-50 transition-all duration-200">
+                        <button type="button" 
+                                onclick="toggleCategoryFilter('{{ $cat->id }}', '{{ addslashes($cat->nama) }}')"
+                                id="cat-btn-{{ $cat->id }}"
+                                data-cat-id="{{ $cat->id }}"
+                                data-cat-name="{{ $cat->nama }}"
+                                class="category-filter-btn group flex flex-col items-center text-center p-0.5 sm:p-1 rounded-xl hover:bg-slate-50 transition-all duration-200 cursor-pointer focus:outline-none"
+                                aria-pressed="false"
+                                title="Saring barang kategori {{ $cat->nama }} (Klik 2x berturut-turut untuk batal pilih)">
                             
-                            <!-- Ikon Squircle Ringkas & Proporsional -->
-                            <div class="relative mb-1 flex items-center justify-center">
-                                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl {{ $meta['bg'] }} border {{ $meta['border'] }} {{ $meta['text'] }} flex items-center justify-center text-[15px] sm:text-lg shadow-2xs group-hover:scale-105 transition-all duration-200">
-                                    <i class="{{ $meta['icon'] }}"></i>
-                                </div>
-                                <!-- Micro Badge -->
-                                @if(!empty($meta['badge']))
-                                    <span class="absolute -bottom-0.5 px-1 py-0.2 bg-gradient-to-r {{ $meta['badge_grad'] }} text-white text-[5.5px] sm:text-[6.5px] font-black rounded-full uppercase tracking-wider shadow-2xs scale-90 sm:scale-100 whitespace-nowrap">
-                                        {{ $meta['badge'] }}
-                                    </span>
-                                @endif
+                            <!-- Kotak Ikon Biru Sangat Muda (#E6F3FB) & Garis Tipis Biru Langit (#0EA6E9) -->
+                            <div id="cat-box-{{ $cat->id }}" class="cat-icon-box relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#E6F3FB] border border-[#cce7f8] text-[#0EA6E9] flex items-center justify-center shadow-2xs group-hover:bg-[#d9effa] group-hover:border-sky-300 group-hover:scale-105 transition-all duration-200 mb-1 flex-shrink-0">
+                                {!! $svgIcon !!}
+                                <!-- Checkmark Active Badge -->
+                                <span class="cat-badge-active hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-sky-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs ring-2 ring-white">
+                                    <i class="fa-solid fa-check"></i>
+                                </span>
                             </div>
 
                             <!-- Label Kategori Bersih & Rapi -->
                             <div class="w-full flex flex-col justify-center items-center mt-0.5">
-                                <span class="text-[9.5px] sm:text-[10.5px] font-semibold text-slate-700 group-hover:text-sky-600 transition-colors leading-[1.15] block">
+                                <span id="cat-l1-{{ $cat->id }}" class="cat-l1 text-[9.5px] sm:text-[10.5px] font-semibold text-slate-700 group-hover:text-sky-600 transition-colors leading-[1.15] block text-center line-clamp-1">
                                     {{ $line1 }}
                                 </span>
                                 @if($line2)
-                                    <span class="text-[8.5px] sm:text-[9.5px] font-medium text-slate-500 group-hover:text-sky-600 transition-colors leading-[1.15] block">
+                                    <span id="cat-l2-{{ $cat->id }}" class="cat-l2 text-[8.5px] sm:text-[9.5px] font-medium text-slate-500 group-hover:text-sky-600 transition-colors leading-[1.15] block text-center line-clamp-1">
                                         {{ $line2 }}
                                     </span>
                                 @endif
                             </div>
-                        </a>
+                        </button>
                     @endforeach
                 </div>
             </div>
@@ -339,7 +322,7 @@
                             </div>
                             <div>
                                 <h4 class="font-black text-[13.5px] sm:text-sm leading-tight text-white">Lihat Barang Rental Terdekat Di Sekitarmu</h4>
-                                <p class="text-[11px] sm:text-xs text-sky-100 font-medium leading-tight mt-0.5">Aktifkan lokasimu untuk melihat jarak akurat & toko dalam radius 50 KM.</p>
+                                <p class="text-[11px] sm:text-xs text-sky-100 font-medium leading-tight mt-0.5">Aktifkan lokasimu untuk melihat jarak akurat & toko dalam radius {{ round($userRadius ?? 50) }} KM.</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 self-end sm:self-auto flex-shrink-0 w-full sm:w-auto">
@@ -358,7 +341,7 @@
         @endif
 
         <!-- ===== PRODUCT FEED / KATALOG UTAMA ===== -->
-        <section class="px-3 md:px-0 mt-2">
+        <section id="katalog-barang-section" class="px-3 md:px-0 mt-2">
             <!-- Header Section Pilihan -->
             <div class="flex items-center justify-between py-1 px-1 mb-2.5">
                 <div class="flex items-center gap-2.5">
@@ -374,7 +357,7 @@
                             {{ $hasLokasi ? 'Barang di Sekitarmu' : 'Rekomendasi Pilihan Terbaik' }}
                         </h3>
                         <p class="text-[11px] sm:text-[12px] text-slate-400 font-medium leading-tight">
-                            {{ $hasLokasi ? 'Radius ≤ 50 KM dari posisimu' : 'Katalog rental terpopuler & siap disewa' }}
+                            {{ $hasLokasi ? 'Radius ≤ ' . round($userRadius ?? 50) . ' KM dari posisimu' : 'Katalog rental terpopuler & siap disewa' }}
                         </p>
                     </div>
                 </div>
@@ -392,6 +375,33 @@
                 @endif
             </div>
 
+            <!-- CATEGORY FILTER ACTIVE BAR (MUNCUL OTOMATIS SAAT KATEGORI DIPILIH) -->
+            <div id="category-filter-bar" class="hidden items-center justify-between bg-sky-50/90 border border-sky-200/90 rounded-2xl p-2.5 sm:p-3 mb-3 shadow-2xs transition-all">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center text-xs flex-shrink-0 shadow-2xs">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] sm:text-xs font-bold text-slate-600">Menyaring Kategori:</span>
+                            <span id="category-filter-name" class="text-xs sm:text-[13px] font-black text-sky-600"></span>
+                            <span id="category-filter-count-badge" class="px-2 py-0.5 rounded-full bg-white border border-sky-200 text-sky-700 text-[10px] font-black shadow-2xs">
+                                <span id="category-filter-count">0</span> barang
+                            </span>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium">Klik kembali ikon kategori di atas atau tombol di samping untuk membatalkan filter.</p>
+                    </div>
+                </div>
+                <button type="button" 
+                        onclick="resetCategoryFilter()" 
+                        class="px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 text-xs font-bold shadow-2xs flex items-center gap-1.5 transition active:scale-95 flex-shrink-0 ml-2"
+                        title="Batal pilih kategori & tampilkan semua barang">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                    <span class="hidden sm:inline">Batal Pilih</span>
+                    <span class="sm:hidden">Reset</span>
+                </button>
+            </div>
+
             @if($daftarBarang->isEmpty())
                 <!-- EMPTY STATE FALLBACK JIKA DATABASE KOSONG SAMA SEKALI -->
                 <div class="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-2xs max-w-md mx-auto my-6">
@@ -406,9 +416,12 @@
                 </div>
             @else
                 <!-- PRODUCT GRID (MASONRY WATERFALL: MENYESUAIKAN ASLI GAMBAR PANJANG/PENDEK YANG DIUPLOAD) -->
-                <div class="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-2.5 sm:gap-3.5 [column-fill:_balance]">
+                <div id="product-masonry-grid" class="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-2.5 sm:gap-3.5 [column-fill:_balance]">
                     @foreach($daftarBarang as $barang)
-                        <div class="break-inside-avoid mb-2.5 sm:mb-3.5 bg-white rounded-2xl border border-slate-100/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_24px_rgba(14,165,233,0.14)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative group">
+                        <div class="barang-item break-inside-avoid mb-2.5 sm:mb-3.5 bg-white rounded-2xl border border-slate-100/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_24px_rgba(14,165,233,0.14)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative group"
+                             data-kategori-id="{{ $barang->kategori_id ?? '' }}"
+                             data-kategori-nama="{{ strtolower($barang->kategori->nama ?? '') }}"
+                             data-barang-id="{{ $barang->id }}">
                             
                             <!-- GAMBAR PRODUK DINAMIS (MENYESUAIKAN RASIO FOTO ASLI TANPA TERPOTONG KOTAK) -->
                             <a href="{{ url('/customer/barang/' . ($barang->slug ?? $barang->id)) }}" class="block relative w-full overflow-hidden bg-slate-100 flex items-center justify-center">
@@ -432,6 +445,7 @@
                                         {{ $barang->kategori->nama }}
                                     </div>
                                 @endif
+
                             </a>
 
                             <!-- TOMBOL WISHLIST -->
@@ -473,6 +487,21 @@
 
                         </div>
                     @endforeach
+                </div>
+
+                <!-- EMPTY STATE KHUSUS FILTER KATEGORI JIKA TIDAK ADA BARANG -->
+                <div id="cat-empty-state" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-2xs max-w-md mx-auto my-6">
+                    <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 shadow-2xs border border-sky-100">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </div>
+                    <h3 class="text-slate-800 font-black text-base mb-1">Tidak Ada Barang di Kategori Ini</h3>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-5">
+                        Belum ada barang rental untuk kategori <span id="empty-cat-name" class="font-bold text-sky-600"></span> di sekitarmu saat ini.
+                    </p>
+                    <button type="button" onclick="resetCategoryFilter()" class="inline-flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                        <span>Tampilkan Semua Barang</span>
+                    </button>
                 </div>
             @endif
         </section>
@@ -571,7 +600,204 @@
 
                 startAutoSlide();
             }
+
+            // 2. CEK INISIALISASI FILTER KATEGORI DARI URL JIKA ADA
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const initialCatId = urlParams.get('kategori');
+                if (initialCatId) {
+                    const btn = document.querySelector(`.category-filter-btn[data-cat-id="${initialCatId}"]`);
+                    if (btn) {
+                        const catName = btn.dataset.catName || '';
+                        applyCategoryFilter(initialCatId, catName, false);
+                    }
+                }
+            } catch(e) {
+                console.warn("Init kategori param error", e);
+            }
         }
+
+        // ==========================================
+        // 2. DYNAMIC IN-PLACE CATEGORY FILTER
+        // ==========================================
+        let currentFilteredCategoryId = null;
+
+        function toggleCategoryFilter(catId, catName) {
+            catId = String(catId);
+
+            // Jika tombol kategori yang sama diklik 2x berturut-turut -> Batal pilih (unselect)
+            if (currentFilteredCategoryId === catId) {
+                resetCategoryFilter();
+                return;
+            }
+
+            // Jika belum dipilih atau pilih kategori lain -> Terapkan filter
+            applyCategoryFilter(catId, catName, true);
+        }
+
+        function applyCategoryFilter(catId, catName, shouldScroll = false) {
+            catId = String(catId);
+            currentFilteredCategoryId = catId;
+
+            // A. Update visual status seluruh tombol kategori
+            const allBtns = document.querySelectorAll('.category-filter-btn');
+            allBtns.forEach(btn => {
+                const thisId = String(btn.dataset.catId);
+                const box = btn.querySelector('.cat-icon-box');
+                const badge = btn.querySelector('.cat-badge-active');
+                const l1 = btn.querySelector('.cat-l1');
+                const l2 = btn.querySelector('.cat-l2');
+
+                if (thisId === catId) {
+                    btn.setAttribute('aria-pressed', 'true');
+                    if (box) {
+                        box.className = 'cat-icon-box relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-sky-500 border-2 border-sky-600 text-white flex items-center justify-center shadow-md ring-2 ring-sky-300 ring-offset-1 scale-105 transition-all duration-200 mb-1 flex-shrink-0';
+                    }
+                    if (badge) badge.classList.remove('hidden');
+                    if (l1) {
+                        l1.classList.remove('text-slate-700', 'font-semibold');
+                        l1.classList.add('text-sky-600', 'font-black');
+                    }
+                    if (l2) {
+                        l2.classList.remove('text-slate-500', 'font-medium');
+                        l2.classList.add('text-sky-600', 'font-bold');
+                    }
+                } else {
+                    btn.setAttribute('aria-pressed', 'false');
+                    if (box) {
+                        box.className = 'cat-icon-box relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#E6F3FB] border border-[#cce7f8] text-[#0EA6E9] flex items-center justify-center shadow-2xs group-hover:bg-[#d9effa] group-hover:border-sky-300 group-hover:scale-105 transition-all duration-200 mb-1 flex-shrink-0';
+                    }
+                    if (badge) badge.classList.add('hidden');
+                    if (l1) {
+                        l1.classList.remove('text-sky-600', 'font-black');
+                        l1.classList.add('text-slate-700', 'font-semibold');
+                    }
+                    if (l2) {
+                        l2.classList.remove('text-sky-600', 'font-bold');
+                        l2.classList.add('text-slate-500', 'font-medium');
+                    }
+                }
+            });
+
+            // B. Filter item barang di bawahnya
+            const items = document.querySelectorAll('.barang-item');
+            let visibleCount = 0;
+            const catNameLower = (catName || '').toLowerCase().trim();
+
+            items.forEach(item => {
+                const itemCatId = String(item.dataset.kategoriId || '');
+                const itemCatNama = String(item.dataset.kategoriNama || '').toLowerCase();
+
+                const isMatch = (itemCatId === catId) || (catNameLower && itemCatNama.includes(catNameLower));
+                if (isMatch) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // C. Tampilkan/Sembunyikan Empty State Kategori
+            const catEmptyState = document.getElementById('cat-empty-state');
+            const emptyCatName = document.getElementById('empty-cat-name');
+            const masonryGrid = document.getElementById('product-masonry-grid');
+
+            if (visibleCount === 0) {
+                if (emptyCatName) emptyCatName.textContent = catName;
+                if (catEmptyState) catEmptyState.classList.remove('hidden');
+                if (masonryGrid) masonryGrid.classList.add('hidden');
+            } else {
+                if (catEmptyState) catEmptyState.classList.add('hidden');
+                if (masonryGrid) masonryGrid.classList.remove('hidden');
+            }
+
+            // D. Update Category Filter Active Bar
+            const filterBar = document.getElementById('category-filter-bar');
+            const filterName = document.getElementById('category-filter-name');
+            const filterCount = document.getElementById('category-filter-count');
+            if (filterBar) {
+                if (filterName) filterName.textContent = catName;
+                if (filterCount) filterCount.textContent = visibleCount;
+                filterBar.classList.remove('hidden');
+                filterBar.classList.add('flex');
+            }
+
+            // E. Update URL params tanpa reload
+            try {
+                const url = new URL(window.location);
+                url.searchParams.set('kategori', catId);
+                window.history.replaceState({}, '', url);
+            } catch(e) {}
+
+            // F. Smooth scroll agar langsung terlihat barang di bawahnya
+            if (shouldScroll) {
+                const targetSec = document.getElementById('katalog-barang-section');
+                if (targetSec) {
+                    const rect = targetSec.getBoundingClientRect();
+                    if (rect.top < 0 || rect.top > window.innerHeight * 0.75) {
+                        targetSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            }
+        }
+
+        function resetCategoryFilter() {
+            currentFilteredCategoryId = null;
+
+            // A. Reset seluruh tombol kategori ke tampilan awal
+            const allBtns = document.querySelectorAll('.category-filter-btn');
+            allBtns.forEach(btn => {
+                btn.setAttribute('aria-pressed', 'false');
+                const box = btn.querySelector('.cat-icon-box');
+                const badge = btn.querySelector('.cat-badge-active');
+                const l1 = btn.querySelector('.cat-l1');
+                const l2 = btn.querySelector('.cat-l2');
+
+                if (box) {
+                    box.className = 'cat-icon-box relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#E6F3FB] border border-[#cce7f8] text-[#0EA6E9] flex items-center justify-center shadow-2xs group-hover:bg-[#d9effa] group-hover:border-sky-300 group-hover:scale-105 transition-all duration-200 mb-1 flex-shrink-0';
+                }
+                if (badge) badge.classList.add('hidden');
+                if (l1) {
+                    l1.classList.remove('text-sky-600', 'font-black');
+                    l1.classList.add('text-slate-700', 'font-semibold');
+                }
+                if (l2) {
+                    l2.classList.remove('text-sky-600', 'font-bold');
+                    l2.classList.add('text-slate-500', 'font-medium');
+                }
+            });
+
+            // B. Tampilkan kembali seluruh barang
+            const items = document.querySelectorAll('.barang-item');
+            items.forEach(item => {
+                item.style.display = '';
+            });
+
+            // C. Sembunyikan empty state kategori & pastikan grid terlihat
+            const catEmptyState = document.getElementById('cat-empty-state');
+            const masonryGrid = document.getElementById('product-masonry-grid');
+            if (catEmptyState) catEmptyState.classList.add('hidden');
+            if (masonryGrid) masonryGrid.classList.remove('hidden');
+
+            // D. Sembunyikan filter bar
+            const filterBar = document.getElementById('category-filter-bar');
+            if (filterBar) {
+                filterBar.classList.add('hidden');
+                filterBar.classList.remove('flex');
+            }
+
+            // E. Update URL
+            try {
+                const url = new URL(window.location);
+                url.searchParams.delete('kategori');
+                window.history.replaceState({}, '', url);
+            } catch(e) {}
+        }
+
+        // Expose globally
+        window.toggleCategoryFilter = toggleCategoryFilter;
+        window.applyCategoryFilter = applyCategoryFilter;
+        window.resetCategoryFilter = resetCategoryFilter;
 
         if (document.readyState === 'loading') {
             document.addEventListener("DOMContentLoaded", initHomeScripts);
@@ -643,6 +869,7 @@
                 enableHighAccuracy: true
             });
         }
+
     </script>
 </body>
 </html>
