@@ -225,6 +225,70 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Relasi Sesi Chat Omnichannel
+     */
+    public function chatSessions()
+    {
+        return $this->hasMany(ChatSession::class, 'user_id');
+    }
+
+    /**
+     * Relasi Riwayat Consent Marketing
+     */
+    public function marketingConsents()
+    {
+        return $this->hasMany(MarketingConsent::class, 'user_id');
+    }
+
+    /**
+     * Relasi Touchpoints Marketing Attribution
+     */
+    public function marketingAttributions()
+    {
+        return $this->hasMany(MarketingAttribution::class, 'user_id');
+    }
+
+    /**
+     * Relasi Referral yang Diberikan Pengguna Ini (sebagai referrer)
+     */
+    public function referralsGiven()
+    {
+        return $this->hasMany(ReferralRecord::class, 'referrer_id');
+    }
+
+    /**
+     * Relasi Referral yang Diterima Pengguna Ini (sebagai referee)
+     */
+    public function referralReceived()
+    {
+        return $this->hasOne(ReferralRecord::class, 'referee_id');
+    }
+
+    /**
+     * Relasi Entri Buku Besar Finansial Pengguna
+     */
+    public function ledgerEntries()
+    {
+        return $this->hasMany(FinancialLedgerEntry::class, 'user_id');
+    }
+
+    /**
+     * Relasi Kampanye Iklan Vendor
+     */
+    public function adCampaigns()
+    {
+        return $this->hasMany(VendorAdCampaign::class, 'vendor_id');
+    }
+
+    /**
+     * Relasi Ulasan Social Proof Pengguna
+     */
+    public function socialProofReviews()
+    {
+        return $this->hasMany(SocialProofReview::class, 'user_id');
+    }
+
+    /**
      * Mendapatkan total saldo koin tersedia
      */
     public function getCoinBalanceAttribute(): int

@@ -178,6 +178,30 @@ class Barang extends Model
         return $this->hasMany(MomentTaggedProduct::class, 'product_id');
     }
 
+    /**
+     * Kampanye Iklan Promoted Listing untuk Produk Ini
+     */
+    public function adCampaigns()
+    {
+        return $this->hasMany(VendorAdCampaign::class, 'barang_id');
+    }
+
+    /**
+     * Catatan Klik Iklan untuk Produk Ini
+     */
+    public function adClicks()
+    {
+        return $this->hasMany(VendorAdClick::class, 'barang_id');
+    }
+
+    /**
+     * Ulasan Social Proof Terverifikasi untuk Produk Ini
+     */
+    public function socialProofReviews()
+    {
+        return $this->hasMany(SocialProofReview::class, 'barang_id');
+    }
+
     public function moments()
     {
         return $this->belongsToMany(Moment::class, 'moment_tagged_products', 'product_id', 'moment_id')
