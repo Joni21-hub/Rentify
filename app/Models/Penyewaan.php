@@ -10,8 +10,12 @@ class Penyewaan extends Model
 
     protected $fillable = [
         'user_id', 'vendor_id', 'customer_id', 'customer_name', 'customer_whatsapp', 'kode_booking',
+        'payment_group_id',
         'payment_method', 'metode_pengambilan', 'alamat_pengiriman', 'shipping_address', 'shipping_method',
-        'shipping_fee', 'kode_unik', 'voucher_id', 'potongan_voucher', 'koin_digunakan', 'potongan_koin',
+        'shipping_fee', 'kode_unik', 'voucher_id', 'potongan_voucher',
+        'voucher_toko_id', 'potongan_voucher_toko',
+        'voucher_platform_id', 'potongan_voucher_platform',
+        'koin_digunakan', 'potongan_koin',
         'cabang_id', 'total_biaya', 'total_price', 'total_deposit', 'total_denda',
         'vendor_earning', 'rentify_fee', 'completed_at',
         'status', 'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
@@ -19,23 +23,25 @@ class Penyewaan extends Model
     ];
 
     protected $casts = [
-        'tanggal_mulai'          => 'date',
-        'tanggal_selesai'        => 'date',
-        'tanggal_kembali_aktual' => 'date',
-        'total_biaya'            => 'decimal:2',
-        'total_price'            => 'decimal:2',
-        'vendor_earning'         => 'decimal:2',
-        'rentify_fee'            => 'decimal:2',
-        'total_deposit'          => 'decimal:2',
-        'total_denda'            => 'decimal:2',
-        'potongan_voucher'       => 'decimal:2',
-        'koin_digunakan'         => 'integer',
-        'potongan_koin'          => 'decimal:2',
-        'shipping_fee'           => 'decimal:2',
-        'kode_unik'              => 'integer',
-        'completed_at'           => 'datetime',
-        'payment_expired_at'     => 'datetime',
-        'paid_at'                => 'datetime',
+        'tanggal_mulai'             => 'date',
+        'tanggal_selesai'           => 'date',
+        'tanggal_kembali_aktual'    => 'date',
+        'total_biaya'               => 'decimal:2',
+        'total_price'               => 'decimal:2',
+        'vendor_earning'            => 'decimal:2',
+        'rentify_fee'               => 'decimal:2',
+        'total_deposit'             => 'decimal:2',
+        'total_denda'               => 'decimal:2',
+        'potongan_voucher'          => 'decimal:2',
+        'potongan_voucher_toko'     => 'decimal:2',
+        'potongan_voucher_platform' => 'decimal:2',
+        'koin_digunakan'            => 'integer',
+        'potongan_koin'             => 'decimal:2',
+        'shipping_fee'              => 'decimal:2',
+        'kode_unik'                 => 'integer',
+        'completed_at'              => 'datetime',
+        'payment_expired_at'        => 'datetime',
+        'paid_at'                   => 'datetime',
     ];
 
     public static function generateKodeBooking(): string
@@ -52,6 +58,38 @@ class Penyewaan extends Model
     public function ulasans()  { return $this->hasMany(Ulasan::class, 'order_id'); }
     public function chats()   { return $this->hasMany(Chat::class, 'order_id'); }
     public function komplain() { return $this->hasOne(Komplain::class, 'order_id'); }
+
+    /**
+     * Relasi Voucher Toko (Vendor)
+     */
+    public function voucherToko()
+    {
+        return $this->belongsTo(Voucher::class, 'voucher_toko_id');
+    }
+
+    /**
+     * Relasi Voucher Platform
+     */
+    public function voucherPlatform()
+    {
+        return $this->belongsTo(Voucher::class, 'voucher_platform_id');
+    }
+
+    /**
+     * Relasi ke Catatan Pemakaian / Penukaran Voucher (OrderVoucherRedemption)
+     */
+    public function redemptions()
+    {
+        return $this->hasMany(OrderVoucherRedemption::class, 'order_id');
+    }
+
+    /**
+     * Relasi ke Catatan Refund Pesanan
+     */
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class, 'order_id');
+    }
 
     public function isTerlambat(): bool
     {

@@ -173,6 +173,11 @@ class Barang extends Model
         return $this->hasMany(Wishlist::class);
     }
 
+    public function vouchers()
+    {
+        return $this->belongsToMany(Voucher::class, 'voucher_barangs', 'barang_id', 'voucher_id');
+    }
+
     public function momentTaggedProducts()
     {
         return $this->hasMany(MomentTaggedProduct::class, 'product_id');
