@@ -61,5 +61,25 @@ Schedule::command('moments:recalculate-ranking-scores')
     ->name('moments-ranking-recalculate')
     ->withoutOverlapping();
 
+/*
+|--------------------------------------------------------------------------
+| Inactive Customer Re-engagement Schedule (30 & 60 Days Inactivity)
+|--------------------------------------------------------------------------
+|
+| Memeriksa dan mengirimkan voucher reaktivasi berkala kepada pelanggan
+| yang tidak aktif selama 30/60 hari dengan penekanan opt-out dan sengketa aktif.
+|
+*/
+Schedule::command('rentify:customers:reengage-inactive --days=30')
+    ->dailyAt('10:00')
+    ->name('rentify-reengage-inactive-30')
+    ->withoutOverlapping();
+
+Schedule::command('rentify:customers:reengage-inactive --days=60')
+    ->dailyAt('10:30')
+    ->name('rentify-reengage-inactive-60')
+    ->withoutOverlapping();
+
+
 
 

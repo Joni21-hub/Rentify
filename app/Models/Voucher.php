@@ -12,6 +12,8 @@ class Voucher extends Model
     protected $fillable = [
         'vendor_id',
         'kode_voucher',
+        'tipe_voucher',
+        'funding_source',
         'tipe_diskon',
         'nilai_diskon',
         'maksimal_diskon',
