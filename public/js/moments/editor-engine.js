@@ -52,8 +52,14 @@
             this.overlayContainer = document.getElementById('editor-overlays-container');
 
             this.bindEvents();
+            this.setupViewportSwipeGestures();
             this.renderFilterDrawer();
             this.renderMusicCatalog();
+
+            const addMediaInput = document.getElementById('editor-add-media-input');
+            if (addMediaInput) {
+                addMediaInput.addEventListener('change', (e) => this.handleAddMoreMedia(e));
+            }
         }
 
         bindEvents() {
@@ -153,15 +159,16 @@
             this.activeSlideIndex = 0;
             this.loadSlide(0);
 
-            // Terapkan rasio aspek (Persegi 1:1 atau Potret 9:16)
+            // Terapkan rasio aspek (9:16 / 3:4 / 1:1)
             this.applyAspectRatioStyle();
 
             // Set filter awal
             const initialFilter = this.state.get('activeFilter') || 'normal';
             this.applyFilter(initialFilter);
 
-            // Perbarui UI Klip
+            // Perbarui UI Klip & Filmstrip Carousel
             this.renderClipsManager();
+            this.updateFilmstripThumbnails();
         }
 
         /**
@@ -175,6 +182,7 @@
             this.mediaType = item.type;
             this.mediaBlob = item.blob;
             this.mediaUrl = item.url || item.dataUrl;
+            this.isMirrored = !!item.isMirrored;
 
             if (item.type === 'video') {
                 this.setupVideoPreview();
@@ -183,7 +191,9 @@
             }
 
             this.updateCarouselUI();
+            this.updateFilmstripThumbnails();
             this.applyCurrentTransforms();
+            this.applyFilter(item.filter || this.state.get('activeFilter') || 'normal');
         }
 
         nextSlide() {
@@ -224,46 +234,291 @@
             }
         }
 
+        /**
+         * Render strip thumbnail carousel bergaya Instagram di bawah layar editor
+         */
+        updateFilmstripThumbnails() {
+            const track = document.getElementById('editor-filmstrip-track');
+            if (!track) return;
+            track.innerHTML = '';
+
+            const total = this.mediaItems ? this.mediaItems.length : 0;
+            if (total === 0) return;
+
+            this.mediaItems.forEach((item, idx) => {
+                const isActive = (idx === this.activeSlideIndex);
+                const thumb = document.createElement('div');
+                thumb.className = `relative w-12 h-12 rounded-xl shrink-0 cursor-pointer overflow-hidden transition-all duration-200 border-2 select-none ${isActive ? 'border-sky-400 scale-105 shadow-lg shadow-sky-500/30' : 'border-white/20 opacity-70 hover:opacity-100'}`;
+
+                const src = item.url || item.dataUrl;
+                const isVideo = item.type === 'video';
+                const rot = item.rotation || 0;
+                const mirrorScale = item.isMirrored ? -1 : 1;
+
+                thumb.innerHTML = `
+                    <div class="w-full h-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                        ${isVideo 
+                            ? `<video src="${src}" class="w-full h-full object-cover pointer-events-none" style="transform: rotate(${rot}deg) scaleX(${mirrorScale});" muted></video>
+                               <div class="absolute inset-0 bg-black/35 flex items-center justify-center text-white text-[11px]"><i class="fa-solid fa-video"></i></div>`
+                            : `<img src="${src}" class="w-full h-full object-cover pointer-events-none" style="transform: rotate(${rot}deg) scaleX(${mirrorScale});">`
+                        }
+                    </div>
+                    <span class="absolute bottom-0.5 left-1 text-[8px] font-black text-white drop-shadow-md leading-none bg-black/50 px-1 py-0.2 rounded">${idx + 1}</span>
+                    ${total > 1 ? `
+                        <button type="button" class="delete-slide-btn absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/85 hover:bg-rose-500 text-white flex items-center justify-center text-[8px] transition shadow-md" title="Hapus slide ini">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    ` : ''}
+                `;
+
+                thumb.onclick = (e) => {
+                    if (e.target.closest('.delete-slide-btn')) return;
+                    this.loadSlide(idx);
+                };
+
+                const delBtn = thumb.querySelector('.delete-slide-btn');
+                if (delBtn) {
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.removeSlide(idx);
+                    };
+                }
+
+                track.appendChild(thumb);
+            });
+        }
+
+        removeSlide(index) {
+            if (this.mediaItems.length <= 1) {
+                this.backToCamera();
+                return;
+            }
+            this.mediaItems.splice(index, 1);
+            this.state.setCapturedMediaItems(this.mediaItems);
+            const nextIdx = Math.max(0, Math.min(this.mediaItems.length - 1, index));
+            this.loadSlide(nextIdx);
+            this.updateFilmstripThumbnails();
+            this.updateCarouselUI();
+            this.showToast('Slide berhasil dihapus');
+        }
+
+        triggerAddMedia() {
+            const input = document.getElementById('editor-add-media-input');
+            if (input) input.click();
+        }
+
+        async handleAddMoreMedia(event) {
+            const files = event.target.files ? Array.from(event.target.files) : [];
+            if (files.length === 0) return;
+
+            const remainingQuota = 10 - this.mediaItems.length;
+            if (remainingQuota <= 0) {
+                this.showToast('Maksimal 10 media per momen');
+                return;
+            }
+
+            const targetFiles = files.slice(0, remainingQuota);
+            const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
+            const processedItems = [];
+
+            for (const f of targetFiles) {
+                const mime = f.type || '';
+                const ext = (f.name.split('.').pop() || '').toLowerCase();
+                const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
+
+                if (isVideo) {
+                    const videoUrl = URL.createObjectURL(f);
+                    const dur = await new Promise(resolve => {
+                        const tempVideo = document.createElement('video');
+                        tempVideo.preload = 'metadata';
+                        tempVideo.src = videoUrl;
+                        tempVideo.onloadedmetadata = () => resolve(tempVideo.duration || 5);
+                        tempVideo.onerror = () => resolve(5);
+                    });
+
+                    processedItems.push({
+                        id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                        type: 'video',
+                        blob: f,
+                        url: videoUrl,
+                        duration: dur,
+                        speed: 1.0,
+                        filter: 'normal',
+                        isMirrored: false,
+                        rotation: 0,
+                        name: f.name
+                    });
+                } else {
+                    let targetF = f;
+                    if (['heic', 'heif'].includes(ext) && typeof heic2any === 'function') {
+                        try {
+                            const convertedBlob = await heic2any({
+                                blob: f,
+                                toType: 'image/jpeg',
+                                quality: 0.95
+                            });
+                            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            targetF = new File([blob], f.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        } catch (err) {
+                            console.warn('heic2any fallback to original:', err);
+                        }
+                    }
+
+                    const dataUrl = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = ev => resolve(ev.target.result);
+                        reader.readAsDataURL(targetF);
+                    });
+
+                    processedItems.push({
+                        id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                        type: 'photo',
+                        blob: targetF,
+                        dataUrl: dataUrl,
+                        url: dataUrl,
+                        filter: 'normal',
+                        isMirrored: false,
+                        rotation: 0,
+                        timestamp: Date.now(),
+                        name: targetF.name
+                    });
+                }
+            }
+
+            if (processedItems.length > 0) {
+                this.mediaItems = this.mediaItems.concat(processedItems);
+                this.state.setCapturedMediaItems(this.mediaItems);
+                this.updateFilmstripThumbnails();
+                this.updateCarouselUI();
+                this.loadSlide(this.mediaItems.length - 1);
+                this.showToast(`${processedItems.length} media ditambahkan`);
+            }
+            if (event.target) event.target.value = '';
+        }
+
+        setupViewportSwipeGestures() {
+            const viewport = document.getElementById('editor-viewport');
+            if (!viewport) return;
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchStartTime = 0;
+
+            viewport.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.interactive-overlay, button, input, textarea')) return;
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', (e) => {
+                if (e.target.closest('.interactive-overlay, button, input, textarea')) return;
+                if (e.changedTouches.length === 1 && touchStartX !== 0) {
+                    const deltaX = e.changedTouches[0].clientX - touchStartX;
+                    const deltaY = e.changedTouches[0].clientY - touchStartY;
+                    const deltaTime = Date.now() - touchStartTime;
+
+                    // Gestur swipe horizontal signifikan di HP
+                    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && deltaTime < 400) {
+                        if (deltaX < 0) {
+                            this.nextSlide();
+                        } else {
+                            this.prevSlide();
+                        }
+                    }
+                }
+                touchStartX = 0;
+                touchStartY = 0;
+            }, { passive: true });
+        }
+
         toggleAspectRatio() {
             const next = this.state.toggleAspectRatio();
             this.applyAspectRatioStyle();
-            const isSquare = next === 'square';
-            this.showToast(isSquare ? 'Rasio: Persegi (1:1)' : 'Rasio: Potret (9:16)');
+            let label = 'Rasio: Potret (9:16)';
+            if (next === 'standard') label = 'Rasio: Feed (3:4)';
+            else if (next === 'square') label = 'Rasio: Persegi (1:1)';
+            this.showToast(label);
         }
 
         applyAspectRatioStyle() {
             const ratio = this.state.get('aspectRatio') || 'portrait';
             const isSquare = ratio === 'square';
+            const isStandard = ratio === 'standard';
 
             const labelEl = document.getElementById('editor-aspect-label');
             const iconEl = document.getElementById('editor-aspect-icon');
-            if (labelEl) labelEl.textContent = isSquare ? '1:1' : '9:16';
+            if (labelEl) {
+                labelEl.textContent = isSquare ? '1:1' : (isStandard ? '3:4' : '9:16');
+            }
             if (iconEl) {
-                iconEl.className = isSquare ? 'fa-regular fa-square text-sky-400 text-xs' : 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                if (isSquare) iconEl.className = 'fa-regular fa-square text-sky-400 text-xs';
+                else if (isStandard) iconEl.className = 'fa-solid fa-rectangle-vertical text-sky-400 text-xs';
+                else iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
             }
 
             const viewport = document.getElementById('editor-viewport');
             if (viewport) {
                 if (isSquare) {
-                    viewport.classList.add('aspect-square', 'max-w-[92vw]', 'max-h-[75vh]', 'rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.style.aspectRatio = '1 / 1';
+                    viewport.style.maxHeight = '70vh';
+                    viewport.style.maxWidth = '70vh';
+                    viewport.style.width = '90vw';
+                    viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.classList.remove('w-full', 'h-full');
+                } else if (isStandard) {
+                    viewport.style.aspectRatio = '3 / 4';
+                    viewport.style.maxHeight = '76vh';
+                    viewport.style.maxWidth = 'calc(76vh * 3 / 4)';
+                    viewport.style.width = '100%';
+                    viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
                     viewport.classList.remove('w-full', 'h-full');
                 } else {
-                    viewport.classList.remove('aspect-square', 'max-w-[92vw]', 'max-h-[75vh]', 'rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.style.aspectRatio = '';
+                    viewport.style.maxHeight = '';
+                    viewport.style.maxWidth = '';
+                    viewport.style.width = '100%';
+                    viewport.style.height = '100%';
+                    viewport.classList.remove('rounded-3xl', 'border', 'border-white/20', 'shadow-2xl');
                     viewport.classList.add('w-full', 'h-full');
                 }
             }
         }
 
         toggleMirror() {
-            this.isMirrored = !this.isMirrored;
+            const currentItem = this.mediaItems ? this.mediaItems[this.activeSlideIndex] : null;
+            if (currentItem) {
+                currentItem.isMirrored = !currentItem.isMirrored;
+                this.isMirrored = currentItem.isMirrored;
+            } else {
+                this.isMirrored = !this.isMirrored;
+            }
             this.applyCurrentTransforms();
             this.showToast(this.isMirrored ? 'Cermin: Aktif' : 'Cermin: Nonaktif');
+            this.updateFilmstripThumbnails();
+        }
+
+        rotateCurrentSlide() {
+            const currentItem = this.mediaItems ? this.mediaItems[this.activeSlideIndex] : null;
+            if (!currentItem) return;
+            currentItem.rotation = ((currentItem.rotation || 0) + 90) % 360;
+            this.applyCurrentTransforms();
+            this.showToast(`Putar: ${currentItem.rotation}°`);
+            this.updateFilmstripThumbnails();
         }
 
         applyCurrentTransforms() {
+            const currentItem = this.mediaItems ? this.mediaItems[this.activeSlideIndex] : null;
+            const isMirrored = currentItem ? !!currentItem.isMirrored : this.isMirrored;
+            const rotation = currentItem ? (currentItem.rotation || 0) : 0;
             const target = (this.mediaType === 'video') ? this.videoEl : this.imageEl;
             if (target) {
-                target.style.transform = this.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                const scaleX = isMirrored ? -1 : 1;
+                const transformVal = `rotate(${rotation}deg) scaleX(${scaleX}) translateZ(0)`;
+                target.style.transform = transformVal;
+                target.style.webkitTransform = transformVal;
             }
         }
 
@@ -786,63 +1041,89 @@
         }
 
         /**
-         * Menggabungkan foto dengan CSS filter dan stiker/teks overlay ke dalam canvas.
+         * Menggabungkan foto dengan CSS filter, rotasi, cermin (mirror), crop rasio, dan stiker/teks overlay ke dalam canvas.
          */
-        async bakePhotoWithOverlays() {
-            if (this.mediaType !== 'photo' || !this.mediaBlob) {
-                return this.mediaBlob;
+        async bakePhotoWithOverlays(targetItem = null) {
+            const item = targetItem || (this.mediaItems ? this.mediaItems[this.activeSlideIndex] : null) || {
+                type: this.mediaType,
+                blob: this.mediaBlob,
+                url: this.mediaUrl,
+                filter: this.activeFilter,
+                isMirrored: this.isMirrored,
+                rotation: 0
+            };
+
+            if (item.type !== 'photo' || !item.blob) {
+                return item.blob || this.mediaBlob;
             }
 
-            // Jika tidak ada filter atau overlay, gunakan berkas asli langsung
-            const hasFilter = this.activeFilter && this.activeFilter !== 'normal';
-            const hasOverlays = this.overlays && this.overlays.length > 0;
-            if (!hasFilter && !hasOverlays) {
-                return this.mediaBlob;
+            const activeRatio = this.state.get('aspectRatio') || 'portrait';
+            const filterKey = item.filter || this.activeFilter || 'normal';
+            const hasFilter = filterKey && filterKey !== 'normal';
+            const hasOverlays = this.overlays && this.overlays.length > 0 && (!targetItem || item === this.mediaItems[this.activeSlideIndex]);
+            const isMirrored = !!item.isMirrored;
+            const rotation = item.rotation || 0;
+            const needsCrop = (activeRatio === 'square' || activeRatio === 'standard');
+
+            // Jika tidak ada modifikasi apapun, kembalikan blob asli
+            if (!hasFilter && !hasOverlays && !isMirrored && rotation === 0 && !needsCrop) {
+                return item.blob;
             }
 
             return new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
-                const sourceUrl = this.mediaUrl || URL.createObjectURL(this.mediaBlob);
+                const sourceUrl = item.dataUrl || item.url || URL.createObjectURL(item.blob);
 
                 img.onload = () => {
                     try {
+                        const rawW = img.naturalWidth || 1080;
+                        const rawH = img.naturalHeight || 1920;
+                        const isRotated = (rotation === 90 || rotation === 270);
+                        const baseW = isRotated ? rawH : rawW;
+                        const baseH = isRotated ? rawW : rawH;
+
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.naturalWidth || 1080;
-                        canvas.height = img.naturalHeight || 1920;
+                        canvas.width = baseW;
+                        canvas.height = baseH;
                         const ctx = canvas.getContext('2d');
-                        if (!ctx) return resolve(this.mediaBlob);
+                        if (!ctx) return resolve(item.blob);
 
                         // Terapkan CSS filter bila ada
-                        const filterPreset = this.filterPresets[this.activeFilter];
+                        const filterPreset = this.filterPresets[filterKey];
                         if (filterPreset && filterPreset.css && filterPreset.css !== 'none') {
                             ctx.filter = filterPreset.css;
                         }
 
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        // Rotasi & Mirroring
+                        ctx.translate(baseW / 2, baseH / 2);
+                        if (rotation !== 0) ctx.rotate((rotation * Math.PI) / 180);
+                        if (isMirrored) ctx.scale(-1, 1);
+                        ctx.drawImage(img, -rawW / 2, -rawH / 2, rawW, rawH);
+                        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
                         ctx.filter = 'none';
 
-                        // Render teks & stiker overlay
+                        // Render teks & stiker overlay (jika pada slide aktif)
                         if (hasOverlays) {
                             const scale = canvas.width / (this.overlayContainer?.clientWidth || canvas.width);
-                            this.overlays.forEach((item) => {
-                                const x = (item.x / 100) * canvas.width;
-                                const y = (item.y / 100) * canvas.height;
+                            this.overlays.forEach((ov) => {
+                                const x = (ov.x / 100) * canvas.width;
+                                const y = (ov.y / 100) * canvas.height;
 
-                                if (item.type === 'text') {
-                                    const fontSize = Math.max(16, Math.round((item.size || 18) * scale));
+                                if (ov.type === 'text') {
+                                    const fontSize = Math.max(16, Math.round((ov.size || 18) * scale));
                                     ctx.font = `bold ${fontSize}px sans-serif`;
                                     ctx.textAlign = 'center';
                                     ctx.textBaseline = 'middle';
 
-                                    const textMetrics = ctx.measureText(item.text);
+                                    const textMetrics = ctx.measureText(ov.text);
                                     const padX = 14 * scale;
                                     const padY = 8 * scale;
                                     const rectW = textMetrics.width + padX * 2;
                                     const rectH = fontSize + padY * 2;
 
-                                    if (item.bgColor && item.bgColor !== 'transparent') {
-                                        ctx.fillStyle = item.bgColor;
+                                    if (ov.bgColor && ov.bgColor !== 'transparent') {
+                                        ctx.fillStyle = ov.bgColor;
                                         ctx.beginPath();
                                         if (ctx.roundRect) {
                                             ctx.roundRect(x - rectW / 2, y - rectH / 2, rectW, rectH, 10 * scale);
@@ -852,28 +1133,63 @@
                                         ctx.fill();
                                     }
 
-                                    ctx.fillStyle = item.color || '#ffffff';
-                                    ctx.fillText(item.text, x, y);
-                                } else if (item.type === 'sticker') {
-                                    const fontSize = Math.max(24, Math.round((item.size || 38) * scale));
+                                    ctx.fillStyle = ov.color || '#ffffff';
+                                    ctx.fillText(ov.text, x, y);
+                                } else if (ov.type === 'sticker') {
+                                    const fontSize = Math.max(24, Math.round((ov.size || 38) * scale));
                                     ctx.font = `${fontSize}px sans-serif`;
                                     ctx.textAlign = 'center';
                                     ctx.textBaseline = 'middle';
-                                    ctx.fillText(item.emoji, x, y);
+                                    ctx.fillText(ov.emoji, x, y);
                                 }
                             });
                         }
 
-                        canvas.toBlob((blob) => {
-                            resolve(blob || this.mediaBlob);
+                        // Pemotongan Rasio Aspek (Crop Ratio 1:1 atau 3:4 atau 9:16)
+                        let finalCanvas = canvas;
+                        if (activeRatio === 'square') {
+                            const size = Math.min(canvas.width, canvas.height);
+                            const sqCanvas = document.createElement('canvas');
+                            sqCanvas.width = size;
+                            sqCanvas.height = size;
+                            const sqCtx = sqCanvas.getContext('2d');
+                            sqCtx.imageSmoothingEnabled = true;
+                            sqCtx.imageSmoothingQuality = 'high';
+                            const sx = (canvas.width - size) / 2;
+                            const sy = (canvas.height - size) / 2;
+                            sqCtx.drawImage(canvas, sx, sy, size, size, 0, 0, size, size);
+                            finalCanvas = sqCanvas;
+                        } else if (activeRatio === 'standard') {
+                            let targetW, targetH;
+                            if (canvas.width / canvas.height > 3 / 4) {
+                                targetH = canvas.height;
+                                targetW = Math.round(targetH * (3 / 4));
+                            } else {
+                                targetW = canvas.width;
+                                targetH = Math.round(targetW * (4 / 3));
+                            }
+                            const stdCanvas = document.createElement('canvas');
+                            stdCanvas.width = targetW;
+                            stdCanvas.height = targetH;
+                            const stdCtx = stdCanvas.getContext('2d');
+                            stdCtx.imageSmoothingEnabled = true;
+                            stdCtx.imageSmoothingQuality = 'high';
+                            const sx = (canvas.width - targetW) / 2;
+                            const sy = (canvas.height - targetH) / 2;
+                            stdCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
+                            finalCanvas = stdCanvas;
+                        }
+
+                        finalCanvas.toBlob((blob) => {
+                            resolve(blob || item.blob);
                         }, 'image/jpeg', 0.95);
                     } catch (bakeErr) {
                         console.warn('Gagal bake overlay foto, gunakan blob asli:', bakeErr);
-                        resolve(this.mediaBlob);
+                        resolve(item.blob);
                     }
                 };
 
-                img.onerror = () => resolve(this.mediaBlob);
+                img.onerror = () => resolve(item.blob);
                 img.src = sourceUrl;
             });
         }
@@ -903,16 +1219,6 @@
                 selectedProductIds.push(parseInt(selectedProductSelect.value, 10));
             }
 
-            // Siapkan file yang siap diunggah (bake overlay foto bila perlu)
-            let finalMediaBlob = this.mediaBlob;
-            if (this.mediaType === 'photo' && (!this.mediaBlobs || this.mediaBlobs.length <= 1)) {
-                try {
-                    finalMediaBlob = await this.bakePhotoWithOverlays();
-                } catch (e) {
-                    finalMediaBlob = this.mediaBlob;
-                }
-            }
-
             // Siapkan FormData
             const formData = new FormData();
             const hasMultipleItems = this.mediaItems && this.mediaItems.length > 1;
@@ -920,29 +1226,42 @@
             if (hasMultipleItems) {
                 // Multi-media upload (Carousel Foto, Video, atau Campuran seperti IG)
                 let containsVideo = false;
-                this.mediaItems.forEach((item, idx) => {
+                for (let idx = 0; idx < this.mediaItems.length; idx++) {
+                    const item = this.mediaItems[idx];
                     const isVid = item.type === 'video';
                     if (isVid) containsVideo = true;
-                    const mime = (item.blob && item.blob.type) ? item.blob.type.toLowerCase() : '';
+
+                    let blobToUpload = item.blob;
+                    if (!isVid) {
+                        try {
+                            blobToUpload = await this.bakePhotoWithOverlays(item);
+                        } catch (e) {
+                            blobToUpload = item.blob;
+                        }
+                    }
+
+                    const mime = (blobToUpload && blobToUpload.type) ? blobToUpload.type.toLowerCase() : '';
                     let ext = isVid ? (mime.includes('webm') ? 'webm' : 'mp4') : (mime.includes('png') ? 'png' : 'jpg');
                     const filename = `moment_${Date.now()}_${idx}.${ext}`;
-                    formData.append(`media[${idx}]`, item.blob, filename);
-                });
+                    formData.append('media[]', blobToUpload, filename);
+                }
                 formData.append('media_type', containsVideo ? 'video' : 'image');
             } else {
                 const singleItem = (this.mediaItems && this.mediaItems.length === 1) ? this.mediaItems[0] : null;
-                const blobToUpload = singleItem ? singleItem.blob : finalMediaBlob;
-                const typeToUpload = singleItem ? singleItem.type : this.mediaType;
-                const mimeType = (blobToUpload && blobToUpload.type) ? blobToUpload.type.toLowerCase() : '';
-                let ext = 'jpg';
-                if (typeToUpload === 'video') {
-                    ext = mimeType.includes('webm') ? 'webm' : 'mp4';
-                } else if (mimeType.includes('png')) {
-                    ext = 'png';
+                const isVid = singleItem ? singleItem.type === 'video' : this.mediaType === 'video';
+                let blobToUpload = singleItem ? singleItem.blob : this.mediaBlob;
+                if (!isVid) {
+                    try {
+                        blobToUpload = await this.bakePhotoWithOverlays(singleItem);
+                    } catch (e) {
+                        blobToUpload = singleItem ? singleItem.blob : this.mediaBlob;
+                    }
                 }
+                const mimeType = (blobToUpload && blobToUpload.type) ? blobToUpload.type.toLowerCase() : '';
+                let ext = isVid ? (mimeType.includes('webm') ? 'webm' : 'mp4') : (mimeType.includes('png') ? 'png' : 'jpg');
                 const filename = `moment_${Date.now()}.${ext}`;
                 formData.append('media', blobToUpload, filename);
-                formData.append('media_type', typeToUpload === 'video' ? 'video' : 'image');
+                formData.append('media_type', isVid ? 'video' : 'image');
             }
             formData.append('caption', caption);
 

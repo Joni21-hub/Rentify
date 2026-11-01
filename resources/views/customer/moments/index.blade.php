@@ -578,33 +578,11 @@
 
             const isAuthorOrAdmin = (IS_AUTHENTICATED && (m.author.id === CURRENT_USER_ID || CURRENT_USER_ROLE === 'admin'));
 
-            // Media section
+            // Media section (Prioritaskan Carousel jika > 1 media, lalu Single Video, lalu Single Photo)
             let mediaHtml = '';
-            if (m.media_type === 'video') {
-                mediaHtml = `
-                    <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
-                        <video 
-                            src="${m.media_url}" 
-                            poster="${m.thumbnail_url || ''}" 
-                            playsinline 
-                            loop 
-                            preload="metadata"
-                            muted
-                            class="w-full h-full object-cover pointer-events-none"
-                        ></video>
-                        <!-- Center Play/Pause Indicator -->
-                        <div class="play-pause-indicator pointer-events-none absolute inset-0 flex items-center justify-center">
-                            <div class="play-pause-pulse hidden w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white text-2xl flex items-center justify-center shadow-2xl">
-                                <i class="fa-solid fa-play ml-1"></i>
-                            </div>
-                        </div>
-                        <!-- Video Bottom Progress Bar (2px) -->
-                        <div class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-white/20 z-20 pointer-events-none">
-                            <div class="video-progress-bar h-full bg-sky-400 w-0 transition-all duration-100 ease-linear"></div>
-                        </div>
-                    </div>
-                `;
-            } else if (m.media_urls && Array.isArray(m.media_urls) && m.media_urls.length > 1) {
+            const isCarousel = (m.media_urls && Array.isArray(m.media_urls) && m.media_urls.length > 1);
+
+            if (isCarousel) {
                 // Carousel Post (Multi-Media Foto, Video, atau Campuran bergaya Instagram)
                 const totalSlides = m.media_urls.length;
                 const fallbackMomentImg = 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg';
@@ -612,13 +590,13 @@
                     const isVid = isVideoUrl(url);
                     if (isVid) {
                         return `
-                            <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden bg-black" data-slide-index="${sIdx}">
+                            <div class="carousel-slide relative w-full min-w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden bg-black" data-slide-index="${sIdx}">
                                 <video src="${url}" playsinline loop muted class="relative z-10 w-full h-full object-contain pointer-events-auto" controls onclick="event.stopPropagation();"></video>
                             </div>
                         `;
                     }
                     return `
-                        <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
+                        <div class="carousel-slide relative w-full min-w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
                             <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                             <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         </div>
@@ -642,17 +620,41 @@
                             <span id="carousel-counter-${m.id}">1/${totalSlides}</span>
                         </div>
 
-                        <!-- Prev & Next Arrows (Desktop & Hover) -->
-                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, -1)" class="carousel-prev-${m.id} absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Sebelumnya">
+                        <!-- Prev & Next Arrows (Tampil ramping di mobile & desktop) -->
+                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, -1)" class="carousel-prev-${m.id} absolute left-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center active:scale-90 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Sebelumnya">
                             <i class="fa-solid fa-chevron-left text-xs"></i>
                         </button>
-                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, 1)" class="carousel-next-${m.id} absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Berikutnya">
+                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, 1)" class="carousel-next-${m.id} absolute right-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center active:scale-90 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Berikutnya">
                             <i class="fa-solid fa-chevron-right text-xs"></i>
                         </button>
 
                         <!-- Dots Pagination Bottom -->
                         <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 pointer-events-auto" id="carousel-dots-${m.id}">
                             ${dots}
+                        </div>
+                    </div>
+                `;
+            } else if (m.media_type === 'video') {
+                mediaHtml = `
+                    <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+                        <video 
+                            src="${m.media_url}" 
+                            poster="${m.thumbnail_url || ''}" 
+                            playsinline 
+                            loop 
+                            preload="metadata"
+                            muted
+                            class="w-full h-full object-cover pointer-events-none"
+                        ></video>
+                        <!-- Center Play/Pause Indicator -->
+                        <div class="play-pause-indicator pointer-events-none absolute inset-0 flex items-center justify-center">
+                            <div class="play-pause-pulse hidden w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white text-2xl flex items-center justify-center shadow-2xl">
+                                <i class="fa-solid fa-play ml-1"></i>
+                            </div>
+                        </div>
+                        <!-- Video Bottom Progress Bar (2px) -->
+                        <div class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-white/20 z-20 pointer-events-none">
+                            <div class="video-progress-bar h-full bg-sky-400 w-0 transition-all duration-100 ease-linear"></div>
                         </div>
                     </div>
                 `;

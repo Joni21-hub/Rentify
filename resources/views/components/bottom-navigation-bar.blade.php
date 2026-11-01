@@ -463,8 +463,8 @@
                 if (t.closest('input, textarea, select, button, a:not(#bottom-navigation-bar a)')) return true;
                 // Modal atau sheet aktif
                 if (document.querySelector('#comments-drawer:not(.hidden), #upload-modal:not(.hidden), #report-modal:not(.hidden), #guest-auth-modal:not(.hidden), #drawer-settings:not(.hidden)')) return true;
-                // Carousel foto atau slider horizontal
-                if (t.closest('.carousel-track, #carousel-wrap, #banner-slider, .productSwiper, .swiper, .overflow-x-auto, .overflow-x-scroll')) return true;
+                // Carousel foto atau slider horizontal (Cegah ganti tab SPA saat geser foto carousel momen)
+                if (t.closest('.carousel-track, [id^="carousel-"], .carousel-slide, #carousel-wrap, #banner-slider, .productSwiper, .swiper, .overflow-x-auto, .overflow-x-scroll')) return true;
                 return false;
             }
 

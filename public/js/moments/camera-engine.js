@@ -89,13 +89,15 @@
             // Matikan stream aktif sebelumnya
             this.stopStream();
 
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             const constraintsList = [
-                // 1. Prioritas Utama: Full HD 1080p / 4K Kualitas Tinggi (Landscape/Portrait otomatis dioptimalkan)
+                // 1. Prioritas Utama: Mobile Portrait 9:16 Kualitas Tinggi (Lensa Lebar Normal, Bukan Telephoto Zoom)
                 {
                     video: {
                         facingMode: { ideal: facingMode },
-                        width: { min: 1080, ideal: 1920, max: 3840 },
-                        height: { min: 720, ideal: 1080, max: 2160 },
+                        aspectRatio: { ideal: 9 / 16 },
+                        width: { ideal: 1080 },
+                        height: { ideal: 1920 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
@@ -104,27 +106,37 @@
                         autoGainControl: true
                     }
                 },
-                // 2. Fallback HD 1080p / 720p tanpa batas min ketat
+                // 2. Fallback HD 720p Portrait (720x1280)
                 {
                     video: {
                         facingMode: { ideal: facingMode },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 },
+                        aspectRatio: { ideal: 9 / 16 },
+                        width: { ideal: 720 },
+                        height: { ideal: 1280 },
                         frameRate: { ideal: 30 }
                     },
                     audio: true
                 },
-                // 3. Fallback Facing Mode saja + audio
+                // 3. Fallback Facing Mode dengan dimensi ideal
+                {
+                    video: {
+                        facingMode: { ideal: facingMode },
+                        width: { ideal: isMobile ? 1080 : 1920 },
+                        height: { ideal: isMobile ? 1920 : 1080 }
+                    },
+                    audio: true
+                },
+                // 4. Fallback Facing Mode saja + audio
                 {
                     video: { facingMode: { ideal: facingMode } },
                     audio: true
                 },
-                // 4. Fallback video apa saja + audio
+                // 5. Fallback video apa saja + audio
                 {
                     video: true,
                     audio: true
                 },
-                // 5. Fallback video saja (tanpa audio)
+                // 6. Fallback video saja (tanpa audio)
                 {
                     video: true,
                     audio: false
@@ -179,7 +191,9 @@
             const isMirrored = window.MomentCreatorState.get('isMirrored');
             const zoom = window.MomentCreatorState.get('zoom') || 1.0;
             const scaleX = isMirrored ? -zoom : zoom;
-            this.videoEl.style.transform = `scale(${scaleX}, ${zoom})`;
+            const transformVal = `scale(${scaleX}, ${zoom}) translateZ(0)`;
+            this.videoEl.style.transform = transformVal;
+            this.videoEl.style.webkitTransform = transformVal;
         }
 
         /**
@@ -364,10 +378,12 @@
 
             ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
 
-            // Potong ke 1:1 Persegi jika mode rasio persegi aktif
-            const isSquare = window.MomentCreatorState.get('aspectRatio') === 'square';
+            // Potong ke Rasio Aktif: 1:1 (Persegi), 3:4 (Standar Feed), atau 9:16 (Potret Fullscreen)
+            const aspectRatio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
             let finalCanvas = canvas;
-            if (isSquare) {
+
+            if (aspectRatio === 'square') {
+                // 1:1 Persegi
                 const size = Math.min(canvas.width, canvas.height);
                 const squareCanvas = document.createElement('canvas');
                 squareCanvas.width = size;
@@ -379,6 +395,48 @@
                 const sy = (canvas.height - size) / 2;
                 sCtx.drawImage(canvas, sx, sy, size, size, 0, 0, size, size);
                 finalCanvas = squareCanvas;
+            } else if (aspectRatio === 'standard') {
+                // 3:4 Potret Standar (Lebar : Tinggi = 3 : 4)
+                let targetW, targetH;
+                if (canvas.width / canvas.height > 3 / 4) {
+                    targetH = canvas.height;
+                    targetW = Math.round(targetH * (3 / 4));
+                } else {
+                    targetW = canvas.width;
+                    targetH = Math.round(targetW * (4 / 3));
+                }
+                const stdCanvas = document.createElement('canvas');
+                stdCanvas.width = targetW;
+                stdCanvas.height = targetH;
+                const stdCtx = stdCanvas.getContext('2d');
+                stdCtx.imageSmoothingEnabled = true;
+                stdCtx.imageSmoothingQuality = 'high';
+                const sx = (canvas.width - targetW) / 2;
+                const sy = (canvas.height - targetH) / 2;
+                stdCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
+                finalCanvas = stdCanvas;
+            } else if (aspectRatio === 'portrait') {
+                // 9:16 Potret Fullscreen
+                let targetW, targetH;
+                if (canvas.width / canvas.height > 9 / 16) {
+                    targetH = canvas.height;
+                    targetW = Math.round(targetH * (9 / 16));
+                } else {
+                    targetW = canvas.width;
+                    targetH = Math.round(targetW * (16 / 9));
+                }
+                if (targetW < canvas.width || targetH < canvas.height) {
+                    const portCanvas = document.createElement('canvas');
+                    portCanvas.width = targetW;
+                    portCanvas.height = targetH;
+                    const pCtx = portCanvas.getContext('2d');
+                    pCtx.imageSmoothingEnabled = true;
+                    pCtx.imageSmoothingQuality = 'high';
+                    const sx = (canvas.width - targetW) / 2;
+                    const sy = (canvas.height - targetH) / 2;
+                    pCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
+                    finalCanvas = portCanvas;
+                }
             }
 
             const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);

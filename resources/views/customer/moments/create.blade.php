@@ -87,6 +87,13 @@
                 <div></div>
             </div>
 
+            <!-- 3:4 Framing Mask (Active when Aspect Ratio is 3:4) -->
+            <div id="camera-3-4-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+                <div class="w-full aspect-[3/4] max-h-[82vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+            </div>
+
             <!-- Square Framing Mask (Active when Aspect Ratio is 1:1) -->
             <div id="camera-square-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
                 <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
@@ -118,8 +125,8 @@
                     </span>
                 </button>
 
-                <!-- Aspect Ratio Toggle Button (Persegi 1:1 / Potret 9:16) -->
-                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Persegi 1:1 / Potret 9:16)">
+                <!-- Aspect Ratio Toggle Button (9:16 / 3:4 / 1:1) -->
+                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (9:16 / 3:4 / 1:1)">
                     <i id="aspect-ratio-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
                     <span id="aspect-ratio-label">9:16</span>
                 </button>
@@ -269,8 +276,8 @@
             </div>
         </footer>
 
-        <!-- Hidden Input for File Selection (Semua format foto & video tanpa batasan) -->
-        <input type="file" id="creator-hidden-file-input" accept="image/*,video/*,.heic,.heif,.*" multiple class="hidden">
+        <!-- Hidden Input for File Selection (Semua format foto & video) -->
+        <input type="file" id="creator-hidden-file-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden">
     </div>
 
     <!-- ============================================================== -->
@@ -344,7 +351,7 @@
             </button>
 
             <!-- Aspect Ratio Toggle Button di Editor -->
-            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.toggleAspectRatio()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Persegi 1:1 / Potret 9:16)">
+            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.toggleAspectRatio()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (9:16 / 3:4 / 1:1)">
                 <i id="editor-aspect-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
                 <span id="editor-aspect-label">9:16</span>
             </button>
@@ -364,6 +371,14 @@
                     <i class="fa-solid fa-arrows-left-right text-sm text-cyan-300"></i>
                 </button>
                 <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Cermin</span>
+            </div>
+
+            <!-- 0b. Putar 90° / Rotate Slide -->
+            <div class="flex flex-col items-center">
+                <button onclick="window.MomentEditorEngine.rotateCurrentSlide()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Putar 90°">
+                    <i class="fa-solid fa-rotate-right text-sm text-sky-400"></i>
+                </button>
+                <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Putar</span>
             </div>
 
             <!-- 1. Teks Overlay (Aa) -->
@@ -408,11 +423,30 @@
         </aside>
 
         <!-- 4. Video Bottom Progress Timeline (Hanya Video) -->
-        <div id="editor-video-timeline" class="absolute bottom-4 left-4 right-4 z-20 pointer-events-none">
+        <div id="editor-video-timeline" class="absolute bottom-20 left-4 right-4 z-20 pointer-events-none hidden">
             <div class="h-1 bg-white/20 rounded-full overflow-hidden">
                 <div class="h-full bg-sky-400 w-full animate-pulse"></div>
             </div>
         </div>
+
+        <!-- 5. Bottom Multi-Media Filmstrip Carousel Bar (Gaya Instagram / TikTok) -->
+        <div id="editor-filmstrip-bar" class="absolute bottom-3 left-3 right-3 z-30 pointer-events-auto">
+            <div class="glass-pill rounded-2xl p-1.5 flex items-center justify-between gap-2 shadow-2xl border border-white/20">
+                <!-- Track Thumbnail Slide -->
+                <div id="editor-filmstrip-track" class="flex items-center gap-2 overflow-x-auto py-0.5 px-1 scrollbar-none flex-1">
+                    <!-- Dinamis: thumbnail slide, highlight border-sky-400 pada slide aktif, tombol hapus x -->
+                </div>
+
+                <!-- Tombol Tambah Media (+) -->
+                <button type="button" onclick="window.MomentEditorEngine.triggerAddMedia()" class="w-11 h-11 rounded-xl bg-sky-500/25 hover:bg-sky-500/40 border border-sky-400/60 text-sky-300 flex flex-col items-center justify-center shrink-0 active:scale-95 transition shadow-lg" title="Tambah Media Lagi">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span class="text-[8px] font-black leading-none mt-0.5">Tambah</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Input untuk Tambah Media di Editor -->
+        <input type="file" id="editor-add-media-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden">
 
         <!-- ============================================================== -->
         <!-- DRAWER 1: FILTER VISUAL CAROUSEL -->

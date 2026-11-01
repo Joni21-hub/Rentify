@@ -119,23 +119,39 @@
                 };
             }
 
-            // Header: Aspect Ratio Toggle (9:16 Potret <-> 1:1 Persegi)
+            // Header: Aspect Ratio Toggle (9:16 -> 3:4 -> 1:1)
             const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
             const aspectLabel = document.getElementById('aspect-ratio-label');
             const aspectIcon = document.getElementById('aspect-ratio-icon');
             const squareMask = document.getElementById('camera-square-mask');
+            const standardMask = document.getElementById('camera-3-4-mask');
+
+            const applyCameraRatioUI = (ratio) => {
+                const isSquare = ratio === 'square';
+                const isStandard = ratio === 'standard';
+                const isPortrait = ratio === 'portrait';
+
+                if (aspectLabel) {
+                    aspectLabel.textContent = isSquare ? '1:1' : (isStandard ? '3:4' : '9:16');
+                }
+                if (aspectIcon) {
+                    if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
+                    else if (isStandard) aspectIcon.className = 'fa-solid fa-rectangle-vertical text-sky-400 text-xs';
+                    else aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                }
+                if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
+                if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
+
+                const msg = isSquare ? 'Rasio: Persegi (1:1)' : (isStandard ? 'Rasio: Feed (3:4)' : 'Rasio: Potret (9:16)');
+                this.showFilterToast(msg);
+            };
+
             if (aspectBtn) {
-                aspectBtn.onclick = () => {
+                aspectBtn.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
                     const nextRatio = this.state.toggleAspectRatio();
-                    const isSquare = nextRatio === 'square';
-                    if (aspectLabel) aspectLabel.textContent = isSquare ? '1:1' : '9:16';
-                    if (aspectIcon) {
-                        aspectIcon.className = isSquare ? 'fa-regular fa-square text-sky-400 text-xs' : 'fa-solid fa-mobile-screen text-sky-400 text-xs';
-                    }
-                    if (squareMask) {
-                        squareMask.classList.toggle('hidden', !isSquare);
-                    }
-                    this.showFilterToast(isSquare ? 'Rasio: Persegi (1:1)' : 'Rasio: Potret (9:16)');
+                    applyCameraRatioUI(nextRatio);
+                    this.engine.vibrate(15);
                 };
             }
 
@@ -875,19 +891,22 @@
             }
 
             if (processedItems.length > 0) {
-                this.state.setCapturedMediaItems(processedItems);
+                const existing = this.state.getCapturedMediaItems() || [];
+                const combined = (existing.length > 0) ? existing.concat(processedItems).slice(0, 10) : processedItems;
+                this.state.setCapturedMediaItems(combined);
 
                 // Jika hanya 1 video yang dipilih, daftarkan juga sebagai klip untuk kompatibilitas trimmer
-                if (processedItems.length === 1 && processedItems[0].type === 'video') {
+                if (combined.length === 1 && combined[0].type === 'video') {
                     this.state.clearAllClips();
                     this.state.addClip({
-                        blob: processedItems[0].blob,
-                        duration: processedItems[0].duration,
+                        blob: combined[0].blob,
+                        duration: combined[0].duration,
                         speed: 1.0,
                         filter: 'normal'
                     });
                 }
 
+                if (event.target) event.target.value = '';
                 this.handleNextStep();
             }
         }

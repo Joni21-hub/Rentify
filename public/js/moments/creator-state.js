@@ -158,15 +158,34 @@
         }
 
         setAspectRatio(ratio) {
-            if (['portrait', 'square'].includes(ratio)) {
-                this.set('aspectRatio', ratio);
+            let normalized = ratio;
+            if (ratio === '9:16') normalized = 'portrait';
+            else if (ratio === '3:4') normalized = 'standard';
+            else if (ratio === '1:1') normalized = 'square';
+
+            if (['portrait', 'standard', 'square'].includes(normalized)) {
+                this.set('aspectRatio', normalized);
             }
         }
 
         toggleAspectRatio() {
-            const next = this.state.aspectRatio === 'square' ? 'portrait' : 'square';
+            // Siklus rasio: 9:16 (Potret Fullscreen) -> 3:4 (Standar Feed) -> 1:1 (Persegi) -> 9:16
+            let next = 'portrait';
+            if (this.state.aspectRatio === 'portrait') {
+                next = 'standard';
+            } else if (this.state.aspectRatio === 'standard') {
+                next = 'square';
+            } else {
+                next = 'portrait';
+            }
             this.setAspectRatio(next);
             return next;
+        }
+
+        getAspectRatioDisplay() {
+            if (this.state.aspectRatio === 'standard') return '3:4';
+            if (this.state.aspectRatio === 'square') return '1:1';
+            return '9:16';
         }
 
         setZoom(zoom) {
@@ -180,6 +199,31 @@
             const photos = this.state.capturedMediaItems.filter(i => i.type === 'photo');
             this.setCapturedPhotos(photos);
             this.emit('media_items:updated', this.state.capturedMediaItems);
+        }
+
+        addMediaItem(item) {
+            if (!this.state.capturedMediaItems) this.state.capturedMediaItems = [];
+            if (this.state.capturedMediaItems.length >= 10) return false;
+            this.state.capturedMediaItems.push(item);
+            this.syncPhotosFromMediaItems();
+            this.emit('media_items:updated', this.state.capturedMediaItems);
+            return true;
+        }
+
+        removeMediaItem(idOrIndex) {
+            if (!this.state.capturedMediaItems) return;
+            if (typeof idOrIndex === 'number') {
+                this.state.capturedMediaItems.splice(idOrIndex, 1);
+            } else {
+                this.state.capturedMediaItems = this.state.capturedMediaItems.filter(i => i.id !== idOrIndex);
+            }
+            this.syncPhotosFromMediaItems();
+            this.emit('media_items:updated', this.state.capturedMediaItems);
+        }
+
+        syncPhotosFromMediaItems() {
+            const photos = this.state.capturedMediaItems.filter(i => i.type === 'photo');
+            this.setCapturedPhotos(photos);
         }
 
         getCapturedMediaItems() {
@@ -245,14 +289,26 @@
         }
 
         setCapturedPhoto(blob, dataUrl) {
-            this.state.capturedPhoto = {
+            const newPhoto = {
+                id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                type: 'photo',
                 blob,
                 dataUrl,
-                filter: this.state.activeFilter,
+                url: dataUrl,
+                filter: this.state.activeFilter || 'normal',
+                isMirrored: this.state.isMirrored || false,
+                aspectRatio: this.state.aspectRatio || 'portrait',
                 timestamp: Date.now()
             };
-            this.state.capturedPhotos = [this.state.capturedPhoto];
-            this.emit('photo:captured', this.state.capturedPhoto);
+            this.state.capturedPhoto = newPhoto;
+            if (!this.state.capturedMediaItems || this.state.capturedMediaItems.length === 0) {
+                this.state.capturedMediaItems = [newPhoto];
+            } else {
+                this.state.capturedMediaItems.push(newPhoto);
+            }
+            this.state.capturedPhotos = this.state.capturedMediaItems.filter(i => i.type === 'photo');
+            this.emit('photo:captured', newPhoto);
+            this.emit('media_items:updated', this.state.capturedMediaItems);
         }
 
         setCapturedPhotos(photos) {
