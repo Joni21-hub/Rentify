@@ -62,12 +62,15 @@
                 <!-- FOTO PROFIL DENGAN PREVIEW INSTAN & PILIHAN KAMERA/GALERI -->
                 <div class="flex flex-col items-center">
                     <div class="relative group cursor-pointer mb-2" onclick="openPhotoModal()">
-                        <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-sky-100 flex items-center justify-center text-sky-600 text-3xl font-black relative">
+                        <div class="w-28 h-28 min-w-[112px] min-h-[112px] max-w-[112px] max-h-[112px] aspect-square rounded-full overflow-hidden border-4 border-white shadow-lg bg-sky-100 flex items-center justify-center text-sky-600 text-3xl font-black relative shrink-0" style="width: 112px; height: 112px; min-width: 112px; min-height: 112px; max-width: 112px; max-height: 112px; aspect-ratio: 1 / 1; contain: layout paint;">
                             <!-- Image Element (Tampil jika sudah ada foto atau dipilih foto baru) -->
                             <img id="avatarPreviewImage" 
+                                 width="112"
+                                 height="112"
                                  src="{{ $user->foto_profil ? (str_starts_with((string)$user->foto_profil, 'http') ? $user->foto_profil : Storage::url((string)$user->foto_profil)) : '' }}" 
                                  alt="Foto" 
-                                 class="w-full h-full object-cover {{ $user->foto_profil ? '' : 'hidden' }}">
+                                 class="w-full h-full object-cover rounded-full aspect-square block {{ $user->foto_profil ? '' : 'hidden' }}"
+                                 style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; aspect-ratio: 1 / 1; display: block; border-radius: 9999px;">
                             
                             <!-- Placeholder Inisial (Tampil jika belum ada foto profil) -->
                             <span id="avatarPlaceholder" class="{{ $user->foto_profil ? 'hidden' : '' }}">

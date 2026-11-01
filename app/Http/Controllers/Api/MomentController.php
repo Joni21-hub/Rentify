@@ -234,23 +234,47 @@ class MomentController extends Controller
         $videoDuration = null;
 
         if (is_array($mediaInput)) {
-            // Multi-photo upload (Carousel Post)
+            // Multi-media upload (Carousel Post - Foto, Video, atau Campuran bergaya Instagram)
+            $hasVideo = false;
+            $hasImage = false;
             foreach ($mediaInput as $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
-                    $uploadResult = $this->uploadMediaToCloudinary($file, 'image');
-                    $mediaUrls[] = $uploadResult['secure_url'];
+                    $mime = $file->getMimeType() ?: '';
+                    $ext = strtolower($file->getClientOriginalExtension() ?: '');
+                    $isVideo = (str_starts_with($mime, 'video/') || in_array($ext, $videoExtensions));
+
+                    if ($isVideo) {
+                        $hasVideo = true;
+                        $uploadResult = $this->uploadMediaToCloudinary($file, 'video');
+                        if (!$thumbnailUrl && !empty($uploadResult['thumbnail_url'])) {
+                            $thumbnailUrl = $uploadResult['thumbnail_url'];
+                        }
+                    } else {
+                        $hasImage = true;
+                        $uploadResult = $this->uploadMediaToCloudinary($file, 'image');
+                    }
+
+                    if (!empty($uploadResult['secure_url'])) {
+                        $mediaUrls[] = $uploadResult['secure_url'];
+                    }
                 }
             }
 
             if (empty($mediaUrls)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal memproses berkas foto yang diunggah.',
+                    'message' => 'Gagal memproses berkas media yang diunggah.',
                 ], 422);
             }
 
             $primaryMediaUrl = $mediaUrls[0];
-            $mediaType = 'image';
+            $urlPath = parse_url($primaryMediaUrl, PHP_URL_PATH);
+            $primaryExt = is_string($urlPath) ? strtolower(pathinfo($urlPath, PATHINFO_EXTENSION)) : '';
+            $isPrimaryVideo = in_array($primaryExt, $videoExtensions) || str_contains($primaryMediaUrl, '/video/');
+            $mediaType = $isPrimaryVideo ? 'video' : ($hasVideo && !$hasImage ? 'video' : 'image');
+            if ($isPrimaryVideo && $request->filled('video_duration_seconds')) {
+                $videoDuration = $request->input('video_duration_seconds');
+            }
         } else {
             // Single media (image or video)
             $file = $mediaInput;

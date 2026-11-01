@@ -181,18 +181,18 @@
             <form id="upload-moment-form" onsubmit="submitMomentUpload(event)" class="space-y-3.5">
                 <!-- Media Picker & Live Preview -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto (Multi-Foto / Carousel) atau Video *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto & Video (Multi-Media Carousel seperti IG) *</label>
                     <div id="drop-area" onclick="document.getElementById('media-file-input').click()" class="border-2 border-dashed border-sky-200 hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer transition bg-sky-50/40 hover:bg-sky-50/80">
                         <input type="file" id="media-file-input" accept="image/*,video/*,.heic,.heif,.*" multiple class="hidden" onchange="handleFileSelection(event)">
                         <div id="upload-prompt" class="space-y-2">
                             <div class="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center mx-auto text-xl shadow-xs">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
-                            <p class="text-xs font-bold text-slate-800">Pilih foto (bisa banyak / carousel) atau video</p>
-                            <p class="text-[10px] text-slate-400">Pilih hingga 10 foto untuk postingan carousel bergaya Instagram atau 1 video tanpa batas ukuran</p>
+                            <p class="text-xs font-bold text-slate-800">Pilih foto atau video (bisa banyak / carousel seperti IG)</p>
+                            <p class="text-[10px] text-slate-400">Pilih hingga 10 berkas foto, video, atau campuran untuk postingan carousel bergaya Instagram</p>
                         </div>
                         <div id="media-preview-container" class="hidden space-y-2">
-                            <!-- Multi-Photo Grid Thumbnails -->
+                            <!-- Multi-Media Grid Thumbnails -->
                             <div id="multi-image-preview-grid" class="hidden grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-1.5 rounded-xl bg-slate-50/70 border border-slate-100 scrollbar-none"></div>
                             <!-- Single Preview (1 Foto atau 1 Video) -->
                             <div id="single-media-preview" class="hidden">
@@ -203,7 +203,7 @@
                                 <span id="file-info-text" class="text-sky-700 font-bold"></span>
                                 <div class="flex items-center gap-1.5">
                                     <button type="button" onclick="event.stopPropagation(); document.getElementById('media-file-input').click()" class="text-[10px] font-bold text-sky-600 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-full border border-sky-200 transition">
-                                        <i class="fa-solid fa-plus text-[9px] mr-1"></i> Tambah Foto
+                                        <i class="fa-solid fa-plus text-[9px] mr-1"></i> Tambah Media
                                     </button>
                                     <button type="button" onclick="event.stopPropagation(); resetSelectedMedia()" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-full border border-rose-200 transition">
                                         <i class="fa-solid fa-trash text-[9px] mr-1"></i> Reset
@@ -500,6 +500,68 @@
         `;
     }
 
+    function isVideoUrl(url) {
+        if (!url) return false;
+        const clean = url.split('?')[0].toLowerCase();
+        const videoExts = ['.mp4', '.webm', '.mov', '.mkv', '.avi', '.wmv', '.m4v', '.ogv', '.3gp'];
+        return videoExts.some(ext => clean.endsWith(ext)) || clean.includes('/video/upload/') || clean.includes('/video/');
+    }
+
+    /**
+     * Navigasi slide Carousel foto/video secara halus (Maju / Mundur).
+     */
+    function navigateCarousel(momentId, direction) {
+        const track = document.getElementById(`carousel-track-${momentId}`);
+        if (!track) return;
+        const width = track.clientWidth || 360;
+        track.scrollBy({
+            left: direction * width,
+            behavior: 'smooth'
+        });
+    }
+
+    /**
+     * Loncat langsung ke slide tertentu berdasarkan indeks dot.
+     */
+    function goToCarouselSlide(momentId, slideIndex) {
+        const track = document.getElementById(`carousel-track-${momentId}`);
+        if (!track) return;
+        const width = track.clientWidth || 360;
+        track.scrollTo({
+            left: slideIndex * width,
+            behavior: 'smooth'
+        });
+    }
+
+    /**
+     * Sinkronisasi indikator slide (Counter & Dots) saat carousel digeser (swipe / scroll).
+     */
+    function handleCarouselScroll(event, momentId, totalSlides) {
+        const track = event.target || document.getElementById(`carousel-track-${momentId}`);
+        if (!track) return;
+
+        const width = track.clientWidth || 1;
+        const scrollLeft = track.scrollLeft;
+        const activeIndex = Math.round(scrollLeft / width);
+        const clampedIndex = Math.min(Math.max(activeIndex, 0), totalSlides - 1);
+
+        // Update badge counter top-right (misal: 2/4)
+        const counter = document.getElementById(`carousel-counter-${momentId}`);
+        if (counter) {
+            counter.textContent = `${clampedIndex + 1}/${totalSlides}`;
+        }
+
+        // Update dots pagination di bagian bawah
+        const dots = document.querySelectorAll(`.carousel-dot-${momentId}`);
+        dots.forEach((dot, idx) => {
+            if (idx === clampedIndex) {
+                dot.className = `carousel-dot-${momentId} transition-all duration-300 rounded-full w-4 h-1.5 bg-sky-400 cursor-pointer`;
+            } else {
+                dot.className = `carousel-dot-${momentId} transition-all duration-300 rounded-full w-1.5 h-1.5 bg-white/50 cursor-pointer hover:bg-white/80`;
+            }
+        });
+    }
+
     /**
      * Render kartu-kartu momen ke dalam DOM dengan gaya TikTok / Instagram Reels Fullscreen.
      */
@@ -543,43 +605,53 @@
                     </div>
                 `;
             } else if (m.media_urls && Array.isArray(m.media_urls) && m.media_urls.length > 1) {
-                // Carousel Post (Multi-Foto Instagram Reels Style)
+                // Carousel Post (Multi-Media Foto, Video, atau Campuran bergaya Instagram)
                 const totalSlides = m.media_urls.length;
                 const fallbackMomentImg = 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg';
-                const slides = m.media_urls.map((url, sIdx) => `
-                    <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
-                        <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
-                        <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
-                    </div>
-                `).join('');
+                const slides = m.media_urls.map((url, sIdx) => {
+                    const isVid = isVideoUrl(url);
+                    if (isVid) {
+                        return `
+                            <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden bg-black" data-slide-index="${sIdx}">
+                                <video src="${url}" playsinline loop muted class="relative z-10 w-full h-full object-contain pointer-events-auto" controls onclick="event.stopPropagation();"></video>
+                            </div>
+                        `;
+                    }
+                    return `
+                        <div class="carousel-slide relative w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
+                            <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                            <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                        </div>
+                    `;
+                }).join('');
 
                 const dots = m.media_urls.map((_, dIdx) => `
-                    <div class="carousel-dot-${m.id} transition-all duration-300 rounded-full ${dIdx === 0 ? 'w-4 h-1.5 bg-sky-400' : 'w-1.5 h-1.5 bg-white/50'}" data-dot-index="${dIdx}"></div>
+                    <button type="button" onclick="event.stopPropagation(); goToCarouselSlide(${m.id}, ${dIdx})" class="carousel-dot-${m.id} transition-all duration-300 rounded-full cursor-pointer p-0 border-0 outline-none ${dIdx === 0 ? 'w-4 h-1.5 bg-sky-400' : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'}" data-dot-index="${dIdx}" aria-label="Slide ${dIdx + 1}"></button>
                 `).join('');
 
                 mediaHtml = `
                     <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden group/carousel" id="carousel-wrap-${m.id}">
                         <!-- Track Slide Horizontal Snap -->
-                        <div class="carousel-track flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none" id="carousel-track-${m.id}" onscroll="handleCarouselScroll(event, ${m.id}, ${totalSlides})" style="-webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <div class="carousel-track flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none" id="carousel-track-${m.id}" onscroll="handleCarouselScroll(event, ${m.id}, ${totalSlides})" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x pan-y;">
                             ${slides}
                         </div>
 
                         <!-- Badge Counter Top-Right (e.g. 1/3) -->
                         <div class="absolute top-16 right-4 z-20 glass-pill px-2.5 py-1 rounded-full text-[11px] font-black text-white/95 shadow-xl pointer-events-none flex items-center gap-1.5 border border-white/20">
-                            <i class="fa-solid fa-images text-sky-400 text-xs"></i>
+                            <i class="fa-solid fa-layer-group text-sky-400 text-xs"></i>
                             <span id="carousel-counter-${m.id}">1/${totalSlides}</span>
                         </div>
 
                         <!-- Prev & Next Arrows (Desktop & Hover) -->
-                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, -1)" class="carousel-prev-${m.id} absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20" aria-label="Foto Sebelumnya">
+                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, -1)" class="carousel-prev-${m.id} absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Sebelumnya">
                             <i class="fa-solid fa-chevron-left text-xs"></i>
                         </button>
-                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, 1)" class="carousel-next-${m.id} absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20" aria-label="Foto Berikutnya">
+                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, 1)" class="carousel-next-${m.id} absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Berikutnya">
                             <i class="fa-solid fa-chevron-right text-xs"></i>
                         </button>
 
                         <!-- Dots Pagination Bottom -->
-                        <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 pointer-events-none" id="carousel-dots-${m.id}">
+                        <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 pointer-events-auto" id="carousel-dots-${m.id}">
                             ${dots}
                         </div>
                     </div>
@@ -1158,7 +1230,7 @@
     }
 
     /**
-     * Pemilihan file (bisa multi-foto hingga 10 foto atau 1 video) dengan HEIC auto-transcoding.
+     * Pemilihan file (mendukung multi-foto, multi-video, atau campuran hingga 10 berkas) dengan HEIC auto-transcoding.
      */
     async function handleFileSelection(event) {
         const rawFiles = Array.from(event.target.files || []);
@@ -1167,50 +1239,8 @@
         const imageExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'bmp', 'tiff', 'tif', 'svg', 'avif', 'ico', 'raw', 'cr2', 'nef', 'arw', 'dng', 'psd', 'eps', 'ai'];
         const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
 
-        // Cek jika terdapat file video
-        const hasVideo = rawFiles.some(f => {
-            const m = f.type || '';
-            const e = (f.name || '').split('.').pop().toLowerCase();
-            return m.startsWith('video/') || videoExts.includes(e);
-        });
-
-        if (hasVideo) {
-            if (rawFiles.length > 1 || selectedFiles.length > 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    text: 'Postingan video hanya mendukung 1 berkas video. Untuk multi-upload, silakan pilih foto (maksimal 10 foto).'
-                });
-            }
-            const videoFile = rawFiles.find(f => {
-                const m = f.type || '';
-                const e = (f.name || '').split('.').pop().toLowerCase();
-                return m.startsWith('video/') || videoExts.includes(e);
-            }) || rawFiles[0];
-
-            selectedFiles = [videoFile];
-            selectedFile = videoFile;
-
-            const videoUrl = URL.createObjectURL(videoFile);
-            const tempVideo = document.createElement('video');
-            tempVideo.preload = 'metadata';
-            tempVideo.src = videoUrl;
-
-            tempVideo.onloadedmetadata = function () {
-                URL.revokeObjectURL(videoUrl);
-                selectedVideoDuration = tempVideo.duration;
-                showSingleMediaPreview(videoFile, true);
-            };
-
-            tempVideo.onerror = function () {
-                selectedVideoDuration = null;
-                showSingleMediaPreview(videoFile, true);
-            };
-            return;
-        }
-
-        // Penanganan multi-foto
         const statusEl = document.getElementById('heic-converting-status');
-        const processedPhotos = [];
+        const processedFiles = [];
 
         async function loadHeicConverter() {
             if (typeof heic2any === 'function') return true;
@@ -1230,10 +1260,11 @@
             const mime = file.type || '';
             const ext = (file.name || '').split('.').pop().toLowerCase();
             const isImage = mime.startsWith('image/') || imageExts.includes(ext);
+            const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
 
-            if (!isImage) continue;
+            if (!isImage && !isVideo) continue;
 
-            if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
+            if (isImage && (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif'))) {
                 statusEl?.classList.remove('hidden');
                 try {
                     await loadHeicConverter();
@@ -1241,35 +1272,33 @@
                         const convertedBlob = await heic2any({
                             blob: file,
                             toType: 'image/jpeg',
-                            quality: 0.9
+                            quality: 0.95
                         });
                         const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-                        processedPhotos.push(new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' }));
+                        processedFiles.push(new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' }));
                     } else {
-                        processedPhotos.push(file);
+                        processedFiles.push(file);
                     }
                 } catch (err) {
                     console.warn('heic2any failed, fallback to file:', err);
-                    processedPhotos.push(file);
+                    processedFiles.push(file);
                 } finally {
                     statusEl?.classList.add('hidden');
                 }
             } else {
-                processedPhotos.push(file);
+                processedFiles.push(file);
             }
         }
 
-        const currentImages = selectedFiles.filter(f => !(f.type || '').startsWith('video/'));
-        const totalNew = currentImages.concat(processedPhotos);
-
-        if (totalNew.length > 10) {
+        const combined = selectedFiles.concat(processedFiles);
+        if (combined.length > 10) {
             Swal.fire({
                 icon: 'warning',
-                text: 'Maksimal 10 foto per momen. Hanya 10 foto pertama yang disimpan.'
+                text: 'Maksimal 10 media (foto/video) per momen. 10 media pertama disimpan.'
             });
-            selectedFiles = totalNew.slice(0, 10);
+            selectedFiles = combined.slice(0, 10);
         } else {
-            selectedFiles = totalNew;
+            selectedFiles = combined;
         }
 
         selectedFile = selectedFiles[0] || null;
@@ -1295,9 +1324,14 @@
 
         const grid = document.getElementById('multi-image-preview-grid');
         const fileInfo = document.getElementById('file-info-text');
+        const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
 
         if (selectedFiles.length === 1) {
-            showSingleMediaPreview(selectedFiles[0], false);
+            const single = selectedFiles[0];
+            const mime = single.type || '';
+            const ext = (single.name || '').split('.').pop().toLowerCase();
+            const isVid = mime.startsWith('video/') || videoExts.includes(ext);
+            showSingleMediaPreview(single, isVid);
             return;
         }
 
@@ -1306,23 +1340,44 @@
             grid.classList.remove('hidden');
 
             let totalBytes = 0;
+            let videoCount = 0;
+            let photoCount = 0;
+
             selectedFiles.forEach((f, idx) => {
                 totalBytes += f.size;
+                const mime = f.type || '';
+                const ext = (f.name || '').split('.').pop().toLowerCase();
+                const isVid = mime.startsWith('video/') || videoExts.includes(ext);
+                if (isVid) videoCount++; else photoCount++;
+
                 const url = URL.createObjectURL(f);
                 const item = document.createElement('div');
-                item.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 group border border-slate-200 shadow-xs';
-                item.innerHTML = `
-                    <img src="${url}" class="w-full h-full object-cover">
-                    <span class="absolute top-1 left-1 bg-black/70 backdrop-blur-md text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">#${idx + 1}</span>
-                    <button type="button" onclick="event.stopPropagation(); removePhotoByIndex(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm transition">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                `;
+                item.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-900 group border border-slate-700 shadow-xs flex items-center justify-center';
+
+                if (isVid) {
+                    item.innerHTML = `
+                        <video src="${url}#t=0.5" class="w-full h-full object-cover pointer-events-none" muted preload="metadata"></video>
+                        <span class="absolute top-1 left-1 bg-black/75 backdrop-blur-md text-white text-[9px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                            <i class="fa-solid fa-play text-sky-400 text-[8px]"></i> #${idx + 1}
+                        </span>
+                        <button type="button" onclick="event.stopPropagation(); removePhotoByIndex(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <img src="${url}" class="w-full h-full object-cover">
+                        <span class="absolute top-1 left-1 bg-black/75 backdrop-blur-md text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">#${idx + 1}</span>
+                        <button type="button" onclick="event.stopPropagation(); removePhotoByIndex(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                }
                 grid.appendChild(item);
             });
 
             if (fileInfo) {
-                fileInfo.textContent = `${selectedFiles.length} Foto Dipilih (${(totalBytes / (1024 * 1024)).toFixed(1)} MB) — Format Carousel`;
+                fileInfo.textContent = `${selectedFiles.length} Media Dipilih (${photoCount} Foto, ${videoCount} Video, ${(totalBytes / (1024 * 1024)).toFixed(1)} MB) — Format Carousel`;
             }
         }
     }
@@ -1410,30 +1465,33 @@
 
         submitBtn.disabled = true;
         const isMulti = selectedFiles.length > 1;
-        btnText.textContent = isMulti ? `Mengunggah ${selectedFiles.length} foto...` : 'Mengunggah momen...';
+        btnText.textContent = isMulti ? `Mengunggah ${selectedFiles.length} media...` : 'Mengunggah momen...';
         spinner?.classList.remove('hidden');
 
         const formData = new FormData();
-        const firstFile = selectedFiles[0];
-        const ext = (firstFile.name || '').split('.').pop().toLowerCase();
-        const mime = firstFile.type || '';
         const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
-        const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
 
-        if (isVideo) {
-            formData.append('media', firstFile);
-            formData.append('media_type', 'video');
-            if (selectedVideoDuration) {
-                formData.append('video_duration_seconds', selectedVideoDuration.toFixed(2));
-            }
-        } else if (isMulti) {
+        if (isMulti) {
+            let containsVideo = false;
             selectedFiles.forEach((file, idx) => {
+                const ext = (file.name || '').split('.').pop().toLowerCase();
+                const mime = file.type || '';
+                const isVid = mime.startsWith('video/') || videoExts.includes(ext);
+                if (isVid) containsVideo = true;
                 formData.append(`media[${idx}]`, file);
             });
-            formData.append('media_type', 'image');
+            formData.append('media_type', containsVideo ? 'video' : 'image');
         } else {
+            const firstFile = selectedFiles[0];
+            const ext = (firstFile.name || '').split('.').pop().toLowerCase();
+            const mime = firstFile.type || '';
+            const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
+
             formData.append('media', firstFile);
-            formData.append('media_type', 'image');
+            formData.append('media_type', isVideo ? 'video' : 'image');
+            if (isVideo && selectedVideoDuration) {
+                formData.append('video_duration_seconds', selectedVideoDuration.toFixed(2));
+            }
         }
 
         formData.append('caption', document.getElementById('caption-input')?.value || '');

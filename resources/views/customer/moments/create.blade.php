@@ -87,6 +87,13 @@
                 <div></div>
             </div>
 
+            <!-- Square Framing Mask (Active when Aspect Ratio is 1:1) -->
+            <div id="camera-square-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+                <div class="w-full aspect-square border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+            </div>
+
             <!-- Filter Name Subtle Toast (Swipe Notification) -->
             <div id="filter-name-toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300 glass-pill px-4 py-1.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-1.5">
                 <i class="fa-solid fa-wand-magic-sparkles text-sky-400 text-[11px]"></i>
@@ -111,10 +118,11 @@
                     </span>
                 </button>
 
-                <!-- Aspect Ratio Badge -->
-                <div class="glass-pill px-2.5 py-1 rounded-full text-[10px] font-black text-white/80 tracking-wider">
-                    9:16
-                </div>
+                <!-- Aspect Ratio Toggle Button (Persegi 1:1 / Potret 9:16) -->
+                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Persegi 1:1 / Potret 9:16)">
+                    <i id="aspect-ratio-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
+                    <span id="aspect-ratio-label">9:16</span>
+                </button>
             </div>
 
             <!-- Segmented Progress Bar Multi-Klip -->
@@ -131,6 +139,14 @@
                     <i class="fa-solid fa-camera-rotate text-sm"></i>
                 </button>
                 <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Balik</span>
+            </div>
+
+            <!-- 1b. Mirror / Cermin Flip Toggle -->
+            <div class="flex flex-col items-center">
+                <button id="tool-mirror-btn" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Cermin / Balik Horizontal">
+                    <i class="fa-solid fa-arrows-left-right text-sm"></i>
+                </button>
+                <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Cermin</span>
             </div>
 
             <!-- 2. Torch / Flashlight -->
@@ -288,6 +304,22 @@
                 </div>
             </div>
 
+            <!-- Multi-Media Carousel Controls (Aktif saat > 1 media/foto/video) -->
+            <div id="editor-carousel-counter" class="hidden absolute top-20 left-4 z-30 glass-pill px-2.5 py-1 rounded-full text-[11px] font-black text-white/95 shadow-xl pointer-events-none flex items-center gap-1.5 border border-white/20">
+                <i class="fa-solid fa-layer-group text-sky-400 text-xs"></i>
+                <span id="editor-carousel-counter-text">1/1</span>
+            </div>
+
+            <button id="editor-carousel-prev-btn" onclick="event.stopPropagation(); window.MomentEditorEngine.prevSlide()" class="hidden absolute left-3 top-1/2 -translate-y-1/2 z-30 glass-btn w-9 h-9 rounded-full text-white flex items-center justify-center shadow-2xl active:scale-90 transition hover:bg-black/60">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+            </button>
+
+            <button id="editor-carousel-next-btn" onclick="event.stopPropagation(); window.MomentEditorEngine.nextSlide()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 z-30 glass-btn w-9 h-9 rounded-full text-white flex items-center justify-center shadow-2xl active:scale-90 transition hover:bg-black/60">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+
+            <div id="editor-carousel-dots" class="hidden absolute bottom-8 left-0 right-0 z-30 flex items-center justify-center gap-1.5 pointer-events-none"></div>
+
             <!-- Subtle Editor Toast Notification -->
             <div id="editor-toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300 glass-pill px-4 py-1.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-1.5">
                 <i class="fa-solid fa-wand-magic-sparkles text-sky-400 text-xs"></i>
@@ -303,12 +335,18 @@
             </button>
 
             <!-- Pill Musik Latar -->
-            <button onclick="window.MomentEditorEngine.openMusicModal()" class="glass-pill px-3.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-2 shadow-lg active:scale-95 transition max-w-[200px]">
+            <button onclick="window.MomentEditorEngine.openMusicModal()" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition max-w-[170px]">
                 <i class="fa-solid fa-music text-sky-400 text-xs shrink-0"></i>
                 <span id="editor-music-pill-text" class="truncate">Tambah Musik</span>
                 <span id="editor-remove-music-btn" onclick="event.stopPropagation(); window.MomentEditorEngine.removeMusic()" class="hidden ml-0.5 text-white/60 hover:text-white p-0.5" title="Hapus Musik">
                     <i class="fa-solid fa-xmark text-[10px]"></i>
                 </span>
+            </button>
+
+            <!-- Aspect Ratio Toggle Button di Editor -->
+            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.toggleAspectRatio()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Persegi 1:1 / Potret 9:16)">
+                <i id="editor-aspect-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
+                <span id="editor-aspect-label">9:16</span>
             </button>
 
             <!-- Lanjut ke Detail Postingan (Next Button) -->
@@ -320,6 +358,14 @@
 
         <!-- 3. Editor Right Floating Toolbar (IG / TikTok Tools) -->
         <aside class="absolute right-3.5 top-28 z-30 flex flex-col items-center gap-4 pointer-events-auto">
+            <!-- 0. Cermin / Mirror Flip Toggle -->
+            <div class="flex flex-col items-center">
+                <button onclick="window.MomentEditorEngine.toggleMirror()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Cermin / Balik Horizontal">
+                    <i class="fa-solid fa-arrows-left-right text-sm text-cyan-300"></i>
+                </button>
+                <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Cermin</span>
+            </div>
+
             <!-- 1. Teks Overlay (Aa) -->
             <div class="flex flex-col items-center">
                 <button onclick="window.MomentEditorEngine.openTextEditor()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md" title="Tambah Teks">

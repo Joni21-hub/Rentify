@@ -90,30 +90,41 @@
             this.stopStream();
 
             const constraintsList = [
-                // Ideal: portrait 9:16 resolusi tinggi
+                // 1. Prioritas Utama: Full HD 1080p / 4K Kualitas Tinggi (Landscape/Portrait otomatis dioptimalkan)
                 {
                     video: {
                         facingMode: { ideal: facingMode },
-                        width: { ideal: 1080 },
-                        height: { ideal: 1920 },
+                        width: { min: 1080, ideal: 1920, max: 3840 },
+                        height: { min: 720, ideal: 1080, max: 2160 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
                         echoCancellation: true,
-                        noiseSuppression: true
+                        noiseSuppression: true,
+                        autoGainControl: true
                     }
                 },
-                // Fallback 1: video biasa + audio
+                // 2. Fallback HD 1080p / 720p tanpa batas min ketat
                 {
-                    video: { facingMode: facingMode },
+                    video: {
+                        facingMode: { ideal: facingMode },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        frameRate: { ideal: 30 }
+                    },
                     audio: true
                 },
-                // Fallback 2: video apa saja + audio
+                // 3. Fallback Facing Mode saja + audio
+                {
+                    video: { facingMode: { ideal: facingMode } },
+                    audio: true
+                },
+                // 4. Fallback video apa saja + audio
                 {
                     video: true,
                     audio: true
                 },
-                // Fallback 3: video saja (jika perangkat tidak punya mikrofon)
+                // 5. Fallback video saja (tanpa audio)
                 {
                     video: true,
                     audio: false
@@ -153,10 +164,32 @@
                 console.warn('[CameraEngine] Autoplay video dicegah:', playErr);
             }
 
-            // Update facingMode di state
-            window.MomentCreatorState.set('facingMode', facingMode);
+            // Update facingMode di state & terapkan transformasi mirror preview
+            window.MomentCreatorState.setFacingMode(facingMode);
+            this.updateMirrorTransform();
             this.isInitializing = false;
             return true;
+        }
+
+        /**
+         * Sinkronkan orientasi mirror video preview dengan state
+         */
+        updateMirrorTransform() {
+            if (!this.videoEl) return;
+            const isMirrored = window.MomentCreatorState.get('isMirrored');
+            const zoom = window.MomentCreatorState.get('zoom') || 1.0;
+            const scaleX = isMirrored ? -zoom : zoom;
+            this.videoEl.style.transform = `scale(${scaleX}, ${zoom})`;
+        }
+
+        /**
+         * Toggle cermin / mirror horizontal secara manual
+         */
+        toggleMirror() {
+            const isMirrored = window.MomentCreatorState.toggleMirror();
+            this.updateMirrorTransform();
+            this.vibrate(15);
+            return isMirrored;
         }
 
         /**
@@ -249,7 +282,7 @@
 
             // Fallback digital zoom via CSS transform
             if (this.videoEl) {
-                this.videoEl.style.transform = `scale(${zoomLevel})`;
+                this.updateMirrorTransform();
             }
         }
 
@@ -293,7 +326,7 @@
         }
 
         /**
-         * Ambil foto snapshot berkualitas tinggi dari video stream
+         * Ambil foto snapshot berkualitas tinggi dan tajam (mendukung Square & Mirror)
          * @returns {Promise<{ blob: Blob, dataUrl: string }>}
          */
         async capturePhoto() {
@@ -305,16 +338,19 @@
             this.flashScreenEffect();
 
             const canvas = document.createElement('canvas');
+            // Gunakan resolusi sensor asli video stream
             const videoWidth = this.videoEl.videoWidth || 1080;
             const videoHeight = this.videoEl.videoHeight || 1920;
             canvas.width = videoWidth;
             canvas.height = videoHeight;
 
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
-            // Cerminkan secara horizontal jika menggunakan kamera depan (selfie)
-            const isUserFacing = window.MomentCreatorState.get('facingMode') === 'user';
-            if (isUserFacing) {
+            // Cerminkan secara horizontal sesuai state isMirrored agar sama persis dengan preview
+            const isMirrored = window.MomentCreatorState.get('isMirrored');
+            if (isMirrored) {
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
             }
@@ -328,14 +364,31 @@
 
             ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            // Potong ke 1:1 Persegi jika mode rasio persegi aktif
+            const isSquare = window.MomentCreatorState.get('aspectRatio') === 'square';
+            let finalCanvas = canvas;
+            if (isSquare) {
+                const size = Math.min(canvas.width, canvas.height);
+                const squareCanvas = document.createElement('canvas');
+                squareCanvas.width = size;
+                squareCanvas.height = size;
+                const sCtx = squareCanvas.getContext('2d');
+                sCtx.imageSmoothingEnabled = true;
+                sCtx.imageSmoothingQuality = 'high';
+                const sx = (canvas.width - size) / 2;
+                const sy = (canvas.height - size) / 2;
+                sCtx.drawImage(canvas, sx, sy, size, size, 0, 0, size, size);
+                finalCanvas = squareCanvas;
+            }
+
+            const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);
 
             return new Promise((resolve) => {
-                canvas.toBlob((blob) => {
+                finalCanvas.toBlob((blob) => {
                     const result = { blob, dataUrl };
                     window.MomentCreatorState.setCapturedPhoto(blob, dataUrl);
                     resolve(result);
-                }, 'image/jpeg', 0.95);
+                }, 'image/jpeg', 0.98);
             });
         }
 
@@ -408,7 +461,13 @@
                 }
             }
 
-            const options = selectedMime ? { mimeType: selectedMime } : {};
+            const options = {
+                videoBitsPerSecond: 8000000, // 8 Mbps bitrate tinggi untuk rekaman video jernih dan tajam
+                audioBitsPerSecond: 128000,
+            };
+            if (selectedMime) {
+                options.mimeType = selectedMime;
+            }
             this.currentMimeType = selectedMime;
 
             try {

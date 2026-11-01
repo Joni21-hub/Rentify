@@ -15,6 +15,9 @@
             this.mediaType = 'video'; // 'video' | 'photo'
             this.mediaUrl = null;
             this.mediaBlob = null;
+            this.mediaItems = []; // Carousel items: [{ id, type: 'photo'|'video', blob, url, dataUrl, duration, name }]
+            this.activeSlideIndex = 0;
+            this.isMirrored = false;
             this.activeFilter = 'normal';
             this.overlays = []; // Array of { id, type: 'text'|'sticker', text, emoji, color, bgColor, x, y, size }
             this.selectedOverlayId = null;
@@ -102,33 +105,43 @@
                 window.MomentCameraEngine.stopStream();
             }
 
+            const mediaItems = this.state.getCapturedMediaItems();
             const capturedPhotos = this.state.get('capturedPhotos');
             const capturedPhoto = this.state.get('capturedPhoto');
             const clips = this.state.get('clips');
 
-            if (capturedPhotos && capturedPhotos.length > 0) {
-                this.mediaType = 'photo';
-                this.mediaBlobs = capturedPhotos.map(p => p.blob);
-                this.mediaUrls = capturedPhotos.map(p => p.dataUrl || URL.createObjectURL(p.blob));
-                this.mediaBlob = this.mediaBlobs[0];
-                this.mediaUrl = this.mediaUrls[0];
-                this.setupPhotoPreview();
+            if (mediaItems && mediaItems.length > 0) {
+                this.mediaItems = mediaItems;
+            } else if (capturedPhotos && capturedPhotos.length > 0) {
+                this.mediaItems = capturedPhotos.map((p, idx) => ({
+                    id: 'photo_' + idx,
+                    type: 'photo',
+                    blob: p.blob,
+                    dataUrl: p.dataUrl || URL.createObjectURL(p.blob),
+                    url: p.dataUrl || URL.createObjectURL(p.blob),
+                    filter: p.filter || 'normal'
+                }));
             } else if (capturedPhoto) {
-                this.mediaType = 'photo';
-                this.mediaBlobs = [capturedPhoto.blob];
-                this.mediaUrls = [capturedPhoto.dataUrl || URL.createObjectURL(capturedPhoto.blob)];
-                this.mediaBlob = capturedPhoto.blob;
-                this.mediaUrl = this.mediaUrls[0];
-                this.setupPhotoPreview();
+                this.mediaItems = [{
+                    id: 'photo_0',
+                    type: 'photo',
+                    blob: capturedPhoto.blob,
+                    dataUrl: capturedPhoto.dataUrl || URL.createObjectURL(capturedPhoto.blob),
+                    url: capturedPhoto.dataUrl || URL.createObjectURL(capturedPhoto.blob),
+                    filter: capturedPhoto.filter || 'normal'
+                }];
             } else if (clips && clips.length > 0) {
-                this.mediaType = 'video';
-                this.currentClipIndex = 0;
-                this.mediaBlob = clips[0].blob;
-                this.mediaUrl = clips[0].url;
-                this.setupVideoPreview();
+                this.mediaItems = clips.map((c, idx) => ({
+                    id: c.id || ('clip_' + idx),
+                    type: 'video',
+                    blob: c.blob,
+                    url: c.url,
+                    duration: c.duration,
+                    filter: c.filter || 'normal'
+                }));
             } else {
                 if (window.swalRentify) {
-                    window.swalRentify.fire({ icon: 'warning', text: 'Belum ada media yang direkam.' });
+                    window.swalRentify.fire({ icon: 'warning', text: 'Belum ada media yang dipilih atau direkam.' });
                 }
                 return;
             }
@@ -137,12 +150,121 @@
             document.getElementById('screen-camera')?.classList.add('hidden');
             document.getElementById('screen-editor')?.classList.remove('hidden');
 
+            this.activeSlideIndex = 0;
+            this.loadSlide(0);
+
+            // Terapkan rasio aspek (Persegi 1:1 atau Potret 9:16)
+            this.applyAspectRatioStyle();
+
             // Set filter awal
             const initialFilter = this.state.get('activeFilter') || 'normal';
             this.applyFilter(initialFilter);
 
             // Perbarui UI Klip
             this.renderClipsManager();
+        }
+
+        /**
+         * Muat slide media tertentu pada pratinjau editor
+         */
+        loadSlide(index) {
+            if (!this.mediaItems || this.mediaItems.length === 0) return;
+            this.activeSlideIndex = Math.max(0, Math.min(this.mediaItems.length - 1, index));
+            const item = this.mediaItems[this.activeSlideIndex];
+
+            this.mediaType = item.type;
+            this.mediaBlob = item.blob;
+            this.mediaUrl = item.url || item.dataUrl;
+
+            if (item.type === 'video') {
+                this.setupVideoPreview();
+            } else {
+                this.setupPhotoPreview();
+            }
+
+            this.updateCarouselUI();
+            this.applyCurrentTransforms();
+        }
+
+        nextSlide() {
+            if (this.mediaItems && this.activeSlideIndex < this.mediaItems.length - 1) {
+                this.loadSlide(this.activeSlideIndex + 1);
+            }
+        }
+
+        prevSlide() {
+            if (this.mediaItems && this.activeSlideIndex > 0) {
+                this.loadSlide(this.activeSlideIndex - 1);
+            }
+        }
+
+        updateCarouselUI() {
+            const total = this.mediaItems ? this.mediaItems.length : 0;
+            const isMulti = total > 1;
+
+            const counterEl = document.getElementById('editor-carousel-counter');
+            const counterText = document.getElementById('editor-carousel-counter-text');
+            const prevBtn = document.getElementById('editor-carousel-prev-btn');
+            const nextBtn = document.getElementById('editor-carousel-next-btn');
+            const dotsEl = document.getElementById('editor-carousel-dots');
+
+            if (counterEl) counterEl.classList.toggle('hidden', !isMulti);
+            if (counterText) counterText.textContent = `${this.activeSlideIndex + 1}/${total}`;
+            if (prevBtn) prevBtn.classList.toggle('hidden', !isMulti || this.activeSlideIndex === 0);
+            if (nextBtn) nextBtn.classList.toggle('hidden', !isMulti || this.activeSlideIndex === total - 1);
+
+            if (dotsEl) {
+                dotsEl.classList.toggle('hidden', !isMulti);
+                dotsEl.innerHTML = '';
+                for (let i = 0; i < total; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = `transition-all duration-200 rounded-full ${i === this.activeSlideIndex ? 'w-4 h-1.5 bg-sky-400' : 'w-1.5 h-1.5 bg-white/50'}`;
+                    dotsEl.appendChild(dot);
+                }
+            }
+        }
+
+        toggleAspectRatio() {
+            const next = this.state.toggleAspectRatio();
+            this.applyAspectRatioStyle();
+            const isSquare = next === 'square';
+            this.showToast(isSquare ? 'Rasio: Persegi (1:1)' : 'Rasio: Potret (9:16)');
+        }
+
+        applyAspectRatioStyle() {
+            const ratio = this.state.get('aspectRatio') || 'portrait';
+            const isSquare = ratio === 'square';
+
+            const labelEl = document.getElementById('editor-aspect-label');
+            const iconEl = document.getElementById('editor-aspect-icon');
+            if (labelEl) labelEl.textContent = isSquare ? '1:1' : '9:16';
+            if (iconEl) {
+                iconEl.className = isSquare ? 'fa-regular fa-square text-sky-400 text-xs' : 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+            }
+
+            const viewport = document.getElementById('editor-viewport');
+            if (viewport) {
+                if (isSquare) {
+                    viewport.classList.add('aspect-square', 'max-w-[92vw]', 'max-h-[75vh]', 'rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.classList.remove('w-full', 'h-full');
+                } else {
+                    viewport.classList.remove('aspect-square', 'max-w-[92vw]', 'max-h-[75vh]', 'rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.classList.add('w-full', 'h-full');
+                }
+            }
+        }
+
+        toggleMirror() {
+            this.isMirrored = !this.isMirrored;
+            this.applyCurrentTransforms();
+            this.showToast(this.isMirrored ? 'Cermin: Aktif' : 'Cermin: Nonaktif');
+        }
+
+        applyCurrentTransforms() {
+            const target = (this.mediaType === 'video') ? this.videoEl : this.imageEl;
+            if (target) {
+                target.style.transform = this.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+            }
         }
 
         setupPhotoPreview() {
@@ -793,25 +915,34 @@
 
             // Siapkan FormData
             const formData = new FormData();
-            const mediaTypeToSend = (this.mediaType === 'video') ? 'video' : 'image';
+            const hasMultipleItems = this.mediaItems && this.mediaItems.length > 1;
 
-            if (this.mediaType === 'photo' && this.mediaBlobs && this.mediaBlobs.length > 1) {
-                // Multi-photo upload (Carousel)
-                this.mediaBlobs.forEach((blob, idx) => {
-                    formData.append(`media[${idx}]`, blob, `moment_${Date.now()}_${idx}.jpg`);
+            if (hasMultipleItems) {
+                // Multi-media upload (Carousel Foto, Video, atau Campuran seperti IG)
+                let containsVideo = false;
+                this.mediaItems.forEach((item, idx) => {
+                    const isVid = item.type === 'video';
+                    if (isVid) containsVideo = true;
+                    const mime = (item.blob && item.blob.type) ? item.blob.type.toLowerCase() : '';
+                    let ext = isVid ? (mime.includes('webm') ? 'webm' : 'mp4') : (mime.includes('png') ? 'png' : 'jpg');
+                    const filename = `moment_${Date.now()}_${idx}.${ext}`;
+                    formData.append(`media[${idx}]`, item.blob, filename);
                 });
-                formData.append('media_type', 'image');
+                formData.append('media_type', containsVideo ? 'video' : 'image');
             } else {
-                const mimeType = (finalMediaBlob && finalMediaBlob.type) ? finalMediaBlob.type.toLowerCase() : '';
+                const singleItem = (this.mediaItems && this.mediaItems.length === 1) ? this.mediaItems[0] : null;
+                const blobToUpload = singleItem ? singleItem.blob : finalMediaBlob;
+                const typeToUpload = singleItem ? singleItem.type : this.mediaType;
+                const mimeType = (blobToUpload && blobToUpload.type) ? blobToUpload.type.toLowerCase() : '';
                 let ext = 'jpg';
-                if (this.mediaType === 'video') {
+                if (typeToUpload === 'video') {
                     ext = mimeType.includes('webm') ? 'webm' : 'mp4';
                 } else if (mimeType.includes('png')) {
                     ext = 'png';
                 }
                 const filename = `moment_${Date.now()}.${ext}`;
-                formData.append('media', finalMediaBlob, filename);
-                formData.append('media_type', mediaTypeToSend);
+                formData.append('media', blobToUpload, filename);
+                formData.append('media_type', typeToUpload === 'video' ? 'video' : 'image');
             }
             formData.append('caption', caption);
 

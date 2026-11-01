@@ -260,18 +260,45 @@ class MomentCrudApiTest extends TestCase
         $response->assertJsonValidationErrors(['media']);
     }
 
-    public function test_store_moment_rejects_video_in_multi_upload(): void
+    public function test_store_moment_allows_multiple_videos_and_mixed_media_in_carousel(): void
     {
+        Queue::fake();
+
         $photo = UploadedFile::fake()->image('photo_1.jpg', 800, 600);
         $video = UploadedFile::fake()->create('clip.mp4', 1000, 'video/mp4');
 
         $response = $this->actingAs($this->author)
             ->postJson('/api/moments', [
-                'media' => [$photo, $video],
+                'media'   => [$photo, $video],
+                'caption' => 'Carousel campuran foto dan video seperti IG',
             ]);
 
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['media']);
+        $response->assertStatus(201);
+        $this->assertTrue($response->json('success'));
+        $mediaUrls = $response->json('data.media_urls');
+        $this->assertIsArray($mediaUrls);
+        $this->assertCount(2, $mediaUrls);
+    }
+
+    public function test_store_moment_allows_multiple_videos_in_carousel(): void
+    {
+        Queue::fake();
+
+        $video1 = UploadedFile::fake()->create('clip1.mp4', 1000, 'video/mp4');
+        $video2 = UploadedFile::fake()->create('clip2.webm', 1000, 'video/webm');
+
+        $response = $this->actingAs($this->author)
+            ->postJson('/api/moments', [
+                'media'   => [$video1, $video2],
+                'caption' => 'Carousel dua video sekaligus seperti IG',
+            ]);
+
+        $response->assertStatus(201);
+        $this->assertTrue($response->json('success'));
+        $mediaUrls = $response->json('data.media_urls');
+        $this->assertIsArray($mediaUrls);
+        $this->assertCount(2, $mediaUrls);
+        $this->assertEquals('video', $response->json('data.media_type'));
     }
 
     public function test_author_authorization_for_updating_caption_and_product_tags(): void

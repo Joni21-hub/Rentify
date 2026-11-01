@@ -19,12 +19,15 @@
                 isBeautyActive: false,
                 torchActive: false,
                 facingMode: 'environment', // 'environment' (belakang) | 'user' (depan)
+                isMirrored: false,         // Mirror horizontal untuk selfie/preview/capture
+                aspectRatio: 'portrait',   // 'portrait' (9:16) | 'square' (1:1)
                 zoom: 1.0,
                 isRecording: false,
                 recordingElapsed: 0,   // detik saat ini pada klip yang sedang direkam
                 clips: [],             // Array of { id, blob, url, duration, speed, filter }
                 capturedPhoto: null,   // { blob, dataUrl, filter }
                 capturedPhotos: [],    // Array of { blob, dataUrl, filter } for multi-photo
+                capturedMediaItems: [],// Unified carousel media items: [{ id, type: 'photo'|'video', blob, url, dataUrl, duration, filter }]
                 selectedMusic: null,   // { id, title, artist, cover, previewUrl, startMs, duration }
                 gallerySelectedMedia: null, // Dari galeri
             };
@@ -133,6 +136,8 @@
         setFacingMode(mode) {
             if (['environment', 'user'].includes(mode)) {
                 this.set('facingMode', mode);
+                // Sinkronisasi otomatis: kamera selfie secara default mirrored
+                this.set('isMirrored', mode === 'user');
             }
         }
 
@@ -142,9 +147,43 @@
             return nextMode;
         }
 
+        setMirrored(mirrored) {
+            this.set('isMirrored', !!mirrored);
+        }
+
+        toggleMirror() {
+            const next = !this.state.isMirrored;
+            this.setMirrored(next);
+            return next;
+        }
+
+        setAspectRatio(ratio) {
+            if (['portrait', 'square'].includes(ratio)) {
+                this.set('aspectRatio', ratio);
+            }
+        }
+
+        toggleAspectRatio() {
+            const next = this.state.aspectRatio === 'square' ? 'portrait' : 'square';
+            this.setAspectRatio(next);
+            return next;
+        }
+
         setZoom(zoom) {
             const clamped = Math.max(1.0, Math.min(5.0, zoom));
             this.set('zoom', clamped);
+        }
+
+        setCapturedMediaItems(items) {
+            this.state.capturedMediaItems = items || [];
+            // Sinkronisasi backward compatibility untuk foto
+            const photos = this.state.capturedMediaItems.filter(i => i.type === 'photo');
+            this.setCapturedPhotos(photos);
+            this.emit('media_items:updated', this.state.capturedMediaItems);
+        }
+
+        getCapturedMediaItems() {
+            return this.state.capturedMediaItems || [];
         }
 
         // Multi-clip Management
@@ -184,6 +223,7 @@
             this.state.clips = [];
             this.state.capturedPhoto = null;
             this.state.capturedPhotos = [];
+            this.state.capturedMediaItems = [];
             this.emit('clips:cleared');
             this.emit('clips:updated', this.state.clips);
         }
@@ -198,7 +238,10 @@
         }
 
         hasRecordedContent() {
-            return this.state.clips.length > 0 || this.state.capturedPhoto !== null || (this.state.capturedPhotos && this.state.capturedPhotos.length > 0);
+            return this.state.clips.length > 0 || 
+                   this.state.capturedPhoto !== null || 
+                   (this.state.capturedPhotos && this.state.capturedPhotos.length > 0) ||
+                   (this.state.capturedMediaItems && this.state.capturedMediaItems.length > 0);
         }
 
         setCapturedPhoto(blob, dataUrl) {

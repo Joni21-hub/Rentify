@@ -124,7 +124,7 @@
                 @auth
                 <a href="{{ route('customer.dashboard') }}" class="flex flex-col items-center px-3.5 py-1.5 text-slate-500 hover:text-sky-500 rounded-xl transition">
                     @if(Auth::user()->foto_profil)
-                        <img src="{{ str_starts_with((string)Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url((string)Auth::user()->foto_profil) }}" class="w-7 h-7 rounded-full object-cover border-2 border-sky-300" alt="Profil">
+                        <img src="{{ str_starts_with((string)Auth::user()->foto_profil, 'http') ? Auth::user()->foto_profil : Storage::url((string)Auth::user()->foto_profil) }}" width="28" height="28" class="w-7 h-7 min-w-[28px] min-h-[28px] max-w-[28px] max-h-[28px] rounded-full object-cover border-2 border-sky-300 aspect-square block shrink-0" style="width: 28px; height: 28px; min-width: 28px; min-height: 28px; max-width: 28px; max-height: 28px; object-fit: cover; aspect-ratio: 1 / 1;" alt="Profil">
                     @else
                         <div class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-black text-xs">{{ substr(Auth::user()->name, 0, 1) }}</div>
                     @endif

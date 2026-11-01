@@ -60,10 +60,6 @@ class StoreMomentRequest extends FormRequest
                         if (!$isImage && !$isVideo) {
                             return $fail('Format media tidak didukung. Harap unggah berkas foto atau video.');
                         }
-
-                        if (!$allowVideo && $isVideo) {
-                            return $fail('Unggah lebih dari satu berkas hanya diperbolehkan untuk foto/gambar.');
-                        }
                     };
 
                     if (is_array($value)) {
@@ -71,14 +67,13 @@ class StoreMomentRequest extends FormRequest
                             return $fail('Berkas media (foto/video) wajib diunggah.');
                         }
                         if (count($value) > 10) {
-                            return $fail('Maksimal foto yang dapat diunggah dalam satu momen adalah 10 foto.');
+                            return $fail('Maksimal berkas media yang dapat diunggah dalam satu momen adalah 10 item.');
                         }
-                        $allowVideo = (count($value) === 1);
                         foreach ($value as $file) {
-                            $validateSingleFile($file, $allowVideo);
+                            $validateSingleFile($file);
                         }
                     } else {
-                        $validateSingleFile($value, true);
+                        $validateSingleFile($value);
                     }
                 },
             ],

@@ -295,3 +295,46 @@ select.rentify-input option {
         transform: scale(1);
     }
 }
+
+/* --- RIGID AVATAR & PROFILE IMAGE VIEW TRANSITION CONSTRAINTS --- */
+/* Mencegah gambar profil beresolusi tinggi membesar meluap ke seluruh layar saat View Transitions atau navigasi SPA */
+.avatar-box,
+[data-avatar-box] {
+    width: 72px !important;
+    height: 72px !important;
+    min-width: 72px !important;
+    min-height: 72px !important;
+    max-width: 72px !important;
+    max-height: 72px !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    contain: layout paint !important;
+}
+
+@media (min-width: 640px) {
+    .avatar-box,
+    [data-avatar-box] {
+        width: 80px !important;
+        height: 80px !important;
+        min-width: 80px !important;
+        min-height: 80px !important;
+        max-width: 80px !important;
+        max-height: 80px !important;
+    }
+}
+
+.avatar-box img,
+[data-avatar-box] img,
+img.avatar-img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
+    display: block !important;
+    border-radius: 9999px !important;
+}
+

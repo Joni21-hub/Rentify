@@ -80,6 +80,41 @@
 
     <!-- WRAPPER KONTEN TAB AKUN (UNTUK SMOOTH TAB SWAPPING) -->
     <div id="rentify-page-content" data-tab="akun" class="w-full min-h-screen">
+        <style>
+            .avatar-box, [data-avatar-box] {
+                width: 72px !important;
+                height: 72px !important;
+                min-width: 72px !important;
+                min-height: 72px !important;
+                max-width: 72px !important;
+                max-height: 72px !important;
+                aspect-ratio: 1 / 1 !important;
+                overflow: hidden !important;
+                flex-shrink: 0 !important;
+                position: relative !important;
+                contain: layout paint !important;
+            }
+            @media (min-width: 640px) {
+                .avatar-box, [data-avatar-box] {
+                    width: 80px !important;
+                    height: 80px !important;
+                    min-width: 80px !important;
+                    min-height: 80px !important;
+                    max-width: 80px !important;
+                    max-height: 80px !important;
+                }
+            }
+            .avatar-box img, [data-avatar-box] img, img.avatar-img {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                aspect-ratio: 1 / 1 !important;
+                object-fit: cover !important;
+                display: block !important;
+                border-radius: 9999px !important;
+            }
+        </style>
 
     <!-- ===== DESKTOP TOP NAVBAR (HIDDEN ON MOBILE) ===== -->
     <header class="rentify-navbar hidden md:flex sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/60">
@@ -130,14 +165,17 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex items-center gap-3.5 flex-1 min-w-0">
                             <!-- Avatar Ringed with Rentify Sky Blue -->
-                            <div class="relative shrink-0 avatar-box">
-                                <div class="w-full h-full rounded-full p-1 bg-gradient-to-tr from-sky-400 to-sky-600 shadow-md flex items-center justify-center">
-                                    <div class="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center text-sky-600 font-black text-2xl border border-white shadow-inner">
+                            <div class="relative shrink-0 avatar-box w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] min-w-[72px] min-h-[72px] sm:min-w-[80px] sm:min-h-[80px] max-w-[72px] max-h-[72px] sm:max-w-[80px] sm:max-h-[80px] aspect-square overflow-hidden" data-avatar-box style="width: 72px; height: 72px; min-width: 72px; min-height: 72px; max-width: 72px; max-height: 72px; aspect-ratio: 1 / 1; flex-shrink: 0; contain: layout paint;">
+                                <div class="w-full h-full rounded-full p-1 bg-gradient-to-tr from-sky-400 to-sky-600 shadow-md flex items-center justify-center overflow-hidden" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1;">
+                                    <div class="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center text-sky-600 font-black text-2xl border border-white shadow-inner" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1;">
                                         @if($user->foto_profil)
                                             <img src="{{ str_starts_with((string)$user->foto_profil, 'http') ? $user->foto_profil : Storage::url((string)$user->foto_profil) }}" 
                                                  alt="Foto Profil" 
-                                                 class="w-full h-full object-cover rounded-full" 
-                                                 style="width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1/1;">
+                                                 width="72"
+                                                 height="72"
+                                                 loading="eager"
+                                                 class="avatar-img w-full h-full object-cover rounded-full aspect-square block" 
+                                                 style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; aspect-ratio: 1 / 1; display: block; border-radius: 9999px;">
                                         @else
                                             {{ strtoupper(substr($user->name ?? 'C', 0, 1)) }}
                                         @endif

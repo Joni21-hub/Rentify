@@ -108,6 +108,37 @@
                 flipBtn.onclick = () => this.engine.switchCamera();
             }
 
+            // Toolbar: Mirror / Cermin Flip Toggle
+            const mirrorBtn = document.getElementById('tool-mirror-btn');
+            if (mirrorBtn) {
+                mirrorBtn.onclick = () => {
+                    const isMirrored = this.engine.toggleMirror();
+                    mirrorBtn.classList.toggle('text-sky-400', isMirrored);
+                    mirrorBtn.classList.toggle('bg-sky-500/20', isMirrored);
+                    this.showFilterToast(isMirrored ? 'Cermin: Aktif' : 'Cermin: Nonaktif');
+                };
+            }
+
+            // Header: Aspect Ratio Toggle (9:16 Potret <-> 1:1 Persegi)
+            const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
+            const aspectLabel = document.getElementById('aspect-ratio-label');
+            const aspectIcon = document.getElementById('aspect-ratio-icon');
+            const squareMask = document.getElementById('camera-square-mask');
+            if (aspectBtn) {
+                aspectBtn.onclick = () => {
+                    const nextRatio = this.state.toggleAspectRatio();
+                    const isSquare = nextRatio === 'square';
+                    if (aspectLabel) aspectLabel.textContent = isSquare ? '1:1' : '9:16';
+                    if (aspectIcon) {
+                        aspectIcon.className = isSquare ? 'fa-regular fa-square text-sky-400 text-xs' : 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                    }
+                    if (squareMask) {
+                        squareMask.classList.toggle('hidden', !isSquare);
+                    }
+                    this.showFilterToast(isSquare ? 'Rasio: Persegi (1:1)' : 'Rasio: Potret (9:16)');
+                };
+            }
+
             // Toolbar: Torch/Flash
             const torchBtn = document.getElementById('tool-torch');
             if (torchBtn) {
@@ -780,54 +811,42 @@
             if (files.length === 0) return;
 
             const videoExts = ['mp4', 'mov', 'quicktime', 'webm', 'mkv', 'avi', 'wmv', 'flv', '3gp', '3g2', 'm4v', 'ts', 'mpeg', 'mpg', 'ogv', 'vob', 'm2ts', 'divx', 'rm', 'rmvb', 'asf', 'm4p', 'f4v'];
-            const firstFile = files[0];
-            const mime = firstFile.type || '';
-            const ext = (firstFile.name.split('.').pop() || '').toLowerCase();
-            const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
+            const targetFiles = files.slice(0, 10);
+            const processedItems = [];
 
-            if (isVideo) {
-                // Buat klip dari file video tanpa batasan format/ukuran
-                const file = firstFile;
-                const url = URL.createObjectURL(file);
-                const tempVideo = document.createElement('video');
-                tempVideo.preload = 'metadata';
-                tempVideo.src = url;
-                tempVideo.onloadedmetadata = () => {
-                    this.state.addClip({
-                        blob: file,
-                        duration: tempVideo.duration || 5,
-                        speed: 1.0,
-                        filter: 'normal'
-                    });
-                    this.handleNextStep();
-                };
-                tempVideo.onerror = () => {
-                    this.state.addClip({
-                        blob: file,
-                        duration: 5,
-                        speed: 1.0,
-                        filter: 'normal'
-                    });
-                    this.handleNextStep();
-                };
-            } else {
-                // Foto dari galeri (mendukung satu atau banyak foto / carousel hingga 10 foto)
-                const photoFiles = files.filter(f => {
-                    const m = f.type || '';
-                    const e = (f.name.split('.').pop() || '').toLowerCase();
-                    return !m.startsWith('video/') && !videoExts.includes(e);
-                }).slice(0, 10);
+            for (const f of targetFiles) {
+                const mime = f.type || '';
+                const ext = (f.name.split('.').pop() || '').toLowerCase();
+                const isVideo = mime.startsWith('video/') || videoExts.includes(ext);
 
-                const processedPhotos = [];
-                for (const f of photoFiles) {
-                    const e = (f.name.split('.').pop() || '').toLowerCase();
+                if (isVideo) {
+                    const videoUrl = URL.createObjectURL(f);
+                    const dur = await new Promise(resolve => {
+                        const tempVideo = document.createElement('video');
+                        tempVideo.preload = 'metadata';
+                        tempVideo.src = videoUrl;
+                        tempVideo.onloadedmetadata = () => resolve(tempVideo.duration || 5);
+                        tempVideo.onerror = () => resolve(5);
+                    });
+
+                    processedItems.push({
+                        id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                        type: 'video',
+                        blob: f,
+                        url: videoUrl,
+                        duration: dur,
+                        speed: 1.0,
+                        filter: this.state.get('activeFilter') || 'normal',
+                        name: f.name
+                    });
+                } else {
                     let targetF = f;
-                    if (['heic', 'heif'].includes(e) && typeof heic2any === 'function') {
+                    if (['heic', 'heif'].includes(ext) && typeof heic2any === 'function') {
                         try {
                             const convertedBlob = await heic2any({
                                 blob: f,
                                 toType: 'image/jpeg',
-                                quality: 0.9
+                                quality: 0.95
                             });
                             const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
                             targetF = new File([blob], f.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
@@ -842,18 +861,34 @@
                         reader.readAsDataURL(targetF);
                     });
 
-                    processedPhotos.push({
+                    processedItems.push({
+                        id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                        type: 'photo',
                         blob: targetF,
                         dataUrl: dataUrl,
+                        url: dataUrl,
                         filter: this.state.get('activeFilter') || 'normal',
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        name: targetF.name
+                    });
+                }
+            }
+
+            if (processedItems.length > 0) {
+                this.state.setCapturedMediaItems(processedItems);
+
+                // Jika hanya 1 video yang dipilih, daftarkan juga sebagai klip untuk kompatibilitas trimmer
+                if (processedItems.length === 1 && processedItems[0].type === 'video') {
+                    this.state.clearAllClips();
+                    this.state.addClip({
+                        blob: processedItems[0].blob,
+                        duration: processedItems[0].duration,
+                        speed: 1.0,
+                        filter: 'normal'
                     });
                 }
 
-                if (processedPhotos.length > 0) {
-                    this.state.setCapturedPhotos(processedPhotos);
-                    this.handleNextStep();
-                }
+                this.handleNextStep();
             }
         }
 
