@@ -120,4 +120,54 @@ class WhatsAppUcupAssistantTest extends TestCase
         $this->assertStringContainsString('BOS JONI', $reply);
         $this->assertStringContainsString('reset wa', $reply);
     }
+
+    public function test_order_query_guard_intercepts_unknown_order_in_webhook(): void
+    {
+        Http::fake([
+            'http://127.0.0.1:3000/send' => Http::response(['status' => true], 200),
+        ]);
+
+        $controller = new WhatsAppWebhookController();
+        $request = Request::create('/webhook/whatsapp', 'POST', [
+            'sender'  => '081262364197',
+            'name'    => 'Pelanggan Uji',
+            'message' => 'Halo Ucup, tolong cek status pesanan saya kode RNT-GHOST-888 ya',
+        ]);
+
+        $response = $controller->handle($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertTrue($data['status']);
+        $this->assertStringContainsString('RNT-GHOST-888', $data['reply']);
+        $this->assertStringContainsString('tidak ditemukan dalam sistem kami', $data['reply']);
+    }
+
+    public function test_progressive_lead_capture_in_webhook(): void
+    {
+        Http::fake([
+            'http://127.0.0.1:3000/send' => Http::response(['status' => true], 200),
+        ]);
+
+        $senderPhone = '0812' . rand(10000000, 99999999);
+        $controller = new WhatsAppWebhookController();
+        $request = Request::create('/webhook/whatsapp', 'POST', [
+            'sender'  => $senderPhone,
+            'name'    => 'Radit',
+            'message' => 'Halo mau sewa tenda camping buat 4 hari budget 200000',
+        ]);
+
+        $response = $controller->handle($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertTrue($data['status']);
+
+        // Verify ChatSession captured the lead progressively
+        $session = \App\Models\ChatSession::where('phone_number', $senderPhone)->first();
+        $this->assertNotNull($session);
+        $this->assertEquals('Radit', $session->customer_name);
+        $this->assertEquals(4, $session->metadata['lead_profile']['duration_days']);
+        $this->assertEquals(200000, $session->metadata['lead_profile']['budget_amount']);
+    }
 }

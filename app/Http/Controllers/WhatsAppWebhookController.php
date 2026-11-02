@@ -251,23 +251,56 @@ class WhatsAppWebhookController extends Controller
      */
     protected function generateReply(string $message, string $name, string $sender = ''): string
     {
+        /** @var \App\Services\ContextGroundingService $groundingService */
+        $groundingService = app(\App\Services\ContextGroundingService::class);
+        $groundingContext = $groundingService->getCustomerGroundingContext(
+            phoneNumber: $sender,
+            options: ['message' => $message, 'channel' => 'whatsapp']
+        );
+
+        // Progressive lead capture on intent (non-blocking)
+        try {
+            $partialLead = [];
+            if (!empty($name) && strtolower($name) !== 'kak') {
+                $partialLead['name'] = $name;
+            }
+            if (preg_match('/(\d+)\s*(?:hari|day|days|minggu|bulan)/i', $message, $m)) {
+                $multiplier = str_contains(strtolower($m[0]), 'minggu') ? 7 : (str_contains(strtolower($m[0]), 'bulan') ? 30 : 1);
+                $partialLead['duration_days'] = ((int) $m[1]) * $multiplier;
+                $partialLead['duration_text'] = $m[0];
+            }
+            if (preg_match('/(?:budget|anggaran|dana|biaya|maksimal)\s*[:=]?\s*(?:rp\.?\s*)?([0-9.,]+)/i', $message, $m)) {
+                $partialLead['budget'] = $m[1];
+            }
+            if (!empty($partialLead) && !empty($sender)) {
+                $groundingService->captureLeadProgressively($sender, $partialLead);
+            }
+        } catch (\Throwable $e) {
+            Log::info('Progressive lead capture skipped: ' . $e->getMessage());
+        }
+
+        // If order query guard triggered (user asked about non-existent order), enforce anti-hallucination immediately
+        if ($groundingContext->hasOrderGuard() && !empty($groundingContext->getMissingRecordNotice())) {
+            return $groundingContext->getMissingRecordNotice();
+        }
+
         $geminiKey = config('rentify_ai.gemini.api_key')
             ?: (config('services.gemini.api_key') ?: env('GEMINI_API_KEY'));
 
         if (!empty($geminiKey)) {
-            $aiReply = $this->callGemini($message, $name, $sender, $geminiKey);
+            $aiReply = $this->callGemini($message, $name, $sender, $geminiKey, $groundingContext);
             if (!empty($aiReply)) {
                 return $aiReply;
             }
         }
 
-        return $this->smartRuleReply($message, $name, $sender);
+        return $this->smartRuleReply($message, $name, $sender, $groundingContext);
     }
 
     /**
      * Balasan AI santai, ramah & responsif via Gemini API dengan Session Memory
      */
-    protected function callGemini(string $message, string $name, string $sender, string $rawApiKeys): ?string
+    protected function callGemini(string $message, string $name, string $sender, string $rawApiKeys, ?\App\DTOs\GroundingContextDTO $groundingContext = null): ?string
     {
         $keys = array_values(array_filter(array_map('trim', preg_split('/[\s,]+/', $rawApiKeys))));
         if (empty($keys)) {
@@ -322,6 +355,10 @@ Kamu siap menjawab pertanyaan baik dari CUSTOMER (penyewa) maupun VENDOR (pemili
   Sampaikan dengan jujur bahwa Ucup akan langsung meneruskan data kendala ini ke Bos Joni (Pemilik Rentify) agar ditindaklanjuti.
 - Sertakan tag [ESKALASI_ADMIN] di baris paling akhir balasan jika kendala memerlukan penanganan darurat dari Bos Joni.
 PROMPT;
+
+        if ($groundingContext) {
+            $systemPrompt .= "\n\n" . $groundingContext->toPromptContext();
+        }
 
         $cachePhone = preg_replace('/[^0-9]/', '', $sender);
         $cacheKey = 'wa_chat_history_' . ($cachePhone ?: md5($sender . $name));
@@ -446,7 +483,7 @@ PROMPT;
     /**
      * Template balasan cerdas Customer Service santai & responsif (Fallback jika AI offline)
      */
-    protected function smartRuleReply(string $message, string $name, string $sender = ''): string
+    protected function smartRuleReply(string $message, string $name, string $sender = '', ?\App\DTOs\GroundingContextDTO $groundingContext = null): string
     {
         $lower = strtolower(trim($message));
         $webUrl = $this->getWebsiteUrl();
@@ -455,6 +492,14 @@ PROMPT;
         $salutation = 'Kak';
         if (!empty($name) && strtolower($name) !== 'kak' && strlen($name) <= 25 && !preg_match('/[0-9]{5,}/', $name)) {
             $salutation = "Kak {$name}";
+        }
+
+        // 0. Active Order Grounding Reply
+        if ($groundingContext && $groundingContext->hasActiveOrders() && (str_contains($lower, 'pesanan') || str_contains($lower, 'order') || str_contains($lower, 'status'))) {
+            $active = $groundingContext->getActiveOrders()[0];
+            $bookingCode = $active['kode_booking'] ?? '-';
+            $st = $active['status'] ?? '-';
+            return "Halo {$salutation}! Pesanan aktif Kakak dengan kode {$bookingCode} saat ini berstatus '{$st}'. Ada yang perlu Ucup bantu terkait pesanan ini?";
         }
 
         $reply = null;
