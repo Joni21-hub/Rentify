@@ -363,6 +363,19 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Relasi Riwayat Pesanan Rental Pengguna
+     */
+    public function penyewaans()
+    {
+        return $this->hasMany(Penyewaan::class, 'user_id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Penyewaan::class, 'user_id');
+    }
+
+    /**
      * Mendapatkan total saldo koin tersedia
      */
     public function getCoinBalanceAttribute(): int

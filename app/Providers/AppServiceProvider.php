@@ -93,5 +93,10 @@ class AppServiceProvider extends ServiceProvider //[cite: 3]
             $maxMb = isset($parameters[0]) ? round(((int) $parameters[0]) / 1024, 1) : 100;
             return "Berkas {$attribute} harus berupa foto atau video valid dan maksimal {$maxMb} MB.";
         });
+
+        // 5. Daftarkan perintah artisan
+        $this->commands([
+            \App\Console\Commands\ReengageInactiveCustomersCommand::class,
+        ]);
     }
 }
