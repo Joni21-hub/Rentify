@@ -172,7 +172,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->foto_profil;
         }
 
-        $cleanPath = str_replace('public/', '', $this->foto_profil);
+        $cleanPath = (string) str_replace('public/', '', (string) $this->foto_profil);
         if (file_exists(public_path($cleanPath))) {
             return asset($cleanPath);
         }
@@ -194,6 +194,46 @@ class User extends Authenticatable implements MustVerifyEmail
     public function vouchers()
     {
         return $this->hasMany(Voucher::class, 'vendor_id');
+    }
+
+    /**
+     * Relasi ke Klaim Voucher Customer
+     */
+    public function customerVouchers()
+    {
+        return $this->hasMany(CustomerVoucher::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke Voucher Platform yang menargetkan Vendor ini
+     */
+    public function targetVouchers()
+    {
+        return $this->belongsToMany(Voucher::class, 'voucher_vendors', 'vendor_id', 'voucher_id');
+    }
+
+    /**
+     * Relasi ke Permohonan / Penerimaan Refund
+     */
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke Refund yang diproses oleh Admin
+     */
+    public function processedRefunds()
+    {
+        return $this->hasMany(Refund::class, 'processed_by');
+    }
+
+    /**
+     * Relasi ke Catatan Audit Log Admin
+     */
+    public function adminAuditLogs()
+    {
+        return $this->hasMany(AdminAuditLog::class, 'admin_id');
     }
 
     /**

@@ -25,4 +25,9 @@ class Kategori extends Model
     {
         return $this->hasMany(Barang::class, 'kategori_id');
     }
+
+    public function vouchers()
+    {
+        return $this->belongsToMany(Voucher::class, 'voucher_kategoris', 'kategori_id', 'voucher_id');
+    }
 }
