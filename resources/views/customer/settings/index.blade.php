@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pengaturan Akun — Rentify</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}?v={{ $appVersion ?? \App\Helpers\AppVersion::get() }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -14,6 +14,7 @@
             background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%) fixed !important;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="min-h-screen text-slate-800 pb-28 bg-flowing overflow-x-hidden w-full max-w-full">
 
@@ -228,6 +229,39 @@
                 </div>
             </div>
 
+            <!-- KATEGORI 4: SISTEM & PEMBARUAN APLIKASI -->
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5">Pembaruan & Sistem</p>
+                <div class="rentify-card rounded-2xl p-4 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs">
+                                <i class="fa-solid fa-mobile-screen-button text-xs"></i>
+                            </div>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800">Versi Aplikasi</span>
+                                <span class="block text-[10px] text-slate-400 font-medium">Auto-Update Aktif</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-2.5 py-0.5">
+                            <i class="fa-solid fa-circle-check text-sky-500 text-[9px]"></i>
+                            {{ $appVersion ?? \App\Helpers\AppVersion::get() }}
+                        </span>
+                    </div>
+
+                    <div class="pt-1 flex gap-2">
+                        <button type="button" onclick="window.rentifyCheckUpdate()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white text-xs font-black shadow-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+                            <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                            <span>Cek Pembaruan</span>
+                        </button>
+                        <button type="button" onclick="window.rentifyForceClearCache()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition active:scale-95" title="Muat ulang bersih">
+                            <i class="fa-solid fa-trash-can text-[11px]"></i>
+                            <span>Bersihkan Cache</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- TOMBOL KELUAR AKUN -->
             <form action="{{ route('logout') }}" method="POST" class="w-full pt-2">
                 @csrf
@@ -242,5 +276,6 @@
             <p class="text-center text-[10px] font-bold text-slate-400 pb-2 tracking-wider">Rentify v1.0</p>
         </div>
     </div>
+@include('partials.pwa-updater')
 </body>
 </html>

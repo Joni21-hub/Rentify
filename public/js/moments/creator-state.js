@@ -159,32 +159,35 @@
 
         setAspectRatio(ratio) {
             let normalized = ratio;
-            if (ratio === '9:16') normalized = 'portrait';
-            else if (ratio === '3:4') normalized = 'standard';
-            else if (ratio === '1:1') normalized = 'square';
+            if (ratio === '9:16' || ratio === 'portrait') normalized = 'portrait';
+            else if (ratio === '4:5' || ratio === 'feed') normalized = 'feed';
+            else if (ratio === '1:1' || ratio === 'square') normalized = 'square';
+            else if (ratio === '3:4' || ratio === 'standard') normalized = 'standard';
+            else if (ratio === '16:9' || ratio === 'landscape') normalized = 'landscape';
+            else if (ratio === 'original' || ratio === 'free' || ratio === 'asli') normalized = 'original';
 
-            if (['portrait', 'standard', 'square'].includes(normalized)) {
+            if (['portrait', 'feed', 'square', 'standard', 'landscape', 'original'].includes(normalized)) {
                 this.set('aspectRatio', normalized);
             }
         }
 
         toggleAspectRatio() {
-            // Siklus rasio: 9:16 (Potret Fullscreen) -> 3:4 (Standar Feed) -> 1:1 (Persegi) -> 9:16
-            let next = 'portrait';
-            if (this.state.aspectRatio === 'portrait') {
-                next = 'standard';
-            } else if (this.state.aspectRatio === 'standard') {
-                next = 'square';
-            } else {
-                next = 'portrait';
-            }
+            // Siklus rasio lengkap ala Shopee & IG: 9:16 (Story) -> 4:5 (Feed) -> 1:1 (Persegi) -> 3:4 (Foto) -> 16:9 (Lanskap) -> Asli -> 9:16
+            const sequence = ['portrait', 'feed', 'square', 'standard', 'landscape', 'original'];
+            const cur = this.state.aspectRatio || 'portrait';
+            const curIndex = sequence.indexOf(cur);
+            const nextIndex = curIndex >= 0 ? (curIndex + 1) % sequence.length : 0;
+            const next = sequence[nextIndex];
             this.setAspectRatio(next);
             return next;
         }
 
         getAspectRatioDisplay() {
-            if (this.state.aspectRatio === 'standard') return '3:4';
+            if (this.state.aspectRatio === 'feed') return '4:5';
             if (this.state.aspectRatio === 'square') return '1:1';
+            if (this.state.aspectRatio === 'standard') return '3:4';
+            if (this.state.aspectRatio === 'landscape') return '16:9';
+            if (this.state.aspectRatio === 'original') return 'Asli';
             return '9:16';
         }
 

@@ -87,18 +87,32 @@
                 <div></div>
             </div>
 
+            <!-- 4:5 Feed Framing Mask (Active when Aspect Ratio is 4:5) -->
+            <div id="camera-feed-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/75"></div>
+                <div class="w-full aspect-[4/5] max-h-[80vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
+            </div>
+
             <!-- 3:4 Framing Mask (Active when Aspect Ratio is 3:4) -->
             <div id="camera-3-4-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
-                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
                 <div class="w-full aspect-[3/4] max-h-[82vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
-                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
             </div>
 
             <!-- Square Framing Mask (Active when Aspect Ratio is 1:1) -->
             <div id="camera-square-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
-                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
                 <div class="w-full aspect-square border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
-                <div class="w-full flex-1 bg-black/75 backdrop-blur-xs"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
+            </div>
+
+            <!-- 16:9 Landscape Framing Mask (Active when Aspect Ratio is 16:9) -->
+            <div id="camera-landscape-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/75"></div>
+                <div class="w-full aspect-[16/9] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
             </div>
 
             <!-- Filter Name Subtle Toast (Swipe Notification) -->
@@ -327,6 +341,29 @@
 
             <div id="editor-carousel-dots" class="hidden absolute bottom-8 left-0 right-0 z-30 flex items-center justify-center gap-1.5 pointer-events-none"></div>
 
+            <!-- Floating Zoom Indicator Badge -->
+            <div id="editor-zoom-badge" class="pointer-events-none absolute top-20 right-4 z-30 opacity-0 transition-opacity duration-300 glass-pill px-2.5 py-1 rounded-full text-[11px] font-black text-sky-400 border border-sky-400/40 shadow-xl flex items-center gap-1">
+                <i class="fa-solid fa-magnifying-glass-plus text-[10px]"></i>
+                <span id="editor-zoom-badge-text">1.0x</span>
+            </div>
+
+            <!-- Floating Quick Zoom & Framing Controls (Ala Shopee & Instagram) -->
+            <div id="editor-zoom-controls" class="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 glass-pill px-3 py-1.5 rounded-full flex items-center gap-2.5 shadow-2xl border border-white/20 transition-all duration-200">
+                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.zoomOut()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs active:scale-90" title="Perkecil Zoom (-)">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.cycleQuickZoom()" id="editor-zoom-level-btn" class="text-xs font-black text-sky-400 min-w-[36px] text-center hover:scale-105 active:scale-95 transition" title="Ketuk untuk ganti tingkat zoom">
+                    1.0x
+                </button>
+                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.zoomIn()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs active:scale-90" title="Perbesar Zoom (+)">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <div class="w-px h-3.5 bg-white/20"></div>
+                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.resetZoom()" class="text-[10px] font-bold text-white/70 hover:text-white active:scale-90 px-1" title="Reset Zoom ke 1.0x">
+                    Reset
+                </button>
+            </div>
+
             <!-- Subtle Editor Toast Notification -->
             <div id="editor-toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300 glass-pill px-4 py-1.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-1.5">
                 <i class="fa-solid fa-wand-magic-sparkles text-sky-400 text-xs"></i>
@@ -350,8 +387,8 @@
                 </span>
             </button>
 
-            <!-- Aspect Ratio Toggle Button di Editor -->
-            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.toggleAspectRatio()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (9:16 / 3:4 / 1:1)">
+            <!-- Aspect Ratio Toggle Button di Editor (Klik untuk buka drawer rasio Shopee / IG) -->
+            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.openRatioDrawer()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Pilih Rasio (Shopee & Instagram)">
                 <i id="editor-aspect-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
                 <span id="editor-aspect-label">9:16</span>
             </button>
@@ -364,8 +401,24 @@
         </header>
 
         <!-- 3. Editor Right Floating Toolbar (IG / TikTok Tools) -->
-        <aside class="absolute right-3.5 top-28 z-30 flex flex-col items-center gap-4 pointer-events-auto">
-            <!-- 0. Cermin / Mirror Flip Toggle -->
+        <aside class="absolute right-3.5 top-24 z-30 flex flex-col items-center gap-3.5 pointer-events-auto">
+            <!-- 0a. Rasio / Crop (Shopee & IG Format) -->
+            <div class="flex flex-col items-center">
+                <button onclick="window.MomentEditorEngine.openRatioDrawer()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Format & Rasio">
+                    <i class="fa-solid fa-crop-simple text-sm text-sky-400"></i>
+                </button>
+                <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Rasio</span>
+            </div>
+
+            <!-- 0b. Zoom & Atur Posisi (Pan) -->
+            <div class="flex flex-col items-center">
+                <button onclick="window.MomentEditorEngine.toggleZoomControls()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Zoom & Atur Posisi">
+                    <i class="fa-solid fa-magnifying-glass-plus text-sm text-sky-300"></i>
+                </button>
+                <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Zoom</span>
+            </div>
+
+            <!-- 0c. Cermin / Mirror Flip Toggle -->
             <div class="flex flex-col items-center">
                 <button onclick="window.MomentEditorEngine.toggleMirror()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Cermin / Balik Horizontal">
                     <i class="fa-solid fa-arrows-left-right text-sm text-cyan-300"></i>
@@ -373,7 +426,7 @@
                 <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Cermin</span>
             </div>
 
-            <!-- 0b. Putar 90° / Rotate Slide -->
+            <!-- 0d. Putar 90° / Rotate Slide -->
             <div class="flex flex-col items-center">
                 <button onclick="window.MomentEditorEngine.rotateCurrentSlide()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Putar 90°">
                     <i class="fa-solid fa-rotate-right text-sm text-sky-400"></i>
@@ -447,6 +500,100 @@
 
         <!-- Hidden Input untuk Tambah Media di Editor -->
         <input type="file" id="editor-add-media-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden">
+
+        <!-- ============================================================== -->
+        <!-- DRAWER 0: FORMAT & RASIO LENGKAP (ALA SHOPEE & INSTAGRAM) -->
+        <!-- ============================================================== -->
+        <div id="editor-ratio-drawer" class="absolute bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-2xl border-t border-white/15 p-4 transition-transform duration-300 translate-y-full">
+            <div class="flex items-center justify-between mb-3.5">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-crop-simple"></i>
+                    </div>
+                    <h4 class="text-xs font-black text-white">Format & Rasio Foto / Video</h4>
+                    <span class="text-[10px] text-sky-400 font-bold">Shopee & IG</span>
+                </div>
+                <button onclick="window.MomentEditorEngine.closeRatioDrawer()" class="text-white/60 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Grid 6 Pilihan Rasio -->
+            <div class="grid grid-cols-3 gap-2.5 mb-3">
+                <!-- 1:1 Persegi -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
+                    <div class="flex items-center justify-between">
+                        <span class="w-5 h-5 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-xs font-black text-sky-400">1:1</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight">Persegi</p>
+                        <p class="text-[9px] text-slate-400">Feed Shopee & IG</p>
+                    </div>
+                </button>
+
+                <!-- 4:5 Feed Potret -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('feed')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="feed">
+                    <div class="flex items-center justify-between">
+                        <span class="w-4 h-5 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-xs font-black text-sky-400">4:5</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight">Potret Feed</p>
+                        <p class="text-[9px] text-slate-400">Instagram & Shopee</p>
+                    </div>
+                </button>
+
+                <!-- 9:16 Fullscreen -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
+                    <div class="flex items-center justify-between">
+                        <span class="w-3.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-xs font-black text-sky-400">9:16</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight">Layar Penuh</p>
+                        <p class="text-[9px] text-slate-400">Story, Video, Reels</p>
+                    </div>
+                </button>
+
+                <!-- 3:4 Standar -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('standard')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="standard">
+                    <div class="flex items-center justify-between">
+                        <span class="w-4.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-xs font-black text-sky-400">3:4</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight">Foto Klasik</p>
+                        <p class="text-[9px] text-slate-400">Kamera Ponsel</p>
+                    </div>
+                </button>
+
+                <!-- 16:9 Lanskap -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('landscape')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="landscape">
+                    <div class="flex items-center justify-between">
+                        <span class="w-6 h-3.5 border-2 border-sky-400/80 rounded-sm"></span>
+                        <span class="text-xs font-black text-sky-400">16:9</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight">Layar Lebar</p>
+                        <p class="text-[9px] text-slate-400">Lanskap Horizontal</p>
+                    </div>
+                </button>
+
+                <!-- Asli / Original -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
+                    <div class="flex items-center justify-between">
+                        <i class="fa-solid fa-expand text-sky-400 text-sm"></i>
+                        <span class="text-xs font-black text-sky-400">Asli</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight">Format Asli</p>
+                        <p class="text-[9px] text-slate-400">Bebas Tanpa Crop</p>
+                    </div>
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-400 text-center"><i class="fa-solid fa-hand-pointer mr-1 text-sky-400"></i> Tip: Kamu bisa cubit layar (pinch) atau pakai tombol zoom di layar untuk memperbesar & menggeser foto.</p>
+        </div>
 
         <!-- ============================================================== -->
         <!-- DRAWER 1: FILTER VISUAL CAROUSEL -->
@@ -671,14 +818,17 @@
 </div>
 
 <!-- ============================================================== -->
-<!-- SCRIPT LOADER MODULAR: CREATOR & EDITOR ENGINE -->
+<!-- SCRIPT LOADER MODULAR: CREATOR & EDITOR ENGINE (DENGAN CACHE-BUSTER) -->
 <!-- ============================================================== -->
-<script src="{{ asset('js/moments/creator-state.js') }}"></script>
-<script src="{{ asset('js/moments/permission-manager.js') }}"></script>
-<script src="{{ asset('js/moments/camera-engine.js') }}"></script>
-<script src="{{ asset('js/moments/music-provider.js') }}"></script>
-<script src="{{ asset('js/moments/editor-engine.js') }}"></script>
-<script src="{{ asset('js/moments/creator-ui.js') }}"></script>
+@php
+    $cacheBuster = (string) time();
+@endphp
+<script src="{{ asset('js/moments/creator-state.js') }}?v={{ file_exists(public_path('js/moments/creator-state.js')) ? (string) (filemtime(public_path('js/moments/creator-state.js')) ?: $cacheBuster) : $cacheBuster }}"></script>
+<script src="{{ asset('js/moments/permission-manager.js') }}?v={{ file_exists(public_path('js/moments/permission-manager.js')) ? (string) (filemtime(public_path('js/moments/permission-manager.js')) ?: $cacheBuster) : $cacheBuster }}"></script>
+<script src="{{ asset('js/moments/camera-engine.js') }}?v={{ file_exists(public_path('js/moments/camera-engine.js')) ? (string) (filemtime(public_path('js/moments/camera-engine.js')) ?: $cacheBuster) : $cacheBuster }}"></script>
+<script src="{{ asset('js/moments/music-provider.js') }}?v={{ file_exists(public_path('js/moments/music-provider.js')) ? (string) (filemtime(public_path('js/moments/music-provider.js')) ?: $cacheBuster) : $cacheBuster }}"></script>
+<script src="{{ asset('js/moments/editor-engine.js') }}?v={{ file_exists(public_path('js/moments/editor-engine.js')) ? (string) (filemtime(public_path('js/moments/editor-engine.js')) ?: $cacheBuster) : $cacheBuster }}"></script>
+<script src="{{ asset('js/moments/creator-ui.js') }}?v={{ file_exists(public_path('js/moments/creator-ui.js')) ? (string) (filemtime(public_path('js/moments/creator-ui.js')) ?: $cacheBuster) : $cacheBuster }}"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', async function () {

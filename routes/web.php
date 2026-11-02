@@ -99,19 +99,21 @@ Route::middleware('auth')->group(function () {
 });
 
 
-// ─── 3. ADMIN ROUTES (TERKUNCI) ──────────────────────────────────────────────
-Route::get('/admin/vendors-validation', [AdminVendorController::class, 'validasiVendor'])->name('admin.vendors.validation');
-Route::post('/admin/vendors/{id}/approve-validation', [AdminVendorController::class, 'approveVendor'])->name('admin.vendors.approve-validation');
-Route::post('/admin/vendors/{id}/reject-validation', [AdminVendorController::class, 'rejectVendor'])->name('admin.vendors.reject');
-
-// Admin Masuk ke Toko Vendor (Impersonate & Leave)
-Route::get('/admin/vendors/{id}/impersonate', [AdminVendorController::class, 'impersonate'])->middleware('auth')->name('admin.vendors.impersonate');
-Route::post('/admin/vendors/{id}/impersonate', [AdminVendorController::class, 'impersonate'])->middleware('auth');
+// ─── 3. ADMIN ROUTES (TERKUNCI TINGKAT TINGGI: WAJIB GOOGLE SSO RENTIFY.ID@GMAIL.COM) ───
 Route::get('/admin/impersonate/leave', [AdminVendorController::class, 'leaveImpersonate'])->middleware('auth')->name('admin.impersonate.leave');
 
 Route::prefix('admin')->name('admin.')
     ->middleware(['auth', 'role:admin'])
     ->group(function () {
+
+    // Validasi & Moderasi Mitra Vendor
+    Route::get('/vendors-validation', [AdminVendorController::class, 'validasiVendor'])->name('vendors.validation');
+    Route::post('/vendors/{id}/approve-validation', [AdminVendorController::class, 'approveVendor'])->name('vendors.approve-validation');
+    Route::post('/vendors/{id}/reject-validation', [AdminVendorController::class, 'rejectVendor'])->name('vendors.reject');
+
+    // Admin Masuk ke Toko Vendor (Impersonate)
+    Route::get('/vendors/{id}/impersonate', [AdminVendorController::class, 'impersonate'])->name('vendors.impersonate');
+    Route::post('/vendors/{id}/impersonate', [AdminVendorController::class, 'impersonate']);
 
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
@@ -315,6 +317,18 @@ Route::post('/api/webhook/mutasi', [\App\Http\Controllers\Api\MutasiWebhookContr
 Route::post('/webhook/whatsapp', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])
     ->name('whatsapp.webhook');
 
+// ─── PWA & SYSTEM APP VERSION API (AUTO-UPDATE REALTIME) ──────────────────────
+Route::get('/api/app-version', function () {
+    return response()->json([
+        'status'    => 'success',
+        'name'      => 'Rentify',
+        'version'   => \App\Helpers\AppVersion::get(),
+        'timestamp' => \App\Helpers\AppVersion::timestamp(),
+    ])->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+      ->header('Pragma', 'no-cache')
+      ->header('Expires', '0');
+})->name('api.app.version');
+
 
 // ─── EMAIL VERIFICATION ROUTES ──────────────────────────────────────────────────
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -360,8 +374,8 @@ Route::prefix('api/moments')->group(function () {
         ->name('api.moments.comments.destroy');
 });
 
-// ─── MOMENT CONTENT MODERATION API (ADMIN) ────────────────────────────────────
-Route::prefix('api/admin/moderation')->group(function () {
+// ─── MOMENT CONTENT MODERATION API (ADMIN TERKUNCI) ──────────────────────────
+Route::prefix('api/admin/moderation')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\AdminMomentModerationController::class, 'index'])
         ->name('api.admin.moderation.index');
     Route::post('/{id}/dismiss', [\App\Http\Controllers\Admin\AdminMomentModerationController::class, 'dismiss'])

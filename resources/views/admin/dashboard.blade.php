@@ -113,10 +113,12 @@
         <div class="p-4 border-t border-slate-100">
             <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-[#0369a1] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md">AD</div>
+                    <div class="w-8 h-8 bg-[#0369a1] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md"><i class="fa-brands fa-google text-xs"></i></div>
                     <div class="truncate">
                         <h4 class="text-xs font-bold text-slate-800 truncate">Super Admin</h4>
-                        <p class="text-[9px] text-slate-400 truncate">Otoritas Penuh</p>
+                        <p class="text-[9px] text-sky-600 font-semibold truncate flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-[9px] text-emerald-500"></i> rentify.id@gmail.com
+                        </p>
                     </div>
                 </div>
                 <form action="/logout" method="POST">
@@ -137,6 +139,9 @@
                 <h2 id="header-title" class="text-lg font-black text-slate-800 tracking-tight">Pusat Kendali Sistem Utama</h2>
                 <span class="text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center shadow-xs">
                     <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span> Mode Admin God-Mode
+                </span>
+                <span class="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-0.5 rounded-full shadow-xs">
+                    <i class="fa-brands fa-google text-sky-500"></i> Google SSO Shield Active
                 </span>
             </div>
 

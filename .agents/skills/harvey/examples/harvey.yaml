@@ -1,0 +1,92 @@
+persona:
+  name: "Rian"
+  company: "Rentify Indonesia"
+  role: "Tim Kemitraan & Pertumbuhan Vendor"
+  email: "partner@rentify21.my.id"
+  whatsapp: "+6281234567890"
+  website: "https://rentify21.my.id"
+  tone: "ramah, santai, profesional, solutif, khas UMKM Indonesia"
+
+product:
+  name: "Rentify"
+  url: "https://rentify21.my.id"
+  description: "Platform marketplace persewaan lokal terintegrasi di Indonesia untuk kamera, outdoor camping, busana pesta/wisuda, sound system, dan konsol game."
+  pricing: "Komisi 5% hanya jika transaksi berhasil (Rp 0 biaya pendaftaran, Rp 0 langganan bulanan)"
+  key_benefits:
+    - "Katalog online & kalender booking otomatis tanpa risiko bentrok jadwal sewa"
+    - "Verifikasi KTP dan identitas penyewa aman untuk meminimalisir risiko barang hilang"
+    - "Dukungan pembayaran fleksibel: QRIS otomatis instan dan sistem COD aman"
+    - "Pencairan saldo aktif vendor instan (H+0 setelah masa sewa selesai)"
+    - "Ongkos kirim 100% utuh menjadi hak vendor tanpa potongan"
+  objection_responses:
+    "sudah ramai di wa": "Rentify melengkapi WA kakak jadi etalase booking otomatis di bio, jadi admin nggak begadang rekap jadwal manual."
+    "takut barang hilang": "Setiap penyewa terverifikasi KTP, ada surat perjanjian digital sah, dan vendor pegang kendali penuh terima/tolak pesanan."
+    "potongan mahal": "Biaya platform cuma 5% per transaksi berhasil. Pendaftaran gratis dan tanpa biaya bulanan."
+    "repot upload produk": "Tim kemitraan kami siap bantu masukkan katalog dan pricelist produk kakak secara cuma-cuma."
+  offer:
+    primary: "Onboarding toko gratis + promo bebas komisi 0% untuk 10 transaksi pertama"
+    entry: "Preview etalase digital toko gratis dalam 2 menit"
+    goal: "register_vendor"
+    booking_url: "https://rentify21.my.id/vendor/register"
+
+icp:
+  vendors:
+    categories:
+      - "Rental Kamera & Lensa"
+      - "Sewa Alat Camping & Outdoor"
+      - "Sewa Kebaya, Jas & Busana Wisuda"
+      - "Rental Sound System & Alat Event"
+      - "Rental PS5 & Gaming Console"
+    company_size: "1-10 staf (UMKM persewaan lokal)"
+    geography:
+      - "Jakarta & Bodetabek"
+      - "Surabaya & Malang"
+      - "Bandung"
+      - "Yogyakarta & Solo"
+      - "Semarang"
+      - "Medan & Bali"
+    decision_makers:
+      - "Owner Rental"
+      - "Admin / Pengelola Toko"
+  customers:
+    segments:
+      - "Event Organizer & Wedding Planner"
+      - "Mahasiswa & BEM Kampus (Divisi Perlengkapan Acara)"
+      - "Komunitas Pecinta Alam & Pendaki"
+      - "Fotografer & Content Creator Freelance"
+
+channels:
+  whatsapp:
+    enabled: true
+    max_daily_sends: 25
+    send_jitter_seconds_min: 180
+    send_jitter_seconds_max: 420
+    require_approval: true
+  instagram:
+    enabled: true
+    max_daily_dms: 20
+    follow_before_dm: true
+    require_approval: true
+  email:
+    enabled: true
+    provider: "smtp"
+    max_daily_sends: 30
+    require_approval: true
+
+usage:
+  heartbeat_interval_minutes: 15
+  quiet_hours:
+    start: "20:00"
+    end: "08:30"
+    timezone: "Asia/Jakarta"
+  active_send_window:
+    start: "09:30"
+    end: "16:30"
+    weekdays_only: false
+    saturday_half_day: true
+
+compliance:
+  opt_out_line: 'Kurang berkenan? Cukup balas "tidak" dan kami tidak akan menghubungi lagi.'
+  do_not_contact:
+    - "competitor.id"
+    - "info@rentify21.my.id"

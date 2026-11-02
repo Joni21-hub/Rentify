@@ -119,32 +119,50 @@
                 };
             }
 
-            // Header: Aspect Ratio Toggle (9:16 -> 3:4 -> 1:1)
+            // Header: Aspect Ratio Toggle (9:16 -> 4:5 -> 1:1 -> 3:4 -> 16:9 -> Asli -> 9:16)
             const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
             const aspectLabel = document.getElementById('aspect-ratio-label');
             const aspectIcon = document.getElementById('aspect-ratio-icon');
             const squareMask = document.getElementById('camera-square-mask');
+            const feedMask = document.getElementById('camera-feed-mask');
             const standardMask = document.getElementById('camera-3-4-mask');
+            const landscapeMask = document.getElementById('camera-landscape-mask');
 
             const applyCameraRatioUI = (ratio) => {
                 const isSquare = ratio === 'square';
+                const isFeed = ratio === 'feed';
                 const isStandard = ratio === 'standard';
+                const isLandscape = ratio === 'landscape';
+                const isOriginal = ratio === 'original';
                 const isPortrait = ratio === 'portrait';
 
                 if (aspectLabel) {
-                    aspectLabel.textContent = isSquare ? '1:1' : (isStandard ? '3:4' : '9:16');
+                    aspectLabel.textContent = this.state.getAspectRatioDisplay();
                 }
                 if (aspectIcon) {
                     if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
-                    else if (isStandard) aspectIcon.className = 'fa-solid fa-rectangle-vertical text-sky-400 text-xs';
+                    else if (isFeed) aspectIcon.className = 'fa-solid fa-rectangle-vertical text-sky-400 text-xs';
+                    else if (isStandard) aspectIcon.className = 'fa-solid fa-camera text-sky-400 text-xs';
+                    else if (isLandscape) aspectIcon.className = 'fa-solid fa-tv text-sky-400 text-xs';
+                    else if (isOriginal) aspectIcon.className = 'fa-solid fa-crop-simple text-sky-400 text-xs';
                     else aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
                 }
                 if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
+                if (feedMask) feedMask.classList.toggle('hidden', !isFeed);
                 if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
+                if (landscapeMask) landscapeMask.classList.toggle('hidden', !isLandscape);
 
-                const msg = isSquare ? 'Rasio: Persegi (1:1)' : (isStandard ? 'Rasio: Feed (3:4)' : 'Rasio: Potret (9:16)');
+                let msg = 'Rasio: Potret (9:16)';
+                if (isFeed) msg = 'Rasio: Feed IG/Shopee (4:5)';
+                else if (isSquare) msg = 'Rasio: Persegi (1:1)';
+                else if (isStandard) msg = 'Rasio: Foto Standar (3:4)';
+                else if (isLandscape) msg = 'Rasio: Layar Lebar (16:9)';
+                else if (isOriginal) msg = 'Rasio: Format Asli';
                 this.showFilterToast(msg);
             };
+
+            // Set UI awal kamera
+            applyCameraRatioUI(this.state.get('aspectRatio') || 'portrait');
 
             if (aspectBtn) {
                 aspectBtn.onclick = (e) => {

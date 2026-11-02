@@ -1,0 +1,295 @@
+import React from 'react';
+import {
+  AbsoluteFill,
+  interpolate,
+  spring,
+  useCurrentFrame,
+  useVideoConfig,
+  Img,
+  staticFile,
+} from 'remotion';
+import { z } from 'zod';
+
+export const catalogReelSchema = z.object({
+  productName: z.string(),
+  category: z.string(),
+  rentalPricePerDay: z.number(),
+  retailPrice: z.number(),
+  rating: z.number().default(4.9),
+  reviewCount: z.number().default(128),
+  vendorName: z.string(),
+  imageUrl: z.string(),
+  primaryColor: z.string().default('#0284c7'), // Sky 600
+  accentColor: z.string().default('#f59e0b'),  // Amber 500
+});
+
+export type CatalogReelProps = z.infer<typeof catalogReelSchema>;
+
+export const defaultCatalogReelProps: CatalogReelProps = {
+  productName: 'Sony Alpha A7 IV Kit 28-70mm',
+  category: 'Kamera & Fotografi',
+  rentalPricePerDay: 250000,
+  retailPrice: 38000000,
+  rating: 4.9,
+  reviewCount: 84,
+  vendorName: 'Nusantara Lens Official',
+  imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80',
+  primaryColor: '#0284c7',
+  accentColor: '#f59e0b',
+};
+
+export const DynamicCatalogReel: React.FC<CatalogReelProps> = ({
+  productName,
+  category,
+  rentalPricePerDay,
+  retailPrice,
+  rating,
+  reviewCount,
+  vendorName,
+  imageUrl,
+  primaryColor,
+  accentColor,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // Entrance springs
+  const cardScale = spring({
+    frame,
+    fps,
+    config: { damping: 14, mass: 0.6, stiffness: 120 },
+    from: 0.8,
+    to: 1,
+  });
+
+  const cardOpacity = interpolate(frame, [0, 15], [0, 1], {
+    extrapolateRight: 'clamp',
+  });
+
+  // Badge pop-in animation
+  const badgeScale = spring({
+    frame: frame - 20,
+    fps,
+    config: { damping: 10, mass: 0.5, stiffness: 150 },
+    from: 0,
+    to: 1,
+  });
+
+  // Calculate savings percentage
+  const savingsPercent = Math.round(
+    ((retailPrice - rentalPricePerDay) / retailPrice) * 100
+  );
+
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: '#090d16',
+        color: '#ffffff',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '80px 60px',
+      }}
+    >
+      {/* Background ambient lighting */}
+      <div
+        style={{
+          position: 'absolute',
+          top: -200,
+          left: -200,
+          width: 800,
+          height: 800,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${primaryColor}40 0%, transparent 70%)`,
+          filter: 'blur(100px)',
+        }}
+      />
+
+      {/* Header: Platform Branding */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          zIndex: 10,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 16,
+              backgroundColor: primaryColor,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: 28,
+            }}
+          >
+            R
+          </div>
+          <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>
+            Rentify
+          </span>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            padding: '10px 24px',
+            borderRadius: 999,
+            fontSize: 20,
+            fontWeight: 600,
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          {category}
+        </div>
+      </div>
+
+      {/* Main Showcase Card */}
+      <div
+        style={{
+          transform: `scale(${cardScale})`,
+          opacity: cardOpacity,
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 36,
+          padding: 40,
+          backdropFilter: 'blur(20px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          position: 'relative',
+          zIndex: 10,
+        }}
+      >
+        {/* Savings Ribbon */}
+        {frame >= 20 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: -24,
+              right: 32,
+              transform: `scale(${badgeScale})`,
+              backgroundColor: accentColor,
+              color: '#000000',
+              fontWeight: 800,
+              fontSize: 22,
+              padding: '12px 28px',
+              borderRadius: 999,
+              boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)',
+            }}
+          >
+            Hemat {savingsPercent}% vs Beli!
+          </div>
+        )}
+
+        {/* Product Image */}
+        <div
+          style={{
+            width: '100%',
+            height: 520,
+            borderRadius: 24,
+            overflow: 'hidden',
+            backgroundColor: '#1e293b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 36,
+          }}
+        >
+          <Img
+            src={imageUrl}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        </div>
+
+        {/* Product Title */}
+        <h2
+          style={{
+            fontSize: 44,
+            fontWeight: 800,
+            textAlign: 'center',
+            lineHeight: 1.2,
+            marginBottom: 20,
+          }}
+        >
+          {productName}
+        </h2>
+
+        {/* Vendor & Rating */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 24,
+            color: '#94a3b8',
+            fontSize: 22,
+            marginBottom: 32,
+          }}
+        >
+          <span>⭐ {rating.toFixed(1)} ({reviewCount} ulasan)</span>
+          <span>•</span>
+          <span>Verified: {vendorName}</span>
+        </div>
+
+        {/* Price Comparison */}
+        <div
+          style={{
+            width: '100%',
+            backgroundColor: 'rgba(2, 132, 199, 0.15)',
+            border: '1px solid rgba(2, 132, 199, 0.3)',
+            borderRadius: 24,
+            padding: '24px 32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 18, color: '#94a3b8', textDecoration: 'line-through' }}>
+              Beli baru: Rp {retailPrice.toLocaleString('id-ID')}
+            </div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: '#38bdf8' }}>
+              Rp {rentalPricePerDay.toLocaleString('id-ID')}
+              <span style={{ fontSize: 20, fontWeight: 500, color: '#94a3b8' }}>/hari</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: primaryColor,
+              color: '#ffffff',
+              padding: '16px 32px',
+              borderRadius: 16,
+              fontSize: 22,
+              fontWeight: 700,
+            }}
+          >
+            Sewa Sekarang
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Call to Action */}
+      <div
+        style={{
+          textAlign: 'center',
+          color: '#94a3b8',
+          fontSize: 22,
+          zIndex: 10,
+        }}
+      >
+        Unduh aplikasi Rentify atau kunjungi <strong style={{ color: '#ffffff' }}>rentify21.my.id</strong>
+      </div>
+    </AbsoluteFill>
+  );
+};

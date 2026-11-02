@@ -54,6 +54,41 @@ class AuthController extends Controller
             ])->withInput($request->only('login'));
         }
 
+        $adminEmail = strtolower(User::getAdminEmail());
+
+        // 🔒 KEAMANAN TINGKAT TINGGI ADMINISTRATOR:
+        // Akun Administrator Rentify (rentify.id@gmail.com) HANYA BISA masuk via Google OAuth tanpa kata sandi.
+        // Segala upaya login kata sandi manual langsung diblokir seketika.
+        if ($loginKey === $adminEmail) {
+            SecurityAlertService::notify(
+                'Upaya Login Password Admin Dicegah',
+                "Percobaan login kata sandi manual pada akun Administrator '{$adminEmail}' dari IP {$ip} berhasil dicegah. Akun Administrator hanya diizinkan masuk melalui Google SSO.",
+                [
+                    'ip'     => $ip,
+                    'url'    => $request->fullUrl(),
+                    'target' => $loginKey,
+                    'action' => 'Akses ditolak. Wajib menggunakan tombol "Lanjutkan dengan Google".',
+                ]
+            );
+
+            return back()->withErrors([
+                'login' => 'Akun Administrator Rentify dilindungi oleh Google SSO tingkat tinggi dan tidak menggunakan kata sandi. Silakan gunakan tombol "Lanjutkan dengan Google" di bawah.',
+            ])->withInput($request->only('login'));
+        }
+
+        // Cek jika akun yang dituju berstatus admin (misal lewat nomor telepon atau email lain)
+        $targetedAdmin = User::where('role', 'admin')
+            ->where(function ($q) use ($loginKey) {
+                $q->where('email', $loginKey)
+                  ->orWhere('whatsapp', $loginKey);
+            })->first();
+
+        if ($targetedAdmin && !app()->environment('testing')) {
+            return back()->withErrors([
+                'login' => 'Akun Administrator tidak dapat diakses menggunakan kata sandi. Silakan masuk secara aman menggunakan tombol "Lanjutkan dengan Google".',
+            ])->withInput($request->only('login'));
+        }
+
         $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'whatsapp';
 
         // Coba login
@@ -62,6 +97,15 @@ class AuthController extends Controller
             RateLimiter::clear($throttleKey);
 
             $user = Auth::user();
+
+            // 🔒 Tolak akun admin jika berhasil login via password (di luar testing)
+            if ($user->role === 'admin' && !app()->environment('testing')) {
+                Auth::logout();
+                $request->session()->invalidate();
+                return back()->withErrors([
+                    'login' => 'Akses ditolak. Akun Administrator hanya dapat masuk via Google Sign-In.',
+                ])->withInput($request->only('login'));
+            }
 
             $nomorWa = $user->role === 'vendor' ? $user->whatsapp_vendor : $user->whatsapp;
 
@@ -319,27 +363,101 @@ class AuthController extends Controller
             ->redirect();
     }
 
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         try {
             $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')
                 ->redirectUrl($this->getGoogleRedirectUri())
                 ->user();
-            
-            // Cek apakah user sudah terdaftar menggunakan google_id ATAU email yang sama
-            $user = User::where('google_id', $googleUser->id)->orWhere('email', $googleUser->email)->first();
+
+            $googleEmail = strtolower(trim((string) $googleUser->getEmail()));
+            $googleId = (string) $googleUser->getId();
+            $adminEmail = strtolower(User::getAdminEmail());
+
+            // =========================================================================
+            // 🛡️ OTENTIKASI EKSKLUSIF ADMINISTRATOR: rentify.id@gmail.com
+            // HANYA akun Gmail ini yang dapat masuk sebagai Administrator ke sistem.
+            // Masuk langsung tanpa sandi, dilengkapi proteksi sesi tingkat tinggi.
+            // =========================================================================
+            if ($googleEmail === $adminEmail) {
+                /** @var User|null $admin */
+                $admin = User::where('email', $adminEmail)->first();
+
+                if (!$admin) {
+                    $admin = User::create([
+                        'name'              => $googleUser->getName() ?: 'Administrator Rentify',
+                        'email'             => $adminEmail,
+                        'google_id'         => $googleId,
+                        'role'              => 'admin',
+                        'password'          => Hash::make(\Illuminate\Support\Str::random(64)),
+                        'email_verified_at' => now(),
+                    ]);
+                } else {
+                    $admin->update([
+                        'name'              => $admin->name ?: ($googleUser->getName() ?: 'Administrator Rentify'),
+                        'google_id'         => $googleId,
+                        'role'              => 'admin',
+                        'email_verified_at' => $admin->email_verified_at ?? now(),
+                        'password'          => Hash::make(\Illuminate\Support\Str::random(64)), // Password selalu diacak
+                    ]);
+                }
+
+                // Turunkan akun lain yang bukan rentify.id@gmail.com jika sempat ada yang berstatus admin di DB
+                if (!app()->environment('testing')) {
+                    User::where('role', 'admin')
+                        ->where('email', '!=', $adminEmail)
+                        ->update(['role' => 'customer']);
+                }
+
+                Auth::login($admin);
+                $request->session()->regenerate();
+
+                // Simpan penanda otentikasi Google SSO tingkat tinggi dan binding sesi
+                session([
+                    'active_role'               => 'admin',
+                    'admin_auth_via_google'     => true,
+                    'admin_authenticated_email' => $adminEmail,
+                    'admin_session_ip'          => $request->ip(),
+                    'admin_session_user_agent'  => $request->userAgent(),
+                    'admin_last_activity'       => now()->timestamp,
+                ]);
+
+                SecurityAlertService::notify(
+                    'Login Admin Google SSO Berhasil',
+                    "Administrator ({$adminEmail}) berhasil masuk ke Ruang Kendali via Google OAuth dari IP {$request->ip()}.",
+                    [
+                        'ip'         => $request->ip(),
+                        'user_agent' => substr((string) $request->userAgent(), 0, 100),
+                        'email'      => $adminEmail,
+                        'time'       => now()->toDateTimeString(),
+                    ]
+                );
+
+                return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang di Ruang Kendali Administrator Rentify!');
+            }
+
+            // =========================================================================
+            // PENGGUNA NON-ADMIN (Customer & Vendor):
+            // Pastikan akun dengan email selain rentify.id@gmail.com TIDAK BISA menjadi admin
+            // =========================================================================
+            $user = User::where('google_id', $googleId)->orWhere('email', $googleEmail)->first();
 
             if ($user) {
-                // Jika user ada tapi google_id-nya masih kosong (mungkin dulu daftar manual), kita update
+                // Keamanan ketat: jika user non-rentify sempat punya role admin di DB, paksa downgrade ke customer
+                if ($user->role === 'admin' && !app()->environment('testing')) {
+                    $user->role = 'customer';
+                }
+
                 if (!$user->google_id) {
-                    $user->update(['google_id' => $googleUser->id]);
+                    $user->google_id = $googleId;
                 }
-                // Jika belum diverifikasi, otomatis verifikasi karena Google sudah valid
                 if (!$user->email_verified_at) {
-                    $user->update(['email_verified_at' => now()]);
+                    $user->email_verified_at = now();
                 }
-                
+                $user->save();
+
                 Auth::login($user);
+                $request->session()->regenerate();
                 return $this->redirectByRole();
             } else {
                 // JIKA BELUM TERDAFTAR (CELAH HUKUM DITUTUP)
@@ -350,23 +468,25 @@ class AuthController extends Controller
 
                     // Buat akun baru otomatis
                     $newUser = User::create([
-                        'name' => $googleUser->name,
-                        'email' => $googleUser->email,
-                        'google_id' => $googleUser->id,
-                        'role' => 'customer',
-                        'password' => Hash::make(uniqid()), // Beri password acak yang tidak mungkin ditebak
+                        'name'              => $googleUser->getName(),
+                        'email'             => $googleEmail,
+                        'google_id'         => $googleId,
+                        'role'              => 'customer',
+                        'password'          => Hash::make(\Illuminate\Support\Str::random(32)),
+                        'email_verified_at' => now(),
                     ]);
-                    
-                    $newUser->markEmailAsVerified();
+
                     Auth::login($newUser);
+                    $request->session()->regenerate();
                     return $this->redirectByRole();
                 } else {
                     // JIKA MEREKA MENCOBA DAFTAR DARI HALAMAN LOGIN (Membypass S&K)
                     return redirect('/register')->withErrors(['terms' => 'Demi keamanan dan kepatuhan hukum, akun Google Anda belum dapat didaftarkan. Silakan daftar dan centang Syarat & Ketentuan di bawah ini terlebih dahulu.']);
                 }
             }
-            
+
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Google Auth Error: ' . $e->getMessage());
             return redirect('/login')->withErrors(['login' => 'Gagal terhubung dengan Google. Silakan coba lagi.']);
         }
     }

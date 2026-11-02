@@ -10,12 +10,12 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Akun Admin
+        // Akun Admin (Keamanan Tinggi: Wajib Google SSO, tanpa password)
         User::updateOrCreate(
             ['email' => 'rentify.id@gmail.com'],
             [
-                'name' => 'Admin Rentify',
-                'password' => Hash::make('Rentify21'),
+                'name' => 'Administrator Rentify',
+                'password' => Hash::make(\Illuminate\Support\Str::random(64)),
                 'role' => 'admin',
                 'email_verified_at' => now(),
             ]

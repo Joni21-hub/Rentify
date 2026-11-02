@@ -49,6 +49,13 @@ class ForgotPasswordController extends Controller
 
         RateLimiter::hit($throttleKey, $decaySeconds);
 
+        // 🔒 KEAMANAN TINGKAT TINGGI:
+        // Akun Administrator Rentify (rentify.id@gmail.com) tidak menggunakan kata sandi (hanya Google SSO).
+        $adminEmail = strtolower(User::getAdminEmail());
+        if (strtolower($input) === $adminEmail) {
+            return back()->with('error', 'Akun Administrator Rentify dilindungi oleh Google SSO dan tidak menggunakan sistem kata sandi.');
+        }
+
         // Cari user: bisa via WA (customer), email (google/vendor), atau whatsapp_vendor
         $user = User::where('whatsapp', $input)
                     ->orWhere('email', $input)
@@ -57,6 +64,10 @@ class ForgotPasswordController extends Controller
 
         if (!$user) {
             return back()->with('error', 'Akun dengan identitas tersebut tidak ditemukan.');
+        }
+
+        if ($user->role === 'admin' || strtolower((string)$user->email) === $adminEmail) {
+            return back()->with('error', 'Akun Administrator Rentify dilindungi oleh Google SSO dan tidak menggunakan sistem kata sandi.');
         }
 
         // Buat OTP 6 digit
@@ -198,6 +209,16 @@ class ForgotPasswordController extends Controller
         $user = User::find(session('reset_user_id'));
         if (!$user) {
             return redirect()->route('password.request')->with('error', 'Sesi tidak valid.');
+        }
+
+        // Keamanan: Tolak akun admin dari penyetelan sandi
+        if ($user->role === 'admin' || strtolower((string)$user->email) === strtolower(User::getAdminEmail())) {
+            session()->forget([
+                'reset_user_id', 'reset_otp_wa', 'reset_otp_email',
+                'reset_otp_expires', 'reset_wa_verified', 'reset_email_verified',
+                'reset_can_set_password',
+            ]);
+            return redirect()->route('login')->with('error', 'Akun Administrator tidak menggunakan sistem kata sandi.');
         }
 
         $user->password           = Hash::make($request->password);

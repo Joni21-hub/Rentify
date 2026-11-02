@@ -696,7 +696,7 @@
                         <!-- Kanan Atas Bingkai: Badge & Tombol Panduan -->
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="hidden sm:inline-block px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black border border-indigo-200">
-                                Have Fun & Party
+                                Have Fun & Rekreasi
                             </span>
 
                             <!-- Tombol Panduan di Atas Kanan Bingkai -->
@@ -720,10 +720,10 @@
                                         <!-- Cakupan Unit -->
                                         <div class="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-1.5">
                                             <p class="font-black text-indigo-900 flex items-center gap-1.5">
-                                                <i class="fa-solid fa-circle-check text-indigo-600"></i> Cakupan Unit & Hiburan:
+                                                <i class="fa-solid fa-circle-check text-indigo-600"></i> Cakupan Alat Have Fun & Rekreasi:
                                             </p>
                                             <p class="text-[11px] text-slate-600 leading-relaxed">
-                                                Konsol Game (PS4/PS5, Nintendo Switch, Oculus/VR, Steering Wheel G29), Alat Musik (Gitar akustik/listrik, Keyboard, Cajon, Mini Amp), Sound System & Karaoke (Speaker portable bluetooth 8-15 inch, Dual Mic Wireless), Mesin Bubble pesta, Lampu disko panggung, Board game seru, dan Proyektor nobar mini.
+                                                Olahraga santai & hobi (Raket badminton, tenis, bola voli, perlengkapan renang), Alat pancing & joran, Alat musik santai (Gitar akustik, ukulele, cajon), Perlengkapan pantai & santai (Kursi pantai lipat, payung peneduh pantai, matras piknik), serta Board game & mainan rekreasi keluarga.
                                             </p>
                                         </div>
 
@@ -733,18 +733,18 @@
                                                 <i class="fa-solid fa-list-check text-sky-500"></i> Panduan Pengisian Setiap Kolom:
                                             </p>
                                             <ul class="space-y-2 text-[11px] text-slate-600 list-disc pl-4 leading-relaxed">
-                                                <li><strong>Jenis Paket Hiburan:</strong> Tuliskan nama paket lengkap dan jumlah perlengkapan (contoh: <code>Paket PS5 Disc Edition + 2 Stick DualSense + 5 Game Populer (FIFA 24, Tekken 8)</code> atau <code>Speaker Portable Party 12 Inch + 2 Mic Wireless + Stand Tripod</code>).</li>
-                                                <li><strong>Kelengkapan Game / Aksesoris:</strong> Cantumkan seluruh kabel pelengkap (Kabel HDMI 2.1, Kabel Power, Kabel Charger Type-C), adaptor, stand mic, baterai cadangan, tas pelindung, dan kaset game yang disertakan.</li>
+                                                <li><strong>Jenis Alat / Paket Rekreasi:</strong> Tuliskan nama alat atau paket lengkap (contoh: <code>Raket Badminton Yonex + Shuttlecock</code>, <code>Set Joran Pancing + Reel & Umpan</code>, <code>Gitar Akustik Yamaha</code>, atau <code>Kursi Pantai Lipat Portable</code>).</li>
+                                                <li><strong>Kelengkapan & Aksesoris:</strong> Cantumkan seluruh perlengkapan pelengkap (contoh: tas raket, senar cadangan, reel pancing, kotak kail, softcase gitar, pick, tali jinjing kursi pantai, dll).</li>
                                             </ul>
                                         </div>
 
                                         <!-- Standar Kesiapan Perangkat -->
                                         <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1.5">
                                             <p class="font-black text-slate-800 flex items-center gap-1.5">
-                                                <i class="fa-solid fa-gamepad text-indigo-600"></i> Standar Kesiapan Perangkat & Akun:
+                                                <i class="fa-solid fa-umbrella-beach text-indigo-600"></i> Standar Kesiapan & Kebersihan Alat:
                                             </p>
                                             <p class="leading-relaxed">
-                                                Pastikan stik/controller bebas dari kendala <em>stick drift</em>, volume speaker jernih tanpa distorsi suara, dan untuk konsol game gunakan profil tamu (*guest account*) agar data pribadi Anda tetap terlindungi.
+                                                Pastikan senar raket tidak kendur/putus, joran & reel pancing bekerja mulus tanpa macet, senar gitar terpasang rapi dan bersih, serta rangka dan kain kursi pantai kuat, kokoh, dan bersih dari pasir pantai atau kotoran.
                                             </p>
                                         </div>
 
@@ -754,9 +754,8 @@
                                                 <i class="fa-solid fa-shield-halved text-indigo-600"></i> SOP Serah Terima & Proteksi Vendor:
                                             </p>
                                             <ul class="space-y-1 list-disc pl-4 leading-relaxed">
-                                                <li>Wajib tes nyala dan coba suara speaker / gameplay konsol di hadapan penyewa sebelum serah terima.</li>
-                                                <li>Pastikan semua kabel pendukung dan controller dihitung bersama penyewa.</li>
-                                                <li>Terapkan deposit jaminan (uang tunai / e-KTP asli) untuk peralatan bernilai tinggi seperti PS5, keyboard musik, dan speaker aktif premium.</li>
+                                                <li>Wajib periksa keutuhan fisik, kelengkapan aksesoris, dan tas pelindung bersama penyewa sebelum serah terima.</li>
+                                                <li>Berikan panduan singkat perawatan dan pemakaian saat serah terima.</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -767,12 +766,12 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Jenis Paket Hiburan</label>
-                            <input type="text" name="spesifikasi[jenis_hiburan]" value="{{ (string) old('spesifikasi.jenis_hiburan', $spek['jenis_hiburan'] ?? '') }}" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Jenis Alat / Paket Rekreasi</label>
+                            <input type="text" name="spesifikasi[jenis_hiburan]" value="{{ (string) old('spesifikasi.jenis_hiburan', $spek['jenis_hiburan'] ?? '') }}" placeholder="Contoh: Raket Badminton / Joran Pancing / Gitar / Kursi Pantai" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kelengkapan Game / Aksesoris</label>
-                            <input type="text" name="spesifikasi[kelengkapan_have_fun]" value="{{ (string) old('spesifikasi.kelengkapan_have_fun', $spek['kelengkapan_have_fun'] ?? '') }}" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Kelengkapan & Aksesoris</label>
+                            <input type="text" name="spesifikasi[kelengkapan_have_fun]" value="{{ (string) old('spesifikasi.kelengkapan_have_fun', $spek['kelengkapan_have_fun'] ?? '') }}" placeholder="Contoh: Tas raket, shuttlecock, reel pancing, tas gitar, dll" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-slate-800 text-xs font-semibold focus:outline-none focus:border-indigo-500">
                         </div>
                     </div>
                 </div>

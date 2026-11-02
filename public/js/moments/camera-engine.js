@@ -378,65 +378,42 @@
 
             ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
 
-            // Potong ke Rasio Aktif: 1:1 (Persegi), 3:4 (Standar Feed), atau 9:16 (Potret Fullscreen)
+            // Potong ke Rasio Aktif: 1:1, 4:5, 3:4, 16:9, 9:16 atau Asli
             const aspectRatio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
             let finalCanvas = canvas;
 
-            if (aspectRatio === 'square') {
-                // 1:1 Persegi
-                const size = Math.min(canvas.width, canvas.height);
-                const squareCanvas = document.createElement('canvas');
-                squareCanvas.width = size;
-                squareCanvas.height = size;
-                const sCtx = squareCanvas.getContext('2d');
-                sCtx.imageSmoothingEnabled = true;
-                sCtx.imageSmoothingQuality = 'high';
-                const sx = (canvas.width - size) / 2;
-                const sy = (canvas.height - size) / 2;
-                sCtx.drawImage(canvas, sx, sy, size, size, 0, 0, size, size);
-                finalCanvas = squareCanvas;
-            } else if (aspectRatio === 'standard') {
-                // 3:4 Potret Standar (Lebar : Tinggi = 3 : 4)
+            const cropHelper = (ratioW, ratioH) => {
                 let targetW, targetH;
-                if (canvas.width / canvas.height > 3 / 4) {
+                const targetRatio = ratioW / ratioH;
+                if (canvas.width / canvas.height > targetRatio) {
                     targetH = canvas.height;
-                    targetW = Math.round(targetH * (3 / 4));
+                    targetW = Math.round(targetH * targetRatio);
                 } else {
                     targetW = canvas.width;
-                    targetH = Math.round(targetW * (4 / 3));
+                    targetH = Math.round(targetW / targetRatio);
                 }
-                const stdCanvas = document.createElement('canvas');
-                stdCanvas.width = targetW;
-                stdCanvas.height = targetH;
-                const stdCtx = stdCanvas.getContext('2d');
-                stdCtx.imageSmoothingEnabled = true;
-                stdCtx.imageSmoothingQuality = 'high';
+                const cropped = document.createElement('canvas');
+                cropped.width = targetW;
+                cropped.height = targetH;
+                const cCtx = cropped.getContext('2d');
+                cCtx.imageSmoothingEnabled = true;
+                cCtx.imageSmoothingQuality = 'high';
                 const sx = (canvas.width - targetW) / 2;
                 const sy = (canvas.height - targetH) / 2;
-                stdCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
-                finalCanvas = stdCanvas;
+                cCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
+                return cropped;
+            };
+
+            if (aspectRatio === 'square') {
+                finalCanvas = cropHelper(1, 1);
+            } else if (aspectRatio === 'feed') {
+                finalCanvas = cropHelper(4, 5);
+            } else if (aspectRatio === 'standard') {
+                finalCanvas = cropHelper(3, 4);
+            } else if (aspectRatio === 'landscape') {
+                finalCanvas = cropHelper(16, 9);
             } else if (aspectRatio === 'portrait') {
-                // 9:16 Potret Fullscreen
-                let targetW, targetH;
-                if (canvas.width / canvas.height > 9 / 16) {
-                    targetH = canvas.height;
-                    targetW = Math.round(targetH * (9 / 16));
-                } else {
-                    targetW = canvas.width;
-                    targetH = Math.round(targetW * (16 / 9));
-                }
-                if (targetW < canvas.width || targetH < canvas.height) {
-                    const portCanvas = document.createElement('canvas');
-                    portCanvas.width = targetW;
-                    portCanvas.height = targetH;
-                    const pCtx = portCanvas.getContext('2d');
-                    pCtx.imageSmoothingEnabled = true;
-                    pCtx.imageSmoothingQuality = 'high';
-                    const sx = (canvas.width - targetW) / 2;
-                    const sy = (canvas.height - targetH) / 2;
-                    pCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
-                    finalCanvas = portCanvas;
-                }
+                finalCanvas = cropHelper(9, 16);
             }
 
             const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);

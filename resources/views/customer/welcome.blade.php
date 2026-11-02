@@ -1074,5 +1074,6 @@
     $$('[data-reveal], .aman-card').forEach(el => io.observe(el));
 })();
 </script>
+@include('partials.pwa-updater')
 </body>
 </html>

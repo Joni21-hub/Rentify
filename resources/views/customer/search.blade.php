@@ -36,28 +36,28 @@
             <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
                 <a href="{{ route('customer.search', ['q' => $keyword]) }}" 
                    class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 {{ empty($kategoriId) ? 'bg-sky-50 border-sky-500 text-sky-700 shadow-sm font-bold' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}">
-                    <i class="fa-solid fa-layer-group text-[11px] {{ empty($kategoriId) ? 'text-sky-500' : 'text-slate-400' }}"></i>
+                    <svg class="w-3.5 h-3.5 {{ empty($kategoriId) ? 'text-sky-500' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
                     Semua Kategori
                 </a>
                 @foreach($kategoris as $kat)
                     @php
                         $namaLower = strtolower($kat->nama);
-                        $iconClass = 'fa-tag';
-                        if (str_contains($namaLower, 'have fun')) {
-                            $iconClass = 'fa-guitar';
-                        } elseif (str_contains($namaLower, 'outdoor')) {
-                            $iconClass = 'fa-campground';
-                        } elseif (str_contains($namaLower, 'elektronik')) {
-                            $iconClass = 'fa-camera';
-                        } elseif (str_contains($namaLower, 'kendaraan')) {
-                            $iconClass = 'fa-car';
-                        } elseif (str_contains($namaLower, 'kos') || str_contains($namaLower, 'kamar')) {
-                            $iconClass = 'fa-door-open';
-                        }
                     @endphp
                     <a href="{{ route('customer.search', ['q' => $keyword, 'kategori' => $kat->id]) }}" 
                        class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 {{ $kategoriId == $kat->id ? 'bg-sky-50 border-sky-500 text-sky-700 shadow-sm font-bold' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}">
-                        <i class="fa-solid {{ $iconClass }} text-[11px] {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}"></i>
+                        @if (str_contains($namaLower, 'have fun'))
+                            <svg class="w-3.5 h-3.5 {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m11.9 12.1 4.514-4.514"/><path d="M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z"/><path d="m6 16 2 2"/><path d="M8.2 9.9C8.7 8.8 9.8 8 11 8c2.8 0 5 2.2 5 5 0 1.2-.8 2.3-1.9 2.8l-.9.4A2 2 0 0 0 12 18a4 4 0 0 1-4 4c-3.3 0-6-2.7-6-6a4 4 0 0 1 4-4 2 2 0 0 0 1.8-1.2z"/><circle cx="11.5" cy="12.5" r=".5" fill="currentColor"/></svg>
+                        @elseif (str_contains($namaLower, 'outdoor'))
+                            <svg class="w-3.5 h-3.5 {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20L12 4L5 20h14z"/><path d="m12 14-3 6"/><path d="m12 14 3 6"/><path d="M3 20h18"/></svg>
+                        @elseif (str_contains($namaLower, 'elektronik'))
+                            <svg class="w-3.5 h-3.5 {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                        @elseif (str_contains($namaLower, 'kendaraan'))
+                            <svg class="w-3.5 h-3.5 {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                        @elseif (str_contains($namaLower, 'kos') || str_contains($namaLower, 'kamar'))
+                            <svg class="w-3.5 h-3.5 {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        @else
+                            <svg class="w-3.5 h-3.5 {{ $kategoriId == $kat->id ? 'text-sky-600' : 'text-slate-400' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg>
+                        @endif
                         {{ $kat->nama }}
                     </a>
                 @endforeach

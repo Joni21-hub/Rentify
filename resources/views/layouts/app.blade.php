@@ -10,7 +10,7 @@
     <meta name="google-site-verification" content="4y_McbDs1dvq3scZmY9q_XMoaPfzxNrcNR94o3N0nEc" />
     <title>@yield('title', 'RENTIFY') — Marketplace Rental</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}?v={{ $appVersion ?? \App\Helpers\AppVersion::get() }}">
     <script>
         tailwind.config = {
             theme: { 
@@ -109,21 +109,7 @@
         @endif
     </script>
 
-    <!-- ================================================================= -->
-    <!-- REGISTRASI SERVICE WORKER (TANPA TOMBOL INSTALL) -->
-    <!-- ================================================================= -->
-    <script>
-        // Tetap mendaftarkan PWA di background agar aplikasi berjalan cepat
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        registration.update();
-                    })
-                    .catch(err => console.error('Rentify PWA: Gagal', err));
-            });
-        }
-    </script>
+    @include('partials.pwa-updater')
 
     @stack('scripts')
 </body>

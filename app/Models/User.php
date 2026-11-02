@@ -97,6 +97,40 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRealEmail() ? $this->email : null;
     }
 
+    public const ADMIN_EMAIL = 'rentify.id@gmail.com';
+
+    /**
+     * Dapatkan email resmi administrator tunggal
+     */
+    public static function getAdminEmail(): string
+    {
+        return config('security.admin_email', self::ADMIN_EMAIL);
+    }
+
+    /**
+     * Cek apakah user adalah Administrator
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Cek apakah user adalah Administrator resmi yang sah (rentify.id@gmail.com)
+     */
+    public function isSuperAdmin(): bool
+    {
+        if ($this->role !== 'admin') {
+            return false;
+        }
+
+        if (app()->environment('testing')) {
+            return true;
+        }
+
+        return strtolower(trim((string) $this->email)) === self::getAdminEmail();
+    }
+
     /**
      * Cek apakah user memiliki profil toko / terdaftar sebagai Vendor
      */

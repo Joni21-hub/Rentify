@@ -183,7 +183,7 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto & Video (Multi-Media Carousel seperti IG) *</label>
                     <div id="drop-area" onclick="document.getElementById('media-file-input').click()" class="border-2 border-dashed border-sky-200 hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer transition bg-sky-50/40 hover:bg-sky-50/80">
-                        <input type="file" id="media-file-input" accept="image/*,video/*,.heic,.heif,.*" multiple class="hidden" onchange="handleFileSelection(event)">
+                        <input type="file" id="media-file-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden" onchange="handleFileSelection(event)">
                         <div id="upload-prompt" class="space-y-2">
                             <div class="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center mx-auto text-xl shadow-xs">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -215,6 +215,31 @@
                     <!-- HEIC conversion status -->
                     <div id="heic-converting-status" class="hidden mt-2 p-2 rounded-xl bg-sky-50 text-sky-700 text-xs flex items-center gap-2 font-medium">
                         <i class="fa-solid fa-circle-notch fa-spin text-sky-600"></i> Mengonversi foto iPhone (HEIC)...
+                    </div>
+                </div>
+
+                <!-- Aspect Ratio Selector (Pilihan Rasio Lengkap seperti Shopee / Instagram) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Format Rasio Tampilan</label>
+                    <div class="grid grid-cols-6 gap-1 text-center">
+                        <button type="button" onclick="selectModalRatio('9:16')" id="modal-ratio-btn-9-16" class="py-1.5 px-0.5 rounded-xl border border-sky-500 bg-sky-50 text-sky-700 font-extrabold text-[10px] transition">
+                            9:16<br><span class="text-[8px] font-normal text-slate-500">Story</span>
+                        </button>
+                        <button type="button" onclick="selectModalRatio('4:5')" id="modal-ratio-btn-4-5" class="py-1.5 px-0.5 rounded-xl border border-slate-200 text-slate-600 font-extrabold text-[10px] hover:border-sky-300 transition">
+                            4:5<br><span class="text-[8px] font-normal text-slate-500">Feed</span>
+                        </button>
+                        <button type="button" onclick="selectModalRatio('1:1')" id="modal-ratio-btn-1-1" class="py-1.5 px-0.5 rounded-xl border border-slate-200 text-slate-600 font-extrabold text-[10px] hover:border-sky-300 transition">
+                            1:1<br><span class="text-[8px] font-normal text-slate-500">Persegi</span>
+                        </button>
+                        <button type="button" onclick="selectModalRatio('3:4')" id="modal-ratio-btn-3-4" class="py-1.5 px-0.5 rounded-xl border border-slate-200 text-slate-600 font-extrabold text-[10px] hover:border-sky-300 transition">
+                            3:4<br><span class="text-[8px] font-normal text-slate-500">Foto</span>
+                        </button>
+                        <button type="button" onclick="selectModalRatio('16:9')" id="modal-ratio-btn-16-9" class="py-1.5 px-0.5 rounded-xl border border-slate-200 text-slate-600 font-extrabold text-[10px] hover:border-sky-300 transition">
+                            16:9<br><span class="text-[8px] font-normal text-slate-500">Lanskap</span>
+                        </button>
+                        <button type="button" onclick="selectModalRatio('original')" id="modal-ratio-btn-original" class="py-1.5 px-0.5 rounded-xl border border-slate-200 text-slate-600 font-extrabold text-[10px] hover:border-sky-300 transition">
+                            Asli<br><span class="text-[8px] font-normal text-slate-500">Bebas</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1186,6 +1211,31 @@
         document.getElementById('guest-auth-modal')?.classList.add('hidden');
     }
 
+    let selectedRatio = '9:16';
+    function selectModalRatio(ratio) {
+        selectedRatio = ratio;
+        const allRatios = ['9:16', '4:5', '1:1', '3:4', '16:9', 'original'];
+        allRatios.forEach(r => {
+            const btn = document.getElementById(`modal-ratio-btn-${r.replace(':', '-')}`);
+            if (btn) {
+                if (r === ratio) {
+                    btn.className = 'py-1.5 px-0.5 rounded-xl border border-sky-500 bg-sky-50 text-sky-700 font-extrabold text-[10px] transition shadow-xs';
+                } else {
+                    btn.className = 'py-1.5 px-0.5 rounded-xl border border-slate-200 text-slate-600 font-extrabold text-[10px] hover:border-sky-300 transition';
+                }
+            }
+        });
+        const img = document.getElementById('image-preview');
+        if (img) {
+            if (ratio === '1:1') img.style.aspectRatio = '1 / 1';
+            else if (ratio === '4:5') img.style.aspectRatio = '4 / 5';
+            else if (ratio === '3:4') img.style.aspectRatio = '3 / 4';
+            else if (ratio === '16:9') img.style.aspectRatio = '16 / 9';
+            else if (ratio === '9:16') img.style.aspectRatio = '9 / 16';
+            else img.style.aspectRatio = 'auto';
+        }
+    }
+
     function openUploadModal() {
         document.getElementById('upload-modal')?.classList.remove('hidden');
     }
@@ -1497,6 +1547,7 @@
         }
 
         formData.append('caption', document.getElementById('caption-input')?.value || '');
+        formData.append('aspect_ratio', selectedRatio || '9:16');
 
         taggedProductIds.forEach((prodId, idx) => {
             formData.append(`product_ids[${idx}]`, prodId);

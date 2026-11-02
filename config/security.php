@@ -14,6 +14,18 @@ return [
     // Nomor WhatsApp Admin yang menerima alarm darurat keamanan via WhatsApp Gateway
     'admin_phone' => env('ADMIN_SECURITY_PHONE', '083183494835'),
 
+    // Email Akun Administrator Tunggal yang Sah (Wajib Google SSO)
+    'admin_email' => env('ADMIN_SECURITY_EMAIL', 'rentify.id@gmail.com'),
+
+    'admin_auth' => [
+        // Hanya izinkan login via Google Sign-In (OAuth), tolak sandi manual
+        'sso_only' => true,
+        // Durasi inaktivitas sesi admin sebelum otomatis di-logout (menit)
+        'session_timeout_minutes' => 60,
+        // Proteksi session hijacking via binding IP dan User-Agent
+        'bind_session' => true,
+    ],
+
     'firewall' => [
         // Aktifkan atau nonaktifkan firewall middleware
         'enabled' => env('SECURITY_FIREWALL_ENABLED', true),

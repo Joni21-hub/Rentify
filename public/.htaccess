@@ -24,6 +24,15 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
+# Pastikan Service Worker tidak di-cache oleh HTTP browser
+<IfModule mod_headers.c>
+    <Files "sw.js">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </Files>
+</IfModule>
+
 # Konfigurasi batas upload PHP (Apache / mod_php)
 <IfModule mod_php.c>
     php_value upload_max_filesize 512M

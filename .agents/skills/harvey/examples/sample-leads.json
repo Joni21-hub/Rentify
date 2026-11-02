@@ -1,0 +1,48 @@
+[
+  {
+    "business_name": "Lensa Malang Rental Kamera",
+    "category": "Rental Kamera & Lensa",
+    "city": "Malang",
+    "phone": "081234567890",
+    "instagram": "@lensamalang",
+    "signals": ["MANUAL_BOOKING_SHEET", "SLOW_RESPONSE_REVIEWS"],
+    "notes": "Bio ada format WA teks manual, ulasan Google Maps bintang 4.2 keluhan chat slow respon."
+  },
+  {
+    "business_name": "Bromo Camp Outdoor Gear",
+    "category": "Sewa Alat Camping & Outdoor",
+    "city": "Surabaya",
+    "phone": "085711223344",
+    "instagram": "@bromocamp_sby",
+    "signals": ["WEEKDAY_IDLE_STOCK", "NO_BOOKING_WEBSITE"],
+    "notes": "Ada promo paket sewa tenda weekday, belum ada link web booking."
+  },
+  {
+    "business_name": "Kencana Kebaya Wisuda",
+    "category": "Sewa Kebaya & Busana",
+    "city": "Yogyakarta",
+    "phone": "087899001122",
+    "instagram": "@kencanakebaya_jogja",
+    "signals": ["SEASONAL_SURGE", "DOUBLE_BOOKING_RISK"],
+    "notes": "Musim wisuda kampus UGM/UNY ramai, katalog 40+ kebaya."
+  },
+  {
+    "business_name": "Sound Pro Surabaya",
+    "category": "Rental Sound System & Alat Event",
+    "city": "Surabaya",
+    "phone": "081987654321",
+    "instagram": "@soundpro_sby",
+    "email": "booking@soundpro-sby.com",
+    "signals": ["EXPANDING_CATALOG", "MANUAL_PAYMENT_PROOF"],
+    "notes": "Baru nambah unit line array speaker, masih minta transfer DP manual."
+  },
+  {
+    "business_name": "PlayBox Rental PS5 Bandung",
+    "category": "Rental PS5 & Gaming Console",
+    "city": "Bandung",
+    "phone": "082133445566",
+    "instagram": "@playbox_bdg",
+    "signals": ["MANUAL_ID_VERIFICATION"],
+    "notes": "Wajib tahan KTP fisik penyewa asli saat antar unit konsol."
+  }
+]

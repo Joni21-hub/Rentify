@@ -49,6 +49,9 @@ class AppServiceProvider extends ServiceProvider //[cite: 3]
             URL::forceScheme('https');
         }
 
+        // 1b. Bagikan versi aplikasi dinamis ke seluruh view untuk pembaruan PWA & cache-busting otomatis
+        View::share('appVersion', \App\Helpers\AppVersion::get());
+
         // 2. KODE ASLIMU: Menampilkan angka jumlah keranjang di seluruh halaman website[cite: 3]
         View::composer('*', function ($view) {
             if (Auth::check()) {

@@ -82,7 +82,15 @@ class AdminVendorController extends Controller
         if ($admin instanceof User && $admin->role === 'admin') {
             session()->forget('admin_impersonator_id');
             Auth::login($admin);
-            session(['active_role' => 'admin']);
+            $adminEmail = strtolower(User::getAdminEmail());
+            session([
+                'active_role'               => 'admin',
+                'admin_auth_via_google'     => true,
+                'admin_authenticated_email' => $adminEmail,
+                'admin_session_ip'          => request()->ip(),
+                'admin_session_user_agent'  => request()->userAgent(),
+                'admin_last_activity'       => now()->timestamp,
+            ]);
             return redirect()->route('admin.dashboard')->with('success', 'Sesi kelola toko selesai. Anda telah kembali ke Dashboard Administrator.');
         }
 

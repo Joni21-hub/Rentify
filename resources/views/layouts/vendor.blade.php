@@ -13,7 +13,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('rentify-theme.css') }}?v={{ $appVersion ?? \App\Helpers\AppVersion::get() }}">
     
     <script>
         tailwind.config = {
@@ -262,5 +262,6 @@
     </script>
 
     @stack('scripts')
+    @include('partials.pwa-updater')
 </body>
 </html>
