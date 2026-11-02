@@ -19,6 +19,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Anthropic Claude API Configuration (Customer & Vendor CS WhatsApp)
+    |--------------------------------------------------------------------------
+    |
+    | Model default: claude-3-5-sonnet-20241022 (Claude Sonnet)
+    | Sesuai instruksi: ramah, nyaman untuk customer & vendor, jawaban ringkas (tidak teks panjang)
+    |
+    */
+    'claude' => [
+        'api_key'     => env('ANTHROPIC_API_KEY', env('CLAUDE_API_KEY', '')),
+        'model'       => env('ANTHROPIC_MODEL', env('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022')),
+        'max_tokens'  => (int) env('CLAUDE_MAX_TOKENS', 250),
+        'temperature' => (float) env('CLAUDE_TEMPERATURE', 0.5),
+        'timeout'     => (int) env('CLAUDE_TIMEOUT', 15),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Aturan Otomasi Harian & Jadwal Bergantian (50:50 Customer vs Vendor)
     |--------------------------------------------------------------------------
     |

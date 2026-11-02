@@ -68,14 +68,6 @@
                         class="input-glass w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none font-bold">
                 </div>
 
-                <div id="adminNotice" class="hidden p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-800 text-xs font-semibold flex items-start gap-2 shadow-sm animate-fade-in">
-                    <i class="fa-solid fa-shield-halved text-amber-600 mt-0.5"></i>
-                    <div>
-                        <strong class="font-bold block">Akun Administrator Terdeteksi</strong>
-                        <span>Admin tidak menggunakan kata sandi. Silakan langsung klik tombol <strong>"Lanjutkan dengan Google"</strong> di bawah.</span>
-                    </div>
-                </div>
-
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-[#475569] group-focus-within:text-sky-500 transition">
                         <i class="fa-solid fa-lock text-sm"></i>
@@ -126,12 +118,6 @@
                     </svg>
                     <span>Lanjutkan dengan Google</span>
                 </a>
-                
-                <div class="mt-2 text-center">
-                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/40 px-2.5 py-1 rounded-full border border-slate-200">
-                        <i class="fa-solid fa-shield-halved text-sky-500"></i> Khusus Admin: Masuk via Google SSO tanpa sandi
-                    </span>
-                </div>
             </form>
 
             <div class="mt-8 space-y-4 text-center">
@@ -172,26 +158,6 @@
             }
         }
 
-        const loginInput = document.getElementById('loginInput');
-        const adminNotice = document.getElementById('adminNotice');
-        const googleLoginBtn = document.getElementById('googleLoginBtn');
-
-        if (loginInput && adminNotice) {
-            loginInput.addEventListener('input', function() {
-                const val = this.value.trim().toLowerCase();
-                if (val === 'rentify.id@gmail.com') {
-                    adminNotice.classList.remove('hidden');
-                    if (googleLoginBtn) {
-                        googleLoginBtn.classList.add('ring-2', 'ring-sky-500', 'scale-[1.02]');
-                    }
-                } else {
-                    adminNotice.classList.add('hidden');
-                    if (googleLoginBtn) {
-                        googleLoginBtn.classList.remove('ring-2', 'ring-sky-500', 'scale-[1.02]');
-                    }
-                }
-            });
-        }
 
         // Service Worker terintegrasi melalui partial pwa-updater
 

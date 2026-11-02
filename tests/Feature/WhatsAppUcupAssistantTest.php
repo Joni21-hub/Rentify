@@ -20,7 +20,8 @@ class WhatsAppUcupAssistantTest extends TestCase
             'services.whatsapp.gateway_secret' => 'rentify-wa-secret-2026',
             'security.admin_phone'             => '083183494835',
             'guardian.owner_phones'            => ['083183494835'],
-            'rentify_ai.gemini.api_key'        => 'dummy-key',
+            'services.anthropic.api_key'       => 'dummy-claude-key',
+            'services.anthropic.model'         => 'claude-3-5-sonnet-20241022',
         ]);
     }
 
@@ -28,16 +29,14 @@ class WhatsAppUcupAssistantTest extends TestCase
     {
         Http::fake([
             'http://127.0.0.1:3000/send' => Http::response(['status' => true], 200),
-            'https://generativelanguage.googleapis.com/*' => Http::response([
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => 'Halo Kak! Aku Ucup dari Rentify. Ada yang bisa Ucup bantu seputar sewa barang? 😊']
-                            ]
-                        ]
-                    ]
-                ]
+            'https://api.anthropic.com/v1/messages' => Http::response([
+                'id'      => 'msg_123',
+                'type'    => 'message',
+                'role'    => 'assistant',
+                'content' => [
+                    ['type' => 'text', 'text' => 'Halo Kak! Mau sewa kamera apa nih? Ucup bantu cek ketersediaannya ya.']
+                ],
+                'model'   => 'claude-3-5-sonnet-20241022',
             ], 200),
         ]);
 
@@ -53,27 +52,31 @@ class WhatsAppUcupAssistantTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $data = $response->getData(true);
         $this->assertTrue($data['status']);
+        $this->assertStringContainsString('kamera', $data['reply']);
         $this->assertStringContainsString('Ucup', $data['reply']);
     }
 
-    public function test_gemini_fallback_when_3_8_flash_is_503(): void
+    public function test_claude_fallback_when_preferred_model_is_503(): void
     {
         $callCount = 0;
         Http::fake([
             'http://127.0.0.1:3000/send' => Http::response(['status' => true], 200),
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent*' => Http::response([
-                'error' => ['code' => 503, 'message' => 'High demand']
-            ], 503),
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent*' => function () use (&$callCount) {
+            'https://api.anthropic.com/v1/messages' => function ($request) use (&$callCount) {
+                $payload = json_decode($request->body(), true);
+                if (($payload['model'] ?? '') === 'claude-3-5-sonnet-20241022' && $callCount === 0) {
+                    $callCount++;
+                    return Http::response(['error' => ['type' => 'overloaded_error', 'message' => 'Overloaded']], 503);
+                }
+
                 $callCount++;
                 return Http::response([
-                    'candidates' => [
-                        [
-                            'content' => [
-                                ['parts' => [['text' => 'Halo Kak! Aku Ucup dari Rentify, siap bantu sewa barang!']]]
-                            ]
-                        ]
-                    ]
+                    'id'      => 'msg_456',
+                    'type'    => 'message',
+                    'role'    => 'assistant',
+                    'content' => [
+                        ['type' => 'text', 'text' => 'Halo Kak! Sewa di Rentify mulai dari 10rb aja kok. Mau cari barang apa?']
+                    ],
+                    'model'   => 'claude-3-5-sonnet-latest',
                 ], 200);
             },
         ]);
@@ -90,8 +93,8 @@ class WhatsAppUcupAssistantTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $data = $response->getData(true);
         $this->assertTrue($data['status']);
-        $this->assertStringContainsString('Ucup', $data['reply']);
-        $this->assertGreaterThan(0, $callCount, 'Harus otomatis fallback ke gemini-3.5-flash saat 3.8-flash 503');
+        $this->assertStringContainsString('Rentify', $data['reply']);
+        $this->assertGreaterThan(1, $callCount, 'Harus otomatis fallback ke model Claude berikutnya saat model utama 503');
     }
 
     public function test_owner_reset_wa_command_triggers_session_ratchet_reset(): void

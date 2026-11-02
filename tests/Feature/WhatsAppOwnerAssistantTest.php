@@ -28,7 +28,7 @@ class WhatsAppOwnerAssistantTest extends TestCase
             'password'       => bcrypt('secret'),
             'role'           => 'vendor',
             'vendor_name'    => 'Joni Audio Visual',
-            'whatsapp'       => '082183394549',
+            'whatsapp'       => '081299990001',
             'is_active'      => 1,
         ]);
 

@@ -138,6 +138,10 @@ Route::prefix('admin')->name('admin.')
     Route::get('pembayaran', [AdminPembayaranController::class, 'index'])->name('pembayaran');
     Route::patch('pembayaran/{id}/verify', [AdminPembayaranController::class, 'verify'])->name('pembayaran.verify');
     Route::patch('pembayaran/{id}/refund', [AdminPembayaranController::class, 'refund'])->name('pembayaran.refund');
+    Route::patch('orders/{id}/cancel', [AdminPembayaranController::class, 'cancelOrder'])->name('orders.cancel');
+
+    // Rekam Jejak Trail Audit Admin
+    Route::get('audit-logs', [\App\Http\Controllers\Admin\AdminAuditLogController::class, 'index'])->name('audit-logs.index');
 
     // Monitoring Mutasi Rekening & Simulasi Auto-Detect Android
     Route::get('mutasi', [\App\Http\Controllers\Admin\AdminMutasiController::class, 'index'])->name('mutasi.index');

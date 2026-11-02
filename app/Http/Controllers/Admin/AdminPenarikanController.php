@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon; // Tambahan untuk memformat tanggal
 
 class AdminPenarikanController extends Controller
 {
@@ -52,16 +53,48 @@ class AdminPenarikanController extends Controller
 
             // 2. Kurangi saldo ditahan (uangnya sudah sukses ditransfer Admin)
             $saldo = DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->lockForUpdate()->first();
+            $saldoDitahanSebelum = $saldo ? (float) $saldo->saldo_ditahan : 0.0;
+            $saldoAktifSebelum = $saldo ? (float) $saldo->saldo_aktif : 0.0;
+            $saldoDitahanBaru = max(0, $saldoDitahanSebelum - (float) $penarikan->nominal);
+
             if ($saldo) {
-                $saldoDitahanBaru = max(0, (float) $saldo->saldo_ditahan - (float) $penarikan->nominal);
                 DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->update([
                     'saldo_ditahan' => $saldoDitahanBaru,
                     'updated_at' => now()
                 ]);
             }
 
+            // 3. Catat Trail Audit Admin
+            AuditLogService::log(
+                action: 'pencairan_penarikan_vendor',
+                auditableType: 'App\Models\Withdrawal',
+                auditableId: $id,
+                before: [
+                    'withdrawal_id'         => (int) $id,
+                    'vendor_id'             => (int) $penarikan->vendor_id,
+                    'nominal_penarikan'     => (float) $penarikan->nominal,
+                    'status_penarikan'      => 'pending',
+                    'bank'                  => $penarikan->bank ?? null,
+                    'nomor_rekening'        => $penarikan->nomor_rekening ?? null,
+                    'nama_rekening'         => $penarikan->nama_rekening ?? null,
+                    'saldo_aktif_sebelum'   => $saldoAktifSebelum,
+                    'saldo_ditahan_sebelum' => $saldoDitahanSebelum,
+                ],
+                after: [
+                    'withdrawal_id'         => (int) $id,
+                    'vendor_id'             => (int) $penarikan->vendor_id,
+                    'nominal_penarikan'     => (float) $penarikan->nominal,
+                    'status_penarikan'      => 'disetujui',
+                    'saldo_aktif_sesudah'   => $saldoAktifSebelum,
+                    'saldo_ditahan_sesudah' => $saldoDitahanBaru,
+                    'keterangan'            => 'Pencairan dana disetujui, dana sukses ditransfer ke rekening vendor',
+                ],
+                adminId: auth()->id(),
+                request: request()
+            );
+
             DB::commit();
-            return back()->with('success', 'Penarikan dana berhasil disetujui!');
+            return back()->with('success', 'Penarikan dana berhasil disetujui dan tercatat dalam trail audit.');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
@@ -87,17 +120,48 @@ class AdminPenarikanController extends Controller
 
             // 2. Kembalikan uang ke saldo aktif Vendor secara aman!
             $saldo = DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->lockForUpdate()->first();
+            $saldoDitahanSebelum = $saldo ? (float) $saldo->saldo_ditahan : 0.0;
+            $saldoAktifSebelum = $saldo ? (float) $saldo->saldo_aktif : 0.0;
+
+            $saldoDitahanBaru = max(0, $saldoDitahanSebelum - (float) $penarikan->nominal);
+            $saldoAktifBaru = $saldoAktifSebelum + (float) $penarikan->nominal;
+
             if ($saldo) {
-                $saldoDitahanBaru = max(0, (float) $saldo->saldo_ditahan - (float) $penarikan->nominal);
                 DB::table('saldos')->where('vendor_id', $penarikan->vendor_id)->update([
-                    'saldo_aktif' => (float) $saldo->saldo_aktif + (float) $penarikan->nominal,
+                    'saldo_aktif'   => $saldoAktifBaru,
                     'saldo_ditahan' => $saldoDitahanBaru,
-                    'updated_at' => now()
+                    'updated_at'    => now()
                 ]);
             }
 
+            // 3. Catat Trail Audit Admin
+            AuditLogService::log(
+                action: 'penolakan_penarikan_vendor',
+                auditableType: 'App\Models\Withdrawal',
+                auditableId: $id,
+                before: [
+                    'withdrawal_id'         => (int) $id,
+                    'vendor_id'             => (int) $penarikan->vendor_id,
+                    'nominal_penarikan'     => (float) $penarikan->nominal,
+                    'status_penarikan'      => 'pending',
+                    'saldo_aktif_sebelum'   => $saldoAktifSebelum,
+                    'saldo_ditahan_sebelum' => $saldoDitahanSebelum,
+                ],
+                after: [
+                    'withdrawal_id'         => (int) $id,
+                    'vendor_id'             => (int) $penarikan->vendor_id,
+                    'nominal_penarikan'     => (float) $penarikan->nominal,
+                    'status_penarikan'      => 'ditolak',
+                    'saldo_aktif_sesudah'   => $saldoAktifBaru,
+                    'saldo_ditahan_sesudah' => $saldoDitahanBaru,
+                    'keterangan'            => 'Penarikan ditolak, dana dikembalikan ke saldo aktif vendor',
+                ],
+                adminId: auth()->id(),
+                request: request()
+            );
+
             DB::commit();
-            return back()->with('success', 'Penarikan dana berhasil ditolak, saldo dikembalikan ke saldo aktif vendor.');
+            return back()->with('success', 'Penarikan dana berhasil ditolak, saldo dikembalikan ke saldo aktif vendor dan tercatat dalam trail audit.');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());

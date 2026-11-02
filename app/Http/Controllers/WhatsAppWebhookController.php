@@ -284,11 +284,12 @@ class WhatsAppWebhookController extends Controller
             return $groundingContext->getMissingRecordNotice();
         }
 
-        $geminiKey = config('rentify_ai.gemini.api_key')
-            ?: (config('services.gemini.api_key') ?: env('GEMINI_API_KEY'));
+        // Panggil Anthropic Claude (Claude Sonnet) untuk Asisten CS WhatsApp Customer & Vendor
+        $claudeKey = config('services.anthropic.api_key')
+            ?: (config('rentify_ai.claude.api_key') ?: (env('ANTHROPIC_API_KEY') ?: env('CLAUDE_API_KEY')));
 
-        if (!empty($geminiKey)) {
-            $aiReply = $this->callGemini($message, $name, $sender, $geminiKey, $groundingContext);
+        if (!empty($claudeKey)) {
+            $aiReply = $this->callClaude($message, $name, $sender, $claudeKey, $groundingContext);
             if (!empty($aiReply)) {
                 return $aiReply;
             }
@@ -298,7 +299,197 @@ class WhatsAppWebhookController extends Controller
     }
 
     /**
-     * Balasan AI santai, ramah & responsif via Gemini API dengan Session Memory
+     * Balasan AI santai, ramah, nyaman & to-the-point via Anthropic Claude (Sonnet) dengan Session Memory
+     */
+    protected function callClaude(string $message, string $name, string $sender, string $rawApiKeys, ?\App\DTOs\GroundingContextDTO $groundingContext = null): ?string
+    {
+        $keys = array_values(array_filter(array_map('trim', preg_split('/[\s,]+/', $rawApiKeys))));
+        if (empty($keys)) {
+            return null;
+        }
+
+        $preferredModel = config('services.anthropic.model')
+            ?: (config('rentify_ai.claude.model') ?: (env('ANTHROPIC_MODEL') ?: env('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022')));
+
+        // Prioritas model: model preferensi user (misal claude-sonnet-5.5 / 3.5), kemudian candidate resmi Anthropic
+        $candidateModels = array_values(array_unique(array_filter([
+            $preferredModel,
+            'claude-3-5-sonnet-20241022',
+            'claude-3-5-sonnet-latest',
+            'claude-3-7-sonnet-latest',
+            'claude-3-7-sonnet-20250219',
+            'claude-3-5-haiku-20241022',
+        ])));
+
+        $webUrl = $this->getWebsiteUrl();
+
+        $systemPrompt = <<<PROMPT
+# SYSTEM PROMPT — ASISTEN AI UCUP (RENTIFY)
+Website Resmi: {$webUrl}
+
+## 1. Identitas & Persona: Nyaman, Santai & Ramah
+Kamu adalah Ucup, asisten WhatsApp resmi dari Rentify.
+Tujuan utamamu adalah membuat CUSTOMER maupun VENDOR merasa nyaman, santai, dan terbantu saat chatting.
+Bicaralah dengan gaya percakapan sehari-hari yang natural, hangat, sopan, dan bersahabat seperti mengobrol dengan CS / teman yang solutif.
+Gunakan sapaan "Kak" secara santai dan wajar.
+HINDARI:
+- Bahasa kaku, birokratis, atau gaya robot.
+- Mengulang-ulang salam pembuka ("Halo Kak! Aku Ucup dari Rentify...") di setiap pesan jika sudah mengobrol.
+- Nada menggurui atau berbelit-belit.
+
+## 2. ATURAN PANJANG TEKS (SANGAT KETAT):
+- JANGAN PERNAH MENGIRIM TEKS PANJANG.
+- Panjang balasan maksimal 1–3 kalimat pendek yang langsung menjawab inti pertanyaan.
+- Dilarang membuat daftar poin panjang atau format bullet beruntun kecuali memang diminta secara spesifik oleh lawan bicara.
+- Ingat bahwa pesan dibaca di layar HP WhatsApp; buat sejelas, seringkas, dan se-fleksibel mungkin agar nyaman dibaca sekilas.
+
+## 3. Layanan untuk Customer & Vendor
+- CUSTOMER (Penyewa):
+  • Bantu cari & sewa barang (kamera, alat camping/outdoor, PlayStation, proyektor, pakaian/kostum, alat pesta/event, dsb).
+  • Alur sewa mudah di {$webUrl}: pilih barang -> pilih tanggal -> ambil sendiri / diantar kurir -> pembayaran (QRIS otomatis instan / COD tunai ke vendor).
+  • Jika customer komplain atau ada kendala, tanggapi dengan tenang, santun, dan tanyakan nomor pesanan dengan ramah.
+- VENDOR (Pemilik Rental):
+  • Pendaftaran Buka Toko Rental 100% GRATIS di {$webUrl}/register tanpa biaya admin atau bulanan.
+  • Skema Komisi Rentify 5%: Komisi platform hanya 5% dari harga murni barang (ongkir 100% milik vendor/kurir).
+  • COD: vendor terima tunai penuh dari penyewa, sistem memotong komisi 5% dari saldo dompet vendor.
+  • Saldo penghasilan bisa ditarik kapan saja via dashboard vendor ke bank / e-wallet.
+
+## 4. Eskalasi ke Pemilik (Bos Joni)
+Jika ada masalah transaksi penting (dana belum masuk, verifikasi manual, komplain mendesak, atau minta kontak pemilik):
+Sampaikan dengan jujur & santun bahwa Ucup akan langsung meneruskan data kendala ini ke Bos Joni agar segera dibantu.
+Sertakan tag [ESKALASI_ADMIN] di baris paling akhir balasan jika kendala memerlukan penanganan darurat dari Bos Joni.
+PROMPT;
+
+        if ($groundingContext) {
+            $systemPrompt .= "\n\n" . $groundingContext->toPromptContext();
+        }
+
+        $cachePhone = preg_replace('/[^0-9]/', '', $sender);
+        $cacheKey = 'wa_chat_history_' . ($cachePhone ?: md5($sender . $name));
+
+        // Ambil riwayat percakapan sesi (30 menit)
+        $history = Cache::get($cacheKey, []);
+        if (!is_array($history)) {
+            $history = [];
+        }
+
+        // Susun daftar turns untuk Anthropic Claude
+        $rawTurns = [];
+        foreach ($history as $h) {
+            if (isset($h['role'], $h['text']) && is_string($h['text']) && trim($h['text']) !== '') {
+                $role = ($h['role'] === 'assistant' || $h['role'] === 'model') ? 'assistant' : 'user';
+                $rawTurns[] = [
+                    'role'    => $role,
+                    'content' => trim($h['text']),
+                ];
+            }
+        }
+
+        // Tambahkan input pesan user saat ini
+        $rawTurns[] = [
+            'role'    => 'user',
+            'content' => $message,
+        ];
+
+        // Format peran strictly alternate untuk Anthropic (user -> assistant -> user -> ...)
+        $messages = [];
+        $lastRole = null;
+        foreach ($rawTurns as $turn) {
+            $role = $turn['role'];
+            $text = $turn['content'];
+            if (empty($text)) continue;
+
+            if ($lastRole === $role) {
+                $idx = count($messages) - 1;
+                $messages[$idx]['content'] .= "\n" . $text;
+            } else {
+                $messages[] = [
+                    'role'    => $role,
+                    'content' => $text,
+                ];
+                $lastRole = $role;
+            }
+        }
+
+        // Pastikan turn pertama adalah role 'user'
+        if (!empty($messages) && $messages[0]['role'] !== 'user') {
+            array_shift($messages);
+        }
+
+        if (empty($messages)) {
+            $messages = [
+                [
+                    'role'    => 'user',
+                    'content' => $message,
+                ]
+            ];
+        }
+
+        $timeout = (int) config('rentify_ai.claude.timeout', 15);
+        $maxTokens = (int) config('rentify_ai.claude.max_tokens', 250);
+        $temperature = (float) config('rentify_ai.claude.temperature', 0.5);
+
+        foreach ($keys as $apiKey) {
+            foreach ($candidateModels as $model) {
+                $payload = [
+                    'model'       => $model,
+                    'max_tokens'  => $maxTokens,
+                    'temperature' => $temperature,
+                    'system'      => $systemPrompt,
+                    'messages'    => $messages,
+                ];
+
+                try {
+                    $response = Http::withHeaders([
+                        'x-api-key'         => $apiKey,
+                        'anthropic-version' => '2023-06-01',
+                        'content-type'      => 'application/json',
+                    ])->timeout($timeout)->post('https://api.anthropic.com/v1/messages', $payload);
+
+                    if ($response->successful()) {
+                        $data = $response->json();
+                        $replyText = null;
+                        if (isset($data['content']) && is_array($data['content'])) {
+                            foreach ($data['content'] as $block) {
+                                if (($block['type'] ?? '') === 'text' && !empty($block['text'])) {
+                                    $replyText = $block['text'];
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!empty($replyText)) {
+                            $cleanReply = trim((string) $replyText);
+
+                            // Simpan ke riwayat memori percakapan
+                            $history[] = ['role' => 'user', 'text' => $message];
+                            $history[] = ['role' => 'assistant', 'text' => $cleanReply];
+                            if (count($history) > 10) {
+                                $history = array_slice($history, -10);
+                            }
+                            Cache::put($cacheKey, $history, now()->addMinutes(30));
+
+                            return $cleanReply;
+                        }
+                    } else {
+                        $status = $response->status();
+                        Log::warning("Claude Webhook API Error (Model: {$model}, Status: {$status}): " . $response->body());
+                        // Jika unauthorized (401/403), key invalid, lanjutkan ke key berikutnya
+                        if (in_array($status, [401, 403])) {
+                            break;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning("Claude Webhook Exception (Model: {$model}): " . $e->getMessage());
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Balasan AI santai, ramah & responsif via Gemini API dengan Session Memory (Legacy fallback)
      */
     protected function callGemini(string $message, string $name, string $sender, string $rawApiKeys, ?\App\DTOs\GroundingContextDTO $groundingContext = null): ?string
     {

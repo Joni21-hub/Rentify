@@ -46,6 +46,11 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-3.8-flash'),
     ],
 
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY', env('CLAUDE_API_KEY')),
+        'model'   => env('ANTHROPIC_MODEL', env('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022')),
+    ],
+
     'whatsapp' => [
         'provider'       => env('WHATSAPP_PROVIDER', 'self_hosted'),
         'gateway_url'    => env('WHATSAPP_GATEWAY_URL', 'http://127.0.0.1:3000'),

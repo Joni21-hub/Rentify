@@ -119,4 +119,103 @@ class MutasiWebhookTest extends TestCase
         $this->assertNotNull($mutasi);
         $this->assertEquals('MATCHED', $mutasi->status);
     }
+
+    /**
+     * Uji mutasi otomatis mencocokkan pesanan combo multi-vendor (2 pesanan sekaligus)
+     * saat uang nyata masuk ke DANA/Bank dengan nominal gabungan.
+     */
+    public function test_webhook_auto_matches_multi_order_combo()
+    {
+        $user = User::first() ?? User::create([
+            'name'     => 'Customer Combo Test',
+            'email'    => 'combo_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'role'     => 'customer',
+        ]);
+
+        $paymentGroupId = 'GRP-TEST-' . uniqid();
+        $nominal1 = 30000.0;
+        $nominal2 = 25123.0;
+        $totalGabungan = $nominal1 + $nominal2; // 55.123
+
+        // Pesanan 1 dari Vendor A
+        $order1Id = DB::table('orders')->insertGetId([
+            'user_id'            => $user->id,
+            'payment_group_id'   => $paymentGroupId,
+            'kode_booking'       => 'TEST-A-' . uniqid(),
+            'customer_name'      => 'Customer Combo Test',
+            'customer_whatsapp'  => '081234567890',
+            'metode_pengambilan' => 'ambil',
+            'tanggal_mulai'      => now(),
+            'tanggal_selesai'    => now()->addDays(1),
+            'payment_method'     => 'QRIS',
+            'total_biaya'        => $nominal1,
+            'total_price'        => $nominal1,
+            'status'             => 'PENDING_PAYMENT',
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        // Pesanan 2 dari Vendor B (dengan kode unik 123)
+        $order2Id = DB::table('orders')->insertGetId([
+            'user_id'            => $user->id,
+            'payment_group_id'   => $paymentGroupId,
+            'kode_booking'       => 'TEST-B-' . uniqid(),
+            'customer_name'      => 'Customer Combo Test',
+            'customer_whatsapp'  => '081234567890',
+            'metode_pengambilan' => 'ambil',
+            'tanggal_mulai'      => now(),
+            'tanggal_selesai'    => now()->addDays(1),
+            'payment_method'     => 'QRIS',
+            'kode_unik'          => 123,
+            'total_biaya'        => $nominal2,
+            'total_price'        => $nominal2,
+            'status'             => 'PENDING_PAYMENT',
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        $secret = config('mutasi.webhook_secret', 'rentify_mutasi_secret_2026');
+
+        // Webhook mutasi DANA menerima nominal total gabungan (55.123)
+        $response = $this->postJson('/api/webhook/mutasi', [
+            'app_name' => 'DANA',
+            'title'    => 'DANA',
+            'content'  => 'Kamu menerima uang Rp 55.123 dari John Doe via QRIS.',
+        ], [
+            'X-Webhook-Secret' => $secret,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->json('success'));
+        $this->assertTrue($response->json('matched'));
+
+        // Pastikan KEDUA pesanan telah terupdate otomatis menjadi Menunggu Konfirmasi (bukan lagi PENDING_PAYMENT)
+        $order1 = DB::table('orders')->where('id', $order1Id)->first();
+        $order2 = DB::table('orders')->where('id', $order2Id)->first();
+
+        $this->assertEquals('Menunggu Konfirmasi', $order1->status);
+        $this->assertEquals('Menunggu Konfirmasi', $order2->status);
+        $this->assertNotNull($order1->paid_at);
+        $this->assertNotNull($order2->paid_at);
+
+        // Pastikan pembayaran untuk KEDUA pesanan tercatat Lunas
+        $pembayaran1 = Pembayaran::where('order_id', $order1Id)->first();
+        $pembayaran2 = Pembayaran::where('order_id', $order2Id)->first();
+
+        $this->assertNotNull($pembayaran1);
+        $this->assertEquals('Lunas', $pembayaran1->status);
+        $this->assertEquals($nominal1, (float) $pembayaran1->jumlah);
+
+        $this->assertNotNull($pembayaran2);
+        $this->assertEquals('Lunas', $pembayaran2->status);
+        $this->assertEquals($nominal2, (float) $pembayaran2->jumlah);
+
+        // Pastikan mutasi tercatat MATCHED dan mengaitkan kedua order
+        $mutasi = Mutasi::where('nominal', $totalGabungan)->latest('id')->first();
+        $this->assertNotNull($mutasi);
+        $this->assertEquals('MATCHED', $mutasi->status);
+        $this->assertStringContainsString((string) $order1Id, $mutasi->catatan);
+        $this->assertStringContainsString((string) $order2Id, $mutasi->catatan);
+    }
 }

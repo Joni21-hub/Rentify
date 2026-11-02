@@ -299,6 +299,8 @@ class CheckoutController extends Controller
 
         // BUNGKUS TRANSAKSI MULTI-VENDOR SECARA ATOMIK (All or Nothing)
         // Jika ada 1 query gagal antar vendor, seluruh pembuatan order & item di-rollback agar keranjang tidak terfragmentasi
+        $paymentGroupId = 'GRP-' . date('YmdHis') . '-' . (auth()->id() ?? '0') . '-' . bin2hex(random_bytes(3));
+
         DB::beginTransaction();
         try {
             foreach ($keranjangPerVendor as $vendorId => $items) {
@@ -406,7 +408,7 @@ class CheckoutController extends Controller
                 $totalHargaVendor = $pricing['total_price'];
                 $totalBayarSemua += $totalHargaVendor;
 
-                $orderId = DB::table('orders')->insertGetId([
+                $orderInsertData = [
                     'user_id' => auth()->id(),
                     'vendor_id' => $vendorId, 
                     'kode_booking' => 'RNT' . strtoupper(uniqid()),
@@ -442,7 +444,13 @@ class CheckoutController extends Controller
                     'status' => $metodeInput === 'COD' ? 'Menunggu Konfirmasi' : 'PENDING_PAYMENT',
                     'created_at' => $waktuSekarang,
                     'updated_at' => $waktuSekarang
-                ]);
+                ];
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'payment_group_id')) {
+                    $orderInsertData['payment_group_id'] = $paymentGroupId;
+                }
+
+                $orderId = DB::table('orders')->insertGetId($orderInsertData);
 
                 // Eksekusi pemotongan saldo koin user secara atomik FIFO jika menggunakan koin
                 if ($orderCoins > 0 && $userId) {

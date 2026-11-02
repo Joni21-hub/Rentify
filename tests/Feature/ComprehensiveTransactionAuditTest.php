@@ -252,8 +252,8 @@ class ComprehensiveTransactionAuditTest extends TestCase
         // Saat mutasi QRIS masuk sebesar Rp 31.500
         $match = $mutasiService->findMatchingOrder($totalAggregatedQris);
 
-        // BUKTI: MutasiService::findMatchingOrder gagal menemukan pesanan karena hanya mencari single row total!
-        $this->assertNull($match);
+        // VERIFIKASI PERBAIKAN: MutasiService::findMatchingOrder berhasil menemukan pesanan multi-vendor combo!
+        $this->assertNotNull($match);
     }
 
     /**

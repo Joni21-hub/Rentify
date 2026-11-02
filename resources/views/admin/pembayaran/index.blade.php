@@ -45,6 +45,10 @@
                     <i class="fas fa-credit-card text-[#0369a1] w-5"></i>
                     <span>Verifikasi Pembayaran</span>
                 </a>
+                <a href="{{ route('admin.audit-logs.index') }}" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
+                    <i class="fas fa-shield-halved text-slate-400 w-5"></i>
+                    <span>Trail Audit Admin</span>
+                </a>
                 <a href="{{ route('admin.mutasi.index') }}" class="flex items-center space-x-3 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition duration-200">
                     <i class="fas fa-bolt text-amber-500 w-5"></i>
                     <span>Auto-Detect Mutasi</span>

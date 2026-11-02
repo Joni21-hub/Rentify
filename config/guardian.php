@@ -17,7 +17,7 @@ return [
     'target_url' => env('RENTIFY_TARGET_URL', 'https://rentify21.my.id'),
 
     // Nomor WhatsApp Pemilik (Boss Joni Utama)
-    'owner_phones' => array_values(array_filter(array_map('trim', explode(',', env('GUARDIAN_OWNER_PHONES', '083183494835,082183394549'))))),
+    'owner_phones' => array_values(array_filter(array_map('trim', explode(',', env('GUARDIAN_OWNER_PHONES', '083183494835'))))),
 
     // Thresholds peringatan otomatis
     'thresholds' => [

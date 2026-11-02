@@ -176,6 +176,27 @@ class PesananController extends Controller
             'updated_at' => Carbon::now('Asia/Jakarta'),
         ]);
 
+        // Catat Trail Audit Pembatalan Pesanan
+        \App\Services\AuditLogService::log(
+            action: 'pembatalan_pesanan',
+            auditableType: 'App\Models\Penyewaan',
+            auditableId: $id,
+            before: [
+                'order_id'       => (int) $id,
+                'status'         => $order->status,
+                'total_biaya'    => (float) ($order->total_biaya ?? $order->total_price ?? 0),
+                'payment_method' => $order->payment_method ?? null,
+            ],
+            after: [
+                'order_id'       => (int) $id,
+                'status'         => 'Dibatalkan',
+                'cancelled_by'   => auth()->user()?->role ?? 'customer',
+                'executor_id'    => auth()->id(),
+            ],
+            adminId: auth()->user()?->role === 'admin' ? auth()->id() : 1,
+            request: request()
+        );
+
         if (!empty($order->voucher_id)) {
             DB::table('vouchers')->where('id', $order->voucher_id)->where('kuota_terpakai', '>', 0)->decrement('kuota_terpakai');
         }
