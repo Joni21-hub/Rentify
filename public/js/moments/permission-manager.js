@@ -33,7 +33,16 @@
          * Tampilkan modal penjelasan ramah sebelum memicu popup browser bawaan
          * @returns {Promise<boolean>} True jika pengguna menekan Izinkan
          */
-        requestWithEducation() {
+        async requestWithEducation() {
+            // Jika izin sudah pernah diberikan sebelumnya, langsung loloskan tanpa menampilkan modal mengulang-ulang
+            try {
+                const currentStatus = await this.checkStatus();
+                if (currentStatus === 'granted') {
+                    localStorage.setItem('camera_permission_granted', '1');
+                    return true;
+                }
+            } catch (e) {}
+
             return new Promise((resolve) => {
                 // Buat modal DOM jika belum ada
                 let modal = document.getElementById('camera-permission-modal');
@@ -81,6 +90,7 @@
 
                 allowBtn.onclick = () => {
                     cleanup();
+                    try { localStorage.setItem('camera_permission_granted', '1'); } catch (e) {}
                     resolve(true);
                 };
 

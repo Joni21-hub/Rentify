@@ -126,10 +126,10 @@
                     </span>
                 </button>
 
-                <!-- Aspect Ratio Toggle Button (Asli / 9:16 / 3:4 / 1:1) -->
-                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Asli / 9:16 / 3:4 / 1:1)">
-                    <i id="aspect-ratio-icon" class="fa-solid fa-expand text-sky-400 text-xs"></i>
-                    <span id="aspect-ratio-label">Asli</span>
+                <!-- Aspect Ratio Toggle Button (9:16 / 3:4 / 1:1) -->
+                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (9:16 / 3:4 / 1:1)">
+                    <i id="aspect-ratio-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
+                    <span id="aspect-ratio-label">9:16</span>
                 </button>
             </div>
 
@@ -233,14 +233,7 @@
                 </div>
             </div>
 
-            <!-- Zoom Presets Selector Kamera (Ala Native Camera: 0.5x | 1x | 2x) -->
-            <div id="camera-zoom-selector" class="flex items-center justify-center gap-2 z-30 pointer-events-auto">
-                <div class="glass-pill rounded-full p-1 flex items-center gap-1.5 shadow-lg border border-white/20">
-                    <button type="button" onclick="window.MomentCameraEngine.applyZoom(0.5)" data-cam-zoom="0.5" class="cam-zoom-btn w-8 h-8 rounded-full text-[11px] font-black text-white/80 hover:text-white flex items-center justify-center transition active:scale-90" title="0.5x Ultra-Wide">0.5</button>
-                    <button type="button" onclick="window.MomentCameraEngine.applyZoom(1.0)" data-cam-zoom="1.0" class="cam-zoom-btn w-8 h-8 rounded-full text-[11px] font-black text-sky-400 bg-sky-500/25 border border-sky-400/40 flex items-center justify-center transition active:scale-90 shadow-xs" title="1x Normal Sensor">1x</button>
-                    <button type="button" onclick="window.MomentCameraEngine.applyZoom(2.0)" data-cam-zoom="2.0" class="cam-zoom-btn w-8 h-8 rounded-full text-[11px] font-black text-white/80 hover:text-white flex items-center justify-center transition active:scale-90" title="2x Telephoto Zoom">2x</button>
-                </div>
-            </div>
+
 
             <!-- Action Row -->
             <div class="flex items-center justify-between max-w-sm mx-auto">
@@ -337,28 +330,7 @@
 
             <div id="editor-carousel-dots" class="hidden absolute bottom-8 left-0 right-0 z-30 flex items-center justify-center gap-1.5 pointer-events-none"></div>
 
-            <!-- Floating Zoom Indicator Badge -->
-            <div id="editor-zoom-badge" class="pointer-events-none absolute top-20 right-4 z-30 opacity-0 transition-opacity duration-300 glass-pill px-2.5 py-1 rounded-full text-[11px] font-black text-sky-400 border border-sky-400/40 shadow-xl flex items-center gap-1">
-                <i class="fa-solid fa-magnifying-glass-plus text-[10px]"></i>
-                <span id="editor-zoom-badge-text">1.0x</span>
-            </div>
 
-            <!-- Floating Quick Zoom & Framing Controls (Ala Native Camera: 0.5x | 1x | 2x) -->
-            <div id="editor-zoom-controls" class="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 glass-pill px-3 py-1.5 rounded-full flex items-center gap-2 shadow-2xl border border-white/20 transition-all duration-200">
-                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.setZoom(0.5)" class="editor-zoom-preset-btn px-2.5 py-1 rounded-full text-xs font-black text-white/80 hover:text-white active:scale-90 transition" data-zoom-val="0.5">0.5x</button>
-                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.setZoom(1.0)" class="editor-zoom-preset-btn px-2.5 py-1 rounded-full text-xs font-black text-sky-400 bg-sky-500/20 border border-sky-400/40 active:scale-90 transition shadow-xs" data-zoom-val="1.0">1x</button>
-                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.setZoom(2.0)" class="editor-zoom-preset-btn px-2.5 py-1 rounded-full text-xs font-black text-white/80 hover:text-white active:scale-90 transition" data-zoom-val="2.0">2x</button>
-                <div class="w-px h-3.5 bg-white/20"></div>
-                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.zoomOut()" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-[10px] active:scale-90" title="Perkecil Zoom (-)">
-                    <i class="fa-solid fa-minus"></i>
-                </button>
-                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.zoomIn()" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-[10px] active:scale-90" title="Perbesar Zoom (+)">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-                <button type="button" onclick="event.stopPropagation(); window.MomentEditorEngine.resetZoom()" class="text-[10px] font-bold text-white/70 hover:text-white active:scale-90 px-1" title="Reset Zoom ke 1.0x">
-                    Reset
-                </button>
-            </div>
 
             <!-- Subtle Editor Toast Notification -->
             <div id="editor-toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300 glass-pill px-4 py-1.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-1.5">
@@ -514,29 +486,17 @@
                 </button>
             </div>
 
-            <!-- Pilihan Rasio: Frame Asli (Utuh) / 9:16 / 3:4 / 1:1 -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-                <!-- Frame Asli (Utuh) -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-3 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
-                    <div class="flex items-center justify-between">
-                        <i class="fa-solid fa-expand text-sky-400 text-sm"></i>
-                        <span class="text-xs font-black text-sky-400">Asli</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-white leading-tight">Frame Asli</p>
-                        <p class="text-[9px] text-slate-400">Utuh Tanpa Potong</p>
-                    </div>
-                </button>
-
+            <!-- Pilihan Rasio Standar: 9:16 / 3:4 / 1:1 -->
+            <div class="grid grid-cols-3 gap-2.5 mb-3">
                 <!-- 9:16 Fullscreen -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-3 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
                     <div class="flex items-center justify-between">
                         <span class="w-3.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
                         <span class="text-xs font-black text-sky-400">9:16</span>
                     </div>
                     <div>
                         <p class="text-xs font-bold text-white leading-tight">Layar Penuh</p>
-                        <p class="text-[9px] text-slate-400">Story, Video, Reels</p>
+                        <p class="text-[9px] text-slate-400">Story & Reels</p>
                     </div>
                 </button>
 
@@ -548,7 +508,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-bold text-white leading-tight">Standar</p>
-                        <p class="text-[9px] text-slate-400">Kamera Ponsel</p>
+                        <p class="text-[9px] text-slate-400">Kamera Foto</p>
                     </div>
                 </button>
 
@@ -560,7 +520,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-bold text-white leading-tight">Persegi</p>
-                        <p class="text-[9px] text-slate-400">Feed Katalog</p>
+                        <p class="text-[9px] text-slate-400">Feed Produk</p>
                     </div>
                 </button>
             </div>

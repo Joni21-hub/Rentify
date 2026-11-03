@@ -119,12 +119,12 @@
                 : { facingMode: { ideal: facingMode } };
 
             const constraintsList = isMobile ? [
-                // 1. Mobile Ultra HD / 4K / FHD (Kualitas 100% HD Tajam Sensor Asli Tanpa Downscale)
+                // 1. Mobile FHD Portrait (Kualitas 100% HD Tajam Langsung Terbuka Tanpa Sensor Flicker / Loop)
                 {
                     video: {
                         ...baseVideoConstraint,
-                        width: { ideal: 2160, max: 4096 },
-                        height: { ideal: 3840, max: 4096 },
+                        width: { ideal: 1080 },
+                        height: { ideal: 1920 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
@@ -133,12 +133,12 @@
                         autoGainControl: true
                     }
                 },
-                // 2. Mobile FHD 1080x1920
+                // 2. Mobile Landscape/Natural Sensor 1920x1080 (HD Sensor Asli)
                 {
                     video: {
                         ...baseVideoConstraint,
-                        width: { ideal: 1080, max: 1920 },
-                        height: { ideal: 1920, max: 1920 },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
@@ -237,6 +237,7 @@
             }
 
             this.stream = streamAcquired;
+            try { localStorage.setItem('camera_permission_granted', '1'); } catch (e) {}
 
             // Reset hardware zoom level ke normal 1x dan aktifkan hardware auto-focus, auto-exposure, auto-white-balance
             const videoTrack = this.stream.getVideoTracks()[0];
@@ -278,25 +279,13 @@
             this.videoEl.playsInline = true;
             this.videoEl.muted = true; // Supaya tidak feedback saat live preview
 
-            // Tampilan kamera: jika rasio Frame Asli, gunakan object-contain agar sensor tidak ter-crop (tidak ngezoom)
-            const currentRatio = window.MomentCreatorState.get('aspectRatio') || 'original';
-            if (currentRatio === 'original') {
-                this.videoEl.classList.remove('object-cover');
-                this.videoEl.classList.add('object-contain');
-            } else {
-                this.videoEl.classList.remove('object-contain');
-                this.videoEl.classList.add('object-cover');
-            }
+            // Tampilan preview kamera standar 1x tanpa distorsi
+            this.videoEl.classList.remove('object-contain');
+            this.videoEl.classList.add('object-cover');
 
             this.videoEl.onloadedmetadata = () => {
-                const rat = window.MomentCreatorState.get('aspectRatio') || 'original';
-                if (rat === 'original') {
-                    this.videoEl.classList.remove('object-cover');
-                    this.videoEl.classList.add('object-contain');
-                } else {
-                    this.videoEl.classList.remove('object-contain');
-                    this.videoEl.classList.add('object-cover');
-                }
+                this.videoEl.classList.remove('object-contain');
+                this.videoEl.classList.add('object-cover');
             };
 
             try {
@@ -399,26 +388,14 @@
         }
 
         /**
-         * Terapkan zoom kamera (0.5x, 1x, 2x, dll): hardware optical/sensor zoom atau CSS transform
-         * @param {number} level Zoom multiplier (0.5 - 5.0)
+         * Terapkan zoom kamera: hardware optical/sensor zoom atau CSS transform
+         * @param {number} level Zoom multiplier (1.0 - 5.0)
          */
         async applyZoom(level) {
-            const zoomLevel = Math.max(0.5, Math.min(5.0, parseFloat(level)));
+            const zoomLevel = Math.max(1.0, Math.min(5.0, parseFloat(level)));
             window.MomentCreatorState.set('zoom', zoomLevel);
             this.vibrate(15);
 
-            // Update UI tombol zoom kamera jika ada (0.5 | 1x | 2x)
-            document.querySelectorAll('.cam-zoom-btn').forEach(btn => {
-                const val = parseFloat(btn.getAttribute('data-cam-zoom'));
-                const isActive = Math.abs(val - zoomLevel) < 0.1;
-                if (isActive) {
-                    btn.className = 'cam-zoom-btn w-8 h-8 rounded-full text-[11px] font-black text-sky-400 bg-sky-500/25 border border-sky-400/40 flex items-center justify-center transition active:scale-90 shadow-xs';
-                } else {
-                    btn.className = 'cam-zoom-btn w-8 h-8 rounded-full text-[11px] font-black text-white/80 hover:text-white flex items-center justify-center transition active:scale-90';
-                }
-            });
-
-            let hardwareApplied = false;
             if (this.stream) {
                 const videoTrack = this.stream.getVideoTracks()[0];
                 if (videoTrack && videoTrack.getCapabilities) {
@@ -431,20 +408,14 @@
                                 await videoTrack.applyConstraints({
                                     advanced: [{ zoom: zoomLevel }]
                                 });
-                                hardwareApplied = true;
                             }
                         } catch (e) {}
                     }
                 }
             }
 
-            // Fallback / Complementary CSS scale transform (misal 0.5x ultra-wide saat sensor min=1.0)
             if (this.videoEl) {
-                if (hardwareApplied && zoomLevel >= 1.0) {
-                    this.updateMirrorTransform(1.0);
-                } else {
-                    this.updateMirrorTransform(zoomLevel);
-                }
+                this.updateMirrorTransform(zoomLevel);
             }
         }
 
@@ -601,11 +572,9 @@
                 finalCanvas = cropHelper(1, 1);
             } else if (aspectRatio === 'standard' || aspectRatio === '3:4') {
                 finalCanvas = cropHelper(3, 4);
-            } else if (aspectRatio === 'portrait' || aspectRatio === '9:16') {
-                finalCanvas = cropHelper(9, 16);
             } else {
-                // 'original' / Frame Asli: Pertahankan 100% ukuran sensor asli tanpa crop!
-                finalCanvas = canvas;
+                // Default 9:16 (Layar Penuh Story & Reels)
+                finalCanvas = cropHelper(9, 16);
             }
 
             const dataUrl = finalCanvas.toDataURL('image/jpeg', 1.0);

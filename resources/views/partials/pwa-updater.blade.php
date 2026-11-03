@@ -21,6 +21,11 @@
     // Fungsi menampilkan notifikasi pembaruan dan memuat ulang halaman otomatis
     function triggerAutoUpdateReload(message = 'Memperbarui aplikasi ke versi terbaru...') {
         if (isReloading) return;
+        // Jangan interupsi atau paksa reload jika sedang berada di halaman pembuatan Momen / Kamera aktif
+        if (window.location.pathname.includes('/moments/create') || window.location.pathname.includes('/customer/moments/create')) {
+            console.log('[Rentify PWA] Menunda auto-reload karena pengguna sedang aktif di layar kamera/creator Momen.');
+            return;
+        }
         isReloading = true;
 
         const banner = document.getElementById('rentify-update-banner');
