@@ -47,6 +47,13 @@
     .animate-pulse-center {
         animation: pulseCenterIcon 0.45s ease-out forwards;
     }
+    @keyframes slideUpDrawer {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    .animate-slide-up {
+        animation: slideUpDrawer 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
 </style>
 @endpush
 
@@ -90,12 +97,12 @@
     <!-- ============================================================== -->
     <!-- DRAWER: KOMENTAR MOMEN (TIKTOK / REELS BOTTOM SHEET) -->
     <!-- ============================================================== -->
-    <div id="comments-drawer" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end transition-opacity duration-200">
+    <div id="comments-drawer" class="hidden fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex flex-col justify-end transition-opacity duration-200">
         <!-- Backdrop click area -->
         <div class="flex-1 w-full" onclick="closeCommentsDrawer()"></div>
 
         <!-- Bottom Sheet Content -->
-        <div class="w-full max-w-lg mx-auto bg-slate-900/95 backdrop-blur-2xl rounded-t-3xl border-t border-white/15 shadow-2xl flex flex-col max-h-[70vh] min-h-[45vh] text-white overflow-hidden">
+        <div class="w-full max-w-lg mx-auto bg-slate-900/95 backdrop-blur-2xl rounded-t-3xl border-t border-white/15 shadow-2xl flex flex-col max-h-[75vh] min-h-[45vh] text-white overflow-hidden animate-slide-up">
             <!-- Handle & Header -->
             <div class="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-2">
@@ -114,8 +121,8 @@
                 <!-- Dynamically populated via loadComments -->
             </div>
 
-            <!-- Comment Input Box -->
-            <div class="p-3 bg-slate-950/90 border-t border-white/10 shrink-0">
+            <!-- Comment Input Box (Aman di atas Safe Area HP) -->
+            <div class="p-3 bg-slate-950/95 border-t border-white/10 shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));">
                 <form id="comment-form" onsubmit="submitComment(event)" class="flex items-center gap-2">
                     <input type="hidden" id="active-comment-moment-id">
                     <input 
@@ -123,10 +130,10 @@
                         id="comment-input-text" 
                         maxlength="500" 
                         placeholder="Tulis komentar kamu..." 
-                        class="flex-1 bg-white/10 border border-white/15 rounded-full px-4 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-sky-400 focus:bg-white/15 transition"
+                        class="flex-1 bg-white/10 border border-white/15 rounded-full px-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-sky-400 focus:bg-white/15 transition"
                         autocomplete="off"
                     >
-                    <button type="submit" id="comment-submit-btn" class="w-9 h-9 rounded-full bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white flex items-center justify-center shrink-0 shadow-md active:scale-95 transition">
+                    <button type="submit" id="comment-submit-btn" class="w-10 h-10 rounded-full bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white flex items-center justify-center shrink-0 shadow-md active:scale-95 transition">
                         <i class="fa-solid fa-paper-plane text-xs"></i>
                     </button>
                 </form>
@@ -137,7 +144,7 @@
     <!-- ============================================================== -->
     <!-- MODAL: GUEST AUTHENTICATION PROMPT -->
     <!-- ============================================================== -->
-    <div id="guest-auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="guest-auth-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 border border-slate-100">
             <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-2xl shadow-inner">
                 <i class="fa-solid fa-user-lock"></i>
@@ -163,7 +170,7 @@
     <!-- ============================================================== -->
     <!-- MODAL: UPLOAD MOMEN BARU (SIMPEL & INTUITIF) -->
     <!-- ============================================================== -->
-    <div id="upload-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div id="upload-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 my-8 border border-slate-100">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
@@ -280,7 +287,7 @@
     <!-- ============================================================== -->
     <!-- MODAL: LAPORKAN POSTINGAN -->
     <!-- ============================================================== -->
-    <div id="report-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="report-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
@@ -588,6 +595,56 @@
     }
 
     /**
+     * Kontrol visibilitas floating bottom navigation bar saat modal/drawer terbuka.
+     */
+    function setBottomNavVisible(visible) {
+        const navWrapper = document.getElementById('bottom-navigation-wrapper');
+        if (!navWrapper) return;
+        if (visible) {
+            navWrapper.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease';
+            navWrapper.style.transform = '';
+            navWrapper.style.opacity = '';
+            navWrapper.style.pointerEvents = '';
+        } else {
+            navWrapper.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease';
+            navWrapper.style.transform = 'translateY(150%)';
+            navWrapper.style.opacity = '0';
+            navWrapper.style.pointerEvents = 'none';
+        }
+    }
+
+    /**
+     * Floating Toast mini yang halus dan tidak menutupi seluruh layar.
+     */
+    function showMomentToast(message, icon = 'info') {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: icon,
+                text: message,
+                timer: 1700,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top',
+                background: '#0f172a',
+                color: '#f8fafc',
+                iconColor: icon === 'success' ? '#38bdf8' : (icon === 'info' ? '#38bdf8' : '#fb7185'),
+                customClass: {
+                    popup: 'rounded-full px-4 py-2 text-xs font-semibold shadow-2xl border border-white/20 mt-3'
+                }
+            });
+        }
+    }
+
+    /**
+     * Format caption teks: highlight hashtag dan escape HTML untuk keamanan.
+     */
+    function formatCaptionWithHashtags(caption) {
+        if (!caption) return '';
+        const escaped = escapeHtml(caption);
+        return escaped.replace(/#([\w\u00C0-\u024F]+)/g, '<span class="text-sky-300 font-semibold hover:underline cursor-pointer">#$1</span>');
+    }
+
+    /**
      * Render kartu-kartu momen ke dalam DOM dengan gaya TikTok / Instagram Reels Fullscreen.
      */
     function renderMoments(moments) {
@@ -600,8 +657,9 @@
             const card = document.createElement('article');
             card.id = `moment-card-${m.id}`;
             card.className = "moment-reel relative w-full h-[100dvh] snap-start snap-always shrink-0 overflow-hidden bg-black flex items-center justify-center select-none";
-
-            const isAuthorOrAdmin = (IS_AUTHENTICATED && (m.author.id === CURRENT_USER_ID || CURRENT_USER_ROLE === 'admin'));
+            const isAuthor = (IS_AUTHENTICATED && m.author && m.author.id === CURRENT_USER_ID);
+            const isAuthorOrAdmin = (IS_AUTHENTICATED && (isAuthor || CURRENT_USER_ROLE === 'admin'));
+            card.dataset.isAuthor = isAuthor ? 'true' : 'false';
 
             // Media section (Prioritaskan Carousel jika > 1 media, lalu Single Video, lalu Single Photo)
             let mediaHtml = '';
@@ -622,7 +680,7 @@
                     }
                     return `
                         <div class="carousel-slide relative w-full min-w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
-                            <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                            <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                             <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         </div>
                     `;
@@ -654,6 +712,13 @@
             } else if (m.media_type === 'video') {
                 mediaHtml = `
                     <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+                        <!-- Ambient Blurred Backdrop for Video (Mencegah Crop & Tetap Elegan) -->
+                        ${m.thumbnail_url ? `
+                            <img src="${m.thumbnail_url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none select-none" alt="" aria-hidden="true">
+                        ` : `
+                            <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-black pointer-events-none"></div>
+                        `}
+                        <!-- High-Definition Main Video with Smart Contain (Teks / grafis samping tidak akan terpotong di HP apa pun) -->
                         <video 
                             src="${m.media_url}" 
                             poster="${m.thumbnail_url || ''}" 
@@ -661,15 +726,15 @@
                             loop 
                             preload="metadata"
                             muted
-                            class="w-full h-full object-cover pointer-events-none"
+                            class="relative z-10 w-full h-full object-contain pointer-events-none"
                         ></video>
                         <!-- Center Play/Pause Indicator -->
-                        <div class="play-pause-indicator pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div class="play-pause-indicator pointer-events-none absolute inset-0 z-15 flex items-center justify-center">
                             <div class="play-pause-pulse hidden w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white text-2xl flex items-center justify-center shadow-2xl">
                                 <i class="fa-solid fa-play ml-1"></i>
                             </div>
                         </div>
-                        <!-- Video Bottom Progress Bar (2px) -->
+                        <!-- Video Bottom Progress Bar (2.5px) -->
                         <div class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-white/20 z-20 pointer-events-none">
                             <div class="video-progress-bar h-full bg-sky-400 w-0 transition-all duration-100 ease-linear"></div>
                         </div>
@@ -680,48 +745,57 @@
                 mediaHtml = `
                     <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
                         <!-- Ambient Blurred Backdrop -->
-                        <img src="${m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                        <img src="${m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         <!-- High-res Sharp Image 100% HD -->
                         <img src="${m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" class="relative z-10 w-full h-full object-contain pointer-events-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                     </div>
                 `;
             }
 
-            // Tagged Rental Products (Subtle Compact Badges)
+            // Tagged Rental Products (Subtle Compact Badges — Hapus "Rp 0")
             let productsHtml = '';
             if (m.tagged_products && m.tagged_products.length > 0) {
                 productsHtml = `
-                    <div class="pt-1 flex flex-wrap gap-1.5 max-w-[270px] pointer-events-auto">
-                        ${m.tagged_products.map(tp => `
-                            <a href="/customer/barang/${tp.slug || tp.id}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-md border border-white/20 hover:border-sky-400 text-white shadow-md transition-all group">
-                                <i class="fa-solid fa-tag text-[9px] text-sky-400 group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold text-[10px] text-white/90 truncate max-w-[110px] leading-tight">${tp.nama}</span>
-                                <span class="font-black text-[10px] text-amber-300 whitespace-nowrap">Rp ${Number(tp.harga_sewa).toLocaleString('id-ID')}</span>
-                                <i class="fa-solid fa-chevron-right text-[8px] text-white/40 group-hover:translate-x-0.5 transition-transform"></i>
-                            </a>
-                        `).join('')}
+                    <div class="pt-1 flex flex-wrap gap-1.5 max-w-[280px] pointer-events-auto">
+                        ${m.tagged_products.map(tp => {
+                            const priceNum = Number(tp.harga_sewa);
+                            const hasValidPrice = !isNaN(priceNum) && priceNum > 0;
+                            const priceBadge = hasValidPrice 
+                                ? `<span class="font-bold text-[10px] text-amber-300 whitespace-nowrap">Rp ${priceNum.toLocaleString('id-ID')}<span class="text-[9px] font-normal text-white/70">/hari</span></span>` 
+                                : `<span class="font-semibold text-[9px] text-sky-300 whitespace-nowrap">Sewa Sekarang</span>`;
+
+                            return `
+                                <a href="/customer/barang/${tp.slug || tp.id}" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 hover:bg-slate-900/95 backdrop-blur-md border border-white/20 hover:border-sky-400 text-white shadow-md transition-all group">
+                                    <i class="fa-solid fa-tag text-[9px] text-sky-400 group-hover:scale-110 transition-transform"></i>
+                                    <span class="font-bold text-[10px] text-white/90 truncate max-w-[110px] leading-tight">${escapeHtml(tp.nama || 'Barang Rental')}</span>
+                                    ${priceBadge}
+                                    <i class="fa-solid fa-chevron-right text-[8px] text-white/40 group-hover:translate-x-0.5 group-hover:text-sky-300 transition-transform"></i>
+                                </a>
+                            `;
+                        }).join('')}
                     </div>
                 `;
             }
 
-            // Caption formatting with inline read more
+            // Caption formatting with inline read more & hashtag highlight
             let captionHtml = '';
             if (m.caption) {
+                const formattedCaption = formatCaptionWithHashtags(m.caption);
                 const isLong = m.caption.length > 85;
                 if (isLong) {
                     captionHtml = `
-                        <div class="text-xs text-white/95 leading-relaxed drop-shadow-md font-medium pointer-events-auto">
-                            <span id="caption-short-${m.id}" class="line-clamp-2">${m.caption}</span>
-                            <span id="caption-full-${m.id}" class="hidden whitespace-pre-wrap">${m.caption}</span>
-                            <button onclick="toggleCaptionExpand(${m.id})" id="caption-btn-${m.id}" class="text-sky-300 hover:text-sky-200 text-[11px] font-bold mt-0.5 inline-block">
+                        <div class="text-xs text-white/95 leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] font-medium pointer-events-auto">
+                            <span id="caption-short-${m.id}" class="line-clamp-2">${formattedCaption}</span>
+                            <span id="caption-full-${m.id}" class="hidden whitespace-pre-wrap">${formattedCaption}</span>
+                            <button onclick="toggleCaptionExpand(${m.id})" id="caption-btn-${m.id}" class="text-sky-300 hover:text-sky-200 text-[11px] font-bold mt-0.5 inline-block cursor-pointer">
                                 selengkapnya
                             </button>
                         </div>
                     `;
                 } else {
                     captionHtml = `
-                        <p class="text-xs text-white/95 leading-relaxed drop-shadow-md font-medium">
-                            ${m.caption}
+                        <p class="text-xs text-white/95 leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] font-medium">
+                            ${formattedCaption}
                         </p>
                     `;
                 }
@@ -772,10 +846,10 @@
                 </div>
 
                 <!-- RIGHT RAIL: ENGAGEMENT BUTTONS (TikTok / Reels Style) -->
-                <div class="absolute right-3.5 bottom-32 z-20 flex flex-col items-center gap-3 pointer-events-auto">
+                <div class="absolute right-3.5 z-20 flex flex-col items-center gap-3.5 pointer-events-auto" style="bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));">
                     <!-- Like Button (Tanpa tanda + coin di bawah hati) -->
                     <div class="flex flex-col items-center group">
-                        <button onclick="handleLikeToggle(${m.id})" id="like-btn-${m.id}" class="glass-rail-btn w-11 h-11 rounded-full flex items-center justify-center text-white active:scale-125 transition-transform shadow-md">
+                        <button onclick="handleLikeToggle(${m.id}, ${isAuthor ? 'true' : 'false'})" id="like-btn-${m.id}" class="glass-rail-btn w-11 h-11 rounded-full flex items-center justify-center text-white active:scale-125 transition-transform shadow-md">
                             <i class="${m.is_liked ? 'fa-solid fa-heart text-rose-500' : 'fa-regular fa-heart text-white group-hover:text-rose-400'} text-xl transition-colors"></i>
                         </button>
                         <span id="like-count-${m.id}" class="text-[11px] font-black text-white mt-0.5 drop-shadow-md ${m.is_liked ? 'text-rose-400' : 'text-white'}">${m.likes_count}</span>
@@ -815,8 +889,8 @@
                     ` : ''}
                 </div>
 
-                <!-- BOTTOM-LEFT: CAPTION & COMPACT RENTAL PRODUCT TAG (Nama akun di atas) -->
-                <div class="absolute left-3.5 right-20 bottom-16 z-20 space-y-1.5 pointer-events-none">
+                <!-- BOTTOM-LEFT: CAPTION & COMPACT RENTAL PRODUCT TAG (Dinaikkan agar aman di atas Navbar) -->
+                <div class="absolute left-3.5 right-20 z-20 space-y-2 pointer-events-none" style="bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));">
                     <!-- Caption Section -->
                     ${captionHtml}
 
@@ -895,7 +969,9 @@
         const btn = document.getElementById(`like-btn-${momentId}`);
         const icon = btn?.querySelector('i');
         if (icon && !icon.classList.contains('fa-solid')) {
-            handleLikeToggle(momentId);
+            const card = document.getElementById(`moment-card-${momentId}`);
+            const isAuthor = card?.dataset?.isAuthor === 'true';
+            handleLikeToggle(momentId, isAuthor);
         }
     }
 
@@ -989,9 +1065,14 @@
     /**
      * Toggle Like dengan Optimistic UI dan integrasi Reward Koin Rentify.
      */
-    async function handleLikeToggle(momentId) {
+    async function handleLikeToggle(momentId, isAuthor = false) {
         if (!IS_AUTHENTICATED) {
             openGuestAuthModal();
+            return;
+        }
+
+        if (isAuthor) {
+            showMomentToast('Anda tidak dapat menyukai momen sendiri', 'info');
             return;
         }
 
@@ -1007,11 +1088,11 @@
         if (wasLiked) {
             icon.className = 'fa-regular fa-heart text-white group-hover:text-rose-400 text-xl transition-colors';
             countSpan.textContent = Math.max(0, prevCount - 1);
-            countSpan.className = 'text-[11px] font-black text-white mt-1 drop-shadow-md';
+            countSpan.className = 'text-[11px] font-black text-white mt-0.5 drop-shadow-md';
         } else {
             icon.className = 'fa-solid fa-heart text-rose-500 text-xl transition-colors';
             countSpan.textContent = prevCount + 1;
-            countSpan.className = 'text-[11px] font-black text-rose-400 mt-1 drop-shadow-md';
+            countSpan.className = 'text-[11px] font-black text-rose-400 mt-0.5 drop-shadow-md';
         }
 
         try {
@@ -1027,24 +1108,19 @@
             if (!result.success) {
                 countSpan.textContent = prevCount;
                 icon.className = wasLiked ? 'fa-solid fa-heart text-rose-500 text-xl' : 'fa-regular fa-heart text-white text-xl';
-                Swal.fire({ icon: 'warning', text: result.message || 'Gagal mengubah status suka.' });
+                countSpan.className = wasLiked ? 'text-[11px] font-black text-rose-400 mt-0.5 drop-shadow-md' : 'text-[11px] font-black text-white mt-0.5 drop-shadow-md';
+                showMomentToast(result.message || 'Tidak dapat memberikan like.', 'info');
             } else {
                 countSpan.textContent = result.likes_count;
                 if (result.minted) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '1 Koin Didapatkan!',
-                        text: 'Pembuat momen mendapatkan 1 Koin Rentify dari apresiasi Anda!',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
+                    showMomentToast('1 Koin Rentify didapatkan dari apresiasi Anda!', 'success');
                 }
             }
         } catch (error) {
             countSpan.textContent = prevCount;
             icon.className = wasLiked ? 'fa-solid fa-heart text-rose-500 text-xl' : 'fa-regular fa-heart text-white text-xl';
+            countSpan.className = wasLiked ? 'text-[11px] font-black text-rose-400 mt-0.5 drop-shadow-md' : 'text-[11px] font-black text-white mt-0.5 drop-shadow-md';
+            showMomentToast('Terjadi kesalahan jaringan.', 'error');
         }
     }
 
@@ -1196,11 +1272,13 @@
     }
 
     function openGuestAuthModal() {
+        setBottomNavVisible(false);
         document.getElementById('guest-auth-modal')?.classList.remove('hidden');
     }
 
     function closeGuestAuthModal() {
         document.getElementById('guest-auth-modal')?.classList.add('hidden');
+        setBottomNavVisible(true);
     }
 
     let selectedRatio = '9:16';
@@ -1229,12 +1307,14 @@
     }
 
     function openUploadModal() {
+        setBottomNavVisible(false);
         document.getElementById('upload-modal')?.classList.remove('hidden');
     }
 
     function closeUploadModal() {
         document.getElementById('upload-modal')?.classList.add('hidden');
         resetUploadForm();
+        setBottomNavVisible(true);
     }
 
     function resetUploadForm() {
@@ -1595,6 +1675,7 @@
             return;
         }
         closeCardMenus();
+        setBottomNavVisible(false);
         const inputId = document.getElementById('report-moment-id');
         if (inputId) inputId.value = momentId;
         document.getElementById('report-form')?.reset();
@@ -1603,6 +1684,7 @@
 
     function closeReportModal() {
         document.getElementById('report-modal')?.classList.add('hidden');
+        setBottomNavVisible(true);
     }
 
     async function submitReport(event) {
@@ -1664,6 +1746,7 @@
 
         activeInput.value = momentId;
         drawer.classList.remove('hidden');
+        setBottomNavVisible(false);
         list.innerHTML = `
             <div class="py-12 flex flex-col items-center justify-center text-slate-400">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl text-sky-400 mb-2"></i>
@@ -1691,6 +1774,7 @@
     function closeCommentsDrawer() {
         document.getElementById('comments-drawer')?.classList.add('hidden');
         document.getElementById('comment-form')?.reset();
+        setBottomNavVisible(true);
     }
 
     function renderCommentsList(comments, momentId) {
@@ -1856,5 +1940,15 @@
     function setupHorizontalSwipeNavigation() {
         // Dikelola secara harmonis oleh modul gestur navigasi x-bottom-navigation-bar
     }
+
+    // Global listener: Tutup drawer komentar atau modal dengan tombol Escape & pulihkan navbar
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCommentsDrawer();
+            closeUploadModal();
+            closeReportModal();
+            closeGuestAuthModal();
+        }
+    });
 </script>
 @endsection

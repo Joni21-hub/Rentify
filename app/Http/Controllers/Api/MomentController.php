@@ -129,10 +129,11 @@ class MomentController extends Controller
                         'id'            => $tp->product_id,
                         'display_order' => $tp->display_order,
                         'nama'          => $tp->product->nama ?? null,
-                        'harga_sewa'    => $tp->product->harga_sewa ?? 0,
+                        'slug'          => $tp->product->slug ?? null,
+                        'harga_sewa'    => $tp->product ? ($tp->product->harga_sewa_customer ?? $tp->product->harga_sewa_harian ?? 0) : 0,
                         'cover_photo'   => $tp->product->cover_photo ?? null,
                         'vendor_name'   => $tp->product->vendor->vendor_name ?? null,
-                        'stock'         => $tp->product->stok ?? 1,
+                        'stock'         => $tp->product->stok_total ?? 1,
                     ];
                 }),
             ];
@@ -204,10 +205,11 @@ class MomentController extends Controller
                         'id'            => $tp->product_id,
                         'display_order' => $tp->display_order,
                         'nama'          => $tp->product->nama ?? null,
-                        'harga_sewa'    => $tp->product->harga_sewa ?? 0,
+                        'slug'          => $tp->product->slug ?? null,
+                        'harga_sewa'    => $tp->product ? ($tp->product->harga_sewa_customer ?? $tp->product->harga_sewa_harian ?? 0) : 0,
                         'cover_photo'   => $tp->product->cover_photo ?? null,
                         'vendor_name'   => $tp->product->vendor->vendor_name ?? null,
-                        'stock'         => $tp->product->stok ?? 1,
+                        'stock'         => $tp->product->stok_total ?? 1,
                     ];
                 }),
             ],

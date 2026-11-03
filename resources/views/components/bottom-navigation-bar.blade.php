@@ -23,9 +23,9 @@
         ? route('customer.account') 
         : (\Illuminate\Support\Facades\Route::has('customer.dashboard') ? route('customer.dashboard') : '/account');
 
-    // Desain Bar: Kaca gelap elegan pada Momen, kaca terang frosted pada Beranda/Akun
+    // Desain Bar: Kaca gelap elegan & ramping pada Momen, kaca terang frosted pada Beranda/Akun
     $navContainerClass = $isMomen
-        ? 'bg-slate-950/85 backdrop-blur-2xl border border-white/20 text-white shadow-2xl px-6 py-2 transition-all duration-300 relative overflow-hidden'
+        ? 'bg-slate-950/70 hover:bg-slate-950/85 backdrop-blur-xl border border-white/15 text-white/90 shadow-2xl px-5 py-1.5 transition-all duration-300 relative overflow-hidden'
         : 'rentify-card bg-white/90 backdrop-blur-xl border border-white/80 px-7 py-2 shadow-xl shadow-sky-900/10 transition-all duration-300 relative overflow-hidden';
 @endphp
 
