@@ -129,6 +129,21 @@ class CustomerHomeController extends Controller
     }
 
     /**
+     * Penanganan tombol "Mulai Menyewa":
+     * - Jika sudah login / punya akun: arahkan langsung ke Beranda katalog.
+     * - Jika belum login / belum terdaftar: simpan intended route ke Beranda lalu arahkan ke login.
+     */
+    public function mulaiMenyewa()
+    {
+        if (Auth::check()) {
+            return redirect()->route('customer.home');
+        }
+
+        session(['url.intended' => route('customer.home')]);
+        return redirect()->route('login');
+    }
+
+    /**
      * Halaman Pengenalan Rentify Publik (Dapat diakses langsung via /tentang)
      */
     public function about()

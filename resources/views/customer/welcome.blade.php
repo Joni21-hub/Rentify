@@ -3,7 +3,13 @@
     $go = fn (string $name, string $fallback, array $params = []) =>
         \Illuminate\Support\Facades\Route::has($name) ? route($name, $params) : url($fallback);
 
+    $isLoggedIn = \Illuminate\Support\Facades\Auth::check();
+    $rentLink = $isLoggedIn
+        ? $go('customer.home', '/')
+        : $go('customer.mulai_menyewa', '/mulai-menyewa');
+
     $links = [
+        'rent'   => $rentLink,
         'search' => $go('customer.search', '/search'),
         'shop'   => $go('register', '/register?peran=pemilik', ['peran' => 'pemilik']),
         'login'  => $go('login', '/login'),
@@ -463,7 +469,7 @@
         <a href="#rasa-aman" data-testid="mobile-link-rasa-aman"><i data-lucide="shield-check"></i> Rasa Aman</a>
         <button type="button" data-download data-testid="mobile-download-btn"><i data-lucide="download"></i> Download Aplikasi</button>
         <div class="mm-cta">
-            <a href="{{ $links['search'] }}" class="btn btn-primary" data-testid="mobile-rent-btn">Mulai Menyewa</a>
+            <a href="{{ $links['rent'] }}" class="btn btn-primary" data-testid="mobile-rent-btn">Mulai Menyewa</a>
             @auth
                 <a href="{{ $links['home'] }}" class="btn btn-light" data-testid="mobile-account-btn"><i data-lucide="shopping-bag"></i> Katalog Belanja</a>
             @else
@@ -490,7 +496,7 @@
             </h1>
             <p class="hero-sub" data-testid="hero-subtitle">Barang nganggur jadi penghasilan. Butuh sebentar, tinggal sewa.</p>
             <div class="hero-cta">
-                <a href="{{ $links['search'] }}" class="btn btn-primary" data-testid="hero-rent-btn">Mulai Menyewa</a>
+                <a href="{{ $links['rent'] }}" class="btn btn-primary" data-testid="hero-rent-btn">Mulai Menyewa</a>
                 <a href="{{ $links['shop'] }}" class="btn btn-primary" data-coins data-testid="hero-shop-btn">Buka Toko</a>
             </div>
             <p class="hero-note"><i data-lucide="check-circle-2"></i> Lihat-lihat dan mulai cari barang tanpa perlu login.</p>
@@ -712,7 +718,7 @@
                 <article class="glass how-card" data-testid="how-card-3"><span class="how-num">03</span><span class="how-ic"><i data-lucide="repeat"></i></span><h3>Ambil &amp; kembalikan</h3><p>Ambil barangnya, pakai seperlunya, lalu kembalikan sesuai jadwal.</p></article>
             </div>
         </div>
-        <a href="{{ $links['search'] }}" class="btn btn-primary" id="how-cta" style="margin-top:36px" data-search="{{ $links['search'] }}" data-shop="{{ $links['shop'] }}" data-testid="how-cta-btn"><span>Mulai Menyewa</span> <i data-lucide="arrow-right"></i></a>
+        <a href="{{ $links['rent'] }}" class="btn btn-primary" id="how-cta" style="margin-top:36px" data-rent="{{ $links['rent'] }}" data-search="{{ $links['rent'] }}" data-shop="{{ $links['shop'] }}" data-testid="how-cta-btn"><span>Mulai Menyewa</span> <i data-lucide="arrow-right"></i></a>
     </div>
 </section>
 
@@ -790,7 +796,7 @@
             <h2 style="margin-top:18px">Punya barang? Butuh barang?<br><span class="grad-text">Rentify jawabannya.</span></h2>
             <p>Sewa barang yang kamu butuhkan sebentar, atau buka toko dari barang yang jarang kamu pakai.</p>
             <div class="final-cta">
-                <a href="{{ $links['search'] }}" class="btn btn-primary" data-testid="final-rent-btn"><i data-lucide="search"></i> Mulai Menyewa</a>
+                <a href="{{ $links['rent'] }}" class="btn btn-primary" data-testid="final-rent-btn"><i data-lucide="search"></i> Mulai Menyewa</a>
                 <a href="{{ $links['shop'] }}" class="btn btn-light" data-coins data-testid="final-shop-btn"><i data-lucide="store"></i> Buka Toko</a>
                 <button type="button" class="btn btn-light" data-download data-testid="final-download-btn"><i data-lucide="download"></i> Download Aplikasi</button>
             </div>
@@ -812,7 +818,7 @@
             <div>
                 <h4>Mulai</h4>
                 <ul>
-                    <li><a href="{{ $links['search'] }}" data-testid="footer-rent-link">Mulai Menyewa</a></li>
+                    <li><a href="{{ $links['rent'] }}" data-testid="footer-rent-link">Mulai Menyewa</a></li>
                     <li><a href="{{ $links['shop'] }}" data-testid="footer-shop-link">Buka Toko</a></li>
                     <li><a href="{{ $links['login'] }}" data-testid="footer-login-link">Masuk</a></li>
                     <li><button type="button" data-download data-testid="footer-download-btn">Download Aplikasi</button></li>
@@ -1059,7 +1065,7 @@
             }, 220);
         }, i * 90));
         const owner = role === 'pemilik';
-        howCta.href = owner ? howCta.dataset.shop : howCta.dataset.search;
+        howCta.href = owner ? howCta.dataset.shop : (howCta.dataset.rent || howCta.dataset.search);
         $('span', howCta).textContent = owner ? 'Buka Toko' : 'Mulai Menyewa';
         howCta.toggleAttribute('data-coins', owner);
     };

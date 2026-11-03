@@ -90,14 +90,41 @@
             this.stopStream();
 
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            const constraintsList = [
-                // 1. Prioritas Utama: Mobile Portrait 9:16 Kualitas Tinggi (Lensa Lebar Normal, Bukan Telephoto Zoom)
+
+            // Cari kamera wide/utama jika ada banyak lensa belakang (hindari lensa telephoto/zoom)
+            let preferredDeviceId = null;
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoInputs = devices.filter(d => d.kind === 'videoinput');
+                    if (videoInputs.length > 1) {
+                        const targetKeyword = facingMode === 'environment' ? 'back' : 'front';
+                        const matching = videoInputs.filter(d => {
+                            const lbl = (d.label || '').toLowerCase();
+                            return lbl.includes(targetKeyword) && !lbl.includes('telephoto') && !lbl.includes('zoom') && !lbl.includes('macro');
+                        });
+                        const wideChoice = matching.find(d => {
+                            const lbl = (d.label || '').toLowerCase();
+                            return lbl.includes('wide') || lbl.includes('ultra') || lbl.includes('main') || lbl.includes('0');
+                        }) || matching[0];
+                        if (wideChoice && wideChoice.deviceId) {
+                            preferredDeviceId = wideChoice.deviceId;
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            const baseVideoConstraint = preferredDeviceId 
+                ? { deviceId: { exact: preferredDeviceId } }
+                : { facingMode: { ideal: facingMode } };
+
+            const constraintsList = isMobile ? [
+                // 1. Mobile Portrait: Prioritaskan Main/Wide Lens tanpa sensor crop paksa
                 {
                     video: {
-                        facingMode: { ideal: facingMode },
-                        aspectRatio: { ideal: 9 / 16 },
-                        width: { ideal: 1080 },
-                        height: { ideal: 1920 },
+                        ...baseVideoConstraint,
+                        width: { ideal: 1080, max: 1920 },
+                        height: { ideal: 1920, max: 1920 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
@@ -106,41 +133,55 @@
                         autoGainControl: true
                     }
                 },
-                // 2. Fallback HD 720p Portrait (720x1280)
+                // 2. Mobile Fallback HD 720p
                 {
                     video: {
-                        facingMode: { ideal: facingMode },
-                        aspectRatio: { ideal: 9 / 16 },
+                        ...baseVideoConstraint,
                         width: { ideal: 720 },
                         height: { ideal: 1280 },
                         frameRate: { ideal: 30 }
                     },
                     audio: true
                 },
-                // 3. Fallback Facing Mode dengan dimensi ideal
-                {
-                    video: {
-                        facingMode: { ideal: facingMode },
-                        width: { ideal: isMobile ? 1080 : 1920 },
-                        height: { ideal: isMobile ? 1920 : 1080 }
-                    },
-                    audio: true
-                },
-                // 4. Fallback Facing Mode saja + audio
+                // 3. Fallback Facing Mode saja
                 {
                     video: { facingMode: { ideal: facingMode } },
                     audio: true
                 },
-                // 5. Fallback video apa saja + audio
+                { video: true, audio: true },
+                { video: true, audio: false }
+            ] : [
+                // 1. Desktop / Laptop Webcam: Sensor 16:9 Widescreen Alami (Jangan crop 9:16 di driver agar tidak ngezoom)
                 {
-                    video: true,
+                    video: {
+                        ...baseVideoConstraint,
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
+                        aspectRatio: { ideal: 16 / 9 },
+                        frameRate: { ideal: 30 }
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                },
+                // 2. Desktop Fallback 1080p
+                {
+                    video: {
+                        ...baseVideoConstraint,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
                     audio: true
                 },
-                // 6. Fallback video saja (tanpa audio)
+                // 3. Desktop Fallback Facing Mode
                 {
-                    video: true,
-                    audio: false
-                }
+                    video: { facingMode: { ideal: facingMode } },
+                    audio: true
+                },
+                { video: true, audio: true },
+                { video: true, audio: false }
             ];
 
             let streamAcquired = null;
@@ -166,9 +207,47 @@
             }
 
             this.stream = streamAcquired;
+
+            // Reset hardware zoom level ke minimum (1x atau lensa wide, bukan telephoto)
+            const videoTrack = this.stream.getVideoTracks()[0];
+            if (videoTrack && videoTrack.getCapabilities) {
+                try {
+                    const capabilities = videoTrack.getCapabilities();
+                    if (capabilities.zoom) {
+                        const minZoom = capabilities.zoom.min || 1.0;
+                        await videoTrack.applyConstraints({
+                            advanced: [{ zoom: minZoom }]
+                        });
+                    }
+                } catch (e) {
+                    console.warn('[CameraEngine] Gagal reset zoom hardware:', e);
+                }
+            }
+
             this.videoEl.srcObject = this.stream;
             this.videoEl.playsInline = true;
             this.videoEl.muted = true; // Supaya tidak feedback saat live preview
+
+            // Adaptif: Saat metadata video dimuat, periksa rasio video untuk mencegah zoom/crop berlebih
+            this.videoEl.onloadedmetadata = () => {
+                const streamWidth = this.videoEl.videoWidth || 0;
+                const streamHeight = this.videoEl.videoHeight || 0;
+                const isLandscapeStream = streamWidth > streamHeight;
+
+                // Jika stream berformat landscape (misal webcam PC/laptop), tampilkan dengan object-contain
+                // agar kamera tampil utuh, wide-angle, dan tidak terpotong (ngezoom) secara drastis
+                if (isLandscapeStream || !isMobile) {
+                    const activeRatio = window.MomentCreatorState.get('aspectRatio');
+                    if (activeRatio === 'original' || activeRatio === 'landscape' || isLandscapeStream) {
+                        this.videoEl.classList.remove('object-cover');
+                        this.videoEl.classList.add('object-contain');
+                        const fitLabel = document.getElementById('tool-fit-label');
+                        const fitIcon = document.getElementById('tool-fit-icon');
+                        if (fitLabel) fitLabel.textContent = 'Utuh';
+                        if (fitIcon) fitIcon.className = 'fa-solid fa-compress text-sm text-sky-400';
+                    }
+                }
+            };
 
             try {
                 await this.videoEl.play();
@@ -178,6 +257,7 @@
 
             // Update facingMode di state & terapkan transformasi mirror preview
             window.MomentCreatorState.setFacingMode(facingMode);
+            window.MomentCreatorState.set('zoom', 1.0);
             this.updateMirrorTransform();
             this.isInitializing = false;
             return true;
@@ -284,7 +364,7 @@
                         try {
                             const min = capabilities.zoom.min || 1;
                             const max = capabilities.zoom.max || 5;
-                            const target = min + (zoomLevel - 1) * ((max - min) / 4);
+                            const target = Math.min(max, Math.max(min, zoomLevel));
                             await videoTrack.applyConstraints({
                                 advanced: [{ zoom: target }]
                             });
@@ -298,6 +378,13 @@
             if (this.videoEl) {
                 this.updateMirrorTransform();
             }
+        }
+
+        /**
+         * Reset zoom kembali ke 1.0x (Normal / Lensa Paling Lebar)
+         */
+        async resetZoom() {
+            return this.applyZoom(1.0);
         }
 
         /**

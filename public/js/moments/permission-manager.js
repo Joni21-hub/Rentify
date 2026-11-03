@@ -49,7 +49,7 @@
                             <div class="text-center space-y-1.5">
                                 <h3 class="text-base font-black tracking-tight text-white">Izinkan Akses Kamera & Mikrofon</h3>
                                 <p class="text-xs text-slate-300 leading-relaxed">
-                                    Rentify membutuhkan akses kamera dan mikrofon agar kamu dapat merekam video Momen, mengambil foto, dan merekam suara secara langsung seperti di Instagram Reels & TikTok.
+                                    Rentify membutuhkan akses kamera dan mikrofon agar kamu dapat merekam video Momen, mengambil foto, dan merekam suara secara langsung di Momen Rentify.
                                 </p>
                             </div>
                             <div class="space-y-2 pt-2">

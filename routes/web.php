@@ -35,6 +35,7 @@ use App\Http\Controllers\Customer\{
 Route::name('customer.')->group(function () {
     Route::get('/', [CustomerHomeController::class, 'index'])->name('home');
     Route::get('/tentang', [CustomerHomeController::class, 'about'])->name('about');
+    Route::get('/mulai-menyewa', [CustomerHomeController::class, 'mulaiMenyewa'])->name('mulai_menyewa');
     Route::get('/moments', [\App\Http\Controllers\Customer\MomentPageController::class, 'index'])->name('moments');
     Route::get('/moments/create', [\App\Http\Controllers\Customer\MomentPageController::class, 'create'])->name('moments.create');
     Route::get('/search', [MarketplaceController::class, 'search'])->name('search');

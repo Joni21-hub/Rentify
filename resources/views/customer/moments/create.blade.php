@@ -58,7 +58,8 @@
 @endpush
 
 @section('content')
-<div class="fixed inset-0 w-full h-[100dvh] bg-black overflow-hidden flex flex-col justify-between" id="moment-creator-app">
+<div class="fixed inset-0 w-full h-[100dvh] bg-slate-950 flex items-center justify-center overflow-hidden">
+    <div class="relative w-full h-full max-w-lg mx-auto bg-black overflow-hidden flex flex-col justify-between shadow-2xl" id="moment-creator-app">
 
     <!-- ============================================================== -->
     <!-- SCREEN 1: FULLSCREEN CAMERA & RECORDER (FASE 1) -->
@@ -168,6 +169,14 @@
                     <i class="fa-solid fa-arrows-left-right text-sm"></i>
                 </button>
                 <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Cermin</span>
+            </div>
+
+            <!-- 1c. Tampilan Layar (Utuh / Penuh - Anti-Ngezoom) -->
+            <div class="flex flex-col items-center">
+                <button id="tool-fit-toggle" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Ubah Tampilan Kamera (Utuh / Layar Penuh)">
+                    <i id="tool-fit-icon" class="fa-solid fa-expand text-sm"></i>
+                </button>
+                <span id="tool-fit-label" class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Penuh</span>
             </div>
 
             <!-- 2. Torch / Flashlight -->
@@ -387,8 +396,8 @@
                 </span>
             </button>
 
-            <!-- Aspect Ratio Toggle Button di Editor (Klik untuk buka drawer rasio Shopee / IG) -->
-            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.openRatioDrawer()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Pilih Rasio (Shopee & Instagram)">
+            <!-- Aspect Ratio Toggle Button di Editor -->
+            <button id="editor-aspect-ratio-btn" onclick="window.MomentEditorEngine.openRatioDrawer()" class="glass-pill px-2.5 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Pilih Format Rasio">
                 <i id="editor-aspect-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
                 <span id="editor-aspect-label">9:16</span>
             </button>
@@ -502,7 +511,7 @@
         <input type="file" id="editor-add-media-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden">
 
         <!-- ============================================================== -->
-        <!-- DRAWER 0: FORMAT & RASIO LENGKAP (ALA SHOPEE & INSTAGRAM) -->
+        <!-- DRAWER 0: FORMAT & RASIO LENGKAP -->
         <!-- ============================================================== -->
         <div id="editor-ratio-drawer" class="absolute bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-2xl border-t border-white/15 p-4 transition-transform duration-300 translate-y-full">
             <div class="flex items-center justify-between mb-3.5">
@@ -511,7 +520,7 @@
                         <i class="fa-solid fa-crop-simple"></i>
                     </div>
                     <h4 class="text-xs font-black text-white">Format & Rasio Foto / Video</h4>
-                    <span class="text-[10px] text-sky-400 font-bold">Shopee & IG</span>
+                    <span class="text-[10px] text-sky-400 font-bold">Format Momen</span>
                 </div>
                 <button onclick="window.MomentEditorEngine.closeRatioDrawer()" class="text-white/60 hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-sm"></i>
@@ -528,7 +537,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-bold text-white leading-tight">Persegi</p>
-                        <p class="text-[9px] text-slate-400">Feed Shopee & IG</p>
+                        <p class="text-[9px] text-slate-400">Feed Persegi</p>
                     </div>
                 </button>
 
@@ -540,7 +549,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-bold text-white leading-tight">Potret Feed</p>
-                        <p class="text-[9px] text-slate-400">Instagram & Shopee</p>
+                        <p class="text-[9px] text-slate-400">Potret Feed Standar</p>
                     </div>
                 </button>
 
@@ -815,6 +824,7 @@
         </div>
     </div>
 
+    </div>
 </div>
 
 <!-- ============================================================== -->

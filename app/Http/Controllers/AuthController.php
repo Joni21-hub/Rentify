@@ -12,8 +12,11 @@ use App\Services\SecurityAlertService;
 class AuthController extends Controller
 {
     // 1. Menampilkan halaman login
-    public function loginForm()
+    public function loginForm(Request $request)
     {
+        if ($request->query('redirect') === 'beranda') {
+            session(['url.intended' => route('customer.home')]);
+        }
         return view('auth.login'); 
     }
 

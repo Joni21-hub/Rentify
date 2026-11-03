@@ -611,7 +611,7 @@
             this.updateRatioDrawerActiveState();
             this.closeRatioDrawer();
             let label = 'Rasio: Potret (9:16)';
-            if (ratioKey === 'feed') label = 'Rasio: Feed IG/Shopee (4:5)';
+            if (ratioKey === 'feed') label = 'Rasio: Potret Feed (4:5)';
             else if (ratioKey === 'square') label = 'Rasio: Persegi (1:1)';
             else if (ratioKey === 'standard') label = 'Rasio: Foto Standar (3:4)';
             else if (ratioKey === 'landscape') label = 'Rasio: Layar Lebar (16:9)';

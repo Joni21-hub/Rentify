@@ -181,15 +181,15 @@
             <form id="upload-moment-form" onsubmit="submitMomentUpload(event)" class="space-y-3.5">
                 <!-- Media Picker & Live Preview -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto & Video (Multi-Media Carousel seperti IG) *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto & Video (Multi-Media Carousel) *</label>
                     <div id="drop-area" onclick="document.getElementById('media-file-input').click()" class="border-2 border-dashed border-sky-200 hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer transition bg-sky-50/40 hover:bg-sky-50/80">
                         <input type="file" id="media-file-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden" onchange="handleFileSelection(event)">
                         <div id="upload-prompt" class="space-y-2">
                             <div class="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center mx-auto text-xl shadow-xs">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
-                            <p class="text-xs font-bold text-slate-800">Pilih foto atau video (bisa banyak / carousel seperti IG)</p>
-                            <p class="text-[10px] text-slate-400">Pilih hingga 10 berkas foto, video, atau campuran untuk postingan carousel bergaya Instagram</p>
+                            <p class="text-xs font-bold text-slate-800">Pilih foto atau video (bisa banyak / carousel)</p>
+                            <p class="text-[10px] text-slate-400">Pilih hingga 10 berkas foto, video, atau campuran untuk postingan carousel Momen</p>
                         </div>
                         <div id="media-preview-container" class="hidden space-y-2">
                             <!-- Multi-Media Grid Thumbnails -->

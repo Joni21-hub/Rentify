@@ -119,6 +119,32 @@
                 };
             }
 
+            // Toolbar: Tampilan Utuh vs Penuh (Anti-Ngezoom)
+            const fitToggleBtn = document.getElementById('tool-fit-toggle');
+            const fitLabel = document.getElementById('tool-fit-label');
+            const fitIcon = document.getElementById('tool-fit-icon');
+            const videoPreviewEl = document.getElementById('camera-video-preview');
+
+            if (fitToggleBtn && videoPreviewEl) {
+                fitToggleBtn.onclick = () => {
+                    const isContain = videoPreviewEl.classList.contains('object-contain');
+                    if (isContain) {
+                        videoPreviewEl.classList.remove('object-contain');
+                        videoPreviewEl.classList.add('object-cover');
+                        if (fitLabel) fitLabel.textContent = 'Penuh';
+                        if (fitIcon) fitIcon.className = 'fa-solid fa-expand text-sm';
+                        this.showFilterToast('Tampilan: Layar Penuh');
+                    } else {
+                        videoPreviewEl.classList.remove('object-cover');
+                        videoPreviewEl.classList.add('object-contain');
+                        if (fitLabel) fitLabel.textContent = 'Utuh';
+                        if (fitIcon) fitIcon.className = 'fa-solid fa-compress text-sm text-sky-400';
+                        this.showFilterToast('Tampilan: Layar Utuh (Wide / Tanpa Crop)');
+                    }
+                    this.engine.vibrate(15);
+                };
+            }
+
             // Header: Aspect Ratio Toggle (9:16 -> 4:5 -> 1:1 -> 3:4 -> 16:9 -> Asli -> 9:16)
             const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
             const aspectLabel = document.getElementById('aspect-ratio-label');
@@ -152,12 +178,30 @@
                 if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
                 if (landscapeMask) landscapeMask.classList.toggle('hidden', !isLandscape);
 
+                // Sesuaikan fitting video preview agar tidak ngezoom jika memilih Format Asli atau Layar Lebar
+                if (videoPreviewEl) {
+                    if (isOriginal || isLandscape) {
+                        videoPreviewEl.classList.remove('object-cover');
+                        videoPreviewEl.classList.add('object-contain');
+                        if (fitLabel) fitLabel.textContent = 'Utuh';
+                        if (fitIcon) fitIcon.className = 'fa-solid fa-compress text-sm text-sky-400';
+                    } else if (isPortrait) {
+                        const isLandscapeStream = videoPreviewEl.videoWidth && videoPreviewEl.videoHeight && (videoPreviewEl.videoWidth > videoPreviewEl.videoHeight);
+                        if (!isLandscapeStream) {
+                            videoPreviewEl.classList.remove('object-contain');
+                            videoPreviewEl.classList.add('object-cover');
+                            if (fitLabel) fitLabel.textContent = 'Penuh';
+                            if (fitIcon) fitIcon.className = 'fa-solid fa-expand text-sm';
+                        }
+                    }
+                }
+
                 let msg = 'Rasio: Potret (9:16)';
-                if (isFeed) msg = 'Rasio: Feed IG/Shopee (4:5)';
+                if (isFeed) msg = 'Rasio: Potret Feed (4:5)';
                 else if (isSquare) msg = 'Rasio: Persegi (1:1)';
                 else if (isStandard) msg = 'Rasio: Foto Standar (3:4)';
                 else if (isLandscape) msg = 'Rasio: Layar Lebar (16:9)';
-                else if (isOriginal) msg = 'Rasio: Format Asli';
+                else if (isOriginal) msg = 'Rasio: Format Asli (Tanpa Zoom/Crop)';
                 this.showFilterToast(msg);
             };
 
@@ -423,7 +467,7 @@
                 }
             }, { passive: true });
 
-            // Touchend for Horizontal Swipe (Ganti Filter IG Style)
+            // Touchend for Horizontal Swipe (Ganti Filter Kamera)
             container.addEventListener('touchend', (e) => {
                 if (e.target.closest('#camera-right-toolbar, #camera-top-header, #camera-bottom-controls')) return;
 
