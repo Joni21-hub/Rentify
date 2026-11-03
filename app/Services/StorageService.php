@@ -135,8 +135,8 @@ class StorageService
             $format = 'webp';
         }
 
-        $compressionQuality = $quality ?: (int) config('filesystems.image_compression_quality', env('IMAGE_COMPRESSION_QUALITY', 85));
-        $maxDim = $maxDimension ?: (int) config('filesystems.image_max_dimension', env('IMAGE_MAX_DIMENSION', 1920));
+        $compressionQuality = $quality ?: (int) config('filesystems.image_compression_quality', env('IMAGE_COMPRESSION_QUALITY', 95));
+        $maxDim = $maxDimension ?: (int) config('filesystems.image_max_dimension', env('IMAGE_MAX_DIMENSION', 2560));
 
         try {
             $manager = new ImageManager(new Driver());

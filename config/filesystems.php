@@ -90,6 +90,6 @@ return [
 
     'image_compression_format' => env('IMAGE_COMPRESSION_FORMAT', 'webp'),
     'image_compression_quality' => (int) env('IMAGE_COMPRESSION_QUALITY', 100),
-    'image_max_dimension' => (int) env('IMAGE_MAX_DIMENSION', 1920),
+    'image_max_dimension' => (int) env('IMAGE_MAX_DIMENSION', 2560),
 
 ];

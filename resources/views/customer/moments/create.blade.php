@@ -88,13 +88,6 @@
                 <div></div>
             </div>
 
-            <!-- 4:5 Feed Framing Mask (Active when Aspect Ratio is 4:5) -->
-            <div id="camera-feed-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
-                <div class="w-full flex-1 bg-black/75"></div>
-                <div class="w-full aspect-[4/5] max-h-[80vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
-                <div class="w-full flex-1 bg-black/75"></div>
-            </div>
-
             <!-- 3:4 Framing Mask (Active when Aspect Ratio is 3:4) -->
             <div id="camera-3-4-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
                 <div class="w-full flex-1 bg-black/75"></div>
@@ -106,13 +99,6 @@
             <div id="camera-square-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
                 <div class="w-full flex-1 bg-black/75"></div>
                 <div class="w-full aspect-square border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
-                <div class="w-full flex-1 bg-black/75"></div>
-            </div>
-
-            <!-- 16:9 Landscape Framing Mask (Active when Aspect Ratio is 16:9) -->
-            <div id="camera-landscape-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
-                <div class="w-full flex-1 bg-black/75"></div>
-                <div class="w-full aspect-[16/9] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
                 <div class="w-full flex-1 bg-black/75"></div>
             </div>
 
@@ -169,14 +155,6 @@
                     <i class="fa-solid fa-arrows-left-right text-sm"></i>
                 </button>
                 <span class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Cermin</span>
-            </div>
-
-            <!-- 1c. Tampilan Layar (Utuh / Penuh - Anti-Ngezoom) -->
-            <div class="flex flex-col items-center">
-                <button id="tool-fit-toggle" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition shadow-md hover:text-sky-300" title="Ubah Tampilan Kamera (Utuh / Layar Penuh)">
-                    <i id="tool-fit-icon" class="fa-solid fa-expand text-sm"></i>
-                </button>
-                <span id="tool-fit-label" class="text-[9px] font-bold text-white/90 mt-1 drop-shadow-md">Penuh</span>
             </div>
 
             <!-- 2. Torch / Flashlight -->
@@ -527,32 +505,8 @@
                 </button>
             </div>
 
-            <!-- Grid 6 Pilihan Rasio -->
+            <!-- Pilihan Rasio Standar Kamera (9:16 / 3:4 / 1:1) -->
             <div class="grid grid-cols-3 gap-2.5 mb-3">
-                <!-- 1:1 Persegi -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
-                    <div class="flex items-center justify-between">
-                        <span class="w-5 h-5 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-xs font-black text-sky-400">1:1</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-white leading-tight">Persegi</p>
-                        <p class="text-[9px] text-slate-400">Feed Persegi</p>
-                    </div>
-                </button>
-
-                <!-- 4:5 Feed Potret -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('feed')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="feed">
-                    <div class="flex items-center justify-between">
-                        <span class="w-4 h-5 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-xs font-black text-sky-400">4:5</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-white leading-tight">Potret Feed</p>
-                        <p class="text-[9px] text-slate-400">Potret Feed Standar</p>
-                    </div>
-                </button>
-
                 <!-- 9:16 Fullscreen -->
                 <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
                     <div class="flex items-center justify-between">
@@ -572,32 +526,20 @@
                         <span class="text-xs font-black text-sky-400">3:4</span>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-white leading-tight">Foto Klasik</p>
+                        <p class="text-xs font-bold text-white leading-tight">Standar</p>
                         <p class="text-[9px] text-slate-400">Kamera Ponsel</p>
                     </div>
                 </button>
 
-                <!-- 16:9 Lanskap -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('landscape')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="landscape">
+                <!-- 1:1 Persegi -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
                     <div class="flex items-center justify-between">
-                        <span class="w-6 h-3.5 border-2 border-sky-400/80 rounded-sm"></span>
-                        <span class="text-xs font-black text-sky-400">16:9</span>
+                        <span class="w-5 h-5 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-xs font-black text-sky-400">1:1</span>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-white leading-tight">Layar Lebar</p>
-                        <p class="text-[9px] text-slate-400">Lanskap Horizontal</p>
-                    </div>
-                </button>
-
-                <!-- Asli / Original -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
-                    <div class="flex items-center justify-between">
-                        <i class="fa-solid fa-expand text-sky-400 text-sm"></i>
-                        <span class="text-xs font-black text-sky-400">Asli</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-white leading-tight">Format Asli</p>
-                        <p class="text-[9px] text-slate-400">Bebas Tanpa Crop</p>
+                        <p class="text-xs font-bold text-white leading-tight">Persegi</p>
+                        <p class="text-[9px] text-slate-400">Feed Katalog</p>
                     </div>
                 </button>
             </div>

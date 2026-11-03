@@ -610,12 +610,9 @@
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
             this.closeRatioDrawer();
-            let label = 'Rasio: Potret (9:16)';
-            if (ratioKey === 'feed') label = 'Rasio: Potret Feed (4:5)';
-            else if (ratioKey === 'square') label = 'Rasio: Persegi (1:1)';
-            else if (ratioKey === 'standard') label = 'Rasio: Foto Standar (3:4)';
-            else if (ratioKey === 'landscape') label = 'Rasio: Layar Lebar (16:9)';
-            else if (ratioKey === 'original') label = 'Rasio: Format Asli';
+            let label = 'Rasio: Layar Penuh (9:16)';
+            if (ratioKey === 'square') label = 'Rasio: Persegi (1:1)';
+            else if (ratioKey === 'standard') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
 
@@ -637,23 +634,17 @@
             const next = this.state.toggleAspectRatio();
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
-            let label = 'Rasio: Potret (9:16)';
-            if (next === 'feed') label = 'Rasio: Feed (4:5)';
-            else if (next === 'square') label = 'Rasio: Persegi (1:1)';
-            else if (next === 'standard') label = 'Rasio: Foto Standar (3:4)';
-            else if (next === 'landscape') label = 'Rasio: Layar Lebar (16:9)';
-            else if (next === 'original') label = 'Rasio: Format Asli';
+            let label = 'Rasio: Layar Penuh (9:16)';
+            if (next === 'square') label = 'Rasio: Persegi (1:1)';
+            else if (next === 'standard') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
 
         applyAspectRatioStyle() {
             const ratio = this.state.get('aspectRatio') || 'portrait';
-            const isSquare = ratio === 'square';
-            const isFeed = ratio === 'feed';
-            const isStandard = ratio === 'standard';
-            const isLandscape = ratio === 'landscape';
-            const isOriginal = ratio === 'original';
-            const isPortrait = ratio === 'portrait';
+            const isSquare = ratio === 'square' || ratio === '1:1';
+            const isStandard = ratio === 'standard' || ratio === '3:4';
+            const isPortrait = !isSquare && !isStandard;
 
             const labelEl = document.getElementById('editor-aspect-label');
             const iconEl = document.getElementById('editor-aspect-icon');
@@ -662,10 +653,7 @@
             }
             if (iconEl) {
                 if (isSquare) iconEl.className = 'fa-regular fa-square text-sky-400 text-xs';
-                else if (isFeed) iconEl.className = 'fa-solid fa-rectangle-vertical text-sky-400 text-xs';
                 else if (isStandard) iconEl.className = 'fa-solid fa-camera text-sky-400 text-xs';
-                else if (isLandscape) iconEl.className = 'fa-solid fa-tv text-sky-400 text-xs';
-                else if (isOriginal) iconEl.className = 'fa-solid fa-crop-simple text-sky-400 text-xs';
                 else iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
             }
 
@@ -678,33 +666,12 @@
                     viewport.style.width = '90vw';
                     viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
                     viewport.classList.remove('w-full', 'h-full');
-                } else if (isFeed) {
-                    viewport.style.aspectRatio = '4 / 5';
-                    viewport.style.maxHeight = '72vh';
-                    viewport.style.maxWidth = 'calc(72vh * 4 / 5)';
-                    viewport.style.width = '90vw';
-                    viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
-                    viewport.classList.remove('w-full', 'h-full');
                 } else if (isStandard) {
                     viewport.style.aspectRatio = '3 / 4';
                     viewport.style.maxHeight = '76vh';
                     viewport.style.maxWidth = 'calc(76vh * 3 / 4)';
                     viewport.style.width = '90vw';
                     viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
-                    viewport.classList.remove('w-full', 'h-full');
-                } else if (isLandscape) {
-                    viewport.style.aspectRatio = '16 / 9';
-                    viewport.style.maxHeight = '55vh';
-                    viewport.style.maxWidth = '94vw';
-                    viewport.style.width = '94vw';
-                    viewport.classList.add('rounded-2xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
-                    viewport.classList.remove('w-full', 'h-full');
-                } else if (isOriginal) {
-                    viewport.style.aspectRatio = 'auto';
-                    viewport.style.maxHeight = '78vh';
-                    viewport.style.maxWidth = '92vw';
-                    viewport.style.width = 'auto';
-                    viewport.classList.add('rounded-2xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
                     viewport.classList.remove('w-full', 'h-full');
                 } else {
                     viewport.style.aspectRatio = '';
@@ -718,10 +685,10 @@
             }
 
             if (this.imageEl) {
-                this.imageEl.style.objectFit = isOriginal ? 'contain' : 'cover';
+                this.imageEl.style.objectFit = 'cover';
             }
             if (this.videoEl) {
-                this.videoEl.style.objectFit = isOriginal ? 'contain' : 'cover';
+                this.videoEl.style.objectFit = 'cover';
             }
             this.applyCurrentTransforms();
         }
@@ -1313,10 +1280,10 @@
             const panX = item.panX || 0;
             const panY = item.panY || 0;
             const hasZoom = zoom > 1.01 || Math.abs(panX) > 1 || Math.abs(panY) > 1;
-            const needsCrop = (activeRatio !== 'original');
 
-            // Jika tidak ada modifikasi apapun, kembalikan blob asli
-            if (!hasFilter && !hasOverlays && !isMirrored && rotation === 0 && !needsCrop && !hasZoom) {
+            // Jika foto sudah dalam resolusi terbaik dan tanpa teks/stiker/efek tambahan, kirim blob asli langsung
+            // untuk menghindari "generation loss" (penurunan kualitas akibat kompresi ulang)
+            if (!hasFilter && !hasOverlays && !isMirrored && rotation === 0 && !hasZoom && item.blob) {
                 return item.blob;
             }
 
@@ -1457,7 +1424,7 @@
 
                         canvas.toBlob((blob) => {
                             resolve(blob || item.blob);
-                        }, 'image/jpeg', 0.95);
+                        }, 'image/jpeg', 0.98);
                     } catch (bakeErr) {
                         console.warn('Gagal bake overlay foto, gunakan blob asli:', bakeErr);
                         resolve(item.blob);

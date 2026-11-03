@@ -1,11 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     nav, header, footer, .navbar, .header, .top-bar, .footer, #footer { display: none !important; }
-    
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
     
     body { 
         background: radial-gradient(circle at center, #fff9ef 0%, #bad6eb 100%) fixed !important; 
@@ -59,7 +60,6 @@
     .action-btn-pill {
         display: flex;
         align-items: center;
-        gap: 6px;
         font-size: 11.5px;
         font-weight: 700;
         padding: 7px 12px;
@@ -144,12 +144,12 @@
         <div style="text-align: center; padding-top: 6px; padding-bottom: 18px; border-bottom: 2px dashed #cbd5e1;">
             
             <!-- Logo & Brand Header -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
                 <img src="{{ asset('images/logo.png') }}" 
                      onerror="this.src='https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387471/gambar_logo_trerjo.png'"
                      alt="Rentify" 
                      crossorigin="anonymous"
-                     style="height: 36px; width: 36px; object-fit: contain;">
+                     style="height: 36px; width: 36px; object-fit: contain; margin-right: 8px;">
                 <span style="font-size: 22px; font-weight: 900; color: #0284c7; letter-spacing: -0.5px;">Rentify</span>
             </div>
             
@@ -157,28 +157,28 @@
                 Bukti Transaksi Pemesanan Resmi
             </div>
             
-            <!-- ID Transaksi -->
-            <div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 12px; border-radius: 20px;">
-                <span style="font-size: 11px; font-weight: 600; color: #64748b;">No. Transaksi:</span>
-                <span style="font-size: 12px; font-weight: 900; color: #0f172a; font-family: monospace;">{{ $id }}</span>
+            <!-- ID Transaksi (HTML2Canvas & Mobile Compatible) -->
+            <div style="margin-top: 10px; display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; padding: 5px 14px; border-radius: 20px; line-height: 1.4; text-align: center;">
+                <span style="font-size: 11px; font-weight: 600; color: #64748b; vertical-align: middle; margin-right: 5px;">No. Transaksi:</span>
+                <span style="font-size: 12px; font-weight: 900; color: #0f172a; font-family: 'Courier New', Courier, monospace; letter-spacing: 0.5px; vertical-align: middle;">{{ $id }}</span>
             </div>
 
-            <!-- STATUS PEMBAYARAN: BERSIH TANPA KATA MIDTRANS -->
-            <div style="margin-top: 12px;">
+            <!-- STATUS PEMBAYARAN: BERSIH TANPA KATA MIDTRANS (HTML2Canvas & Mobile Compatible) -->
+            <div style="margin-top: 12px; text-align: center;">
                 @if(strtoupper($metode) === 'COD')
-                    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0f9ff; color: #0284c7; border: 1.5px solid #bae6fd; padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 900;">
-                        <i class="fa-solid fa-handshake text-xs"></i>
-                        <span>COD &bull; BAYAR DI TEMPAT</span>
+                    <div style="display: inline-block; background: #f0f9ff; color: #0284c7; border: 1.5px solid #bae6fd; padding: 6px 18px; border-radius: 30px; font-size: 11.5px; font-weight: 900; line-height: 1.4; text-align: center;">
+                        <i class="fa-solid fa-handshake" style="font-size: 12px; margin-right: 6px; vertical-align: -1px;"></i>
+                        <span style="letter-spacing: 0.3px; vertical-align: middle;">COD &bull; BAYAR DI TEMPAT</span>
                     </div>
-                    <div style="font-size: 10.5px; color: #64748b; margin-top: 4px; font-weight: 600;">
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 5px; font-weight: 600;">
                         (Bayar tunai langsung saat serah terima barang)
                     </div>
                 @else
-                    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0f9ff; color: #0284c7; border: 1.5px solid #bae6fd; padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 900;">
-                        <i class="fa-solid fa-circle-check text-xs"></i>
-                        <span>LUNAS &bull; PEMBAYARAN TERKONFIRMASI</span>
+                    <div style="display: inline-block; background: #f0f9ff; color: #0284c7; border: 1.5px solid #bae6fd; padding: 6px 18px; border-radius: 30px; font-size: 11.5px; font-weight: 900; line-height: 1.4; text-align: center;">
+                        <i class="fa-solid fa-circle-check" style="font-size: 12px; margin-right: 6px; vertical-align: -1px;"></i>
+                        <span style="letter-spacing: 0.3px; vertical-align: middle;">LUNAS &bull; PEMBAYARAN TERKONFIRMASI</span>
                     </div>
-                    <div style="font-size: 10.5px; color: #64748b; margin-top: 4px; font-weight: 600;">
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 5px; font-weight: 600;">
                         (Transaksi digital berhasil diverifikasi sistem)
                     </div>
                 @endif
@@ -189,32 +189,32 @@
         <!-- INFORMASI DATA CUSTOMER -->
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; margin-top: 16px; margin-bottom: 18px;">
             <div class="info-row">
-                <span style="font-size: 12px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-user text-slate-400 text-xs"></i> Pembeli
+                <span style="font-size: 12px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center;">
+                    <i class="fa-solid fa-user text-slate-400" style="margin-right: 6px; font-size: 12px;"></i> Pembeli
                 </span>
-                <span style="font-size: 13px; font-weight: 800; color: #0f172a;">
+                <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-align: right;">
                     {{ auth()->user()->name ?? 'Customer' }}
                 </span>
             </div>
             
             <div class="info-row">
-                <span style="font-size: 12px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-brands fa-whatsapp text-emerald-500 text-xs"></i> WhatsApp
+                <span style="font-size: 12px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center;">
+                    <i class="fa-brands fa-whatsapp text-emerald-500" style="margin-right: 6px; font-size: 13px;"></i> WhatsApp
                 </span>
-                <span style="font-size: 13px; font-weight: 800; color: #0f172a; font-family: monospace;">
+                <span style="font-size: 13px; font-weight: 800; color: #0f172a; font-family: monospace; text-align: right;">
                     {{ $no_hp }}
                 </span>
             </div>
 
             <div class="info-row">
-                <span style="font-size: 12px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-wallet text-sky-500 text-xs"></i> Pembayaran
+                <span style="font-size: 12px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; white-space: nowrap;">
+                    <i class="fa-solid fa-wallet text-sky-500" style="margin-right: 6px; font-size: 12px;"></i> Pembayaran
                 </span>
-                <span style="font-size: 11.5px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; border: 1px solid #bae6fd;">
+                <span style="font-size: 11px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 3px 10px; border-radius: 6px; border: 1px solid #bae6fd; text-align: right; white-space: nowrap;">
                     @if(strtoupper($metode) === 'COD')
                         COD (Bayar di Tempat)
                     @elseif(str_contains(strtoupper($metode), 'QRIS'))
-                        QRIS (Pembayaran Online Otomatis)
+                        QRIS (Online Otomatis)
                     @else
                         {{ $metode }}
                     @endif
@@ -293,21 +293,21 @@
                 <div style="background: #ffffff; padding: 14px; border-radius: 14px; margin-bottom: 12px; border: 1.5px solid #e2e8f0;">
                     
                     <!-- Vendor Header dengan Foto Profil Toko -->
-                    <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; gap: 8px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border: 1px solid #bae6fd; flex-shrink: 0;">
+                    <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div style="display: inline-flex; align-items: center;">
+                            <div style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: #0284c7; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border: 1px solid #bae6fd; margin-right: 8px; flex-shrink: 0;">
                                 @if(!empty($vendor->foto_profil_url))
-                                    <img src="{{ $vendor->foto_profil_url }}" class="w-full h-full object-cover">
+                                    <img src="{{ $vendor->foto_profil_url }}" crossorigin="anonymous" onerror="this.style.display='none'" class="w-full h-full object-cover">
                                 @else
                                     {{ strtoupper(substr($vendor->vendor_name ?? 'V', 0, 1)) }}
                                 @endif
                             </div>
-                            <span style="font-size: 13.5px; font-weight: 800;">{{ $vendor->vendor_name ?? 'Vendor' }}</span>
-                            <span style="font-size: 11px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 2px 7px; border-radius: 6px; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;">
-                                <i class="fa-regular fa-clock" style="font-size: 9.5px;"></i> {{ $durasi }} Hari
+                            <span style="font-size: 13.5px; font-weight: 800; margin-right: 8px;">{{ $vendor->vendor_name ?? 'Vendor' }}</span>
+                            <span style="font-size: 11px; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 2px 7px; border-radius: 6px; border: 1px solid #bae6fd; display: inline-block; vertical-align: middle; white-space: nowrap;">
+                                <i class="fa-regular fa-clock" style="font-size: 9.5px; margin-right: 3px; vertical-align: -0.5px;"></i>{{ $durasi }} Hari
                             </span>
                         </div>
-                        <span style="font-size: 10.5px; background: #f8fafc; color: #475569; padding: 2px 7px; border-radius: 6px; font-weight: 800; border: 1px solid #cbd5e1; white-space: nowrap;">
+                        <span style="font-size: 10.5px; background: #f8fafc; color: #475569; padding: 2px 7px; border-radius: 6px; font-weight: 800; border: 1px solid #cbd5e1; white-space: nowrap; margin-top: 2px;">
                             Jaminan: {{ $jaminanToko }}
                         </span>
                     </div>
@@ -349,8 +349,8 @@
 
                     <!-- JADWAL PEMAKAIAN -->
                     <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 10px 12px; border-radius: 10px; margin-top: 8px;">
-                        <div style="font-size: 10.5px; font-weight: 800; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
-                            <i class="fa-regular fa-calendar-check"></i> Jadwal Pemakaian (WIB)
+                        <div style="font-size: 10.5px; font-weight: 800; color: #0369a1; text-transform: uppercase; margin-bottom: 6px;">
+                            <i class="fa-regular fa-calendar-check" style="margin-right: 5px;"></i> Jadwal Pemakaian (WIB)
                         </div>
                         <div style="font-size: 11.5px; font-weight: 700; color: #0f172a; display: flex; justify-content: space-between; margin-bottom: 3px;">
                             <span style="color: #64748b;">Mulai Ambil:</span>
@@ -362,11 +362,11 @@
                         </div>
                     </div>
 
-                    <!-- LOKASI & WHATSAPP TOKO (BERSIH TANPA WARNA MENCOLOK) -->
-                    <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                    <!-- LOKASI & WHATSAPP TOKO (BERSIH & RESPONSIF) -->
+                    <div style="margin-top: 8px;">
                         @if($opsiToko === 'ambil')
-                            <a href="{{ $linkMaps }}" target="_blank" class="action-btn-pill maps-pill" title="Klik untuk membuka titik lokasi toko di Google Maps">
-                                <i class="fa-solid fa-location-dot" style="font-size: 12px; flex-shrink: 0;"></i>
+                            <a href="{{ $linkMaps }}" target="_blank" class="action-btn-pill maps-pill" style="margin-bottom: 6px;" title="Klik untuk membuka titik lokasi toko di Google Maps">
+                                <i class="fa-solid fa-location-dot" style="font-size: 12px; flex-shrink: 0; margin-right: 6px;"></i>
                                 <span style="flex: 1;">Lokasi Toko: {{ \App\Helpers\RentifyHelper::formatAreaDesa($alamat) }} (Buka Maps ↗)</span>
                             </a>
                         @endif
@@ -376,8 +376,8 @@
                                 <div style="font-size: 12px; font-weight: 700; color: #334155;">
                                     WhatsApp: <span style="font-family: monospace; font-size: 12.5px; font-weight: 800; color: #0f172a;">{{ $waRaw }}</span>
                                 </div>
-                                <a href="{{ $linkWa }}" target="_blank" style="color: #0284c7; font-size: 11px; font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 4px;">
-                                    Chat <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 9px;"></i>
+                                <a href="{{ $linkWa }}" target="_blank" style="color: #0284c7; font-size: 11px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center;">
+                                    <span>Chat</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 9px; margin-left: 4px;"></i>
                                 </a>
                             </div>
                             <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
@@ -406,7 +406,7 @@
 
             @if($grandKoin > 0)
             <div class="info-row" style="color: #d97706;">
-                <span style="font-weight: 600;"><i class="fa-solid fa-coins mr-1"></i> Diskon Koin Rentify ({{ number_format($grandKoinPcs) }} Koin)</span> 
+                <span style="font-weight: 600;"><i class="fa-solid fa-coins" style="margin-right: 4px;"></i> Diskon Koin Rentify ({{ number_format($grandKoinPcs) }} Koin)</span> 
                 <span style="font-weight: 800;">- Rp {{ number_format($grandKoin, 0, ',', '.') }}</span>
             </div>
             @endif
@@ -435,7 +435,7 @@
             @endif
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                <span style="font-size: 14px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">TOTAL PEMBAYARAN</span>
+                <span style="font-size: 13.5px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">TOTAL PEMBAYARAN</span>
                 <span style="font-size: 20px; font-weight: 900; color: #0284c7;">Rp {{ number_format($total, 0, ',', '.') }}</span>
             </div>
             
@@ -448,7 +448,7 @@
 
         <!-- FOOTER RESMI STRUK -->
         <div style="text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px dashed #e2e8f0; font-size: 10.5px; color: #94a3b8; line-height: 1.4;">
-            <i class="fa-solid fa-shield-halved text-sky-500 mr-1"></i>
+            <i class="fa-solid fa-shield-halved text-sky-500" style="margin-right: 4px;"></i>
             <span>Transaksi Resmi Rentify &bull; Harap simpan struk ini sebagai bukti serah terima unit rental.</span>
         </div>
         
@@ -468,7 +468,7 @@
 </div>
 
 <script>
-    function downloadStrukAsImage() {
+    async function downloadStrukAsImage() {
         const btn = document.getElementById('btn-download-struk');
         const originalHtml = btn.innerHTML;
         
@@ -477,24 +477,30 @@
 
         const cardElement = document.getElementById('card-struk-download');
 
-        html2canvas(cardElement, {
-            scale: 3, // Kualitas resolusi tinggi (3x retina) agar teks super tajam & tidak pecah
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: cardElement.scrollWidth,
-            onclone: (clonedDoc) => {
-                const card = clonedDoc.getElementById('card-struk-download');
-                if (card) {
-                    card.style.transform = 'none';
-                    card.style.boxShadow = 'none';
-                    card.style.margin = '0 auto';
-                }
+        try {
+            // Tunggu seluruh font web dimuat agar rendering teks di canvas sempurna
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
             }
-        }).then(canvas => {
+
+            const canvas = await html2canvas(cardElement, {
+                scale: 3, // Kualitas resolusi tinggi (3x retina) agar teks super tajam & tidak pecah
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: 0,
+                onclone: (clonedDoc) => {
+                    const card = clonedDoc.getElementById('card-struk-download');
+                    if (card) {
+                        card.style.transform = 'none';
+                        card.style.boxShadow = 'none';
+                        card.style.margin = '0 auto';
+                    }
+                }
+            });
+
             const imageURI = canvas.toDataURL("image/png");
 
             const downloadLink = document.createElement('a');
@@ -510,12 +516,12 @@
             setTimeout(() => {
                 btn.innerHTML = originalHtml;
             }, 3000);
-        }).catch(err => {
+        } catch (err) {
             console.error("Gagal mendownload struk:", err);
             alert("Maaf, terjadi kesalahan saat memproses gambar. Anda juga dapat menggunakan tangkapan layar (screenshot) HP Anda.");
             btn.innerHTML = originalHtml;
             btn.disabled = false;
-        });
+        }
     }
 </script>
 @endsection
