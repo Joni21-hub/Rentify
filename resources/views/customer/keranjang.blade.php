@@ -114,7 +114,7 @@
                         <div id="voucher-input-area" class="hidden px-5 pb-4 pt-1 bg-white">
                             <div class="flex gap-3">
                                 <input type="text" id="input-voucher" placeholder="KETIK KODE: RENTIFY" class="rentify-input flex-1 px-4 py-2.5 text-sm font-bold uppercase text-sky-700 outline-none focus:shadow-[0_0_10px_rgba(14,165,233,0.2)] transition">
-                                <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 shadow-[0_0_10px_rgba(14,165,233,0.3)] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition">Pakai</button>
+                                <button type="button" id="btn-apply-voucher" class="bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 hover:from-sky-500 hover:to-sky-700 shadow-[0_0_10px_rgba(14,165,233,0.3)] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition active:scale-95">Pakai</button>
                             </div>
                         </div>
                         <input type="hidden" name="kode_voucher" id="hidden-voucher-code" value="">

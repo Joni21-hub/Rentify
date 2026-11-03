@@ -47,9 +47,12 @@ class StoreController extends Controller
             }
         }
 
-        // Ambil voucher aktif yang dibuat oleh toko ini
+        // Ambil voucher aktif yang dibuat oleh toko ini (hanya voucher bertipe publik)
         $vouchers = Voucher::where('vendor_id', $vendor->id)
             ->where('is_active', 1)
+            ->where(function($q) {
+                $q->where('visibilitas', 'publik')->orWhereNull('visibilitas');
+            })
             ->whereDate('tanggal_mulai', '<=', now())
             ->whereDate('tanggal_selesai', '>=', now())
             ->whereColumn('kuota_terpakai', '<', 'kuota_total')
@@ -86,6 +89,14 @@ class StoreController extends Controller
 
         $areaDesa = RentifyHelper::formatAreaDesa($vendor->alamat_lengkap);
 
-        return view('customer.toko.show', compact('vendor', 'vouchers', 'barangs', 'kategoris', 'jarak', 'areaDesa'));
+        $claimedVoucherIds = [];
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $claimedVoucherIds = \App\Models\CustomerVoucher::where('user_id', \Illuminate\Support\Facades\Auth::id())
+                ->where('status', 'aktif')
+                ->pluck('voucher_id')
+                ->toArray();
+        }
+
+        return view('customer.toko.show', compact('vendor', 'vouchers', 'barangs', 'kategoris', 'jarak', 'areaDesa', 'claimedVoucherIds'));
     }
 }

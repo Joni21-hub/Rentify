@@ -9,51 +9,101 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Barang;
 use App\Models\Keranjang;
 use App\Models\Voucher; // PERUBAHAN: Menambahkan model Voucher
+use App\Models\CustomerVoucher; // PERUBAHAN: Model klaim voucher pelanggan
 
 class CheckoutController extends Controller
 {
-    // PERUBAHAN: Menambahkan fungsi AJAX Cek Voucher
+    // PERUBAHAN: Menambahkan fungsi AJAX Cek Voucher (Mendukung pemilihan dari akun & kode manual ala Shopee)
     public function cekVoucher(Request $request)
     {
-        $kode = strtoupper($request->kode_voucher);
-        $vendorIds = $request->vendor_ids; 
+        $kode = strtoupper(trim((string) $request->kode_voucher));
+        $voucherId = $request->voucher_id;
+        $vendorIds = $request->vendor_ids ?? []; 
 
-        $voucher = Voucher::where('kode_voucher', $kode)
+        $query = Voucher::with('vendor')
             ->where('is_active', 1)
             ->whereDate('tanggal_mulai', '<=', now())
-            ->whereDate('tanggal_selesai', '>=', now())
-            ->first();
+            ->whereDate('tanggal_selesai', '>=', now());
+
+        if ($voucherId) {
+            $voucher = $query->where('id', $voucherId)->first();
+        } else {
+            $voucher = $query->where('kode_voucher', $kode)->first();
+        }
 
         if (!$voucher) {
             return response()->json(['success' => false, 'message' => 'Voucher tidak valid atau sudah kadaluarsa.']);
         }
         
         if ($voucher->kuota_terpakai >= $voucher->kuota_total) {
-            return response()->json(['success' => false, 'message' => 'Kuota voucher telah habis.']);
+            return response()->json(['success' => false, 'message' => 'Kuota pemakaian voucher telah habis.']);
         }
         
-        if (!isset($vendorIds[$voucher->vendor_id])) {
-            return response()->json(['success' => false, 'message' => 'Voucher ini tidak berlaku untuk toko di keranjang Anda.']);
+        $subtotalToko = 0;
+        $targetVendorId = $voucher->vendor_id;
+
+        if ($voucher->vendor_id) {
+            if (!isset($vendorIds[$voucher->vendor_id])) {
+                return response()->json(['success' => false, 'message' => 'Voucher ini tidak berlaku untuk toko di keranjang Anda.']);
+            }
+            $subtotalToko = (float) $vendorIds[$voucher->vendor_id];
+        } else {
+            // Platform voucher: cari toko dengan subtotal yang mencukupi minimal belanja
+            foreach ($vendorIds as $vId => $sub) {
+                if ((float) $sub >= (float) $voucher->minimal_belanja) {
+                    $targetVendorId = $vId;
+                    $subtotalToko = (float) $sub;
+                    break;
+                }
+            }
+            if (!$targetVendorId && !empty($vendorIds)) {
+                $targetVendorId = array_key_first($vendorIds);
+                $subtotalToko = (float) $vendorIds[$targetVendorId];
+            }
         }
         
-        $subtotalToko = (float) $vendorIds[$voucher->vendor_id];
-        
-        if ($subtotalToko < $voucher->minimal_belanja) {
-            return response()->json(['success' => false, 'message' => 'Minimal belanja Rp ' . number_format($voucher->minimal_belanja, 0, ',', '.') . ' tidak terpenuhi untuk toko ini.']);
+        if ($subtotalToko < (float) $voucher->minimal_belanja) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Minimal belanja Rp ' . number_format($voucher->minimal_belanja, 0, ',', '.') . ' belum terpenuhi (saat ini Rp ' . number_format($subtotalToko, 0, ',', '.') . ').'
+            ]);
         }
 
-        $nilaiDiskon = $voucher->tipe_diskon === 'nominal' ? $voucher->nilai_diskon : ($subtotalToko * $voucher->nilai_diskon) / 100;
+        $nilaiDiskon = $voucher->tipe_diskon === 'nominal' ? (float) $voucher->nilai_diskon : ($subtotalToko * (float) $voucher->nilai_diskon) / 100;
         
-        if ($voucher->tipe_diskon === 'persen' && !is_null($voucher->maksimal_diskon) && $nilaiDiskon > $voucher->maksimal_diskon) {
-            $nilaiDiskon = $voucher->maksimal_diskon;
+        if ($voucher->tipe_diskon === 'persen' && !is_null($voucher->maksimal_diskon) && $nilaiDiskon > (float) $voucher->maksimal_diskon) {
+            $nilaiDiskon = (float) $voucher->maksimal_diskon;
         }
+
+        $nilaiDiskon = min($subtotalToko, round($nilaiDiskon, 2));
+
+        // Jika user login, sinkronkan atau buat klaim voucher aktif di akun pelanggan
+        if (auth()->check()) {
+            CustomerVoucher::firstOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'voucher_id' => $voucher->id,
+                ],
+                [
+                    'status' => 'aktif',
+                    'claimed_at' => now(),
+                ]
+            );
+        }
+
+        $vendorName = $voucher->vendor ? ($voucher->vendor->vendor_name ?? $voucher->vendor->name) : 'Rentify Platform';
 
         return response()->json([
             'success' => true, 
-            'message' => 'Voucher berhasil diterapkan!', 
+            'message' => 'Voucher "' . $voucher->kode_voucher . '" berhasil diterapkan!', 
             'potongan' => $nilaiDiskon, 
-            'vendor_id' => $voucher->vendor_id,
-            'voucher_id' => $voucher->id
+            'vendor_id' => $targetVendorId,
+            'voucher_id' => $voucher->id,
+            'kode_voucher' => $voucher->kode_voucher,
+            'vendor_name' => $vendorName,
+            'tipe_diskon' => $voucher->tipe_diskon,
+            'nilai_diskon' => $voucher->nilai_diskon,
+            'minimal_belanja' => $voucher->minimal_belanja,
         ]);
     }
     
@@ -109,7 +159,38 @@ class CheckoutController extends Controller
             $userCoinBalance = $coinService->getAvailableBalance((int) auth()->id());
         }
 
-        return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs', 'kodeVoucher', 'userCoinBalance'));
+        // Ambil daftar voucher yang berlaku untuk checkout ini (voucher akun yang diklaim & voucher toko publik aktif)
+        $vendorIds = $keranjangPerVendor->keys()->all();
+
+        $claimedVoucherIds = collect();
+        if (auth()->check()) {
+            $claimedVoucherIds = CustomerVoucher::where('user_id', auth()->id())
+                ->where('status', 'aktif')
+                ->pluck('voucher_id');
+        }
+
+        $availableVouchers = Voucher::with('vendor')
+            ->where('is_active', 1)
+            ->whereDate('tanggal_mulai', '<=', now())
+            ->whereDate('tanggal_selesai', '>=', now())
+            ->whereColumn('kuota_terpakai', '<', 'kuota_total')
+            ->where(function ($q) use ($vendorIds) {
+                $q->whereIn('vendor_id', $vendorIds)
+                  ->orWhereNull('vendor_id');
+            })
+            ->where(function ($q) use ($claimedVoucherIds) {
+                $q->where(function ($sub) {
+                    $sub->whereNull('visibilitas')
+                        ->orWhere('visibilitas', '!=', 'rahasia');
+                });
+                if ($claimedVoucherIds->isNotEmpty()) {
+                    $q->orWhereIn('id', $claimedVoucherIds);
+                }
+            })
+            ->orderBy('minimal_belanja', 'asc')
+            ->get();
+
+        return view('customer.checkout.index', compact('keranjangPerVendor', 'keranjangs', 'kodeVoucher', 'userCoinBalance', 'availableVouchers'));
     }
 
     public function store(Request $request)
@@ -457,9 +538,18 @@ class CheckoutController extends Controller
                     $coinService->spendCoins((int) $userId, $orderCoins, $orderId);
                 }
 
-                // PERUBAHAN: Menjalankan increment() pada kuota voucher jika voucher dipakai
+                // PERUBAHAN: Menjalankan increment() pada kuota voucher dan catat pemakaian di akun pelanggan jika voucher dipakai
                 if ($voucherIdDipakai) {
                     Voucher::where('id', $voucherIdDipakai)->increment('kuota_terpakai');
+                    if (auth()->check()) {
+                        CustomerVoucher::where('user_id', auth()->id())
+                            ->where('voucher_id', $voucherIdDipakai)
+                            ->where('status', 'aktif')
+                            ->update([
+                                'status' => 'terpakai',
+                                'used_at' => now(),
+                            ]);
+                    }
                 }
 
                 $invoiceIds[] = 'INV-' . $orderId;

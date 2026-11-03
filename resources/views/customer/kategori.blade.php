@@ -213,23 +213,25 @@
                 </div>
             </div>
 
+            @if($barangs->isNotEmpty())
             <div class="text-[11px] sm:text-xs text-slate-500 font-medium">
                 Menampilkan <span class="font-bold text-slate-800">{{ $barangs->count() }}</span> dari <span class="font-bold text-slate-800">{{ $barangs->total() }}</span> barang
             </div>
+            @endif
         </section>
 
         <!-- 5. GRID PRODUK KATALOG MASONRY (SESUAI DENGAN DESAIN BERANDA) -->
         @if($barangs->isEmpty())
             <!-- EMPTY STATE KHUSUS KATEGORI -->
             <div class="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-100 shadow-2xs max-w-lg mx-auto my-8">
-                <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-2xs">
+                <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3.5 shadow-2xs">
                     <i class="fa-solid fa-box-open"></i>
                 </div>
-                <h3 class="text-slate-800 font-black text-base sm:text-lg mb-1">
-                    Belum Ada Barang di Kategori Ini
+                <h3 class="text-slate-800 font-black text-base sm:text-lg mb-1.5">
+                    Mohon Maaf, Barang di Sekitar Belum Tersedia
                 </h3>
-                <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-6 max-w-sm mx-auto">
-                    Toko rental di sekitarmu belum mengunggah barang sewa untuk kategori <span class="font-bold text-slate-600">{{ $kategori->nama }}</span>.
+                <p class="text-slate-500 text-xs sm:text-sm leading-relaxed mb-6 max-w-sm mx-auto">
+                    Saat ini belum ada barang rental untuk kategori <span class="font-bold text-slate-700">{{ $kategori->nama }}</span> di sekitarmu.
                 </p>
                 <div class="flex items-center justify-center gap-2.5">
                     <a href="{{ route('customer.home') }}" class="inline-flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95">

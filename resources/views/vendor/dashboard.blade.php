@@ -42,7 +42,7 @@
                 <i class="fa-solid fa-plus text-xs"></i>
                 <span>Upload Produk</span>
             </a>
-            <a href="{{ route('vendor.voucher.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+            <a href="{{ route('vendor.voucher.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-sky-50 to-sky-100/80 hover:from-sky-100 hover:to-sky-200 text-sky-700 border border-sky-200/80 rounded-xl text-xs font-bold transition shadow-2xs">
                 <i class="fa-solid fa-ticket text-xs text-sky-600"></i>
                 <span>Voucher</span>
             </a>
@@ -176,23 +176,23 @@
             <i class="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-sky-500 group-hover:translate-x-0.5 transition"></i>
         </a>
 
-        <!-- VOUCHER PROMO TOKO (YANG SEBELUMNYA HILANG - KINI JADI FITUR UTAMA) -->
-        <a href="{{ route('vendor.voucher.index') }}" class="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 shadow-xs hover:border-amber-400 transition flex items-center justify-between group">
+        <!-- VOUCHER PROMO TOKO -->
+        <a href="{{ route('vendor.voucher.index') }}" class="p-4 rounded-2xl bg-gradient-to-br from-sky-500/10 via-sky-50/60 to-blue-50/40 border border-sky-200/90 shadow-xs hover:border-sky-300 hover:shadow-md transition flex items-center justify-between group">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-base shrink-0 shadow-xs group-hover:scale-105 transition">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600 text-white flex items-center justify-center text-base shrink-0 shadow-xs shadow-sky-500/25 group-hover:scale-105 transition">
                     <i class="fa-solid fa-ticket"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-1.5">
-                        <h4 class="text-xs sm:text-sm font-black text-amber-950 group-hover:text-amber-700 transition">Voucher Toko</h4>
-                        <span class="px-1.5 py-0.5 bg-amber-200/80 text-amber-800 text-[9px] font-black rounded-md uppercase">Promo</span>
+                        <h4 class="text-xs sm:text-sm font-black text-slate-800 group-hover:text-sky-600 transition">Voucher Toko</h4>
+                        <span class="px-2 py-0.5 bg-gradient-to-r from-sky-100 to-sky-50 text-sky-700 text-[9px] font-black rounded-md uppercase border border-sky-200/80 shadow-2xs">Promo</span>
                     </div>
-                    <p class="text-[11px] text-amber-800/80 font-medium">
+                    <p class="text-[11px] text-slate-500 font-medium">
                         {{ $totalVoucher > 0 ? $totalVoucher . ' Voucher Diskon Aktif' : 'Buat diskon untuk customer' }}
                     </p>
                 </div>
             </div>
-            <span class="text-xs font-black text-amber-700 bg-white/80 px-2.5 py-1 rounded-lg border border-amber-200">
+            <span class="text-xs font-black text-sky-700 bg-white/95 px-2.5 py-1 rounded-lg border border-sky-200 shadow-2xs group-hover:bg-sky-50 transition">
                 Kelola &rarr;
             </span>
         </a>

@@ -78,11 +78,11 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // 3. Untuk Navigasi HTML: Gunakan Network-First dengan header no-cache agar selalu dapat view Blade terbaru
+    // 3. Untuk Navigasi HTML: Gunakan Network-First dengan request asli browser agar menjaga referer
     // Fallback ke cache hanya jika perangkat sedang offline tanpa internet
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(event.request, { cache: 'no-cache' })
+            fetch(event.request)
                 .then(networkResponse => {
                     if (networkResponse && networkResponse.status === 200) {
                         const copy = networkResponse.clone();

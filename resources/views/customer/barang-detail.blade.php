@@ -85,7 +85,24 @@
 
 <div class="detail-container shadow-sm relative">
 
-    <a href="{{ url()->previous() }}" class="absolute top-4 left-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition">
+    @php
+        $rawPrevious = url()->previous();
+        $currentUrl = url()->current();
+
+        // Validasi URL kembali: cegah looping ke halaman sendiri, berkas sw.js / statis, atau domain eksternal
+        $isInvalidPrevious = empty($rawPrevious)
+            || $rawPrevious === $currentUrl
+            || str_contains($rawPrevious, 'sw.js')
+            || preg_match('/\.(js|json|css|png|jpg|jpeg|gif|svg|webp|ico)(\?.*)?$/i', parse_url($rawPrevious, PHP_URL_PATH) ?? '')
+            || (parse_url($rawPrevious, PHP_URL_HOST) && parse_url($rawPrevious, PHP_URL_HOST) !== request()->getHost());
+
+        $backUrl = $isInvalidPrevious ? route('customer.home') : $rawPrevious;
+    @endphp
+
+    <a href="{{ $backUrl }}" 
+       onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.match(/(sw\.js|\.js|\.css|\.json)/i)) { event.preventDefault(); window.history.back(); }" 
+       class="absolute top-4 left-4 z-20 w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition active:scale-95" 
+       aria-label="Kembali">
         <i class="fa-solid fa-arrow-left text-sm"></i>
     </a>
 

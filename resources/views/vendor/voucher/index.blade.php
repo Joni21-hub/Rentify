@@ -16,9 +16,9 @@
     <div class="flex items-center justify-between bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
             <h1 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">Voucher Diskon Toko</h1>
-            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Kelola kode promosi diskon untuk menarik lebih banyak penyewa</p>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Kelola kupon promosi publik di etalase atau voucher rahasia khusus pelanggan pilihan</p>
         </div>
-        <span class="px-3 py-1 bg-amber-50 text-amber-800 text-xs font-black rounded-xl">
+        <span class="px-3 py-1 bg-sky-50 text-sky-700 text-xs font-black rounded-xl border border-sky-200/60">
             {{ count($vouchers) }} Voucher
         </span>
     </div>
@@ -40,10 +40,10 @@
 
     @if(isset($promoAudit['recommendations']) && count($promoAudit['recommendations']) > 0)
         <!-- PANEL REKOMENDASI AUTO-PROMOSI CERDAS (AI MARKETING ENGINE) -->
-        <div class="bg-gradient-to-r from-amber-500/10 via-sky-500/10 to-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-amber-200/80 shadow-xs space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/40 pb-2.5">
+        <div class="bg-gradient-to-r from-sky-500/15 via-sky-400/5 to-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-sky-200/80 shadow-xs space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-sky-200/40 pb-2.5">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 text-white flex items-center justify-center text-xs shadow-xs">
                         <i class="fa-solid fa-bolt"></i>
                     </div>
                     <div>
@@ -51,7 +51,7 @@
                         <p class="text-[11px] text-slate-500">Ditemukan {{ count($promoAudit['recommendations']) }} barang butuh dorongan diskon agar cepat disewa kembali</p>
                     </div>
                 </div>
-                <span class="text-[10px] font-black text-amber-700 bg-amber-100/70 px-2.5 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto">
+                <span class="text-[10px] font-black text-sky-700 bg-sky-100/80 px-2.5 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto border border-sky-200/60">
                     Smart Marketing Assistant
                 </span>
             </div>
@@ -106,6 +106,37 @@
                         <input type="text" name="kode_voucher" id="input_kode_voucher" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-800 uppercase focus:outline-none focus:border-sky-500 shadow-xs" placeholder="RENTALHEMAT">
                     </div>
 
+                    <!-- Pilihan Visibilitas Voucher: Publik vs Rahasia -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                            <span>Visibilitas Voucher</span>
+                            <span class="text-[10px] text-slate-400 font-medium">Pilih Tipe Tampil</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label id="label_visibilitas_publik" class="relative flex flex-col p-2.5 rounded-xl border-2 cursor-pointer transition select-none bg-sky-50/50 border-sky-500 text-sky-900">
+                                <input type="radio" name="visibilitas" value="publik" checked class="sr-only" onchange="updateVisibilitasUI()">
+                                <div class="flex items-center gap-1.5 text-xs font-black">
+                                    <i class="fa-solid fa-globe text-sky-600 text-xs"></i>
+                                    <span>Publik</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1 leading-snug">
+                                    Tampil di profil toko & etalase. Bebas diklaim siapa saja.
+                                </p>
+                            </label>
+
+                            <label id="label_visibilitas_rahasia" class="relative flex flex-col p-2.5 rounded-xl border-2 cursor-pointer transition select-none bg-slate-50/60 border-slate-200 text-slate-700 hover:border-slate-300">
+                                <input type="radio" name="visibilitas" value="rahasia" class="sr-only" onchange="updateVisibilitasUI()">
+                                <div class="flex items-center gap-1.5 text-xs font-black">
+                                    <i class="fa-solid fa-key text-purple-600 text-xs"></i>
+                                    <span>Rahasia</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1 leading-snug">
+                                    Hanya lewat kode pribadi. Klaim di checkout atau halaman promo.
+                                </p>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Tipe</label>
@@ -147,7 +178,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 text-white font-black text-xs rounded-xl shadow-xs transition active:scale-95">
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white font-black text-xs rounded-xl shadow-xs shadow-sky-500/25 transition active:scale-95">
                         Simpan Voucher
                     </button>
                 </form>
@@ -156,44 +187,97 @@
 
         <!-- KOLOM KANAN: Daftar Kupon Voucher (Sleek Card List) -->
         <div class="lg:col-span-2 space-y-3">
-            <h2 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">
-                Voucher Aktif & Riwayat
+            <h2 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                <span>Voucher Toko & Riwayat</span>
+                <span class="text-[11px] text-slate-400 font-semibold lowercase">publik & rahasia</span>
             </h2>
 
             @forelse($vouchers as $v)
-                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col sm:flex-row items-stretch">
+                <div class="bg-gradient-to-r from-sky-50/40 via-white to-white rounded-2xl border border-sky-200/80 shadow-xs overflow-hidden flex flex-col sm:flex-row items-stretch hover:border-sky-300 transition-all {{ !$v->is_active ? 'opacity-70 bg-slate-50/40' : '' }}">
                     <!-- Sisi Kiri / Header Kupon -->
-                    <div class="w-full sm:w-28 {{ $v->is_active && $v->tanggal_selesai >= date('Y-m-d') ? 'bg-gradient-to-br from-sky-500 to-blue-600' : 'bg-slate-300' }} text-white p-3 sm:p-4 flex sm:flex-col items-center justify-between sm:justify-center border-b sm:border-b-0 sm:border-r-2 border-dashed border-white/40">
-                        <i class="fa-solid fa-ticket text-xl sm:text-2xl opacity-90"></i>
-                        <span class="text-[10px] font-black uppercase tracking-wider text-center mt-0 sm:mt-1">
+                    <div class="w-full sm:w-32 {{ $v->is_active && $v->tanggal_selesai >= date('Y-m-d') ? ($v->visibilitas === 'rahasia' ? 'bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700' : 'bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600') : 'bg-slate-400' }} text-white p-3 sm:p-4 flex sm:flex-col items-center justify-between sm:justify-center border-b sm:border-b-0 sm:border-r-2 border-dashed border-white/50 relative overflow-hidden shadow-inner">
+                        <div class="absolute -right-3 -top-3 w-10 h-10 bg-white/20 rounded-full blur-xs pointer-events-none"></div>
+                        <i class="fa-solid {{ $v->visibilitas === 'rahasia' ? 'fa-key' : 'fa-ticket' }} text-xl sm:text-2xl opacity-90 drop-shadow-xs"></i>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-center mt-0 sm:mt-1 drop-shadow-xs">
                             {{ $v->tipe_diskon == 'persen' ? $v->nilai_diskon . '%' : 'Rp ' . number_format($v->nilai_diskon / 1000, 0) . 'k' }}
+                        </span>
+                        <span class="text-[8.5px] font-extrabold uppercase tracking-widest text-sky-100 opacity-90 mt-0.5">
+                            {{ $v->visibilitas === 'rahasia' ? 'RAHASIA' : 'PUBLIK' }}
                         </span>
                     </div>
 
                     <!-- Isi Kupon -->
-                    <div class="flex-1 p-3.5 sm:p-4 flex flex-col justify-between gap-2">
+                    <div class="flex-1 p-3.5 sm:p-4 flex flex-col justify-between gap-2.5">
                         <div class="flex items-start justify-between gap-2">
-                            <div>
-                                <span class="inline-block px-2 py-0.5 bg-sky-50 text-sky-700 rounded text-[10px] font-black uppercase tracking-widest border border-sky-100">
-                                    {{ $v->kode_voucher }}
-                                </span>
-                                <h3 class="font-black text-slate-800 text-xs sm:text-sm mt-1">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="inline-block px-2 py-0.5 bg-gradient-to-r from-sky-50 to-sky-100 text-sky-800 rounded text-[11px] font-black uppercase tracking-widest border border-sky-200 font-mono shadow-2xs">
+                                        {{ $v->kode_voucher }}
+                                    </span>
+                                    
+                                    @if(($v->visibilitas ?? 'publik') === 'rahasia')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-extrabold bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border border-purple-200">
+                                            <i class="fa-solid fa-key text-[8.5px]"></i> Rahasia
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-extrabold bg-gradient-to-r from-sky-100 to-sky-50 text-sky-700 border border-sky-200">
+                                            <i class="fa-solid fa-globe text-[8.5px]"></i> Publik
+                                        </span>
+                                    @endif
+
+                                    @if($v->is_active && $v->tanggal_selesai >= date('Y-m-d'))
+                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-gradient-to-r from-sky-100 to-sky-50 text-sky-700 border border-sky-200/60">Aktif</span>
+                                    @else
+                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-200 text-slate-600">Nonaktif</span>
+                                    @endif
+                                </div>
+
+                                <h3 class="font-black text-slate-800 text-xs sm:text-sm">
                                     @if($v->tipe_diskon == 'persen')
                                         Diskon {{ $v->nilai_diskon }}% @if($v->maksimal_diskon)(Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }})@endif
                                     @else
                                         Potongan Rp {{ number_format($v->nilai_diskon, 0, ',', '.') }}
                                     @endif
                                 </h3>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Min. sewa: Rp {{ number_format($v->minimal_belanja, 0, ',', '.') }}</p>
+                                <p class="text-[11px] text-slate-400">
+                                    Min. sewa: Rp {{ number_format($v->minimal_belanja, 0, ',', '.') }}
+                                    @if(($v->visibilitas ?? 'publik') === 'rahasia')
+                                        • <span class="text-purple-600 font-medium">Hanya via kode (CO / Promo)</span>
+                                    @else
+                                        • <span class="text-sky-600 font-medium">Tampil di etalase toko</span>
+                                    @endif
+                                </p>
                             </div>
 
-                            <form action="{{ route('vendor.voucher.destroy', $v->id) }}" method="POST" onsubmit="return confirm('Hapus voucher promo ini?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center transition active:scale-90" title="Hapus">
-                                    <i class="fa-solid fa-trash text-xs"></i>
+                            <!-- Tombol Aksi: Salin Kode, Toggle Aktif, Hapus -->
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <!-- Salin Kode -->
+                                <button type="button" onclick="copyVoucherCode('{{ $v->kode_voucher }}', this)" 
+                                        class="px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 text-[10px] font-black transition flex items-center gap-1" title="Salin kode untuk dibagikan">
+                                    <i class="fa-regular fa-copy text-[10px]"></i>
+                                    <span class="hidden sm:inline">Salin</span>
                                 </button>
-                            </form>
+
+                                <!-- Toggle Aktif/Nonaktif -->
+                                <form action="{{ route('vendor.voucher.toggle', $v->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" 
+                                            class="px-2.5 py-1.5 rounded-lg {{ $v->is_active ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }} text-[10px] font-black transition" 
+                                            title="{{ $v->is_active ? 'Klik untuk Nonaktifkan' : 'Klik untuk Aktifkan' }}">
+                                        {{ $v->is_active ? 'Matikan' : 'Aktifkan' }}
+                                    </button>
+                                </form>
+
+                                <!-- Hapus -->
+                                <form action="{{ route('vendor.voucher.destroy', $v->id) }}" method="POST" onsubmit="return confirm('Hapus voucher promo ini permanen?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center transition active:scale-90" title="Hapus permanen">
+                                        <i class="fa-solid fa-trash text-xs"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
                         <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-medium text-slate-500">
@@ -209,7 +293,7 @@
             @empty
                 <div class="bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400">
                     <i class="fa-solid fa-ticket text-3xl mb-2 text-slate-300"></i>
-                    <p class="text-xs font-medium">Belum ada voucher diskon aktif.</p>
+                    <p class="text-xs font-medium">Belum ada voucher diskon dibuat.</p>
                 </div>
             @endforelse
         </div>
@@ -218,18 +302,44 @@
 
 </div>
 
+<!-- TOAST SALIN KODE -->
+<div id="vendorToast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+    <span id="vendorToastMsg">Kode voucher berhasil disalin!</span>
+</div>
+
 <script>
+    function updateVisibilitasUI() {
+        const publikRadio = document.querySelector('input[name="visibilitas"][value="publik"]');
+        const labelPublik = document.getElementById('label_visibilitas_publik');
+        const labelRahasia = document.getElementById('label_visibilitas_rahasia');
+
+        if (publikRadio && publikRadio.checked) {
+            labelPublik.className = 'relative flex flex-col p-2.5 rounded-xl border-2 cursor-pointer transition select-none bg-sky-50/50 border-sky-500 text-sky-900';
+            labelRahasia.className = 'relative flex flex-col p-2.5 rounded-xl border-2 cursor-pointer transition select-none bg-slate-50/60 border-slate-200 text-slate-700 hover:border-slate-300';
+        } else {
+            labelPublik.className = 'relative flex flex-col p-2.5 rounded-xl border-2 cursor-pointer transition select-none bg-slate-50/60 border-slate-200 text-slate-700 hover:border-slate-300';
+            labelRahasia.className = 'relative flex flex-col p-2.5 rounded-xl border-2 cursor-pointer transition select-none bg-purple-50/50 border-purple-500 text-purple-900';
+        }
+    }
+
     function toggleMaksimalDiskon() {
         const tipe = document.getElementById('tipe_diskon').value;
         const box = document.getElementById('box_maksimal_diskon');
         const input = document.getElementById('maksimal_diskon');
+        const nilaiInput = document.getElementById('input_nilai_diskon');
+
         if (tipe === 'persen') {
             box.classList.remove('hidden');
             input.required = true;
+            nilaiInput.max = '100';
+            nilaiInput.placeholder = 'Contoh: 15 (%)';
         } else {
             box.classList.add('hidden');
             input.required = false;
             input.value = '';
+            nilaiInput.removeAttribute('max');
+            nilaiInput.placeholder = '10000';
         }
     }
 
@@ -251,8 +361,41 @@
         document.getElementById('input_tanggal_mulai').value = today.toISOString().split('T')[0];
         document.getElementById('input_tanggal_selesai').value = nextWeek.toISOString().split('T')[0];
         
+        // Default rekomendasi AI ke publik
+        const publikRadio = document.querySelector('input[name="visibilitas"][value="publik"]');
+        if (publikRadio) {
+            publikRadio.checked = true;
+            updateVisibilitasUI();
+        }
+
         document.getElementById('input_kode_voucher').focus();
         document.getElementById('input_kode_voucher').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    function copyVoucherCode(kode, btn) {
+        navigator.clipboard.writeText(kode).then(() => {
+            const toast = document.getElementById('vendorToast');
+            document.getElementById('vendorToastMsg').innerText = `Kode "${kode}" berhasil disalin!`;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            const oriText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> <span class="hidden sm:inline">Disalin</span>';
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                btn.innerHTML = oriText;
+            }, 2000);
+        }).catch(() => {
+            prompt("Salin kode voucher ini:", kode);
+        });
+    }
+
+    // Inisialisasi saat load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleMaksimalDiskon();
+        updateVisibilitasUI();
+    });
 </script>
 @endsection

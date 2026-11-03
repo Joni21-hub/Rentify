@@ -361,8 +361,8 @@
                         </div>
                     </a>
 
-                    <a href="{{ route('customer.voucher') }}" class="rentify-card p-3.5 rounded-2xl hover:border-amber-300 transition shadow-xs flex items-center gap-3 group">
-                        <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-sm group-hover:scale-105 transition-transform">
+                    <a href="{{ route('customer.voucher') }}" class="rentify-card p-3.5 rounded-2xl hover:border-sky-300 transition shadow-xs flex items-center gap-3 group">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600 text-white flex items-center justify-center text-sm shadow-xs shadow-sky-500/25 group-hover:scale-105 transition-transform">
                             <i class="fa-solid fa-ticket"></i>
                         </div>
                         <div>
@@ -657,9 +657,9 @@
                     </a>
 
                     <!-- Voucher & Promo Diskon Saya -->
-                    <a href="{{ route('customer.voucher') }}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-amber-50 text-slate-700 transition group">
+                    <a href="{{ route('customer.voucher') }}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-gradient-to-r hover:from-sky-50/80 hover:to-transparent text-slate-700 transition group">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+                            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600 text-white flex items-center justify-center text-sm shadow-xs shadow-sky-500/25">
                                 <i class="fa-solid fa-ticket"></i>
                             </div>
                             <div>
@@ -667,7 +667,7 @@
                                 <span class="text-[10px] text-slate-400">Klaim & pakai kupon sewa</span>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-amber-600 transition"></i>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 transition"></i>
                     </a>
 
                     <!-- Titik Lokasi GPS Pengiriman -->

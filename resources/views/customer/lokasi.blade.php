@@ -221,40 +221,6 @@
         z-index: 4;
     }
 
-    /* Item Pins Inside Radar */
-    .item-radar-pin {
-        position: absolute;
-        z-index: 6;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 3px 8px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border: 1px solid #bae6fd;
-        font-size: 10px;
-        font-weight: 800;
-        color: #0f172a;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        pointer-events: none;
-        user-select: none;
-    }
-    .item-radar-pin.is-active {
-        transform: scale(1.06);
-        background: #ffffff;
-        border: 1.5px solid #0284c7;
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
-        opacity: 1;
-    }
-    .item-radar-pin.is-inactive {
-        opacity: 0.38;
-        transform: scale(0.9);
-        filter: grayscale(80%);
-        background: rgba(241, 245, 249, 0.85);
-        border: 1px solid #cbd5e1;
-    }
-
     /* Radius Control Slider & Badges */
     .radius-control-card {
         background: #f8fafc;
@@ -393,31 +359,6 @@
             <!-- Center User Pin -->
             <div class="center-pin" title="Posisi Anda">
                 <i class="fa-solid fa-location-dot"></i>
-            </div>
-
-            <!-- Simulated Rental Item Pins with Live Highlight Animation -->
-            <!-- 1. Tenda Camping: 8 KM (dekat) -->
-            <div class="item-radar-pin" id="pin-item-1" data-dist="8" style="top: 36%; left: 56%;">
-                <i class="fa-solid fa-campground text-amber-500"></i>
-                <span>Tenda 8km</span>
-            </div>
-
-            <!-- 2. Kamera Mirrorless: 18 KM (menengah) -->
-            <div class="item-radar-pin" id="pin-item-2" data-dist="18" style="top: 66%; left: 32%;">
-                <i class="fa-solid fa-camera text-sky-500"></i>
-                <span>Kamera 18km</span>
-            </div>
-
-            <!-- 3. Motor / Vespa: 32 KM (luas) -->
-            <div class="item-radar-pin" id="pin-item-3" data-dist="32" style="top: 72%; left: 68%;">
-                <i class="fa-solid fa-motorcycle text-emerald-500"></i>
-                <span>Vespa 32km</span>
-            </div>
-
-            <!-- 4. Sound Equipment: 46 KM (maksimal) -->
-            <div class="item-radar-pin" id="pin-item-4" data-dist="46" style="top: 22%; left: 24%;">
-                <i class="fa-solid fa-guitar text-rose-500"></i>
-                <span>Sound 46km</span>
             </div>
         </div>
 
@@ -560,18 +501,6 @@
         
         radarActiveDisc.style.width = `${discSizePct}%`;
         radarActiveDisc.style.height = `${discSizePct}%`;
-
-        // Update Simulated Item Pins inside/outside the current radius
-        document.querySelectorAll('.item-radar-pin').forEach(pin => {
-            const pinDist = parseFloat(pin.getAttribute('data-dist')) || 0;
-            if (currentRadius >= pinDist) {
-                pin.classList.add('is-active');
-                pin.classList.remove('is-inactive');
-            } else {
-                pin.classList.remove('is-active');
-                pin.classList.add('is-inactive');
-            }
-        });
     }
 
     // Set Preset from quick buttons

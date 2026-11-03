@@ -142,7 +142,7 @@ class CustomerCategoryPageTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('customer.kategori');
-        $response->assertSee('Belum Ada Barang di Kategori Ini');
+        $response->assertSee('Mohon Maaf, Barang di Sekitar Belum Tersedia');
         $response->assertSee('Kembali ke Beranda');
     }
 }

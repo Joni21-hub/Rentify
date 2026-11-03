@@ -47,6 +47,7 @@ Route::name('customer.')->group(function () {
     // Rute Profil Toko Publik (Katalog Barang Toko & Voucher)
     Route::get('/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show'])->name('toko.show');
     Route::get('/customer/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show']);
+    Route::post('/voucher/claim', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'claim'])->name('voucher.claim');
     
     Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
@@ -219,6 +220,7 @@ Route::prefix('vendor')->name('vendor.')
     // --- VOUCHER TOKO
     Route::get('voucher', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'index'])->name('voucher.index');
     Route::post('voucher', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'store'])->name('voucher.store');
+    Route::patch('voucher/{id}/toggle', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'toggleStatus'])->name('voucher.toggle');
     Route::delete('voucher/{id}', [\App\Http\Controllers\Vendor\VendorVoucherController::class, 'destroy'])->name('voucher.destroy');
 });
 
@@ -295,6 +297,7 @@ Route::prefix('customer')->name('customer.')
 
     // Voucher & Promo Customer
     Route::get('/voucher', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'index'])->name('voucher');
+    Route::post('/voucher/claim', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'claim'])->name('voucher.claim');
 
     // Chat & Reviews
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');

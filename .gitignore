@@ -26,6 +26,7 @@ Thumbs.db
 
 # Archives & Deployment bundles
 *.tar.gz
+*.sql
 rentify_deploy.tar.gz
 
 # Sokudo internal

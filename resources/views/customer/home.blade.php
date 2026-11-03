@@ -193,17 +193,20 @@
                     @endif
                 </div>
             @else
-                <!-- Hero Default Jika Belum Ada Banner Upload -->
-                <div class="rounded-2xl bg-gradient-to-r from-sky-500 via-sky-600 to-blue-700 text-white p-5 sm:p-7 shadow-md relative overflow-hidden">
-                    <div class="absolute -right-8 -bottom-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                <!-- Hero Default Jika Belum Ada Banner Upload (Sesuai Master Theme Rentify: Sky Blue & Fresh Gradient) -->
+                <div class="rounded-2xl bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 text-white p-5 sm:p-7 shadow-md shadow-sky-500/15 border border-sky-300/30 relative overflow-hidden">
+                    <!-- Elemen Dekoratif Ambient Glow Khas Rentify -->
+                    <div class="absolute -right-8 -bottom-10 w-48 h-48 bg-white/20 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="absolute right-12 top-1 w-28 h-28 bg-sky-200/25 rounded-full blur-xl pointer-events-none"></div>
+
                     <div class="relative z-10 max-w-lg">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-extrabold tracking-wider uppercase mb-2">
-                            <i class="fa-solid fa-sparkles text-amber-300"></i> Marketplace Rental Terlengkap
+                            <i class="fa-solid fa-sparkles text-amber-300"></i> Sewa Gampang, Cuan Datang!
                         </span>
                         <h2 class="text-xl sm:text-2xl font-black tracking-tight leading-snug">Sewa Apapun Lebih Hemat & Praktis di Rentify</h2>
-                        <p class="text-xs sm:text-sm text-sky-100 mt-1 leading-relaxed">Temukan kamera, alat camping, kendaraan & perlengkapan hobi terdekat dari lokasimu.</p>
+                        <p class="text-xs sm:text-sm text-sky-50/95 mt-1 leading-relaxed">Temukan kamera, alat camping, kendaraan & perlengkapan hobi terdekat dari lokasimu.</p>
                         <div class="mt-4 flex items-center gap-2">
-                            <a href="{{ route('customer.search') }}" class="px-4 py-2 rounded-xl bg-white text-sky-700 font-extrabold text-xs shadow-xs hover:bg-sky-50 active:scale-95 transition inline-flex items-center gap-1.5">
+                            <a href="{{ route('customer.search') }}" class="px-4 py-2 rounded-xl bg-white text-sky-600 font-extrabold text-xs shadow-xs hover:bg-sky-50 active:scale-95 transition inline-flex items-center gap-1.5">
                                 <i class="fa-solid fa-magnifying-glass text-[11px]"></i> Jelajahi Barang
                             </a>
                             <button type="button" onclick="autoDetectLocation()" class="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs transition inline-flex items-center gap-1.5">
@@ -375,7 +378,7 @@
                 @endif
             </div>
 
-            <!-- CATEGORY FILTER ACTIVE BAR (MUNCUL OTOMATIS SAAT KATEGORI DIPILIH) -->
+            <!-- CATEGORY FILTER ACTIVE BAR (MUNCUL OTOMATIS SAAT KATEGORI DIPILIH & ADA BARANG) -->
             <div id="category-filter-bar" class="hidden items-center justify-between bg-sky-50/90 border border-sky-200/90 rounded-2xl p-2.5 sm:p-3 mb-3 shadow-2xs transition-all">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center text-xs flex-shrink-0 shadow-2xs">
@@ -383,13 +386,13 @@
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-[11px] sm:text-xs font-bold text-slate-600">Menyaring Kategori:</span>
+                            <span class="text-[11px] sm:text-xs font-bold text-slate-600">Kategori:</span>
                             <span id="category-filter-name" class="text-xs sm:text-[13px] font-black text-sky-600"></span>
                             <span id="category-filter-count-badge" class="px-2 py-0.5 rounded-full bg-white border border-sky-200 text-sky-700 text-[10px] font-black shadow-2xs">
-                                <span id="category-filter-count">0</span> barang
+                                <span id="category-filter-count">0</span> barang tersedia
                             </span>
                         </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium">Klik kembali ikon kategori di atas atau tombol di samping untuk membatalkan filter.</p>
+                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium">Menampilkan barang rental di sekitarmu.</p>
                     </div>
                 </div>
                 <button type="button" 
@@ -404,12 +407,12 @@
 
             @if($daftarBarang->isEmpty())
                 <!-- EMPTY STATE FALLBACK JIKA DATABASE KOSONG SAMA SEKALI -->
-                <div class="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-2xs max-w-md mx-auto my-6">
-                    <div class="w-16 h-16 bg-sky-50 text-sky-400 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">
+                <div class="bg-white rounded-3xl p-8 sm:p-10 text-center border border-slate-100 shadow-2xs max-w-md mx-auto my-6">
+                    <div class="w-16 h-16 bg-sky-50 text-sky-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3.5 shadow-2xs">
                         <i class="fa-solid fa-box-open"></i>
                     </div>
-                    <h3 class="text-slate-700 font-black text-base mb-1">Belum Ada Barang Rental</h3>
-                    <p class="text-slate-400 text-xs leading-relaxed mb-5">Belum ada barang rental yang disetujui di kategori ini saat ini.</p>
+                    <h3 class="text-slate-800 font-black text-base sm:text-lg mb-1.5">Mohon Maaf, Barang di Sekitar Belum Tersedia</h3>
+                    <p class="text-slate-500 text-xs sm:text-[13px] leading-relaxed mb-6 max-w-sm mx-auto">Saat ini belum ada barang rental yang tersedia di sekitarmu.</p>
                     <a href="{{ route('customer.search') }}" class="inline-flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition">
                         <i class="fa-solid fa-magnifying-glass"></i> Cari Semua Barang
                     </a>
@@ -490,15 +493,15 @@
                 </div>
 
                 <!-- EMPTY STATE KHUSUS FILTER KATEGORI JIKA TIDAK ADA BARANG -->
-                <div id="cat-empty-state" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-2xs max-w-md mx-auto my-6">
-                    <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 shadow-2xs border border-sky-100">
-                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                <div id="cat-empty-state" class="hidden bg-white rounded-3xl p-8 sm:p-10 text-center border border-slate-100 shadow-2xs max-w-md mx-auto my-6">
+                    <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3.5 shadow-2xs border border-sky-100">
+                        <i class="fa-solid fa-box-open"></i>
                     </div>
-                    <h3 class="text-slate-800 font-black text-base mb-1">Tidak Ada Barang di Kategori Ini</h3>
-                    <p class="text-slate-500 text-xs leading-relaxed mb-5">
-                        Belum ada barang rental untuk kategori <span id="empty-cat-name" class="font-bold text-sky-600"></span> di sekitarmu saat ini.
+                    <h3 class="text-slate-800 font-black text-base sm:text-lg mb-1.5">Mohon Maaf, Barang di Sekitar Belum Tersedia</h3>
+                    <p class="text-slate-500 text-xs sm:text-[13px] leading-relaxed mb-6 max-w-sm mx-auto">
+                        Saat ini belum ada barang rental untuk kategori <span id="empty-cat-name" class="font-bold text-sky-600"></span> di sekitarmu.
                     </p>
-                    <button type="button" onclick="resetCategoryFilter()" class="inline-flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95 cursor-pointer">
+                    <button type="button" onclick="resetCategoryFilter()" class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95 cursor-pointer">
                         <i class="fa-solid fa-arrow-rotate-left"></i>
                         <span>Tampilkan Semua Barang</span>
                     </button>
@@ -697,29 +700,33 @@
                 }
             });
 
-            // C. Tampilkan/Sembunyikan Empty State Kategori
+            // C. Tampilkan/Sembunyikan Empty State & Filter Bar Kategori
             const catEmptyState = document.getElementById('cat-empty-state');
             const emptyCatName = document.getElementById('empty-cat-name');
             const masonryGrid = document.getElementById('product-masonry-grid');
+            const filterBar = document.getElementById('category-filter-bar');
+            const filterName = document.getElementById('category-filter-name');
+            const filterCount = document.getElementById('category-filter-count');
 
             if (visibleCount === 0) {
                 if (emptyCatName) emptyCatName.textContent = catName;
                 if (catEmptyState) catEmptyState.classList.remove('hidden');
                 if (masonryGrid) masonryGrid.classList.add('hidden');
+                // Sembunyikan bar teknis filter jika kosong agar pengguna langsung melihat pesan permohonan maaf yang bersih
+                if (filterBar) {
+                    filterBar.classList.add('hidden');
+                    filterBar.classList.remove('flex');
+                }
             } else {
                 if (catEmptyState) catEmptyState.classList.add('hidden');
                 if (masonryGrid) masonryGrid.classList.remove('hidden');
-            }
-
-            // D. Update Category Filter Active Bar
-            const filterBar = document.getElementById('category-filter-bar');
-            const filterName = document.getElementById('category-filter-name');
-            const filterCount = document.getElementById('category-filter-count');
-            if (filterBar) {
-                if (filterName) filterName.textContent = catName;
-                if (filterCount) filterCount.textContent = visibleCount;
-                filterBar.classList.remove('hidden');
-                filterBar.classList.add('flex');
+                // Tampilkan info filter kategori jika barang ditemukan
+                if (filterBar) {
+                    if (filterName) filterName.textContent = catName;
+                    if (filterCount) filterCount.textContent = visibleCount;
+                    filterBar.classList.remove('hidden');
+                    filterBar.classList.add('flex');
+                }
             }
 
             // E. Update URL params tanpa reload

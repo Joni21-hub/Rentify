@@ -84,8 +84,8 @@
                 <div class="w-20 h-20 bg-slate-100 text-slate-300 rounded-full flex items-center justify-center text-4xl mb-4">
                     <i class="fa-solid fa-box-open"></i>
                 </div>
-                <h3 class="font-bold text-slate-700 text-lg mb-1">Pencarian Tidak Ditemukan</h3>
-                <p class="text-sm text-slate-500 mb-6">Barang tidak ada atau lokasinya berada di luar radius {{ round($userRadius ?? 50) }} KM dari titik Anda.</p>
+                <h3 class="font-bold text-slate-700 text-lg mb-1">Mohon Maaf, Barang di Sekitar Belum Tersedia</h3>
+                <p class="text-sm text-slate-500 mb-6">Barang tidak ditemukan atau berada di luar jangkauan radius {{ round($userRadius ?? 50) }} KM dari posisimu.</p>
                 <a href="{{ route('customer.search') }}" class="border border-sky-500 text-sky-600 font-bold text-sm px-6 py-2 rounded-full hover:bg-sky-50 transition">
                     Hapus Pencarian
                 </a>

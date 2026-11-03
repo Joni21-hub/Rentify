@@ -245,23 +245,44 @@
             <input type="hidden" name="metode_pembayaran" id="input_metode_pembayaran" value="QRIS">
         </div>
 
-        <!-- PERUBAHAN: Panel Voucher Toko Dinamis dengan AJAX -->
-        <div class="section-title mt-2">Voucher Promo Toko</div>
-        <div class="clean-card" id="card-voucher" style="padding: 0; overflow: hidden; transition: all 0.3s; margin-bottom: 12px;">
-            <div onclick="toggleVoucher()" style="padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white;">
-                <span style="font-size: 13px; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-ticket"></i> Gunakan Voucher Toko
-                </span>
-                <span id="voucher-status-label" style="font-size: 11.5px; font-weight: 700; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                    Punya kode? <span style="font-size: 10px;">▼</span>
-                </span>
-            </div>
-            <div id="voucher-panel" style="display: none; padding: 10px 14px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="input_kode_voucher_field" placeholder="Ketik kode voucher toko" style="flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; outline: none; color: #0f172a;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" class="rentify-input">
-                    <button type="button" onclick="terapkanVoucher()" id="btn-terapkan-voucher" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s;">Pakai</button>
+        <!-- PANEL VOUCHER TOKO (ALA SHOPEE: DAPAT MEMILIH DARI AKUN ATAU KETIK KODE) -->
+        <div class="section-title mt-2">
+            <span style="display: flex; align-items: center; gap: 7px;">
+                <i class="fa-solid fa-ticket text-sky-500"></i> Voucher Promo Toko
+            </span>
+            <span id="voucher-header-badge" style="display: none; font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
+                1 Terpasang
+            </span>
+        </div>
+        <div class="clean-card" id="card-voucher" onclick="bukaModalVoucher()" style="padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s; cursor: pointer; background: white;" onmouseover="this.style.borderColor='#0284c7'" onmouseout="if(!voucherDataTerpilih) this.style.borderColor='#e2e8f0'">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                    <div id="voucher-icon-box" style="width: 38px; height: 38px; border-radius: 11px; background: #f0f9ff; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid #bae6fd; flex-shrink: 0;">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <div>
+                        <div id="voucher-main-title" style="font-size: 13.5px; font-weight: 800; color: #0f172a;">
+                            Gunakan Voucher Toko
+                        </div>
+                        <div id="voucher-sub-title" style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 1px;">
+                            Pilih voucher akun Anda atau ketik kode
+                        </div>
+                    </div>
                 </div>
-                <div id="voucher-message" style="margin-top: 6px; font-size: 11px; font-weight: 600; color: #ef4444; display: none;"></div>
+                <div id="voucher-action-btn" style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #0284c7; flex-shrink: 0;">
+                    <span id="voucher-action-text">Pilih</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+                </div>
+            </div>
+
+            <!-- Detail ringkas saat voucher aktif diterapkan -->
+            <div id="voucher-applied-bar" style="display: none; margin-top: 10px; padding-top: 9px; border-top: 1px dashed #bae6fd; justify-content: space-between; align-items: center;">
+                <span id="voucher-applied-detail" style="font-size: 11.5px; font-weight: 700; color: #0369a1; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-circle-check text-emerald-500"></i> Diskon Rp 0
+                </span>
+                <button type="button" onclick="event.stopPropagation(); batalkanVoucher();" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 11px; font-weight: 800; cursor: pointer; padding: 2px 8px; border-radius: 6px; transition: 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Lepas
+                </button>
             </div>
         </div>
 
@@ -467,6 +488,155 @@
                 </div>
             </div>
         </div>
+
+        <!-- BOTTOM SHEET MODAL PILIH VOUCHER (ALA SHOPEE) -->
+        <div id="modalVoucher" style="display: none; position: fixed; inset: 0; z-index: 99999;">
+            <!-- Backdrop Overlay -->
+            <div onclick="tutupModalVoucher()" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px);"></div>
+            
+            <!-- Modal Sheet -->
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; max-width: 550px; margin: 0 auto; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+                
+                <!-- Header Sheet -->
+                <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 16px; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-ticket text-sky-500"></i> Pilih Voucher Diskon
+                        </div>
+                        <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-top: 1px;">
+                            Pilih voucher akun atau masukkan kode khusus
+                        </div>
+                    </div>
+                    <button type="button" onclick="tutupModalVoucher()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; color: #64748b; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body Sheet (Scrollable) -->
+                <div style="padding: 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 14px;">
+                    
+                    <!-- INPUT KODE MANUAL (ALA SHOPEE) -->
+                    <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px; padding: 12px;">
+                        <div style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 7px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-keyboard text-sky-500"></i> Punya Kode Voucher Lain?
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="input_kode_voucher_field" value="{{ $kodeVoucher ?? '' }}" placeholder="Ketik kode (misal: SEWAHEMAT)" style="flex: 1; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; font-weight: 800; text-transform: uppercase; outline: none; color: #0f172a; background: white;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" class="rentify-input">
+                            <button type="button" onclick="terapkanVoucherManual()" id="btn-terapkan-voucher" style="background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; border: none; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s; white-space: nowrap;" class="shadow-xs active:scale-95">Pakai</button>
+                        </div>
+                        <div id="voucher-message" style="margin-top: 6px; font-size: 11px; font-weight: 700; display: none;"></div>
+                    </div>
+
+                    <!-- DAFTAR VOUCHER TERSEDIA DI AKUN / TOKO -->
+                    <div>
+                        @php $vouchersList = $availableVouchers ?? collect(); @endphp
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px;">
+                                Voucher Tersedia ({{ $vouchersList->count() }})
+                            </span>
+                            <span style="font-size: 10.5px; font-weight: 700; color: #64748b;">
+                                Pilih 1 voucher terbaik
+                            </span>
+                        </div>
+
+                        @if($vouchersList->isEmpty())
+                            <div style="text-align: center; padding: 24px 16px; background: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; margin-top: 4px;">
+                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 18px; margin: 0 auto 10px auto;">
+                                    <i class="fa-solid fa-ticket-simple"></i>
+                                </div>
+                                <div style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 3px;">Belum Ada Voucher Toko Tersedia</div>
+                                <p style="font-size: 11px; font-weight: 600; color: #64748b; margin: 0; line-height: 1.4;">
+                                    Toko pada pesanan ini belum mempublikasikan voucher promo aktif. Jika Anda memiliki kode khusus atau rahasia, silakan masukkan pada kolom di atas.
+                                </p>
+                            </div>
+                        @else
+                            <div style="display: flex; flex-direction: column; gap: 10px;" id="voucher-list-cards">
+                                @foreach($vouchersList as $v)
+                                @php
+                                    $namaVendorToko = $v->vendor ? ($v->vendor->vendor_name ?? $v->vendor->name) : 'Rentify Platform';
+                                    $tglBerakhir = \Carbon\Carbon::parse($v->tanggal_selesai)->format('d M Y');
+                                @endphp
+                                <div class="voucher-card-item"
+                                     id="voucher-card-{{ $v->id }}"
+                                     data-voucher-id="{{ $v->id }}"
+                                     data-kode-voucher="{{ $v->kode_voucher }}"
+                                     data-vendor-id="{{ $v->vendor_id ?? '' }}"
+                                     data-minimal-belanja="{{ (float) $v->minimal_belanja }}"
+                                     data-tipe-diskon="{{ $v->tipe_diskon }}"
+                                     data-nilai-diskon="{{ (float) $v->nilai_diskon }}"
+                                     data-maksimal-diskon="{{ (float) ($v->maksimal_diskon ?? 0) }}"
+                                     onclick="pilihVoucherCard(this)"
+                                     style="border: 1.5px solid #e2e8f0; border-radius: 14px; overflow: hidden; display: flex; background: white; cursor: pointer; transition: all 0.2s; position: relative;">
+                                    
+                                    <!-- Sawtooth ticket edge left -->
+                                    <div style="width: 95px; background: linear-gradient(135deg, #e0f2fe, #bae6fd); border-right: 1.5px dashed #7dd3fc; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 6px; text-align: center; flex-shrink: 0; position: relative;">
+                                        <div style="position: absolute; top: -6px; right: -6px; width: 12px; height: 12px; background: white; border-radius: 50%;"></div>
+                                        <div style="position: absolute; bottom: -6px; right: -6px; width: 12px; height: 12px; background: white; border-radius: 50%;"></div>
+                                        <i class="fa-solid fa-ticket text-sky-600 mb-1" style="font-size: 15px;"></i>
+                                        <div style="font-size: 13.5px; font-weight: 900; color: #0369a1; line-height: 1.1;">
+                                            @if($v->tipe_diskon === 'persen')
+                                                {{ (int) $v->nilai_diskon }}%
+                                            @else
+                                                Rp {{ number_format($v->nilai_diskon / 1000, 0) }}rb
+                                            @endif
+                                        </div>
+                                        <div style="font-size: 9px; font-weight: 800; color: #0284c7; text-transform: uppercase; margin-top: 1px;">
+                                            POTONGAN
+                                        </div>
+                                    </div>
+
+                                    <!-- Middle Details -->
+                                    <div style="flex: 1; padding: 10px 12px; display: flex; flex-direction: column; justify-content: center;">
+                                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                                            <span style="font-size: 9.5px; font-weight: 800; background: #f1f5f9; color: #475569; padding: 1.5px 6px; border-radius: 4px;">
+                                                {{ $v->vendor_id ? 'Toko: ' . Str::limit($namaVendorToko, 18) : 'Semua Toko' }}
+                                            </span>
+                                            <span style="font-size: 10.5px; font-weight: 800; color: #0284c7; font-family: monospace;">
+                                                {{ $v->kode_voucher }}
+                                            </span>
+                                        </div>
+                                        <div style="font-size: 11.5px; font-weight: 700; color: #334155; margin-top: 2px;">
+                                            Min. sewa Rp {{ number_format($v->minimal_belanja, 0, ',', '.') }}
+                                            @if($v->tipe_diskon === 'persen' && $v->maksimal_diskon)
+                                                • Maks Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}
+                                            @endif
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                                            <span style="font-size: 10px; font-weight: 600; color: #94a3b8;">
+                                                s/d {{ $tglBerakhir }}
+                                            </span>
+                                            <span class="voucher-status-badge" style="font-size: 10.5px; font-weight: 800;">
+                                                Memeriksa...
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Radio Selector -->
+                                    <div style="padding: 10px 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <div class="voucher-radio-circle" id="radio-v-circle-{{ $v->id }}" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 900; transition: all 0.15s;">
+                                        </div>
+                                    </div>
+
+                                </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
+
+                <!-- Footer Sheet -->
+                <div style="padding: 12px 16px; border-top: 1px solid #f1f5f9; background: #fafafa; display: flex; gap: 10px;">
+                    <button type="button" onclick="tutupModalVoucher()" style="flex: 1; padding: 12px; border: 1.5px solid #cbd5e1; background: white; color: #475569; border-radius: 12px; font-weight: 800; font-size: 13.5px; cursor: pointer; transition: 0.15s;">
+                        Tutup
+                    </button>
+                    <button type="button" onclick="konfirmasiVoucherTerpilih()" id="btn-konfirmasi-voucher" style="flex: 2; padding: 12px; background: linear-gradient(to bottom right, #38bdf8, #0284c7); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 13.5px; cursor: pointer; transition: 0.15s; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);" class="active:scale-95">
+                        Pakai Voucher
+                    </button>
+                </div>
+
+            </div>
+        </div>
     </form>
 </div>
 
@@ -502,26 +672,21 @@
         hitungSemuaTotal();
     }
 
-    function toggleVoucher() {
-        const panel = document.getElementById('voucher-panel');
-        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+    let voucherDataTerpilih = null;
+    let selectedVoucherCardId = null;
+
+    function bukaModalVoucher() {
+        document.getElementById('modalVoucher').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        evaluasiKelayakanVoucher();
     }
 
-    // PERUBAHAN: Fungsi AJAX Terapkan Voucher
-    function terapkanVoucher() {
-        const field = document.getElementById('input_kode_voucher_field');
-        const kode = field.value.trim().toUpperCase();
-        const msgDiv = document.getElementById('voucher-message');
-        const btn = document.getElementById('btn-terapkan-voucher');
-        
-        if (kode === '') {
-            msgDiv.innerText = '⚠️ Silakan ketik kode voucher!';
-            msgDiv.style.color = '#ef4444';
-            msgDiv.style.display = 'block';
-            return;
-        }
+    function tutupModalVoucher() {
+        document.getElementById('modalVoucher').style.display = 'none';
+        document.body.style.overflow = '';
+    }
 
-        // Kumpulkan total belanja per vendor untuk dikirim ke server
+    function hitungSubtotalPerVendor() {
         const vendorSubtotals = {};
         document.querySelectorAll('.vendor-block').forEach(block => {
             const vId = block.getAttribute('data-vendor');
@@ -532,9 +697,115 @@
             });
             vendorSubtotals[vId] = subSewaToko;
         });
+        return vendorSubtotals;
+    }
+
+    function evaluasiKelayakanVoucher() {
+        const vendorSubtotals = hitungSubtotalPerVendor();
+        const totalSemuaSewa = Object.values(vendorSubtotals).reduce((a, b) => a + b, 0);
+
+        document.querySelectorAll('.voucher-card-item').forEach(card => {
+            const vId = card.getAttribute('data-vendor-id');
+            const minBelanja = parseFloat(card.getAttribute('data-minimal-belanja')) || 0;
+            const subtotalToko = vId ? (vendorSubtotals[vId] || 0) : totalSemuaSewa;
+            const badge = card.querySelector('.voucher-status-badge');
+            const circle = card.querySelector('.voucher-radio-circle');
+            const cardId = card.getAttribute('data-voucher-id');
+
+            if (subtotalToko >= minBelanja) {
+                card.style.opacity = '1';
+                card.style.cursor = 'pointer';
+                card.setAttribute('data-eligible', '1');
+                badge.innerHTML = '<span style="color: #059669; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> Memenuhi syarat</span>';
+            } else {
+                card.style.opacity = '0.55';
+                card.style.cursor = 'not-allowed';
+                card.setAttribute('data-eligible', '0');
+                const kurang = minBelanja - subtotalToko;
+                badge.innerHTML = `<span style="color: #ea580c; font-weight: 700;"><i class="fa-solid fa-circle-info"></i> Kurang ${formatRp(kurang)}</span>`;
+                if (selectedVoucherCardId === cardId) {
+                    selectedVoucherCardId = null;
+                }
+            }
+
+            // Sinkronisasi status visual kartu voucher yang sedang dipilih
+            if (selectedVoucherCardId === cardId || (voucherDataTerpilih && String(voucherDataTerpilih.voucher_id) === String(cardId))) {
+                card.style.borderColor = '#0284c7';
+                card.style.background = '#f0f9ff';
+                if (circle) {
+                    circle.style.borderColor = '#0284c7';
+                    circle.style.background = '#0284c7';
+                    circle.innerText = '✓';
+                }
+            } else {
+                card.style.borderColor = '#e2e8f0';
+                card.style.background = 'white';
+                if (circle) {
+                    circle.style.borderColor = '#cbd5e1';
+                    circle.style.background = 'white';
+                    circle.innerText = '';
+                }
+            }
+        });
+    }
+
+    function pilihVoucherCard(element) {
+        const isEligible = element.getAttribute('data-eligible') === '1';
+        if (!isEligible) {
+            const minBelanja = parseFloat(element.getAttribute('data-minimal-belanja')) || 0;
+            const msgDiv = document.getElementById('voucher-message');
+            msgDiv.innerText = `⚠️ Nilai sewa belum mencapai minimal Rp ${minBelanja.toLocaleString('id-ID')} untuk voucher ini.`;
+            msgDiv.style.color = '#ea580c';
+            msgDiv.style.display = 'block';
+            return;
+        }
+
+        const cardId = element.getAttribute('data-voucher-id');
+        const kode = element.getAttribute('data-kode-voucher');
+
+        selectedVoucherCardId = cardId;
+        document.getElementById('input_kode_voucher_field').value = kode;
+        document.getElementById('voucher-message').style.display = 'none';
+
+        evaluasiKelayakanVoucher();
+    }
+
+    function terapkanVoucherManual() {
+        const field = document.getElementById('input_kode_voucher_field');
+        const kode = field.value.trim().toUpperCase();
+        if (kode === '') {
+            const msgDiv = document.getElementById('voucher-message');
+            msgDiv.innerText = '⚠️ Silakan ketik kode voucher!';
+            msgDiv.style.color = '#ef4444';
+            msgDiv.style.display = 'block';
+            return;
+        }
+        eksekusiAjaxVoucher(kode, null);
+    }
+
+    function konfirmasiVoucherTerpilih() {
+        const field = document.getElementById('input_kode_voucher_field');
+        const manualKode = field.value.trim().toUpperCase();
+
+        if (selectedVoucherCardId) {
+            eksekusiAjaxVoucher(manualKode, selectedVoucherCardId);
+        } else if (manualKode !== '') {
+            eksekusiAjaxVoucher(manualKode, null);
+        } else {
+            tutupModalVoucher();
+        }
+    }
+
+    function eksekusiAjaxVoucher(kode, voucherId) {
+        const msgDiv = document.getElementById('voucher-message');
+        const btn = document.getElementById('btn-terapkan-voucher');
+        const btnKonfirm = document.getElementById('btn-konfirmasi-voucher');
 
         btn.innerText = 'Cek...';
         btn.disabled = true;
+        if (btnKonfirm) btnKonfirm.disabled = true;
+
+        const vendorSubtotals = hitungSubtotalPerVendor();
 
         fetch('{{ route('customer.checkout.cek_voucher') }}', {
             method: 'POST',
@@ -544,6 +815,7 @@
             },
             body: JSON.stringify({
                 kode_voucher: kode,
+                voucher_id: voucherId,
                 vendor_ids: vendorSubtotals
             })
         })
@@ -551,41 +823,95 @@
         .then(data => {
             btn.innerText = 'Pakai';
             btn.disabled = false;
+            if (btnKonfirm) btnKonfirm.disabled = false;
             msgDiv.style.display = 'block';
 
             if (data.success) {
                 msgDiv.innerText = '✅ ' + data.message;
                 msgDiv.style.color = '#10b981';
-                
-                // Simpan data voucher (potongan dan ID)
+
+                voucherDataTerpilih = data;
+                selectedVoucherCardId = String(data.voucher_id);
                 diskonAktif = data.potongan;
+
                 document.getElementById('input_voucher_data_json').value = JSON.stringify({
                     potongan: data.potongan,
                     vendor_id: data.vendor_id,
-                    voucher_id: data.voucher_id
+                    voucher_id: data.voucher_id,
+                    kode_voucher: data.kode_voucher
                 });
-                
+
+                // Update Trigger Card pada halaman Checkout
                 const card = document.getElementById('card-voucher');
-                const label = document.getElementById('voucher-status-label');
+                const mainTitle = document.getElementById('voucher-main-title');
+                const subTitle = document.getElementById('voucher-sub-title');
+                const badgeHeader = document.getElementById('voucher-header-badge');
+                const actionText = document.getElementById('voucher-action-text');
+                const appliedBar = document.getElementById('voucher-applied-bar');
+                const appliedDetail = document.getElementById('voucher-applied-detail');
+                const iconBox = document.getElementById('voucher-icon-box');
+
                 card.style.borderColor = '#0ea5e9';
                 card.style.background = '#f0f9ff';
-                label.innerHTML = '<span style="background: #0284c7; color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;">✓ POTONGAN ' + formatRp(data.potongan) + '</span>';
-                
+                iconBox.style.background = '#0284c7';
+                iconBox.style.color = 'white';
+
+                mainTitle.innerHTML = `<span style="color: #0284c7; font-weight: 800;">✓ Voucher ${data.kode_voucher}</span>`;
+                subTitle.innerText = `Hemat ${formatRp(data.potongan)} (${data.vendor_name})`;
+                badgeHeader.style.display = 'inline-block';
+                actionText.innerText = 'Ubah';
+
+                appliedBar.style.display = 'flex';
+                appliedDetail.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> Potongan ${formatRp(data.potongan)} berhasil diterapkan`;
+
+                evaluasiKelayakanVoucher();
                 hitungSemuaTotal();
+                setTimeout(tutupModalVoucher, 400);
             } else {
                 msgDiv.innerText = '❌ ' + data.message;
                 msgDiv.style.color = '#ef4444';
-                diskonAktif = 0;
-                document.getElementById('input_voucher_data_json').value = '';
-                hitungSemuaTotal();
             }
         })
         .catch(error => {
             btn.innerText = 'Pakai';
             btn.disabled = false;
+            if (btnKonfirm) btnKonfirm.disabled = false;
             msgDiv.innerText = '⚠️ Terjadi kesalahan koneksi.';
             msgDiv.style.display = 'block';
         });
+    }
+
+    function batalkanVoucher() {
+        voucherDataTerpilih = null;
+        selectedVoucherCardId = null;
+        diskonAktif = 0;
+        document.getElementById('input_voucher_data_json').value = '';
+        document.getElementById('input_kode_voucher_field').value = '';
+
+        const card = document.getElementById('card-voucher');
+        const mainTitle = document.getElementById('voucher-main-title');
+        const subTitle = document.getElementById('voucher-sub-title');
+        const badgeHeader = document.getElementById('voucher-header-badge');
+        const actionText = document.getElementById('voucher-action-text');
+        const appliedBar = document.getElementById('voucher-applied-bar');
+        const iconBox = document.getElementById('voucher-icon-box');
+
+        card.style.borderColor = '#e2e8f0';
+        card.style.background = 'white';
+        iconBox.style.background = '#f0f9ff';
+        iconBox.style.color = '#0284c7';
+
+        mainTitle.innerText = 'Gunakan Voucher Toko';
+        subTitle.innerText = 'Pilih voucher akun Anda atau ketik kode';
+        badgeHeader.style.display = 'none';
+        actionText.innerText = 'Pilih';
+        appliedBar.style.display = 'none';
+
+        const msgDiv = document.getElementById('voucher-message');
+        if (msgDiv) msgDiv.style.display = 'none';
+
+        evaluasiKelayakanVoucher();
+        hitungSemuaTotal();
     }
 
     function updateJaminanExclusive() {
@@ -881,6 +1207,7 @@
 
         tutupModalJadwal();
         hitungSemuaTotal();
+        evaluasiKelayakanVoucher();
     }
 
     let currentMetode = 'QRIS';
@@ -948,6 +1275,11 @@
     window.onload = function() {
         hitungSemuaTotal();
         updateJaminanExclusive();
+
+        const vField = document.getElementById('input_kode_voucher_field');
+        if (vField && vField.value.trim() !== '') {
+            eksekusiAjaxVoucher(vField.value.trim().toUpperCase(), null);
+        }
     };
 </script>
 @endsection

@@ -150,7 +150,7 @@ class CustomerDashboardController extends Controller
         $mutations = MomentCoinLedger::where('user_id', $user->id)
             ->with([
                 'moment:id,caption,thumbnail_url,media_url',
-                'interactor:id,name,username,foto_profil',
+                'interactor:id,name,foto_profil',
                 'order:id,kode_booking,total_biaya'
             ])
             ->orderBy('created_at', 'desc')

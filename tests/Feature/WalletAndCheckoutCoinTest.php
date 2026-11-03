@@ -99,6 +99,37 @@ class WalletAndCheckoutCoinTest extends TestCase
         $this->assertNotEmpty($data['data']['mutations']['data']);
     }
 
+    public function test_customer_wallet_coins_web_view_loads_with_interactor_mutations(): void
+    {
+        $user = User::create([
+            'name' => 'Wallet Owner',
+            'email' => 'owner_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+
+        $interactor = User::create([
+            'name' => 'Interactor Friend',
+            'email' => 'interactor_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+
+        MomentCoinLedger::create([
+            'user_id' => $user->id,
+            'interactor_id' => $interactor->id,
+            'interaction_type' => 'like_mint',
+            'coins_amount' => 5,
+            'remaining_lot_balance' => 5,
+            'minted_coin' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('customer.wallet.coins'));
+        $response->assertStatus(200);
+        $response->assertSee('Dompet Koin');
+        $response->assertSee('Riwayat Mutasi Koin');
+    }
+
     public function test_calculate_discount_api_endpoint(): void
     {
         $user = User::create([
