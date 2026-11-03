@@ -34,8 +34,11 @@
          * @returns {Promise<boolean>} True jika pengguna menekan Izinkan
          */
         async requestWithEducation() {
-            // Jika izin sudah pernah diberikan sebelumnya, langsung loloskan tanpa menampilkan modal mengulang-ulang
+            // Jika izin sudah pernah diberikan sebelumnya, langsung loloskan tanpa menampilkan modal berulang-ulang
             try {
+                if (localStorage.getItem('camera_permission_granted') === '1') {
+                    return true;
+                }
                 const currentStatus = await this.checkStatus();
                 if (currentStatus === 'granted') {
                     localStorage.setItem('camera_permission_granted', '1');
@@ -115,6 +118,7 @@
          * @param {string} errorType 
          */
         showPermissionDeniedGuide(errorType = 'NotAllowedError') {
+            try { localStorage.removeItem('camera_permission_granted'); } catch (e) {}
             let modal = document.getElementById('camera-denied-guide-modal');
             if (!modal) {
                 modal = document.createElement('div');

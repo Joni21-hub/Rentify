@@ -20,7 +20,7 @@
                 torchActive: false,
                 facingMode: 'environment', // 'environment' (belakang) | 'user' (depan)
                 isMirrored: false,         // Mirror horizontal untuk selfie/preview/capture
-                aspectRatio: 'original',   // 'original' (Utuh / 100% Sensor Asli Bebas Potong) | 'standard' (3:4) | 'portrait' (9:16) | 'square' (1:1)
+                aspectRatio: 'portrait',   // 'portrait' (9:16 Layar Penuh Default) | 'standard' (3:4) | 'square' (1:1) | 'original' (Utuh)
                 zoom: 1.0,
                 isRecording: false,
                 recordingElapsed: 0,   // detik saat ini pada klip yang sedang direkam
@@ -172,9 +172,9 @@
         }
 
         toggleAspectRatio() {
-            // Siklus rasio kamera: Utuh (Asli / 100% Bebas Potong) -> 9:16 (Layar Penuh Story) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> Utuh
-            const sequence = ['original', 'portrait', 'standard', 'square'];
-            const cur = this.state.aspectRatio || 'original';
+            // Siklus rasio kamera: 9:16 (Layar Penuh Story) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> Utuh (Asli / 100% Bebas Potong) -> 9:16
+            const sequence = ['portrait', 'standard', 'square', 'original'];
+            const cur = this.state.aspectRatio || 'portrait';
             const curIndex = sequence.indexOf(cur);
             const nextIndex = curIndex >= 0 ? (curIndex + 1) % sequence.length : 0;
             const next = sequence[nextIndex];
@@ -185,8 +185,8 @@
         getAspectRatioDisplay() {
             if (this.state.aspectRatio === 'square' || this.state.aspectRatio === '1:1') return '1:1';
             if (this.state.aspectRatio === 'standard' || this.state.aspectRatio === '3:4') return '3:4';
-            if (this.state.aspectRatio === 'portrait' || this.state.aspectRatio === '9:16') return '9:16';
-            return 'Utuh';
+            if (this.state.aspectRatio === 'original' || this.state.aspectRatio === 'utuh') return 'Utuh';
+            return '9:16';
         }
 
         setZoom(zoom) {

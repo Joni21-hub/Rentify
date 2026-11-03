@@ -968,6 +968,17 @@
         const btnConfirmModal = document.getElementById('btn-confirm-modal');
         const formSewaSekarang = document.getElementById('form-sewa-sekarang');
 
+        // ELEMEN & STATE KERANJANG
+        const formAddToCart = document.getElementById('form-add-to-cart');
+        const btnAddToCart = document.getElementById('btn-add-to-cart');
+        const btnAddText = document.getElementById('btn-add-text');
+        const btnAddIcon = document.getElementById('btn-add-icon');
+        const headerCartBtn = document.getElementById('btn-header-cart');
+        const headerCartBadge = document.getElementById('header-cart-badge');
+        const cartToast = document.getElementById('cart-toast');
+        const cartToastText = document.getElementById('cart-toast-text');
+        let toastTimer = null;
+
         // =====================================================================
         // KALENDER INTERAKTIF RENTIFY & DETEKSI TANGGAL PENUH (GLASS DESIGN)
         // =====================================================================
@@ -1255,16 +1266,6 @@
         }
 
         // LOGIKA ANIMASI MASUK KERANJANG & AJAX
-        const formAddToCart = document.getElementById('form-add-to-cart');
-        const btnAddToCart = document.getElementById('btn-add-to-cart');
-        const btnAddText = document.getElementById('btn-add-text');
-        const btnAddIcon = document.getElementById('btn-add-icon');
-        const headerCartBtn = document.getElementById('btn-header-cart');
-        const headerCartBadge = document.getElementById('header-cart-badge');
-        const cartToast = document.getElementById('cart-toast');
-        const cartToastText = document.getElementById('cart-toast-text');
-        let toastTimer = null;
-
         function showCartToast(msg) {
             if (!cartToast) return;
             if (toastTimer) clearTimeout(toastTimer);
