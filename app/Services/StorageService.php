@@ -192,6 +192,124 @@ class StorageService
     }
 
     /**
+     * Menyimpan berkas media Momen dengan mempertahankan master asli (100% untouched, zero generation loss)
+     * dan menghasilkan turunan (derivatives/variants: feed & thumbnail) secara deterministik dari master.
+     *
+     * @param UploadedFile $file
+     * @param string $mediaType 'image' | 'video'
+     * @return array Metadata fidelity lengkap
+     */
+    public static function storeMomentMediaMaster(UploadedFile $file, string $mediaType = 'image'): array
+    {
+        self::assertWritable();
+
+        $realPath = $file->getRealPath();
+        $sha256Hash = hash_file('sha256', $realPath) ?: hash('sha256', (string) file_get_contents($realPath));
+        $ext = strtolower((string) ($file->getClientOriginalExtension() ?: $file->guessExtension() ?: ($mediaType === 'video' ? 'mp4' : 'jpg')));
+
+        // 1. Simpan MASTER 100% ASLI tanpa kompresi / tanpa re-encoding (Invarian 1 & Invarian 3)
+        $masterFilename = Str::random(32) . '_' . substr($sha256Hash, 0, 8) . '.' . $ext;
+        $masterRelativePath = 'moments/masters/' . $masterFilename;
+        $rawBytes = file_get_contents($realPath);
+        if ($rawBytes === false) {
+            throw new \RuntimeException("Gagal membaca berkas master: {$realPath}");
+        }
+        Storage::disk('public')->put($masterRelativePath, $rawBytes);
+        $masterUrl = self::getPublicUrl($masterRelativePath);
+
+        $width = null;
+        $height = null;
+        $aspectRatioStr = null;
+        $feedRelativePath = $masterRelativePath;
+        $feedUrl = $masterUrl;
+        $thumbnailUrl = null;
+        $variants = [
+            'master' => $masterUrl,
+        ];
+
+        if ($mediaType === 'image' && self::isCompressibleImage($file)) {
+            try {
+                // Ekstrak dimensi resolusi asli dari master
+                $imgInfo = @getimagesize($realPath);
+                if ($imgInfo && isset($imgInfo[0], $imgInfo[1])) {
+                    $width = (int) $imgInfo[0];
+                    $height = (int) $imgInfo[1];
+                }
+
+                $manager = new ImageManager(new Driver());
+                $image = $manager->read($realPath);
+                if (!$width || !$height) {
+                    $width = $image->width();
+                    $height = $image->height();
+                }
+
+                if ($width && $height) {
+                    $ratio = $width / $height;
+                    if (abs($ratio - (9 / 16)) < 0.05) {
+                        $aspectRatioStr = '9:16';
+                    } elseif (abs($ratio - (3 / 4)) < 0.05) {
+                        $aspectRatioStr = '3:4';
+                    } elseif (abs($ratio - 1.0) < 0.05) {
+                        $aspectRatioStr = '1:1';
+                    } elseif (abs($ratio - (4 / 5)) < 0.05) {
+                        $aspectRatioStr = '4:5';
+                    } elseif (abs($ratio - (16 / 9)) < 0.05) {
+                        $aspectRatioStr = '16:9';
+                    } else {
+                        $aspectRatioStr = 'custom';
+                    }
+                }
+
+                // Derivative 1: Feed WebP (resolusi optimal s/d 2560px, Q=92)
+                $feedImage = clone $image;
+                if ($width > 2560 || $height > 2560) {
+                    $feedImage->scaleDown(2560, 2560);
+                }
+                $encodedFeed = $feedImage->toWebp(92);
+                $feedFilename = Str::random(32) . '_feed.webp';
+                $feedRelativePath = 'moments/variants/' . $feedFilename;
+                Storage::disk('public')->put($feedRelativePath, (string) $encodedFeed);
+                $feedUrl = self::getPublicUrl($feedRelativePath);
+                $variants['feed'] = $feedUrl;
+
+                // Derivative 2: Thumbnail WebP (resolusi max 480px, Q=80)
+                $thumbImage = clone $image;
+                $thumbImage->scaleDown(480, 480);
+                $encodedThumb = $thumbImage->toWebp(80);
+                $thumbFilename = Str::random(32) . '_thumb.webp';
+                $thumbRelativePath = 'moments/variants/' . $thumbFilename;
+                Storage::disk('public')->put($thumbRelativePath, (string) $encodedThumb);
+                $thumbnailUrl = self::getPublicUrl($thumbRelativePath);
+                $variants['thumbnail'] = $thumbnailUrl;
+            } catch (\Throwable $err) {
+                Log::warning("[StorageService] Gagal menghasilkan derivative gambar: " . $err->getMessage());
+                $feedUrl = $masterUrl;
+                $thumbnailUrl = $masterUrl;
+                $variants['feed'] = $masterUrl;
+                $variants['thumbnail'] = $masterUrl;
+            }
+        } elseif ($mediaType === 'video') {
+            $feedUrl = $masterUrl;
+            $thumbnailUrl = $masterUrl;
+            $variants['feed'] = $masterUrl;
+            $variants['thumbnail'] = $masterUrl;
+        }
+
+        return [
+            'master_path'   => $masterRelativePath,
+            'master_url'    => $masterUrl,
+            'master_hash'   => $sha256Hash,
+            'media_path'    => $feedRelativePath,
+            'media_url'     => $feedUrl,
+            'thumbnail_url' => $thumbnailUrl,
+            'variants'      => $variants,
+            'width'         => $width,
+            'height'        => $height,
+            'aspect_ratio'  => $aspectRatioStr,
+        ];
+    }
+
+    /**
      * Menghapus berkas dari Cloudinary atau disk publik lokal.
      *
      * @param string|null $pathOrUrl
@@ -236,9 +354,13 @@ class StorageService
             return false;
         }
 
-        // Abaikan jika URL eksternal
+        // Jika berupa URL, periksa apakah mengarah ke disk lokal (/storage/)
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return false;
+            if (str_contains($path, '/storage/')) {
+                $path = substr($path, strpos($path, '/storage/') + 9);
+            } else {
+                return false;
+            }
         }
 
         $clean = (string) preg_replace('#^(public/|storage/)+#', '', ltrim($path, '/'));

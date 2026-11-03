@@ -680,8 +680,8 @@
                     }
                     return `
                         <div class="carousel-slide relative w-full min-w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
-                            <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
-                            <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                            <img src="${m.thumbnail_url || url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none select-none" loading="lazy" decoding="async" alt="" aria-hidden="true" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                            <img src="${url}" data-master-url="${m.master_url || url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" decoding="async" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         </div>
                     `;
                 }).join('');
@@ -744,10 +744,10 @@
                 const fallbackMomentImg = 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg';
                 mediaHtml = `
                     <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
-                        <!-- Ambient Blurred Backdrop -->
-                        <img src="${m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                        <!-- Ambient Blurred Backdrop (menggunakan thumbnail ringan untuk menghentikan double-loading) -->
+                        <img src="${m.thumbnail_url || m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-110 pointer-events-none" loading="lazy" decoding="async" alt="" aria-hidden="true" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         <!-- High-res Sharp Image 100% HD -->
-                        <img src="${m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" class="relative z-10 w-full h-full object-contain pointer-events-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                        <img src="${m.media_url}" data-master-url="${m.master_url || m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" class="relative z-10 w-full h-full object-contain pointer-events-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" decoding="async" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                     </div>
                 `;
             }

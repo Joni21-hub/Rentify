@@ -20,6 +20,13 @@ class Moment extends Model
         'media_url',
         'thumbnail_url',
         'media_urls',
+        'master_url',
+        'master_hash',
+        'variants',
+        'width',
+        'height',
+        'aspect_ratio',
+        'blurhash',
         'media_type',
         'video_duration_seconds',
         'caption',
@@ -34,6 +41,9 @@ class Moment extends Model
 
     protected $casts = [
         'media_urls'             => 'array',
+        'variants'               => 'array',
+        'width'                  => 'integer',
+        'height'                 => 'integer',
         'video_duration_seconds' => 'decimal:2',
         'likes_count'            => 'integer',
         'comments_count'         => 'integer',
@@ -54,12 +64,22 @@ class Moment extends Model
             if (!empty($moment->media_url)) {
                 \App\Services\StorageService::deleteFile($moment->media_url);
             }
+            if (!empty($moment->master_url) && $moment->master_url !== $moment->media_url) {
+                \App\Services\StorageService::deleteFile($moment->master_url);
+            }
             if (!empty($moment->thumbnail_url)) {
                 \App\Services\StorageService::deleteFile($moment->thumbnail_url);
             }
             if (!empty($moment->media_urls) && is_array($moment->media_urls)) {
                 foreach ($moment->media_urls as $url) {
                     \App\Services\StorageService::deleteFile($url);
+                }
+            }
+            if (!empty($moment->variants) && is_array($moment->variants)) {
+                foreach ($moment->variants as $variantUrl) {
+                    if (is_string($variantUrl)) {
+                        \App\Services\StorageService::deleteFile($variantUrl);
+                    }
                 }
             }
         });

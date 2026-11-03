@@ -611,6 +611,33 @@
 
             let naturalWidth = this.videoEl.videoWidth || 1080;
             let naturalHeight = this.videoEl.videoHeight || 1920;
+            let sourceImage = this.videoEl;
+            let bitmapToClose = null;
+
+            // Step 3: Hardware Sensor Capture via ImageCapture API jika tersedia
+            // Mengambil still snapshot langsung dari sensor kamera native (12 MP, 48 MP, dll.)
+            const videoTrack = (this.stream && this.stream.getVideoTracks) ? this.stream.getVideoTracks()[0] : null;
+            if (window.ImageCapture && videoTrack && videoTrack.readyState === 'live') {
+                try {
+                    const imageCapture = new window.ImageCapture(videoTrack);
+                    const photoSettings = {};
+                    if (this.isTorchActive) {
+                        photoSettings.fillLightMode = 'flash';
+                    }
+                    const photoBlob = await imageCapture.takePhoto(photoSettings);
+                    if (photoBlob && photoBlob.size > 0 && typeof createImageBitmap === 'function') {
+                        const imgBitmap = await createImageBitmap(photoBlob);
+                        if (imgBitmap && imgBitmap.width > 0 && imgBitmap.height > 0) {
+                            sourceImage = imgBitmap;
+                            bitmapToClose = imgBitmap;
+                            naturalWidth = imgBitmap.width;
+                            naturalHeight = imgBitmap.height;
+                        }
+                    }
+                } catch (captureErr) {
+                    console.info('[CameraEngine] ImageCapture takePhoto fallback ke video frame preview:', captureErr);
+                }
+            }
 
             const canvas = document.createElement('canvas');
             canvas.width = naturalWidth;
@@ -642,9 +669,13 @@
                 const cropH = naturalHeight / zoomLevel;
                 const cropX = (naturalWidth - cropW) / 2;
                 const cropY = (naturalHeight - cropH) / 2;
-                ctx.drawImage(this.videoEl, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(sourceImage, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
             } else {
-                ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            if (bitmapToClose && typeof bitmapToClose.close === 'function') {
+                try { bitmapToClose.close(); } catch (e) {}
             }
 
             // Potong ke Rasio Kamera: 9:16 (Layar Penuh), 3:4 (Standar Ponsel), 1:1 (Persegi), atau Utuh (Original)
@@ -784,9 +815,22 @@
                 }
             }
 
+            // Hitung adaptive video bitrate sesuai target resolusi stream (8-16 Mbps untuk FHD/4K, 5-6 Mbps untuk HD)
+            const vidW = this.videoEl ? (this.videoEl.videoWidth || 1080) : 1080;
+            const vidH = this.videoEl ? (this.videoEl.videoHeight || 1920) : 1920;
+            const pixelCount = vidW * vidH;
+            let targetVideoBitrate = 8000000; // 8 Mbps default FHD high fidelity
+            if (pixelCount >= 3840 * 2160) {
+                targetVideoBitrate = 16000000; // 16 Mbps untuk 4K UHD
+            } else if (pixelCount >= 1080 * 1920) {
+                targetVideoBitrate = 10000000; // 10 Mbps untuk 1080p60 FHD
+            } else if (pixelCount <= 720 * 1280) {
+                targetVideoBitrate = 5000000; // 5 Mbps untuk 720p HD
+            }
+
             const options = {
-                videoBitsPerSecond: 6000000, // 6 Mbps: Kualitas Full HD jernih optimal tanpa membebani encoder hardware
-                audioBitsPerSecond: 128000,
+                videoBitsPerSecond: targetVideoBitrate,
+                audioBitsPerSecond: 160000,
             };
             if (selectedMime) {
                 options.mimeType = selectedMime;

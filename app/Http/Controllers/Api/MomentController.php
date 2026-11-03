@@ -112,6 +112,13 @@ class MomentController extends Controller
                 'media_url'              => $m->media_url,
                 'thumbnail_url'          => $m->thumbnail_url,
                 'media_urls'             => $m->media_urls ?: ($m->media_url ? [$m->media_url] : []),
+                'master_url'             => $m->master_url,
+                'master_hash'            => $m->master_hash,
+                'variants'               => $m->variants,
+                'width'                  => $m->width,
+                'height'                 => $m->height,
+                'aspect_ratio'           => $m->aspect_ratio,
+                'blurhash'               => $m->blurhash,
                 'media_type'             => $m->media_type,
                 'video_duration_seconds' => $m->video_duration_seconds,
                 'caption'                => $m->caption,
@@ -188,6 +195,13 @@ class MomentController extends Controller
                 'media_url'              => $moment->media_url,
                 'thumbnail_url'          => $moment->thumbnail_url,
                 'media_urls'             => $moment->media_urls ?: ($moment->media_url ? [$moment->media_url] : []),
+                'master_url'             => $moment->master_url,
+                'master_hash'            => $moment->master_hash,
+                'variants'               => $moment->variants,
+                'width'                  => $moment->width,
+                'height'                 => $moment->height,
+                'aspect_ratio'           => $moment->aspect_ratio,
+                'blurhash'               => $moment->blurhash,
                 'media_type'             => $moment->media_type,
                 'video_duration_seconds' => $moment->video_duration_seconds,
                 'caption'                => $moment->caption,
@@ -235,10 +249,12 @@ class MomentController extends Controller
         $thumbnailUrl = null;
         $videoDuration = null;
 
+        $primaryUploadResult = null;
         if (is_array($mediaInput)) {
             // Multi-media upload (Carousel Post - Foto, Video, atau Campuran bergaya Instagram)
             $hasVideo = false;
             $hasImage = false;
+            $uploadResults = [];
             foreach ($mediaInput as $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
                     $mime = $file->getMimeType() ?: '';
@@ -256,6 +272,7 @@ class MomentController extends Controller
                         $uploadResult = $this->uploadMediaToCloudinary($file, 'image');
                     }
 
+                    $uploadResults[] = $uploadResult;
                     if (!empty($uploadResult['secure_url'])) {
                         $mediaUrls[] = $uploadResult['secure_url'];
                     }
@@ -269,6 +286,7 @@ class MomentController extends Controller
                 ], 422);
             }
 
+            $primaryUploadResult = $uploadResults[0] ?? [];
             $primaryMediaUrl = $mediaUrls[0];
             $urlPath = parse_url($primaryMediaUrl, PHP_URL_PATH);
             $primaryExt = is_string($urlPath) ? strtolower(pathinfo($urlPath, PATHINFO_EXTENSION)) : '';
@@ -294,9 +312,9 @@ class MomentController extends Controller
             }
 
             // Upload media ke Cloudinary dengan optimasi f_auto, q_auto dan fallback HEIC
-            $uploadResult = $this->uploadMediaToCloudinary($file, $mediaType);
-            $primaryMediaUrl = $uploadResult['secure_url'];
-            $thumbnailUrl = $uploadResult['thumbnail_url'];
+            $primaryUploadResult = $this->uploadMediaToCloudinary($file, $mediaType);
+            $primaryMediaUrl = $primaryUploadResult['secure_url'];
+            $thumbnailUrl = $primaryUploadResult['thumbnail_url'];
             $mediaUrls = [$primaryMediaUrl];
 
             if ($mediaType === 'video') {
@@ -304,11 +322,24 @@ class MomentController extends Controller
             }
         }
 
+        $masterUrl = $primaryUploadResult['master_url'] ?? $primaryMediaUrl;
+        $masterHash = $primaryUploadResult['master_hash'] ?? null;
+        $variants = $primaryUploadResult['variants'] ?? null;
+        $width = $primaryUploadResult['width'] ?? null;
+        $height = $primaryUploadResult['height'] ?? null;
+        $aspectRatio = $primaryUploadResult['aspect_ratio'] ?? null;
+
         $moment = Moment::create([
             'user_id'                => $user->id,
             'media_url'              => $primaryMediaUrl,
             'thumbnail_url'          => $thumbnailUrl,
             'media_urls'             => $mediaUrls,
+            'master_url'             => $masterUrl,
+            'master_hash'            => $masterHash,
+            'variants'               => $variants,
+            'width'                  => $width,
+            'height'                 => $height,
+            'aspect_ratio'           => $aspectRatio,
             'media_type'             => $mediaType,
             'video_duration_seconds' => $videoDuration,
             'caption'                => $request->input('caption'),
@@ -630,38 +661,53 @@ class MomentController extends Controller
                     $rawBytes = (string) file_get_contents($file->getRealPath());
                     \Illuminate\Support\Facades\Storage::disk('public')->put('moments/' . $filename, $rawBytes);
                     $path = 'moments/' . $filename;
-                } else {
-                    $path = \App\Services\StorageService::storePublicFile($file, 'moments', null, 100, 3840);
+                    $fullUrl = \App\Services\StorageService::getPublicUrl($path);
+                    return [
+                        'secure_url'    => $fullUrl,
+                        'master_url'    => $fullUrl,
+                        'master_hash'   => hash('sha256', $rawBytes),
+                        'thumbnail_url' => $mediaType === 'video' ? $fullUrl : null,
+                        'variants'      => ['master' => $fullUrl],
+                        'width'         => null,
+                        'height'        => null,
+                        'aspect_ratio'  => null,
+                    ];
                 }
-                $fullUrl = \App\Services\StorageService::getPublicUrl($path);
+
+                $fidelity = \App\Services\StorageService::storeMomentMediaMaster($file, $mediaType);
                 return [
-                    'secure_url'    => $fullUrl,
-                    'thumbnail_url' => $mediaType === 'video' ? $fullUrl : null,
+                    'secure_url'    => $fidelity['media_url'],
+                    'master_url'    => $fidelity['master_url'],
+                    'master_hash'   => $fidelity['master_hash'],
+                    'thumbnail_url' => $fidelity['thumbnail_url'],
+                    'variants'      => $fidelity['variants'],
+                    'width'         => $fidelity['width'],
+                    'height'        => $fidelity['height'],
+                    'aspect_ratio'  => $fidelity['aspect_ratio'],
                 ];
             } catch (\Throwable $e) {
                 return [
                     'secure_url'    => 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg',
+                    'master_url'    => 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg',
+                    'master_hash'   => null,
                     'thumbnail_url' => null,
+                    'variants'      => null,
+                    'width'         => null,
+                    'height'        => null,
+                    'aspect_ratio'  => null,
                 ];
             }
         }
 
         try {
             $cloudinary = new \Cloudinary\Cloudinary($cloudinaryUrl);
-            $qualityConfig = (int) config('filesystems.image_compression_quality', env('IMAGE_COMPRESSION_QUALITY', 100));
-            $qualityValue = ($qualityConfig >= 100) ? 'auto:best' : (string) $qualityConfig;
+            $sha256Hash = hash_file('sha256', $file->getRealPath()) ?: '';
 
+            // Master disimpan 100% utuh tanpa destructive transformation (Invarian 1 & 2)
             $options = [
-                'folder'        => 'rentify/moments',
+                'folder'        => 'rentify/moments/masters',
                 'resource_type' => $mediaType === 'video' ? 'video' : 'image',
             ];
-
-            if ($mediaType !== 'video') {
-                $options['transformation'] = [
-                    'quality'      => $qualityValue,
-                    'fetch_format' => 'auto',
-                ];
-            }
 
             if (in_array($ext, ['heic', 'heif'])) {
                 $options['format'] = 'jpg';
@@ -673,33 +719,67 @@ class MomentController extends Controller
                 $uploadResult = $cloudinary->uploadApi()->upload($file->getRealPath(), $options);
             }
 
-            $secureUrl = $uploadResult['secure_url'] ?? '';
+            $masterUrl = $uploadResult['secure_url'] ?? '';
+            $cloudName = $cloudinary->configuration->cloud->cloudName ?? 'fnf8f1pm';
+            $publicId = $uploadResult['public_id'] ?? '';
+            $width = $uploadResult['width'] ?? null;
+            $height = $uploadResult['height'] ?? null;
             $thumbnailUrl = null;
+            $feedUrl = $masterUrl;
 
-            if ($mediaType === 'video' && isset($uploadResult['public_id'])) {
-                $cloudName = $cloudinary->configuration->cloud->cloudName ?? 'fnf8f1pm';
-                $thumbnailUrl = "https://res.cloudinary.com/{$cloudName}/video/upload/c_thumb,w_400/{$uploadResult['public_id']}.jpg";
+            if ($mediaType === 'video') {
+                if ($publicId) {
+                    $thumbnailUrl = "https://res.cloudinary.com/{$cloudName}/video/upload/c_thumb,w_400/{$publicId}.jpg";
+                }
+            } else {
+                if ($publicId) {
+                    $feedUrl = "https://res.cloudinary.com/{$cloudName}/image/upload/f_auto,q_auto:best/{$publicId}.{$ext}";
+                    $thumbnailUrl = "https://res.cloudinary.com/{$cloudName}/image/upload/c_scale,w_480,f_auto,q_auto/{$publicId}.{$ext}";
+                }
             }
 
+            $variants = [
+                'master'    => $masterUrl,
+                'feed'      => $feedUrl,
+                'thumbnail' => $thumbnailUrl,
+            ];
+
             return [
-                'secure_url'    => $secureUrl,
+                'secure_url'    => $feedUrl,
+                'master_url'    => $masterUrl,
+                'master_hash'   => $sha256Hash,
                 'thumbnail_url' => $thumbnailUrl,
+                'variants'      => $variants,
+                'width'         => $width,
+                'height'        => $height,
+                'aspect_ratio'  => ($width && $height) ? (($width / $height > 1.2) ? 'landscape' : (($height / $width > 1.5) ? '9:16' : '3:4')) : null,
             ];
         } catch (\Throwable $e) {
             Log::error("Cloudinary upload failed: " . $e->getMessage());
 
             try {
-                $path = \App\Services\StorageService::storePublicFile($file, 'moments', null, 100, 3840);
-                $fullUrl = \App\Services\StorageService::getPublicUrl($path);
+                $fidelity = \App\Services\StorageService::storeMomentMediaMaster($file, $mediaType);
                 return [
-                    'secure_url'    => $fullUrl,
-                    'thumbnail_url' => $mediaType === 'video' ? $fullUrl : null,
+                    'secure_url'    => $fidelity['media_url'],
+                    'master_url'    => $fidelity['master_url'],
+                    'master_hash'   => $fidelity['master_hash'],
+                    'thumbnail_url' => $fidelity['thumbnail_url'],
+                    'variants'      => $fidelity['variants'],
+                    'width'         => $fidelity['width'],
+                    'height'        => $fidelity['height'],
+                    'aspect_ratio'  => $fidelity['aspect_ratio'],
                 ];
             } catch (\Throwable $fallbackEx) {
                 Log::error("Local moments fallback failed: " . $fallbackEx->getMessage());
                 return [
                     'secure_url'    => 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg',
+                    'master_url'    => 'https://res.cloudinary.com/fnf8f1pm/image/upload/v1792881951/rentify/moments/naikdt1lgug5qgylrk1l.jpg',
+                    'master_hash'   => null,
                     'thumbnail_url' => null,
+                    'variants'      => null,
+                    'width'         => null,
+                    'height'        => null,
+                    'aspect_ratio'  => null,
                 ];
             }
         }
