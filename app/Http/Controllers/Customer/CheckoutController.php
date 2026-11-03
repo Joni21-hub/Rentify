@@ -143,6 +143,14 @@ class CheckoutController extends Controller
             }
             
             $keranjangs = $query->get();
+
+            if ($request->filled('durasi_sewa') && !is_array($request->durasi_sewa) && (int) $request->durasi_sewa > 0) {
+                $durasiDipilih = (int) $request->durasi_sewa;
+                foreach ($keranjangs as $kItem) {
+                    $kItem->durasi_sewa = $durasiDipilih;
+                    $kItem->save();
+                }
+            }
         }
 
         if ($keranjangs->isEmpty()) {

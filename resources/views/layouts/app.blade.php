@@ -43,7 +43,6 @@
     @stack('head')
 </head>
 <body class="text-gray-800 antialiased">
-    @include('partials.app-splash')
 
     <!-- Area Konten Utama -->
     <main>

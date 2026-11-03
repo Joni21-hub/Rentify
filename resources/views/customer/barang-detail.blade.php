@@ -734,7 +734,8 @@
                     @csrf
                     <input type="hidden" name="barang_id" value="{{ $barang->id }}">
                     <input type="hidden" name="jumlah" value="1">
-                    <button type="submit" id="btn-add-to-cart" class="w-full bg-sky-50 text-sky-600 border border-sky-300 font-extrabold text-[13px] py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-100 transition active:scale-95">
+                    <input type="hidden" name="durasi_sewa" id="cart-durasi" value="1">
+                    <button type="button" id="btn-add-to-cart" class="w-full bg-sky-50 text-sky-600 border border-sky-300 font-extrabold text-[13px] py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-100 transition active:scale-95">
                         <i class="fa-solid fa-cart-plus" id="btn-add-icon"></i>
                         <span id="btn-add-text">Masukkan</span>
                     </button>
@@ -779,7 +780,7 @@
             <h3 class="text-white font-black text-[17px] flex items-center gap-2">
                 <i class="fa-regular fa-calendar-check text-xl"></i> Atur Jadwal Sewa
             </h3>
-            <p class="text-sky-100 text-xs font-medium mt-1">Tentukan tanggal mulai dan lama pemakaian.</p>
+            <p id="modal-booking-subtitle" class="text-sky-100 text-xs font-medium mt-1">Tentukan tanggal mulai dan lama pemakaian.</p>
         </div>
         <div class="p-6">
             <!-- PILIH TANGGAL MULAI DENGAN KALENDER INTERAKTIF RENTIFY -->
@@ -1155,17 +1156,46 @@
             });
         }
 
+        let bookingModalTarget = 'checkout';
+        const modalBookingSubtitle = document.getElementById('modal-booking-subtitle');
+
         if(btnSewaSekarang) {
             btnSewaSekarang.addEventListener('click', function(e) {
                 e.preventDefault();
+                bookingModalTarget = 'checkout';
+                if (btnConfirmModal) {
+                    btnConfirmModal.innerHTML = '<span>Lanjut Checkout</span>';
+                }
+                if (modalBookingSubtitle) {
+                    modalBookingSubtitle.textContent = 'Tentukan tanggal mulai dan lama pemakaian.';
+                }
                 bookingModal.classList.remove('hidden');
                 renderCalendar();
             });
+        }
 
+        if(btnAddToCart) {
+            btnAddToCart.addEventListener('click', function(e) {
+                e.preventDefault();
+                bookingModalTarget = 'cart';
+                if (btnConfirmModal) {
+                    btnConfirmModal.innerHTML = '<i class="fa-solid fa-cart-plus mr-1"></i> Masukkan Keranjang';
+                }
+                if (modalBookingSubtitle) {
+                    modalBookingSubtitle.textContent = 'Pilih jadwal dan durasi sewa untuk dimasukkan ke keranjang.';
+                }
+                bookingModal.classList.remove('hidden');
+                renderCalendar();
+            });
+        }
+
+        if(btnCloseModal) {
             btnCloseModal.addEventListener('click', function() {
                 bookingModal.classList.add('hidden');
             });
+        }
 
+        if(btnConfirmModal) {
             btnConfirmModal.addEventListener('click', function() {
                 const date = document.getElementById('modal-date').value;
                 const time = document.getElementById('modal-time').value;
@@ -1180,11 +1210,11 @@
                     return;
                 }
                 if(!time) {
-                    alert('⚠️ Silakan pilih Jam Pengambilan!');
+                    showMiniAlert('⚠️ Silakan pilih Jam Pengambilan!');
                     return;
                 }
                 if(!durasi || durasi < 1) {
-                    alert('⚠️ Durasi minimal 1 hari!');
+                    showMiniAlert('⚠️ Durasi minimal 1 hari!');
                     return;
                 }
 
@@ -1210,11 +1240,17 @@
                     return;
                 }
 
-                document.getElementById('direct-start-date').value = date;
-                document.getElementById('direct-start-time').value = time;
-                document.getElementById('direct-durasi').value = durasi;
-                
-                formSewaSekarang.submit();
+                if (bookingModalTarget === 'cart') {
+                    const cartDurasiInput = document.getElementById('cart-durasi');
+                    if (cartDurasiInput) cartDurasiInput.value = durasi;
+                    bookingModal.classList.add('hidden');
+                    executeAddToCart();
+                } else {
+                    document.getElementById('direct-start-date').value = date;
+                    document.getElementById('direct-start-time').value = time;
+                    document.getElementById('direct-durasi').value = durasi;
+                    formSewaSekarang.submit();
+                }
             });
         }
 
@@ -1317,62 +1353,67 @@
             }, 500);
         }
 
-        if (formAddToCart && btnAddToCart) {
+        function executeAddToCart() {
+            if (!btnAddToCart) return;
+
+            // 1. Jalankan animasi terbang ke keranjang
+            triggerFlyAnimation();
+
+            // 2. Efek haptic pada tombol
+            btnAddToCart.disabled = true;
+            const originalText = btnAddText ? btnAddText.textContent : 'Masukkan';
+            if (btnAddText) btnAddText.textContent = 'Memasukkan...';
+            if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-spinner fa-spin';
+
+            // 3. Request AJAX
+            const formData = new FormData(formAddToCart);
+            fetch(formAddToCart.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = "{{ route('login') }}";
+                    return;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.status === 'success') {
+                    if (btnAddText) btnAddText.textContent = 'Tersimpan ✓';
+                    if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-check text-sky-500';
+
+                    // Update angka badge keranjang
+                    if (headerCartBadge) {
+                        headerCartBadge.textContent = data.cart_count;
+                        headerCartBadge.classList.remove('hidden');
+                    }
+
+                    // Tampilkan toast notifikasi elegan
+                    showCartToast(data.message || 'Barang berhasil masuk keranjang');
+                }
+            })
+            .catch(err => {
+                console.error('Error add to cart:', err);
+                if (btnAddText) btnAddText.textContent = 'Gagal';
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    btnAddToCart.disabled = false;
+                    if (btnAddText) btnAddText.textContent = originalText;
+                    if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-cart-plus';
+                }, 1600);
+            });
+        }
+
+        if (formAddToCart) {
             formAddToCart.addEventListener('submit', function(e) {
                 e.preventDefault();
-
-                // 1. Jalankan animasi terbang ke keranjang
-                triggerFlyAnimation();
-
-                // 2. Efek haptic pada tombol
-                btnAddToCart.disabled = true;
-                const originalText = btnAddText ? btnAddText.textContent : 'Masukkan';
-                if (btnAddText) btnAddText.textContent = 'Memasukkan...';
-                if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-spinner fa-spin';
-
-                // 3. Request AJAX
-                const formData = new FormData(formAddToCart);
-                fetch(formAddToCart.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(res => {
-                    if (res.status === 401) {
-                        window.location.href = "{{ route('login') }}";
-                        return;
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data && data.status === 'success') {
-                        if (btnAddText) btnAddText.textContent = 'Tersimpan ✓';
-                        if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-check text-emerald-500';
-
-                        // Update angka badge keranjang
-                        if (headerCartBadge) {
-                            headerCartBadge.textContent = data.cart_count;
-                            headerCartBadge.classList.remove('hidden');
-                        }
-
-                        // Tampilkan toast notifikasi elegan
-                        showCartToast(data.message || 'Barang berhasil masuk keranjang');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error add to cart:', err);
-                    if (btnAddText) btnAddText.textContent = 'Gagal';
-                })
-                .finally(() => {
-                    setTimeout(() => {
-                        btnAddToCart.disabled = false;
-                        if (btnAddText) btnAddText.textContent = originalText;
-                        if (btnAddIcon) btnAddIcon.className = 'fa-solid fa-cart-plus';
-                    }, 1600);
-                });
+                executeAddToCart();
             });
         }
     });

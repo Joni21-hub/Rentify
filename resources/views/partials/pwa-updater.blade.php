@@ -41,6 +41,19 @@
         }, 900);
     }
 
+    // Global PWA Deferred Prompt Handler (Tangkap event instalasi browser)
+    if (!window.rentifyDeferredPrompt) {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.rentifyDeferredPrompt = e;
+            window.dispatchEvent(new CustomEvent('rentify:pwa-prompt-ready', { detail: e }));
+        });
+    }
+    window.addEventListener('appinstalled', () => {
+        window.rentifyDeferredPrompt = null;
+        console.log('[Rentify PWA] Aplikasi berhasil dipasang ke layar utama.');
+    });
+
     // 1. REGISTRASI SERVICE WORKER PINTAR (updateViaCache: 'none')
     if ('serviceWorker' in navigator) {
         // Tangkap saat Service Worker baru mengambil kendali (controllerchange)

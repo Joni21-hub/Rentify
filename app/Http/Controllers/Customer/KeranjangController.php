@@ -20,7 +20,20 @@ class KeranjangController extends Controller
         }
 
         $keranjangs = Keranjang::with('barang.vendor')->where('user_id', Auth::id())->latest()->get();
-        return view('customer.keranjang', compact('keranjangs'));
+
+        // Kumpulkan tanggal yang penuh dibooking untuk seluruh barang di keranjang
+        $fullyBookedByBarang = [];
+        $allFullyBookedDates = [];
+        foreach ($keranjangs as $item) {
+            if ($item->barang) {
+                $dates = $item->barang->getFullyBookedDates();
+                $fullyBookedByBarang[$item->id] = $dates;
+                $allFullyBookedDates = array_merge($allFullyBookedDates, $dates);
+            }
+        }
+        $fullyBookedDates = array_values(array_unique($allFullyBookedDates));
+
+        return view('customer.keranjang', compact('keranjangs', 'fullyBookedDates', 'fullyBookedByBarang'));
     }
 
     /**
@@ -43,19 +56,27 @@ class KeranjangController extends Controller
         $barang_id = $request->barang_id; 
         $barang = Barang::findOrFail($barang_id);
 
+        $durasi = (int) $request->input('durasi_sewa', 1);
+        if ($durasi < 1) $durasi = 1;
+        $jumlah = (int) $request->input('jumlah', 1);
+        if ($jumlah < 1) $jumlah = 1;
+
         $keranjangLama = Keranjang::where('user_id', $userId)
                                   ->where('barang_id', $barang_id)
                                   ->first();
 
         if ($keranjangLama) {
-            $keranjangLama->jumlah += 1;
+            $keranjangLama->jumlah += $jumlah;
+            if ($request->has('durasi_sewa')) {
+                $keranjangLama->durasi_sewa = $durasi;
+            }
             $keranjangLama->save();
         } else {
             Keranjang::create([
                 'user_id'     => $userId,
                 'barang_id'   => $barang_id,
-                'jumlah'      => 1,
-                'durasi_sewa' => 1
+                'jumlah'      => $jumlah,
+                'durasi_sewa' => $durasi
             ]);
         }
 

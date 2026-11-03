@@ -48,8 +48,6 @@
     </style>
 </head>
 <body class="min-h-screen w-full flex items-center justify-center p-4 py-8 relative overflow-x-hidden bg-flowing text-slate-800">
-    @include('partials.app-splash')
-
     <div class="w-full max-w-[380px] relative z-10 my-auto">
         
         <div class="glass-panel p-8 sm:p-10 relative">

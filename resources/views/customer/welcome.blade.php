@@ -47,6 +47,16 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
+    <script>
+        // Tangkap event PWA beforeinstallprompt sedini mungkin
+        window.rentifyDeferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.rentifyDeferredPrompt = e;
+            console.log('[Rentify PWA] Early beforeinstallprompt captured');
+        });
+    </script>
+
     <!-- Schema.org JSON-LD Structured Data -->
     <script type="application/ld+json">
     {
@@ -438,7 +448,6 @@
     </style>
 </head>
 <body data-app-url="{{ $appUrl }}">
-@include('partials.app-splash')
 
 {{-- ===================== NAV ===================== --}}
 <header class="nav" id="nav" data-testid="site-nav">
@@ -842,15 +851,54 @@
     </div>
 </footer>
 
-{{-- Download dialog (aplikasi belum rilis) --}}
+{{-- Download / Pasang Aplikasi Rentify (PWA) Dialog --}}
 <dialog class="dl" id="download-dialog" aria-labelledby="dl-title" data-testid="download-dialog">
-    <div class="glass dl-card">
-        <span class="dl-ic"><i data-lucide="smartphone"></i></span>
-        <h3 id="dl-title">Aplikasi Rentify segera hadir</h3>
-        <p>Kami sedang menyiapkan aplikasinya. Sementara itu, semua fitur Rentify sudah bisa dipakai langsung dari browser di HP maupun laptop.</p>
-        <div class="dl-actions">
-            <a href="{{ $links['search'] }}" class="btn btn-primary" data-testid="download-dialog-web-btn">Pakai versi web</a>
-            <button type="button" class="btn btn-light" data-close-download data-testid="download-dialog-close-btn">Tutup</button>
+    <div class="glass dl-card" style="padding: 26px 22px; border-radius: 26px; box-shadow: 0 20px 45px rgba(15,23,42,0.18);">
+        <div class="dl-ic" style="width: 58px; height: 58px; border-radius: 18px; background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0284c7; box-shadow: 0 4px 14px rgba(14,165,233,0.22); margin-bottom: 14px;">
+            <i data-lucide="smartphone"></i>
+        </div>
+        
+        <h3 id="dl-title" style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 4px;">Pasang Aplikasi Rentify</h3>
+        <p id="dl-desc" style="font-size: 13.5px; color: #64748b; margin-top: 6px; line-height: 1.55;">
+            Pasang Rentify langsung ke layar utama HP Anda tanpa perlu unduh dari Play Store. Lebih cepat, hemat memori, dan bebas update manual.
+        </p>
+
+        <div id="dl-action-box" style="margin-top: 18px; display: grid; gap: 8px;">
+            <button type="button" id="dl-direct-install-btn" class="btn btn-primary" style="justify-content: center; font-weight: 700; gap: 8px; box-shadow: 0 6px 18px rgba(14,165,233,0.35);">
+                <i data-lucide="download"></i>
+                <span>Pasang ke Layar Utama Sekarang</span>
+            </button>
+            @if(!empty($appUrl))
+            <a href="{{ $appUrl }}" target="_blank" rel="noopener" class="btn btn-light" style="justify-content: center; font-size: 12.5px; gap: 6px;">
+                <i data-lucide="arrow-down-to-line"></i>
+                <span>Download File Langsung (APK)</span>
+            </a>
+            @endif
+        </div>
+
+        <div id="dl-manual-guide" style="margin-top: 14px; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; font-size: 12px; line-height: 1.5; color: #334155;">
+            <div style="font-weight: 700; color: #0284c7; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <i data-lucide="help-circle" style="width: 14px; height: 14px;"></i>
+                <span>Panduan Pasang di HP:</span>
+            </div>
+            <div id="dl-guide-android">
+                <p style="margin: 0 0 3px 0; font-weight: 600;">Untuk Android (Chrome):</p>
+                <ol style="margin: 0; padding-left: 16px; color: #475569;">
+                    <li>Ketuk ikon titik tiga (<strong>⋮</strong>) di pojok kanan atas browser.</li>
+                    <li>Pilih menu <strong>"Install aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</li>
+                </ol>
+            </div>
+            <div id="dl-guide-ios" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+                <p style="margin: 0 0 3px 0; font-weight: 600;">Untuk iPhone / iPad (Safari):</p>
+                <ol style="margin: 0; padding-left: 16px; color: #475569;">
+                    <li>Ketuk tombol <strong>Bagikan (Share)</strong> <i data-lucide="share" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i> di bawah layar.</li>
+                    <li>Pilih <strong>"Tambahkan ke Layar Utama"</strong> (Add to Home Screen).</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="dl-actions" style="margin-top: 14px;">
+            <button type="button" class="btn btn-light" data-close-download data-testid="download-dialog-close-btn" style="justify-content: center;">Tutup</button>
         </div>
     </div>
 </dialog>
@@ -923,17 +971,84 @@
         setTimeout(() => { window.location.href = el.href; }, 450);
     });
 
-    /* Download Aplikasi: link ke app bila sudah ada, kalau belum tampilkan info */
+    /* Download / Pasang Aplikasi Rentify PWA */
     const appUrl = document.body.dataset.appUrl;
     const dlg = $('#download-dialog');
     const closeDlg = () => (dlg.close ? dlg.close() : dlg.removeAttribute('open'));
-    document.addEventListener('click', e => {
-        if (!e.target.closest('[data-download]')) return;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isIos = /iphone|ipad|ipod/.test((navigator.userAgent || '').toLowerCase());
+
+    const triggerPwaPrompt = async () => {
+        const promptEvent = window.rentifyDeferredPrompt;
+        if (promptEvent) {
+            try {
+                promptEvent.prompt();
+                const choice = await promptEvent.userChoice;
+                if (choice && choice.outcome === 'accepted') {
+                    window.rentifyDeferredPrompt = null;
+                    closeDlg();
+                    return true;
+                }
+            } catch (err) {
+                console.warn('[Rentify PWA] Prompt failed:', err);
+            }
+        }
+        return false;
+    };
+
+    document.addEventListener('click', async e => {
+        const btn = e.target.closest('[data-download]');
+        if (!btn) return;
         e.preventDefault();
         setMenu(false);
-        if (appUrl) { window.open(appUrl, '_blank', 'noopener'); return; }
+
+        // 1. Jika ada URL APK eksplisit
+        if (appUrl) {
+            window.open(appUrl, '_blank', 'noopener');
+            return;
+        }
+
+        // 2. Jika prompt native PWA sudah siap di browser, langsung tampilkan prompt native instalasi
+        if (window.rentifyDeferredPrompt) {
+            const installed = await triggerPwaPrompt();
+            if (installed) return;
+        }
+
+        // 3. Tampilkan dialog dengan konten adaptif sesuai perangkat
+        const directBtn = $('#dl-direct-install-btn');
+        const guideAndroid = $('#dl-guide-android');
+        const guideIos = $('#dl-guide-ios');
+
+        if (isStandalone) {
+            $('#dl-title').textContent = 'Aplikasi Sudah Terpasang!';
+            $('#dl-desc').textContent = 'Rentify sudah terpasang di layar utama HP Anda. Anda sudah menikmati versi aplikasi terbaik.';
+            if ($('#dl-action-box')) $('#dl-action-box').style.display = 'none';
+            if ($('#dl-manual-guide')) $('#dl-manual-guide').style.display = 'none';
+        } else {
+            if (isIos) {
+                if (directBtn) directBtn.style.display = 'none';
+                if (guideAndroid) guideAndroid.style.display = 'none';
+                if (guideIos) guideIos.style.display = 'block';
+            } else {
+                if (guideIos) guideIos.style.display = 'none';
+                if (guideAndroid) guideAndroid.style.display = 'block';
+                if (directBtn) {
+                    directBtn.style.display = 'inline-flex';
+                    directBtn.onclick = async () => {
+                        const success = await triggerPwaPrompt();
+                        if (!success) {
+                            alert('Browser belum siap menampilkan prompt otomatis. Silakan ikuti panduan di bawah: ketuk titik tiga (⋮) di kanan atas lalu pilih "Tambahkan ke Layar Utama".');
+                        }
+                    };
+                }
+            }
+        }
+
+        icons();
         dlg.showModal ? dlg.showModal() : dlg.setAttribute('open', '');
     });
+
     $$('[data-close-download]').forEach(b => b.addEventListener('click', closeDlg));
     dlg.addEventListener('click', e => { if (e.target === dlg) closeDlg(); });
 

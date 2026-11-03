@@ -73,7 +73,6 @@
     </style>
 </head>
 <body class="text-slate-800 antialiased bg-slate-50/50">
-@include('partials.app-splash')
 
     <!-- WRAPPER KONTEN TAB BERANDA (UNTUK SMOOTH TAB SWAPPING) -->
     <div id="rentify-page-content" data-tab="beranda" class="w-full min-h-screen">
