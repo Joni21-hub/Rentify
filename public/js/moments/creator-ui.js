@@ -119,7 +119,7 @@
                 };
             }
 
-            // Header: Aspect Ratio Toggle (9:16 -> 3:4 -> 1:1 -> 9:16)
+            // Header: Aspect Ratio Toggle (Asli -> 9:16 -> 3:4 -> 1:1 -> Asli)
             const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
             const aspectLabel = document.getElementById('aspect-ratio-label');
             const aspectIcon = document.getElementById('aspect-ratio-icon');
@@ -130,7 +130,8 @@
             const applyCameraRatioUI = (ratio) => {
                 const isSquare = ratio === 'square' || ratio === '1:1';
                 const isStandard = ratio === 'standard' || ratio === '3:4';
-                const isPortrait = !isSquare && !isStandard;
+                const isPortrait = ratio === 'portrait' || ratio === '9:16';
+                const isOriginal = !isSquare && !isStandard && !isPortrait;
 
                 if (aspectLabel) {
                     aspectLabel.textContent = this.state.getAspectRatioDisplay();
@@ -138,25 +139,32 @@
                 if (aspectIcon) {
                     if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
                     else if (isStandard) aspectIcon.className = 'fa-solid fa-camera text-sky-400 text-xs';
-                    else aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                    else if (isPortrait) aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                    else aspectIcon.className = 'fa-solid fa-expand text-sky-400 text-xs';
                 }
                 if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
                 if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
 
-                // Video preview selalu bersih, tajam, dan memenuhi layar tanpa distorsi
+                // Video preview kamera: jika Frame Asli gunakan object-contain agar sensor kamera tidak ter-crop (tidak ngezoom)
                 if (videoPreviewEl) {
-                    videoPreviewEl.classList.remove('object-contain');
-                    videoPreviewEl.classList.add('object-cover');
+                    if (isOriginal) {
+                        videoPreviewEl.classList.remove('object-cover');
+                        videoPreviewEl.classList.add('object-contain');
+                    } else {
+                        videoPreviewEl.classList.remove('object-contain');
+                        videoPreviewEl.classList.add('object-cover');
+                    }
                 }
 
-                let msg = 'Rasio: Layar Penuh (9:16)';
-                if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
+                let msg = 'Rasio: Frame Asli (Utuh)';
+                if (isPortrait) msg = 'Rasio: Layar Penuh (9:16)';
+                else if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
                 else if (isSquare) msg = 'Rasio: Persegi (1:1)';
                 this.showFilterToast(msg);
             };
 
-            // Set UI awal kamera
-            applyCameraRatioUI(this.state.get('aspectRatio') || 'portrait');
+            // Set UI awal kamera ke Frame Asli
+            applyCameraRatioUI(this.state.get('aspectRatio') || 'original');
 
             if (aspectBtn) {
                 aspectBtn.onclick = (e) => {
@@ -412,7 +420,7 @@
                         e.touches[0].clientY - e.touches[1].clientY
                     );
                     const diff = (currentDistance - this.initialPinchDistance) / 100;
-                    const nextZoom = Math.max(1.0, Math.min(5.0, this.currentZoom + diff));
+                    const nextZoom = Math.max(0.5, Math.min(5.0, this.currentZoom + diff));
                     this.engine.applyZoom(nextZoom);
                 }
             }, { passive: true });

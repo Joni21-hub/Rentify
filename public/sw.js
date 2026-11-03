@@ -9,7 +9,11 @@ const CACHE_NAME = 'rentify-pwa-' + swVersion;
 
 // File statis inti yang di-cache saat install
 const urlsToCache = [
-    '/manifest.json'
+    '/manifest.json',
+    '/icons/maskable-icon-192x192.png',
+    '/icons/maskable-icon-512x512.png',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png'
 ];
 
 // 1. Install & Langsung Aktifkan Tanpa Menunggu (Skip Waiting)

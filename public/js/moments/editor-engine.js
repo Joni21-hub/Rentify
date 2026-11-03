@@ -516,9 +516,9 @@
         setZoom(level, panX = null, panY = null) {
             const currentItem = this.mediaItems ? this.mediaItems[this.activeSlideIndex] : null;
             if (!currentItem) return;
-            const clamped = Math.max(1.0, Math.min(3.0, parseFloat(Number(level).toFixed(2))));
+            const clamped = Math.max(0.5, Math.min(3.0, parseFloat(Number(level).toFixed(2))));
             currentItem.zoom = clamped;
-            if (clamped <= 1.01) {
+            if (clamped <= 1.01 && clamped >= 0.99) {
                 currentItem.panX = 0;
                 currentItem.panY = 0;
             } else {
@@ -543,6 +543,17 @@
                     badgeEl.classList.add('opacity-0');
                 }, 1400);
             }
+
+            // Update status tombol preset zoom di editor (0.5x, 1x, 2x)
+            document.querySelectorAll('.editor-zoom-preset-btn').forEach(btn => {
+                const val = parseFloat(btn.getAttribute('data-zoom-val'));
+                const isActive = Math.abs(val - clamped) < 0.1;
+                if (isActive) {
+                    btn.className = 'editor-zoom-preset-btn px-2.5 py-1 rounded-full text-xs font-black text-sky-400 bg-sky-500/20 border border-sky-400/40 active:scale-90 transition shadow-xs';
+                } else {
+                    btn.className = 'editor-zoom-preset-btn px-2.5 py-1 rounded-full text-xs font-black text-white/80 hover:text-white active:scale-90 transition';
+                }
+            });
         }
 
         zoomIn(delta = 0.25) {
@@ -610,14 +621,15 @@
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
             this.closeRatioDrawer();
-            let label = 'Rasio: Layar Penuh (9:16)';
-            if (ratioKey === 'square') label = 'Rasio: Persegi (1:1)';
-            else if (ratioKey === 'standard') label = 'Rasio: Standar Foto (3:4)';
+            let label = 'Rasio: Frame Asli (Utuh)';
+            if (ratioKey === 'portrait' || ratioKey === '9:16') label = 'Rasio: Layar Penuh (9:16)';
+            else if (ratioKey === 'square' || ratioKey === '1:1') label = 'Rasio: Persegi (1:1)';
+            else if (ratioKey === 'standard' || ratioKey === '3:4') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
 
         updateRatioDrawerActiveState() {
-            const cur = this.state.get('aspectRatio') || 'portrait';
+            const cur = this.state.get('aspectRatio') || 'original';
             document.querySelectorAll('.ratio-item-btn').forEach(btn => {
                 const key = btn.getAttribute('data-ratio-key');
                 if (key === cur) {
@@ -634,17 +646,19 @@
             const next = this.state.toggleAspectRatio();
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
-            let label = 'Rasio: Layar Penuh (9:16)';
-            if (next === 'square') label = 'Rasio: Persegi (1:1)';
+            let label = 'Rasio: Frame Asli (Utuh)';
+            if (next === 'portrait') label = 'Rasio: Layar Penuh (9:16)';
+            else if (next === 'square') label = 'Rasio: Persegi (1:1)';
             else if (next === 'standard') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
 
         applyAspectRatioStyle() {
-            const ratio = this.state.get('aspectRatio') || 'portrait';
+            const ratio = this.state.get('aspectRatio') || 'original';
             const isSquare = ratio === 'square' || ratio === '1:1';
             const isStandard = ratio === 'standard' || ratio === '3:4';
-            const isPortrait = !isSquare && !isStandard;
+            const isPortrait = ratio === 'portrait' || ratio === '9:16';
+            const isOriginal = !isSquare && !isStandard && !isPortrait;
 
             const labelEl = document.getElementById('editor-aspect-label');
             const iconEl = document.getElementById('editor-aspect-icon');
@@ -654,7 +668,8 @@
             if (iconEl) {
                 if (isSquare) iconEl.className = 'fa-regular fa-square text-sky-400 text-xs';
                 else if (isStandard) iconEl.className = 'fa-solid fa-camera text-sky-400 text-xs';
-                else iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                else if (isPortrait) iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                else iconEl.className = 'fa-solid fa-expand text-sky-400 text-xs';
             }
 
             const viewport = document.getElementById('editor-viewport');
@@ -673,10 +688,19 @@
                     viewport.style.width = '90vw';
                     viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
                     viewport.classList.remove('w-full', 'h-full');
-                } else {
-                    viewport.style.aspectRatio = '';
+                } else if (isPortrait) {
+                    viewport.style.aspectRatio = '9 / 16';
                     viewport.style.maxHeight = '';
                     viewport.style.maxWidth = '';
+                    viewport.style.width = '100%';
+                    viewport.style.height = '100%';
+                    viewport.classList.remove('rounded-3xl', 'rounded-2xl', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.classList.add('w-full', 'h-full');
+                } else {
+                    // Frame Asli (Utuh) - Tanpa crop atau potong sama sekali!
+                    viewport.style.aspectRatio = '';
+                    viewport.style.maxHeight = '84vh';
+                    viewport.style.maxWidth = '100%';
                     viewport.style.width = '100%';
                     viewport.style.height = '100%';
                     viewport.classList.remove('rounded-3xl', 'rounded-2xl', 'border', 'border-white/20', 'shadow-2xl');
@@ -685,10 +709,10 @@
             }
 
             if (this.imageEl) {
-                this.imageEl.style.objectFit = 'cover';
+                this.imageEl.style.objectFit = isOriginal ? 'contain' : 'cover';
             }
             if (this.videoEl) {
-                this.videoEl.style.objectFit = 'cover';
+                this.videoEl.style.objectFit = isOriginal ? 'contain' : 'cover';
             }
             this.applyCurrentTransforms();
         }
@@ -1344,6 +1368,10 @@
                                 outW = baseW;
                                 outH = Math.round(outW * (16 / 9));
                             }
+                        } else {
+                            // 'original' / Frame Asli: Pertahankan resolusi 100% utuh tanpa cropping!
+                            outW = baseW;
+                            outH = baseH;
                         }
 
                         const canvas = document.createElement('canvas');
@@ -1424,7 +1452,7 @@
 
                         canvas.toBlob((blob) => {
                             resolve(blob || item.blob);
-                        }, 'image/jpeg', 0.98);
+                        }, 'image/jpeg', 1.0);
                     } catch (bakeErr) {
                         console.warn('Gagal bake overlay foto, gunakan blob asli:', bakeErr);
                         resolve(item.blob);

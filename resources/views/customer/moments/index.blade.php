@@ -623,7 +623,7 @@
                     return `
                         <div class="carousel-slide relative w-full min-w-full h-full shrink-0 snap-center flex items-center justify-center overflow-hidden" data-slide-index="${sIdx}">
                             <img src="${url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
-                            <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                            <img src="${url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen'}" class="relative z-10 w-full h-full object-contain pointer-events-none select-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" draggable="false" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                         </div>
                     `;
                 }).join('');
@@ -644,14 +644,6 @@
                             <i class="fa-solid fa-layer-group text-sky-400 text-xs"></i>
                             <span id="carousel-counter-${m.id}">1/${totalSlides}</span>
                         </div>
-
-                        <!-- Prev & Next Arrows (Tampil ramping di mobile & desktop) -->
-                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, -1)" class="carousel-prev-${m.id} absolute left-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center active:scale-90 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Sebelumnya">
-                            <i class="fa-solid fa-chevron-left text-xs"></i>
-                        </button>
-                        <button type="button" onclick="event.stopPropagation(); navigateCarousel(${m.id}, 1)" class="carousel-next-${m.id} absolute right-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center active:scale-90 transition-all shadow-xl pointer-events-auto backdrop-blur-md border border-white/20 cursor-pointer" aria-label="Foto Berikutnya">
-                            <i class="fa-solid fa-chevron-right text-xs"></i>
-                        </button>
 
                         <!-- Dots Pagination Bottom -->
                         <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 pointer-events-auto" id="carousel-dots-${m.id}">
@@ -689,8 +681,8 @@
                     <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
                         <!-- Ambient Blurred Backdrop -->
                         <img src="${m.media_url}" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-110 pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
-                        <!-- High-res Sharp Image -->
-                        <img src="${m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" loading="lazy" class="relative z-10 w-full h-full object-contain pointer-events-none" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
+                        <!-- High-res Sharp Image 100% HD -->
+                        <img src="${m.media_url}" alt="${m.caption ? m.caption.replace(/"/g, '&quot;') : 'Momen Rentify'}" class="relative z-10 w-full h-full object-contain pointer-events-none" style="image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;" onerror="this.onerror=null; this.src='${fallbackMomentImg}';">
                     </div>
                 `;
             }

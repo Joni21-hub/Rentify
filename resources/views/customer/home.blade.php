@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Rentify - Platform Marketplace Rental Barang & Alat Terpercaya</title>
     <meta name="description" content="Rentify (rentify21.my.id) adalah platform marketplace penyewaan alat, kendaraan, kamera, camping dan barang dengan mudah, cepat, dan aman.">
     <meta name="keywords" content="Rentify, rentify21, sewa alat, platform penyewaan, marketplace sewa barang, rental kamera, rental tenda, rental motor">
@@ -73,6 +73,7 @@
     </style>
 </head>
 <body class="text-slate-800 antialiased bg-slate-50/50">
+@include('partials.app-splash')
 
     <!-- WRAPPER KONTEN TAB BERANDA (UNTUK SMOOTH TAB SWAPPING) -->
     <div id="rentify-page-content" data-tab="beranda" class="w-full min-h-screen">

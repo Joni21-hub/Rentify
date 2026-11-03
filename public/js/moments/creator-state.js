@@ -20,7 +20,7 @@
                 torchActive: false,
                 facingMode: 'environment', // 'environment' (belakang) | 'user' (depan)
                 isMirrored: false,         // Mirror horizontal untuk selfie/preview/capture
-                aspectRatio: 'portrait',   // 'portrait' (9:16) | 'square' (1:1)
+                aspectRatio: 'original',   // 'original' (Frame Asli) | 'portrait' (9:16) | 'standard' (3:4) | 'square' (1:1)
                 zoom: 1.0,
                 isRecording: false,
                 recordingElapsed: 0,   // detik saat ini pada klip yang sedang direkam
@@ -159,20 +159,21 @@
 
         setAspectRatio(ratio) {
             let normalized = ratio;
-            if (ratio === '9:16' || ratio === 'portrait' || ratio === 'penuh') normalized = 'portrait';
+            if (ratio === 'original' || ratio === 'asli' || ratio === 'utuh' || ratio === 'natural') normalized = 'original';
+            else if (ratio === '9:16' || ratio === 'portrait' || ratio === 'penuh') normalized = 'portrait';
             else if (ratio === '3:4' || ratio === 'standard') normalized = 'standard';
             else if (ratio === '1:1' || ratio === 'square' || ratio === 'persegi') normalized = 'square';
             else if (ratio === '4:5' || ratio === 'feed') normalized = 'standard';
-            else if (ratio === '16:9' || ratio === 'landscape' || ratio === 'original') normalized = 'portrait';
-            else normalized = 'portrait';
+            else if (ratio === '16:9' || ratio === 'landscape') normalized = 'original';
+            else normalized = 'original';
 
             this.set('aspectRatio', normalized);
         }
 
         toggleAspectRatio() {
-            // Siklus rasio kamera standar & tidak membingungkan: 9:16 (Layar Penuh) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> 9:16
-            const sequence = ['portrait', 'standard', 'square'];
-            const cur = this.state.aspectRatio || 'portrait';
+            // Siklus rasio kamera: Frame Asli (Utuh) -> 9:16 (Layar Penuh) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> Asli
+            const sequence = ['original', 'portrait', 'standard', 'square'];
+            const cur = this.state.aspectRatio || 'original';
             const curIndex = sequence.indexOf(cur);
             const nextIndex = curIndex >= 0 ? (curIndex + 1) % sequence.length : 0;
             const next = sequence[nextIndex];
@@ -183,11 +184,12 @@
         getAspectRatioDisplay() {
             if (this.state.aspectRatio === 'square') return '1:1';
             if (this.state.aspectRatio === 'standard') return '3:4';
-            return '9:16';
+            if (this.state.aspectRatio === 'portrait') return '9:16';
+            return 'Asli';
         }
 
         setZoom(zoom) {
-            const clamped = Math.max(1.0, Math.min(5.0, zoom));
+            const clamped = Math.max(0.5, Math.min(5.0, parseFloat(zoom)));
             this.set('zoom', clamped);
         }
 

@@ -23,8 +23,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#D3EAF8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0ea5e9">
     <title>Rentify — Sewa-menyewa antar teman, kini seluas kotamu</title>
     <meta name="description" content="Rentify adalah marketplace sewa-menyewa untuk semua jenis barang. Barang nganggur jadi penghasilan, butuh sebentar tinggal sewa.">
     <link rel="canonical" href="{{ url('/') }}">
@@ -38,11 +38,14 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="{{ asset('images/logo.png') }}">
 
-    
-    <!-- Favicon & Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/logo.png') }}">
-    <link rel="shortcut icon" href="{{ asset('images/logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
+    <!-- Favicon & PWA Icons Google & Apple Approved -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
     <!-- Schema.org JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -435,6 +438,7 @@
     </style>
 </head>
 <body data-app-url="{{ $appUrl }}">
+@include('partials.app-splash')
 
 {{-- ===================== NAV ===================== --}}
 <header class="nav" id="nav" data-testid="site-nav">

@@ -1,36 +1,51 @@
 {
-  "name": "Rentify",
+  "name": "Rentify - Marketplace Rental",
   "short_name": "Rentify",
-  "description": "Platform Rental Terbaik",
+  "description": "Platform Marketplace Rental Barang, Kendaraan & Alat Terpercaya di Kotamu",
   "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0ea5e9",
   "orientation": "portrait-primary",
+  "categories": ["shopping", "lifestyle", "business"],
+  "lang": "id",
   "icons": [
     {
-      "src": "/favicon-192x192.png",
+      "src": "/icons/maskable-icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-icon-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "/favicon-512x512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387476/20260719_122056_0000_e3zh3h.png",
+      "src": "/favicon-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://res.cloudinary.com/fnf8f1pm/image/upload/v1793387474/logolimaduabelas_gjelaz.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

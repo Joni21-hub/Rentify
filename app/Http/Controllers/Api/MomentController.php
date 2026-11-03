@@ -629,7 +629,7 @@ class MomentController extends Controller
                     \Illuminate\Support\Facades\Storage::disk('public')->put('moments/' . $filename, $rawBytes);
                     $path = 'moments/' . $filename;
                 } else {
-                    $path = \App\Services\StorageService::storePublicFile($file, 'moments', null, 100, 2560);
+                    $path = \App\Services\StorageService::storePublicFile($file, 'moments', null, 100, 3840);
                 }
                 $fullUrl = \App\Services\StorageService::getPublicUrl($path);
                 return [
@@ -687,7 +687,7 @@ class MomentController extends Controller
             Log::error("Cloudinary upload failed: " . $e->getMessage());
 
             try {
-                $path = \App\Services\StorageService::storePublicFile($file, 'moments', null, 100, 2560);
+                $path = \App\Services\StorageService::storePublicFile($file, 'moments', null, 100, 3840);
                 $fullUrl = \App\Services\StorageService::getPublicUrl($path);
                 return [
                     'secure_url'    => $fullUrl,
