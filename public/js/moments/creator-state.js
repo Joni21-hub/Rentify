@@ -162,6 +162,7 @@
             if (ratio === '9:16' || ratio === 'portrait' || ratio === 'penuh') normalized = 'portrait';
             else if (ratio === '3:4' || ratio === 'standard') normalized = 'standard';
             else if (ratio === '1:1' || ratio === 'square' || ratio === 'persegi') normalized = 'square';
+            else if (ratio === 'original' || ratio === 'utuh' || ratio === 'fit' || ratio === 'asli') normalized = 'original';
             else if (ratio === '4:5' || ratio === 'feed') normalized = 'standard';
             else normalized = 'portrait';
 
@@ -169,8 +170,8 @@
         }
 
         toggleAspectRatio() {
-            // Siklus rasio kamera standar: 9:16 (Layar Penuh) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> 9:16
-            const sequence = ['portrait', 'standard', 'square'];
+            // Siklus rasio kamera: 9:16 (Layar Penuh) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> Utuh (Asli / Tanpa Potong) -> 9:16
+            const sequence = ['portrait', 'standard', 'square', 'original'];
             const cur = this.state.aspectRatio || 'portrait';
             const curIndex = sequence.indexOf(cur);
             const nextIndex = curIndex >= 0 ? (curIndex + 1) % sequence.length : 0;
@@ -182,11 +183,12 @@
         getAspectRatioDisplay() {
             if (this.state.aspectRatio === 'square') return '1:1';
             if (this.state.aspectRatio === 'standard') return '3:4';
+            if (this.state.aspectRatio === 'original') return 'Utuh';
             return '9:16';
         }
 
         setZoom(zoom) {
-            const clamped = Math.max(1.0, Math.min(5.0, parseFloat(zoom)));
+            const clamped = Math.max(0.5, Math.min(5.0, parseFloat(zoom)));
             this.set('zoom', clamped);
         }
 

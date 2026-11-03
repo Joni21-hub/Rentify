@@ -233,7 +233,15 @@
                 </div>
             </div>
 
-
+            <!-- Zoom Selector (0.5x | 1x | 2x | 3x) -->
+            <div id="camera-zoom-selector" class="flex items-center justify-center transition-all duration-200">
+                <div class="glass-pill rounded-full p-1 flex items-center gap-1 shadow-xl border border-white/20">
+                    <button type="button" data-camera-zoom="0.5" class="camera-zoom-btn w-8 h-8 rounded-full text-[11px] font-bold text-white/70 hover:text-white flex items-center justify-center transition active:scale-90" title="Ultra-wide / Zoom 0.5x">0.5</button>
+                    <button type="button" data-camera-zoom="1.0" class="camera-zoom-btn w-8 h-8 rounded-full text-xs font-black text-sky-400 bg-sky-500/25 border border-sky-400/60 shadow-md flex items-center justify-center transition active:scale-90" title="Normal 1x">1x</button>
+                    <button type="button" data-camera-zoom="2.0" class="camera-zoom-btn w-8 h-8 rounded-full text-[11px] font-bold text-white/70 hover:text-white flex items-center justify-center transition active:scale-90" title="Zoom 2x">2x</button>
+                    <button type="button" data-camera-zoom="3.0" class="camera-zoom-btn w-8 h-8 rounded-full text-[11px] font-bold text-white/70 hover:text-white flex items-center justify-center transition active:scale-90" title="Zoom 3x">3x</button>
+                </div>
+            </div>
 
             <!-- Action Row -->
             <div class="flex items-center justify-between max-w-sm mx-auto">
@@ -486,41 +494,53 @@
                 </button>
             </div>
 
-            <!-- Pilihan Rasio Standar: 9:16 / 3:4 / 1:1 -->
-            <div class="grid grid-cols-3 gap-2.5 mb-3">
+            <!-- Pilihan Rasio: 9:16 / 3:4 / 1:1 / Utuh (Tidak Terpotong) -->
+            <div class="grid grid-cols-4 gap-2 mb-3">
                 <!-- 9:16 Fullscreen -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-3 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-2.5 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
                     <div class="flex items-center justify-between">
                         <span class="w-3.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-xs font-black text-sky-400">9:16</span>
+                        <span class="text-[11px] font-black text-sky-400">9:16</span>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-white leading-tight">Layar Penuh</p>
-                        <p class="text-[9px] text-slate-400">Story & Reels</p>
+                        <p class="text-[11px] font-bold text-white leading-tight">Penuh</p>
+                        <p class="text-[8px] text-slate-400">Story/Reels</p>
                     </div>
                 </button>
 
                 <!-- 3:4 Standar -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('standard')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="standard">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('standard')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="standard">
                     <div class="flex items-center justify-between">
                         <span class="w-4.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-xs font-black text-sky-400">3:4</span>
+                        <span class="text-[11px] font-black text-sky-400">3:4</span>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-white leading-tight">Standar</p>
-                        <p class="text-[9px] text-slate-400">Kamera Foto</p>
+                        <p class="text-[11px] font-bold text-white leading-tight">Standar</p>
+                        <p class="text-[8px] text-slate-400">Kamera</p>
                     </div>
                 </button>
 
                 <!-- 1:1 Persegi -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
                     <div class="flex items-center justify-between">
                         <span class="w-5 h-5 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-xs font-black text-sky-400">1:1</span>
+                        <span class="text-[11px] font-black text-sky-400">1:1</span>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-white leading-tight">Persegi</p>
-                        <p class="text-[9px] text-slate-400">Feed Produk</p>
+                        <p class="text-[11px] font-bold text-white leading-tight">Persegi</p>
+                        <p class="text-[8px] text-slate-400">Feed</p>
+                    </div>
+                </button>
+
+                <!-- Utuh / Asli Sensor (Tidak Terpotong) -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
+                    <div class="flex items-center justify-between">
+                        <span class="w-5.5 h-4 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-[11px] font-black text-sky-400">Utuh</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-white leading-tight">Asli</p>
+                        <p class="text-[8px] text-slate-400">Tanpa Potong</p>
                     </div>
                 </button>
             </div>

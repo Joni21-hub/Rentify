@@ -22,6 +22,10 @@
             this.audioCtx = null;
             this.currentMimeType = '';
             this.isInitializing = false;
+            this.isHardwareZoomActive = false;
+            this.ultraWideDeviceId = null;
+            this.mainCameraDeviceId = null;
+            this.currentFacingMode = 'environment';
         }
 
         /**
@@ -79,20 +83,23 @@
         }
 
         /**
-         * Jalankan streaming kamera
+         * Jalankan streaming kamera berkualitas 100% Full HD
          * @param {string} facingMode 'environment' atau 'user'
+         * @param {string|null} forceDeviceId Device ID spesifik (misal ultra-wide)
          */
-        async startStream(facingMode = 'environment') {
+        async startStream(facingMode = 'environment', forceDeviceId = null) {
             if (!this.videoEl) return false;
             this.isInitializing = true;
+            this.currentFacingMode = facingMode;
 
             // Matikan stream aktif sebelumnya
             this.stopStream();
 
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-            // Cari kamera wide/utama jika ada banyak lensa belakang (hindari lensa telephoto/zoom)
-            let preferredDeviceId = null;
+            // Enumerasi kamera untuk mendeteksi kamera utama (wide) dan kamera ultra-wide (0.5x)
+            let preferredDeviceId = forceDeviceId;
+            let ultraWideDeviceId = null;
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
                     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -101,30 +108,45 @@
                         const targetKeyword = facingMode === 'environment' ? 'back' : 'front';
                         const matching = videoInputs.filter(d => {
                             const lbl = (d.label || '').toLowerCase();
-                            return lbl.includes(targetKeyword) && !lbl.includes('telephoto') && !lbl.includes('zoom') && !lbl.includes('macro');
+                            return lbl.includes(targetKeyword) && !lbl.includes('telephoto') && !lbl.includes('macro');
                         });
-                        const wideChoice = matching.find(d => {
+
+                        // Lensa ultra-wide (untuk mode zoom 0.5x)
+                        const ultra = videoInputs.find(d => {
                             const lbl = (d.label || '').toLowerCase();
-                            return lbl.includes('wide') || lbl.includes('ultra') || lbl.includes('main') || lbl.includes('0');
-                        }) || matching[0];
-                        if (wideChoice && wideChoice.deviceId) {
-                            preferredDeviceId = wideChoice.deviceId;
+                            return lbl.includes('ultra') || lbl.includes('0.5') || lbl.includes('wide-angle');
+                        });
+                        if (ultra && ultra.deviceId) {
+                            ultraWideDeviceId = ultra.deviceId;
+                        }
+
+                        if (!preferredDeviceId) {
+                            const wideChoice = matching.find(d => {
+                                const lbl = (d.label || '').toLowerCase();
+                                return (lbl.includes('main') || lbl.includes('wide') || lbl.includes('0')) && !lbl.includes('ultra');
+                            }) || matching[0];
+                            if (wideChoice && wideChoice.deviceId) {
+                                preferredDeviceId = wideChoice.deviceId;
+                            }
                         }
                     }
                 }
             } catch (e) {}
+
+            this.ultraWideDeviceId = ultraWideDeviceId;
+            this.mainCameraDeviceId = preferredDeviceId;
 
             const baseVideoConstraint = preferredDeviceId 
                 ? { deviceId: { ideal: preferredDeviceId } }
                 : { facingMode: { ideal: facingMode } };
 
             const constraintsList = isMobile ? [
-                // 1. Mobile FHD Portrait (Kualitas 100% HD Tajam Langsung Terbuka Tanpa Sensor Flicker / Loop)
+                // 1. Mobile FHD Portrait 1080x1920 (Kualitas 100% HD Tajam Langsung)
                 {
                     video: {
                         ...baseVideoConstraint,
-                        width: { ideal: 1080 },
-                        height: { ideal: 1920 },
+                        width: { ideal: 1080, min: 720, max: 2160 },
+                        height: { ideal: 1920, min: 1280, max: 3840 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
@@ -133,12 +155,12 @@
                         autoGainControl: true
                     }
                 },
-                // 2. Mobile Landscape/Natural Sensor 1920x1080 (HD Sensor Asli)
+                // 2. Mobile Landscape/Natural FHD 1920x1080
                 {
                     video: {
                         ...baseVideoConstraint,
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 },
+                        width: { ideal: 1920, min: 1280, max: 3840 },
+                        height: { ideal: 1080, min: 720, max: 2160 },
                         frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
@@ -147,21 +169,7 @@
                         autoGainControl: true
                     }
                 },
-                // 3. Mobile Landscape/Natural Sensor 1920x1080
-                {
-                    video: {
-                        ...baseVideoConstraint,
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 },
-                        frameRate: { ideal: 30, max: 60 }
-                    },
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    }
-                },
-                // 4. Mobile Fallback HD 720p
+                // 3. Mobile Fallback HD 720p
                 {
                     video: {
                         ...baseVideoConstraint,
@@ -171,9 +179,9 @@
                     },
                     audio: true
                 },
-                // 5. Fallback Facing Mode saja
+                // 4. Fallback Facing Mode FHD
                 {
-                    video: { facingMode: { ideal: facingMode } },
+                    video: { facingMode: { ideal: facingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } },
                     audio: true
                 },
                 { video: true, audio: true },
@@ -183,10 +191,10 @@
                 {
                     video: {
                         ...baseVideoConstraint,
-                        width: { ideal: 1920, max: 3840 },
-                        height: { ideal: 1080, max: 2160 },
+                        width: { ideal: 1920, min: 1280, max: 3840 },
+                        height: { ideal: 1080, min: 720, max: 2160 },
                         aspectRatio: { ideal: 16 / 9 },
-                        frameRate: { ideal: 30 }
+                        frameRate: { ideal: 30, max: 60 }
                     },
                     audio: {
                         echoCancellation: true,
@@ -194,20 +202,20 @@
                         autoGainControl: true
                     }
                 },
-                // 2. Desktop Fallback 720p
+                // 2. Desktop Fallback 720p HD
                 {
                     video: {
                         ...baseVideoConstraint,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
+                        width: { ideal: 1280, min: 720 },
+                        height: { ideal: 720, min: 480 },
                         aspectRatio: { ideal: 16 / 9 },
                         frameRate: { ideal: 30 }
                     },
                     audio: true
                 },
-                // 3. Desktop Fallback Facing Mode
+                // 3. Desktop Fallback Facing Mode FHD
                 {
-                    video: { facingMode: { ideal: facingMode } },
+                    video: { facingMode: { ideal: facingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } },
                     audio: true
                 },
                 { video: true, audio: true },
@@ -239,6 +247,8 @@
             this.stream = streamAcquired;
             try { localStorage.setItem('camera_permission_granted', '1'); } catch (e) {}
 
+            this.isHardwareZoomActive = false;
+
             // Reset hardware zoom level ke normal 1x dan aktifkan hardware auto-focus, auto-exposure, auto-white-balance
             const videoTrack = this.stream.getVideoTracks()[0];
             if (videoTrack && videoTrack.getCapabilities) {
@@ -246,10 +256,11 @@
                     const capabilities = videoTrack.getCapabilities();
                     const advanced = [];
 
-                    // Reset zoom hardware ke 1.0 (Lensa paling lebar normal 1x, bukan telephoto)
+                    // Reset zoom hardware ke 1.0 (atau minZoom bawaan)
                     if (capabilities.zoom) {
                         const minZoom = capabilities.zoom.min || 1.0;
                         advanced.push({ zoom: minZoom });
+                        this.isHardwareZoomActive = true;
                     }
 
                     // Aktifkan continuous autofocus bawaan sensor kamera
@@ -278,15 +289,21 @@
             this.videoEl.srcObject = this.stream;
             this.videoEl.playsInline = true;
             this.videoEl.muted = true; // Supaya tidak feedback saat live preview
+            this.videoEl.style.imageRendering = '-webkit-optimize-contrast';
 
-            // Tampilan preview kamera standar 1x tanpa distorsi
-            this.videoEl.classList.remove('object-contain');
-            this.videoEl.classList.add('object-cover');
-
-            this.videoEl.onloadedmetadata = () => {
-                this.videoEl.classList.remove('object-contain');
-                this.videoEl.classList.add('object-cover');
+            const updatePreviewRatioClass = () => {
+                const ratio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
+                if (ratio === 'original' || ratio === 'utuh') {
+                    this.videoEl.classList.remove('object-cover');
+                    this.videoEl.classList.add('object-contain');
+                } else {
+                    this.videoEl.classList.remove('object-contain');
+                    this.videoEl.classList.add('object-cover');
+                }
             };
+
+            updatePreviewRatioClass();
+            this.videoEl.onloadedmetadata = updatePreviewRatioClass;
 
             try {
                 await this.videoEl.play();
@@ -304,13 +321,24 @@
 
         /**
          * Sinkronkan orientasi mirror video preview dengan state
+         * @param {number|null} digitalZoomOverride
          */
-        updateMirrorTransform(zoomOverride = null) {
+        updateMirrorTransform(digitalZoomOverride = null) {
             if (!this.videoEl) return;
             const isMirrored = window.MomentCreatorState.get('isMirrored');
-            const zoom = zoomOverride !== null ? zoomOverride : (window.MomentCreatorState.get('zoom') || 1.0);
-            const scaleX = isMirrored ? -zoom : zoom;
-            const transformVal = `scale(${scaleX}, ${zoom}) translateZ(0)`;
+            
+            // PENTING: Jika hardware zoom aktif, zoom sudah ditangani langsung oleh sensor kamera.
+            // Jangan kalikan lagi dengan CSS scale agar tidak terjadi zoom ganda (double-zoom / abnormal)!
+            let scaleFactor = 1.0;
+            if (digitalZoomOverride !== null) {
+                scaleFactor = digitalZoomOverride;
+            } else if (!this.isHardwareZoomActive) {
+                scaleFactor = window.MomentCreatorState.get('zoom') || 1.0;
+            }
+
+            const scaleX = isMirrored ? -scaleFactor : scaleFactor;
+            const scaleY = scaleFactor;
+            const transformVal = `scale(${scaleX}, ${scaleY}) translateZ(0)`;
             this.videoEl.style.transform = transformVal;
             this.videoEl.style.webkitTransform = transformVal;
         }
@@ -389,13 +417,44 @@
 
         /**
          * Terapkan zoom kamera: hardware optical/sensor zoom atau CSS transform
-         * @param {number} level Zoom multiplier (1.0 - 5.0)
+         * @param {number} level Zoom multiplier (0.5 - 5.0)
          */
         async applyZoom(level) {
-            const zoomLevel = Math.max(1.0, Math.min(5.0, parseFloat(level)));
+            const zoomLevel = Math.max(0.5, Math.min(5.0, parseFloat(level)));
             window.MomentCreatorState.set('zoom', zoomLevel);
-            this.vibrate(15);
 
+            let hardwareApplied = false;
+
+            // Jika zoom 0.5x dan ada lensa ultra-wide fisik terpisah pada perangkat
+            if (zoomLevel <= 0.6 && this.ultraWideDeviceId && this.currentFacingMode === 'environment') {
+                if (this.stream) {
+                    const currentTrack = this.stream.getVideoTracks()[0];
+                    const currentSettings = currentTrack ? currentTrack.getSettings() : {};
+                    if (currentSettings.deviceId !== this.ultraWideDeviceId) {
+                        try {
+                            await this.startStream('environment', this.ultraWideDeviceId);
+                            this.isHardwareZoomActive = true;
+                            this.vibrate(15);
+                            return;
+                        } catch (e) {
+                            console.warn('[CameraEngine] Gagal beralih ke lensa ultra-wide:', e);
+                        }
+                    }
+                }
+            } else if (zoomLevel > 0.8 && this.mainCameraDeviceId && this.currentFacingMode === 'environment') {
+                // Jika sebelumnya di ultra-wide dan kembali ke >= 1x, beralih ke main camera
+                if (this.stream) {
+                    const currentTrack = this.stream.getVideoTracks()[0];
+                    const currentSettings = currentTrack ? currentTrack.getSettings() : {};
+                    if (currentSettings.deviceId === this.ultraWideDeviceId) {
+                        try {
+                            await this.startStream('environment', this.mainCameraDeviceId);
+                        } catch (e) {}
+                    }
+                }
+            }
+
+            // Terapkan hardware zoom pada videoTrack jika didukung
             if (this.stream) {
                 const videoTrack = this.stream.getVideoTracks()[0];
                 if (videoTrack && videoTrack.getCapabilities) {
@@ -408,14 +467,21 @@
                                 await videoTrack.applyConstraints({
                                     advanced: [{ zoom: zoomLevel }]
                                 });
+                                hardwareApplied = true;
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            console.warn('[CameraEngine] Hardware zoom applyConstraints error:', e);
+                        }
                     }
                 }
             }
 
+            this.isHardwareZoomActive = hardwareApplied;
+
+            // PENTING: Jika hardware zoom berhasil, CSS scale = 1.0 agar tidak terjadi double-zoom!
             if (this.videoEl) {
-                this.updateMirrorTransform(zoomLevel);
+                const digitalScale = hardwareApplied ? 1.0 : zoomLevel;
+                this.updateMirrorTransform(digitalScale);
             }
         }
 
@@ -466,7 +532,7 @@
         }
 
         /**
-         * Ambil foto snapshot berkualitas tinggi dan tajam (Kamera Sensor Asli + Hardware ISP)
+         * Ambil foto snapshot berkualitas tinggi dan tajam (Kamera Sensor Asli 100% HD + Hardware ISP)
          * @returns {Promise<{ blob: Blob, dataUrl: string }>}
          */
         async capturePhoto() {
@@ -480,18 +546,30 @@
             const isMirrored = window.MomentCreatorState.get('isMirrored');
             const activeFilter = window.MomentCreatorState.get('activeFilter');
             const aspectRatio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
+            const zoomLevel = window.MomentCreatorState.get('zoom') || 1.0;
             const filterCss = this.getFilterCss(activeFilter);
 
             let sourceImage = null;
-            let naturalWidth = this.videoEl.videoWidth || 1080;
-            let naturalHeight = this.videoEl.videoHeight || 1920;
+            let naturalWidth = this.videoEl.videoWidth || 1920;
+            let naturalHeight = this.videoEl.videoHeight || 1080;
 
             // 1. Coba ambil foto beresolusi penuh langsung dari hardware sensor menggunakan ImageCapture API
             const videoTrack = this.stream ? this.stream.getVideoTracks()[0] : null;
             if (window.ImageCapture && videoTrack && videoTrack.readyState === 'live') {
                 try {
                     const imageCapture = new ImageCapture(videoTrack);
-                    const rawBlob = await imageCapture.takePhoto();
+                    const photoSettings = {};
+                    try {
+                        const caps = await imageCapture.getPhotoCapabilities();
+                        if (caps && caps.imageWidth && caps.imageWidth.max) {
+                            photoSettings.imageWidth = caps.imageWidth.max;
+                        }
+                        if (caps && caps.imageHeight && caps.imageHeight.max) {
+                            photoSettings.imageHeight = caps.imageHeight.max;
+                        }
+                    } catch(capErr) {}
+
+                    const rawBlob = await imageCapture.takePhoto(photoSettings);
                     if (rawBlob && rawBlob.size > 0) {
                         const tempImg = new Image();
                         const imgUrl = URL.createObjectURL(rawBlob);
@@ -514,8 +592,8 @@
             // Fallback ke video element jika ImageCapture tidak didukung oleh browser tertentu
             if (!sourceImage) {
                 sourceImage = this.videoEl;
-                naturalWidth = this.videoEl.videoWidth || 1080;
-                naturalHeight = this.videoEl.videoHeight || 1920;
+                naturalWidth = this.videoEl.videoWidth || 1920;
+                naturalHeight = this.videoEl.videoHeight || 1080;
             }
 
             const canvas = document.createElement('canvas');
@@ -537,13 +615,32 @@
                 ctx.filter = filterCss;
             }
 
-            ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+            // Jika zoom digital aktif (hardware zoom tidak aktif dan zoom bukan 1.0):
+            // Lakukan crop/scale di tengah canvas agar hasil foto 100% identik dengan yang terlihat di layar
+            if (!this.isHardwareZoomActive && Math.abs(zoomLevel - 1.0) > 0.05) {
+                if (zoomLevel > 1.0) {
+                    const cropW = naturalWidth / zoomLevel;
+                    const cropH = naturalHeight / zoomLevel;
+                    const cropX = (naturalWidth - cropW) / 2;
+                    const cropY = (naturalHeight - cropH) / 2;
+                    ctx.drawImage(sourceImage, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+                } else {
+                    // Zoom out 0.5x
+                    const drawW = naturalWidth * zoomLevel;
+                    const drawH = naturalHeight * zoomLevel;
+                    const drawX = (naturalWidth - drawW) / 2;
+                    const drawY = (naturalHeight - drawH) / 2;
+                    ctx.drawImage(sourceImage, 0, 0, naturalWidth, naturalHeight, drawX, drawY, drawW, drawH);
+                }
+            } else {
+                ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+            }
 
             if (sourceImage instanceof HTMLImageElement && sourceImage.src) {
                 try { URL.revokeObjectURL(sourceImage.src); } catch (e) {}
             }
 
-            // Potong ke Rasio Kamera Standar: 9:16 (Layar Penuh), 3:4 (Standar Ponsel), atau 1:1 (Persegi)
+            // Potong ke Rasio Kamera: 9:16 (Layar Penuh), 3:4 (Standar Ponsel), 1:1 (Persegi), atau Utuh (Original)
             let finalCanvas = canvas;
 
             const cropHelper = (ratioW, ratioH) => {
@@ -568,7 +665,10 @@
                 return cropped;
             };
 
-            if (aspectRatio === 'square' || aspectRatio === '1:1') {
+            if (aspectRatio === 'original' || aspectRatio === 'utuh') {
+                // RASIO UTUH / ASLI SENSOR: 100% FRAME ASLI KAMERA TANPA TERPOTONG
+                finalCanvas = canvas;
+            } else if (aspectRatio === 'square' || aspectRatio === '1:1') {
                 finalCanvas = cropHelper(1, 1);
             } else if (aspectRatio === 'standard' || aspectRatio === '3:4') {
                 finalCanvas = cropHelper(3, 4);
@@ -577,14 +677,14 @@
                 finalCanvas = cropHelper(9, 16);
             }
 
-            const dataUrl = finalCanvas.toDataURL('image/jpeg', 1.0);
+            const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);
 
             return new Promise((resolve) => {
                 finalCanvas.toBlob((blob) => {
                     const result = { blob, dataUrl };
                     window.MomentCreatorState.setCapturedPhoto(blob, dataUrl);
                     resolve(result);
-                }, 'image/jpeg', 1.0);
+                }, 'image/jpeg', 0.98);
             });
         }
 

@@ -622,7 +622,8 @@
             this.updateRatioDrawerActiveState();
             this.closeRatioDrawer();
             let label = 'Rasio: Layar Penuh (9:16)';
-            if (ratioKey === 'square' || ratioKey === '1:1') label = 'Rasio: Persegi (1:1)';
+            if (ratioKey === 'original' || ratioKey === 'utuh') label = 'Rasio: Utuh / Asli (Tidak Terpotong)';
+            else if (ratioKey === 'square' || ratioKey === '1:1') label = 'Rasio: Persegi (1:1)';
             else if (ratioKey === 'standard' || ratioKey === '3:4') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
@@ -646,16 +647,18 @@
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
             let label = 'Rasio: Layar Penuh (9:16)';
-            if (next === 'square') label = 'Rasio: Persegi (1:1)';
+            if (next === 'original') label = 'Rasio: Utuh / Asli (Tidak Terpotong)';
+            else if (next === 'square') label = 'Rasio: Persegi (1:1)';
             else if (next === 'standard') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
 
         applyAspectRatioStyle() {
             const ratio = this.state.get('aspectRatio') || 'portrait';
+            const isOriginal = ratio === 'original' || ratio === 'utuh';
             const isSquare = ratio === 'square' || ratio === '1:1';
             const isStandard = ratio === 'standard' || ratio === '3:4';
-            const isPortrait = !isSquare && !isStandard;
+            const isPortrait = !isOriginal && !isSquare && !isStandard;
 
             const labelEl = document.getElementById('editor-aspect-label');
             const iconEl = document.getElementById('editor-aspect-icon');
@@ -663,14 +666,23 @@
                 labelEl.textContent = this.state.getAspectRatioDisplay();
             }
             if (iconEl) {
-                if (isSquare) iconEl.className = 'fa-regular fa-square text-sky-400 text-xs';
+                if (isOriginal) iconEl.className = 'fa-solid fa-expand text-sky-400 text-xs';
+                else if (isSquare) iconEl.className = 'fa-regular fa-square text-sky-400 text-xs';
                 else if (isStandard) iconEl.className = 'fa-solid fa-camera text-sky-400 text-xs';
                 else iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
             }
 
             const viewport = document.getElementById('editor-viewport');
             if (viewport) {
-                if (isSquare) {
+                if (isOriginal) {
+                    viewport.style.aspectRatio = 'auto';
+                    viewport.style.maxHeight = '';
+                    viewport.style.maxWidth = '';
+                    viewport.style.width = '100%';
+                    viewport.style.height = '100%';
+                    viewport.classList.remove('rounded-3xl', 'rounded-2xl', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.classList.add('w-full', 'h-full');
+                } else if (isSquare) {
                     viewport.style.aspectRatio = '1 / 1';
                     viewport.style.maxHeight = '70vh';
                     viewport.style.maxWidth = '70vh';
@@ -696,10 +708,10 @@
             }
 
             if (this.imageEl) {
-                this.imageEl.style.objectFit = 'cover';
+                this.imageEl.style.objectFit = isOriginal ? 'contain' : 'cover';
             }
             if (this.videoEl) {
-                this.videoEl.style.objectFit = 'cover';
+                this.videoEl.style.objectFit = isOriginal ? 'contain' : 'cover';
             }
             this.applyCurrentTransforms();
         }
@@ -1315,7 +1327,11 @@
                         let outW = baseW;
                         let outH = baseH;
 
-                        if (activeRatio === 'square') {
+                        if (activeRatio === 'original' || activeRatio === 'utuh') {
+                            // Utuh / Asli Sensor: 100% frame foto tanpa dipotong
+                            outW = baseW;
+                            outH = baseH;
+                        } else if (activeRatio === 'square') {
                             const s = Math.min(baseW, baseH);
                             outW = s;
                             outH = s;
@@ -1371,8 +1387,9 @@
                             ctx.filter = filterPreset.css;
                         }
 
-                        // Hitung skala fitting (object-cover) dan zoom pengguna
-                        const fitScale = Math.max(outW / baseW, outH / baseH);
+                        // Hitung skala fitting (object-cover atau uncropped 1:1) dan zoom pengguna
+                        const isNoCrop = (activeRatio === 'original' || activeRatio === 'utuh');
+                        const fitScale = isNoCrop ? 1 : Math.max(outW / baseW, outH / baseH);
                         const finalScale = fitScale * zoom;
 
                         // Hitung translasi pergeseran (pan) sesuai rasio layar

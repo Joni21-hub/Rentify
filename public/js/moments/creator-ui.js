@@ -119,7 +119,7 @@
                 };
             }
 
-            // Header: Aspect Ratio Toggle (9:16 -> 3:4 -> 1:1 -> 9:16)
+            // Header: Aspect Ratio Toggle (9:16 -> 3:4 -> 1:1 -> Utuh -> 9:16)
             const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
             const aspectLabel = document.getElementById('aspect-ratio-label');
             const aspectIcon = document.getElementById('aspect-ratio-icon');
@@ -128,29 +128,37 @@
             const videoPreviewEl = document.getElementById('camera-video-preview');
 
             const applyCameraRatioUI = (ratio) => {
+                const isOriginal = ratio === 'original' || ratio === 'utuh';
                 const isSquare = ratio === 'square' || ratio === '1:1';
                 const isStandard = ratio === 'standard' || ratio === '3:4';
-                const isPortrait = !isSquare && !isStandard;
+                const isPortrait = !isOriginal && !isSquare && !isStandard;
 
                 if (aspectLabel) {
                     aspectLabel.textContent = this.state.getAspectRatioDisplay();
                 }
                 if (aspectIcon) {
-                    if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
+                    if (isOriginal) aspectIcon.className = 'fa-solid fa-expand text-sky-400 text-xs';
+                    else if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
                     else if (isStandard) aspectIcon.className = 'fa-solid fa-camera text-sky-400 text-xs';
                     else aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
                 }
                 if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
                 if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
 
-                // Video preview kamera selalu natural 1x standar kamera (object-cover) tanpa distorsi letterbox
+                // Video preview kamera: jika 'original' (Utuh), gunakan object-contain agar 100% sensor kamera terlihat tanpa terpotong!
                 if (videoPreviewEl) {
-                    videoPreviewEl.classList.remove('object-contain');
-                    videoPreviewEl.classList.add('object-cover');
+                    if (isOriginal) {
+                        videoPreviewEl.classList.remove('object-cover');
+                        videoPreviewEl.classList.add('object-contain');
+                    } else {
+                        videoPreviewEl.classList.remove('object-contain');
+                        videoPreviewEl.classList.add('object-cover');
+                    }
                 }
 
                 let msg = 'Rasio: Layar Penuh (9:16)';
-                if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
+                if (isOriginal) msg = 'Rasio: Utuh / Asli Kamera (100% Tidak Terpotong)';
+                else if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
                 else if (isSquare) msg = 'Rasio: Persegi (1:1)';
                 this.showFilterToast(msg);
             };
@@ -301,6 +309,20 @@
                 hiddenFileInput.onchange = (e) => this.handleFileSelection(e);
             }
 
+            // Quick Zoom Selector Buttons (0.5x, 1x, 2x, 3x)
+            const zoomBtns = document.querySelectorAll('[data-camera-zoom]');
+            zoomBtns.forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const val = parseFloat(btn.getAttribute('data-camera-zoom'));
+                    this.state.setZoom(val);
+                    this.engine.applyZoom(val);
+                    this.updateZoomButtonsUI(val);
+                    this.engine.vibrate(15);
+                    this.showFilterToast(`Zoom: ${val === 0.5 ? '0.5x (Ultra Wide)' : val + 'x'}`);
+                };
+            });
+
             // Close any open popovers on click outside
             document.addEventListener('click', () => {
                 if (speedPopover) speedPopover.classList.add('hidden');
@@ -309,6 +331,11 @@
         }
 
         bindStateListeners() {
+            // Reaktif terhadap perubahan zoom level
+            this.state.on('change:zoom', ({ value }) => {
+                this.updateZoomButtonsUI(value);
+            });
+
             // Reaktif terhadap durasi klip dan recording
             this.state.on('change:isRecording', ({ value }) => {
                 this.updateRecordingUI(value);
@@ -414,6 +441,7 @@
                     const diff = (currentDistance - this.initialPinchDistance) / 100;
                     const nextZoom = Math.max(0.5, Math.min(5.0, this.currentZoom + diff));
                     this.engine.applyZoom(nextZoom);
+                    this.updateZoomButtonsUI(nextZoom);
                 }
             }, { passive: true });
 
@@ -591,6 +619,19 @@
                     centerIcon.className = 'w-14 h-14 rounded-full bg-rose-500 transition-all transform';
                 }
             }
+        }
+
+        updateZoomButtonsUI(currentZoom) {
+            const zoomVal = parseFloat(currentZoom);
+            document.querySelectorAll('.camera-zoom-btn').forEach(btn => {
+                const btnVal = parseFloat(btn.getAttribute('data-camera-zoom'));
+                const isActive = Math.abs(btnVal - zoomVal) < 0.25;
+                if (isActive) {
+                    btn.className = 'camera-zoom-btn w-8 h-8 rounded-full text-xs font-black text-sky-400 bg-sky-500/25 border border-sky-400/60 shadow-md flex items-center justify-center transition active:scale-90';
+                } else {
+                    btn.className = 'camera-zoom-btn w-8 h-8 rounded-full text-[11px] font-bold text-white/70 hover:text-white flex items-center justify-center transition active:scale-90';
+                }
+            });
         }
 
         updateDurationUI(duration) {
