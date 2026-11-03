@@ -629,7 +629,7 @@
         }
 
         updateRatioDrawerActiveState() {
-            const cur = this.state.get('aspectRatio') || 'portrait';
+            const cur = this.state.get('aspectRatio') || 'original';
             document.querySelectorAll('.ratio-item-btn').forEach(btn => {
                 const key = btn.getAttribute('data-ratio-key');
                 if (key === cur) {
@@ -647,14 +647,14 @@
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
             let label = 'Rasio: Layar Penuh (9:16)';
-            if (next === 'original') label = 'Rasio: Utuh / Asli (Tidak Terpotong)';
+            if (next === 'original') label = 'Rasio: Utuh / Asli (100% Bebas Potong)';
             else if (next === 'square') label = 'Rasio: Persegi (1:1)';
             else if (next === 'standard') label = 'Rasio: Standar Foto (3:4)';
             this.showToast(label);
         }
 
         applyAspectRatioStyle() {
-            const ratio = this.state.get('aspectRatio') || 'portrait';
+            const ratio = this.state.get('aspectRatio') || 'original';
             const isOriginal = ratio === 'original' || ratio === 'utuh';
             const isSquare = ratio === 'square' || ratio === '1:1';
             const isStandard = ratio === 'standard' || ratio === '3:4';
@@ -708,10 +708,10 @@
             }
 
             if (this.imageEl) {
-                this.imageEl.style.objectFit = isOriginal ? 'contain' : 'cover';
+                this.imageEl.style.objectFit = (isOriginal || isStandard) ? 'contain' : 'cover';
             }
             if (this.videoEl) {
-                this.videoEl.style.objectFit = isOriginal ? 'contain' : 'cover';
+                this.videoEl.style.objectFit = (isOriginal || isStandard) ? 'contain' : 'cover';
             }
             this.applyCurrentTransforms();
         }
@@ -1293,7 +1293,7 @@
                 return item.blob || this.mediaBlob;
             }
 
-            const activeRatio = this.state.get('aspectRatio') || 'portrait';
+            const activeRatio = this.state.get('aspectRatio') || 'original';
             const filterKey = item.filter || this.activeFilter || 'normal';
             const hasFilter = filterKey && filterKey !== 'normal';
             const hasOverlays = this.overlays && this.overlays.length > 0 && (!targetItem || item === this.mediaItems[this.activeSlideIndex]);

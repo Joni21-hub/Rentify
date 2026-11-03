@@ -143,8 +143,32 @@
                 ? { deviceId: { exact: preferredDeviceId || forceDeviceId } }
                 : { facingMode: { ideal: facingMode } };
 
+            const isFrontCamera = (facingMode === 'user');
+            const currentRatio = window.MomentCreatorState.get('aspectRatio') || 'original';
+            const prefersNaturalSensor = isFrontCamera || currentRatio === 'original' || currentRatio === 'standard';
+
             const constraintsList = isMobile ? [
-                // 1. Mobile Portrait FHD Alami (Rasio 9:16 ideal tanpa batas 'min' kaku agar tidak ditolak sensor fisik)
+                // 1. Mobile Sensor Alami (3:4 / 4:3) - Wajib untuk kamera depan dan mode Utuh agar driver TIDAK memotong/mengezoom sensor!
+                ...(prefersNaturalSensor ? [
+                    {
+                        video: {
+                            ...baseVideoConstraint,
+                            width: { ideal: 1440, min: 720 },
+                            height: { ideal: 1920, min: 960 },
+                            aspectRatio: { ideal: 3 / 4 }
+                        },
+                        audio: false
+                    },
+                    {
+                        video: {
+                            ...baseVideoConstraint,
+                            width: { ideal: 1080 },
+                            height: { ideal: 1440 }
+                        },
+                        audio: false
+                    }
+                ] : []),
+                // 2. Mobile High-Res 9:16 Portrait Alami (Hanya jika mode 9:16 dipilih dan bukan kamera depan)
                 {
                     video: {
                         ...baseVideoConstraint,
@@ -154,7 +178,7 @@
                     },
                     audio: false // Preview kamera murni tanpa beban audio agar 60fps mulus bebas lag
                 },
-                // 2. Mobile High-Res 4:3 (Sensor asli kamera smartphone umumnya 4:3)
+                // 3. Mobile High-Res 4:3 (Sensor asli kamera smartphone umumnya 4:3)
                 {
                     video: {
                         ...baseVideoConstraint,
@@ -164,7 +188,7 @@
                     },
                     audio: false
                 },
-                // 3. Mobile FHD Standar
+                // 4. Mobile FHD Standar
                 {
                     video: {
                         ...baseVideoConstraint,
@@ -173,7 +197,7 @@
                     },
                     audio: false
                 },
-                // 4. Mobile Fallback HD 720p
+                // 5. Mobile Fallback HD 720p
                 {
                     video: {
                         ...baseVideoConstraint,
@@ -182,7 +206,7 @@
                     },
                     audio: false
                 },
-                // 5. Fallback Facing Mode Murni
+                // 6. Fallback Facing Mode Murni
                 {
                     video: { facingMode: { ideal: facingMode } },
                     audio: false
@@ -269,8 +293,8 @@
             this.videoEl.style.imageRendering = 'auto'; // Rendering halus natural bebas pixelation
 
             const updatePreviewRatioClass = () => {
-                const ratio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
-                if (ratio === 'original' || ratio === 'utuh') {
+                const ratio = window.MomentCreatorState.get('aspectRatio') || 'original';
+                if (ratio === 'original' || ratio === 'utuh' || ratio === 'standard' || ratio === '3:4') {
                     this.videoEl.classList.remove('object-cover');
                     this.videoEl.classList.add('object-contain');
                 } else {
@@ -529,13 +553,14 @@
 
             const isMirrored = window.MomentCreatorState.get('isMirrored');
             const activeFilter = window.MomentCreatorState.get('activeFilter');
-            const aspectRatio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
+            const aspectRatio = window.MomentCreatorState.get('aspectRatio') || 'original';
             const zoomLevel = window.MomentCreatorState.get('zoom') || 1.0;
             const filterCss = this.getFilterCss(activeFilter);
 
             let sourceImage = null;
             let naturalWidth = this.videoEl.videoWidth || 1920;
             let naturalHeight = this.videoEl.videoHeight || 1080;
+            const isVideoPortrait = (this.videoEl.videoHeight || 1080) >= (this.videoEl.videoWidth || 1920);
 
             // 1. Coba ambil foto beresolusi penuh langsung dari hardware sensor menggunakan ImageCapture API
             const videoTrack = this.stream ? this.stream.getVideoTracks()[0] : null;
@@ -559,9 +584,15 @@
                         const imgUrl = URL.createObjectURL(rawBlob);
                         await new Promise((res, rej) => {
                             tempImg.onload = () => {
-                                naturalWidth = tempImg.naturalWidth;
-                                naturalHeight = tempImg.naturalHeight;
-                                sourceImage = tempImg;
+                                const isImgPortrait = tempImg.naturalHeight >= tempImg.naturalWidth;
+                                // Validasi orientasi ImageCapture agar tidak terjadi cross-crop zoom pada driver Android/iOS
+                                if (isVideoPortrait === isImgPortrait) {
+                                    naturalWidth = tempImg.naturalWidth;
+                                    naturalHeight = tempImg.naturalHeight;
+                                    sourceImage = tempImg;
+                                } else {
+                                    sourceImage = null;
+                                }
                                 res();
                             };
                             tempImg.onerror = rej;

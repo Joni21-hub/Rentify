@@ -72,7 +72,7 @@
                 autoplay 
                 playsinline 
                 muted 
-                class="w-full h-full object-cover pointer-events-none"
+                class="w-full h-full object-contain pointer-events-none transition-all duration-300"
             ></video>
 
             <!-- 3x3 Grid Overlay (Rule of Thirds) -->
@@ -126,10 +126,10 @@
                     </span>
                 </button>
 
-                <!-- Aspect Ratio Toggle Button (9:16 / 3:4 / 1:1) -->
-                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (9:16 / 3:4 / 1:1)">
-                    <i id="aspect-ratio-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
-                    <span id="aspect-ratio-label">9:16</span>
+                <!-- Aspect Ratio Toggle Button (Utuh / 9:16 / 3:4 / 1:1) -->
+                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Utuh / 9:16 / 3:4 / 1:1)">
+                    <i id="aspect-ratio-icon" class="fa-solid fa-expand text-sky-400 text-xs"></i>
+                    <span id="aspect-ratio-label">Utuh</span>
                 </button>
             </div>
 
@@ -309,13 +309,13 @@
                 id="editor-video-preview" 
                 playsinline 
                 loop 
-                class="hidden w-full h-full object-cover pointer-events-none transition-all duration-300"
+                class="hidden w-full h-full object-contain pointer-events-none transition-all duration-300"
             ></video>
 
             <!-- Image Preview Element -->
             <img 
                 id="editor-image-preview" 
-                class="hidden w-full h-full object-cover pointer-events-none transition-all duration-300" 
+                class="hidden w-full h-full object-contain pointer-events-none transition-all duration-300" 
                 alt="Pratinjau Momen"
             >
 
@@ -504,7 +504,7 @@
             <!-- Pilihan Rasio: 9:16 / 3:4 / 1:1 / Utuh (Tidak Terpotong) -->
             <div class="grid grid-cols-4 gap-2 mb-3">
                 <!-- 9:16 Fullscreen -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-2.5 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
                     <div class="flex items-center justify-between">
                         <span class="w-3.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
                         <span class="text-[11px] font-black text-sky-400">9:16</span>
@@ -540,7 +540,7 @@
                 </button>
 
                 <!-- Utuh / Asli Sensor (Tidak Terpotong) -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-2.5 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
                     <div class="flex items-center justify-between">
                         <span class="w-5.5 h-4 border-2 border-sky-400/80 rounded-md"></span>
                         <span class="text-[11px] font-black text-sky-400">Utuh</span>

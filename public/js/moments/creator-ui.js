@@ -145,9 +145,9 @@
                 if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
                 if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
 
-                // Video preview kamera: jika 'original' (Utuh), gunakan object-contain agar 100% sensor kamera terlihat tanpa terpotong!
+                // Video preview kamera: jika 'original' (Utuh) atau 'standard' (3:4), gunakan object-contain agar 100% sensor kamera terlihat tanpa terpotong!
                 if (videoPreviewEl) {
-                    if (isOriginal) {
+                    if (isOriginal || isStandard) {
                         videoPreviewEl.classList.remove('object-cover');
                         videoPreviewEl.classList.add('object-contain');
                     } else {
@@ -156,15 +156,15 @@
                     }
                 }
 
-                let msg = 'Rasio: Layar Penuh (9:16)';
-                if (isOriginal) msg = 'Rasio: Utuh / Asli Kamera (100% Tidak Terpotong)';
+                let msg = 'Rasio: Utuh / Asli Kamera (100% Tidak Terpotong)';
+                if (isPortrait) msg = 'Rasio: Layar Penuh (9:16)';
                 else if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
                 else if (isSquare) msg = 'Rasio: Persegi (1:1)';
                 this.showFilterToast(msg);
             };
 
-            // Set UI awal kamera ke Layar Penuh (9:16)
-            applyCameraRatioUI(this.state.get('aspectRatio') || 'portrait');
+            // Set UI awal kamera ke Utuh (Original) bebas crop
+            applyCameraRatioUI(this.state.get('aspectRatio') || 'original');
 
             if (aspectBtn) {
                 aspectBtn.onclick = (e) => {
@@ -316,6 +316,9 @@
                 nativeCamBtn.onclick = () => {
                     const facing = this.state.get('facingMode') || 'environment';
                     nativeCamInput.setAttribute('capture', facing === 'user' ? 'user' : 'environment');
+                    nativeCamInput.value = ''; // Reset agar bisa memilih file yang sama
+                    this.engine.vibrate(15);
+                    this.showFilterToast('Membuka Kamera Asli HP...');
                     nativeCamInput.click();
                 };
                 nativeCamInput.onchange = (e) => this.handleFileSelection(e);
@@ -953,6 +956,7 @@
                         dataUrl: dataUrl,
                         url: dataUrl,
                         filter: this.state.get('activeFilter') || 'normal',
+                        aspectRatio: 'original',
                         timestamp: Date.now(),
                         name: targetF.name
                     });
@@ -960,6 +964,9 @@
             }
 
             if (processedItems.length > 0) {
+                // Pastikan rasio disetel ke 'original' (Utuh) agar foto hasil kamera HP tidak terpotong (zoom-in)
+                this.state.set('aspectRatio', 'original');
+
                 const existing = this.state.getCapturedMediaItems() || [];
                 const combined = (existing.length > 0) ? existing.concat(processedItems).slice(0, 10) : processedItems;
                 this.state.setCapturedMediaItems(combined);
