@@ -39,11 +39,11 @@
     <meta name="twitter:image" content="{{ asset('images/logo.png') }}">
 
     <!-- Favicon & PWA Icons Google & Apple Approved -->
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v={{ \App\Helpers\AppVersion::get() }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v={{ \App\Helpers\AppVersion::get() }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v={{ \App\Helpers\AppVersion::get() }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v={{ \App\Helpers\AppVersion::get() }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}?v={{ \App\Helpers\AppVersion::get() }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 

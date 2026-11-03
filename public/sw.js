@@ -1,6 +1,6 @@
 // =========================================================================
 // RENTIFY SMART SERVICE WORKER & PWA AUTO-UPDATE SYSTEM
-// Build: 2026-11-03 White Background App Icons Update
+// Build: 2026-11-03 Clean Icon Without Text (Emblem Only, Solid White)
 // =========================================================================
 
 // Ambil versi dinamis dari URL query parameter jika ada (misal /sw.js?v=1.14.0.2026...), atau fallback
