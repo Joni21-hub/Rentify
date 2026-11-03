@@ -48,6 +48,7 @@ Route::name('customer.')->group(function () {
     Route::get('/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show'])->name('toko.show');
     Route::get('/customer/toko/{id}', [\App\Http\Controllers\Customer\StoreController::class, 'show']);
     Route::post('/voucher/claim', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'claim'])->name('voucher.claim');
+    Route::post('/customer/voucher/claim', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'claim'])->name('voucher.claim.alias');
     
     Route::get('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'index'])->name('lokasi');
     Route::post('/lokasi', [App\Http\Controllers\Customer\LokasiController::class, 'store'])->name('lokasi.store');
@@ -297,7 +298,6 @@ Route::prefix('customer')->name('customer.')
 
     // Voucher & Promo Customer
     Route::get('/voucher', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'index'])->name('voucher');
-    Route::post('/voucher/claim', [\App\Http\Controllers\Customer\CustomerVoucherController::class, 'claim'])->name('voucher.claim');
 
     // Chat & Reviews
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
