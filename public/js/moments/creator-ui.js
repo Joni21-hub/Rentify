@@ -309,6 +309,18 @@
                 hiddenFileInput.onchange = (e) => this.handleFileSelection(e);
             }
 
+            // Native camera shortcut trigger (Buka Kamera Bawaan HP)
+            const nativeCamBtn = document.getElementById('native-camera-btn');
+            const nativeCamInput = document.getElementById('native-camera-direct-input');
+            if (nativeCamBtn && nativeCamInput) {
+                nativeCamBtn.onclick = () => {
+                    const facing = this.state.get('facingMode') || 'environment';
+                    nativeCamInput.setAttribute('capture', facing === 'user' ? 'user' : 'environment');
+                    nativeCamInput.click();
+                };
+                nativeCamInput.onchange = (e) => this.handleFileSelection(e);
+            }
+
             // Quick Zoom Selector Buttons (0.5x, 1x, 2x, 3x)
             const zoomBtns = document.querySelectorAll('[data-camera-zoom]');
             zoomBtns.forEach(btn => {
@@ -785,6 +797,10 @@
             }
             if (nextStepBtn) {
                 nextStepBtn.classList.toggle('hidden', !hasContent);
+            }
+            const nativeCamBtn = document.getElementById('native-camera-btn');
+            if (nativeCamBtn) {
+                nativeCamBtn.classList.toggle('hidden', hasContent);
             }
         }
 

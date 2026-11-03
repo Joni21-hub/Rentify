@@ -72,7 +72,7 @@
                 autoplay 
                 playsinline 
                 muted 
-                class="w-full h-full object-cover pointer-events-none transition-transform duration-300"
+                class="w-full h-full object-cover pointer-events-none"
             ></video>
 
             <!-- 3x3 Grid Overlay (Rule of Thirds) -->
@@ -266,7 +266,7 @@
                     </div>
                 </div>
 
-                <!-- Right: Undo Clip & Next / Checkmark -->
+                <!-- Right: Undo Clip & Next / Checkmark / Native Camera -->
                 <div class="w-14 flex items-center justify-center gap-2">
                     <button id="delete-last-clip-btn" class="hidden glass-btn w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:text-rose-300 active:scale-90 transition shadow-lg" title="Hapus klip terakhir">
                         <i class="fa-solid fa-delete-left text-sm"></i>
@@ -274,6 +274,11 @@
 
                     <button id="next-step-btn" class="hidden w-11 h-11 rounded-full bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white flex items-center justify-center active:scale-95 transition shadow-lg shadow-sky-500/30" title="Lanjut ke Editor">
                         <i class="fa-solid fa-check text-base font-black"></i>
+                    </button>
+
+                    <button id="native-camera-btn" class="glass-btn w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-sky-300 hover:text-white active:scale-90 transition shadow-lg border border-sky-400/30" title="Buka Kamera Asli HP (Resolusi 100% Penuh Bawaan)">
+                        <i class="fa-solid fa-camera-retro text-lg"></i>
+                        <span class="text-[8px] font-black tracking-tight mt-0.5 leading-none">Kamera HP</span>
                     </button>
                 </div>
             </div>
@@ -289,6 +294,8 @@
 
         <!-- Hidden Input for File Selection (Semua format foto & video) -->
         <input type="file" id="creator-hidden-file-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden">
+        <!-- Hidden Input for Native Camera Direct (Kamera Asli Bawaan HP) -->
+        <input type="file" id="native-camera-direct-input" accept="image/*,video/*" capture="environment" class="hidden">
     </div>
 
     <!-- ============================================================== -->

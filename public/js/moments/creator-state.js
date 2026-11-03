@@ -136,8 +136,10 @@
         setFacingMode(mode) {
             if (['environment', 'user'].includes(mode)) {
                 this.set('facingMode', mode);
-                // Sinkronisasi otomatis: kamera selfie secara default mirrored
-                this.set('isMirrored', mode === 'user');
+                // Catatan: isMirrored mewakili pilihan cermin manual dari pengguna.
+                // Kamera depan (selfie) otomatis di-mirror pada live preview CSS,
+                // tetapi hasil foto tetap disimpan dalam orientasi natural (unmirrored / teks terbaca)
+                // kecuali pengguna sengaja mengaktifkan tombol Cermin manual.
             }
         }
 
