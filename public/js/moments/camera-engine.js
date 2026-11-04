@@ -312,14 +312,8 @@
             this.videoEl.style.imageRendering = 'auto'; // Rendering halus natural bebas pixelation
 
             const updatePreviewRatioClass = () => {
-                const ratio = window.MomentCreatorState.get('aspectRatio') || 'portrait';
-                if (ratio === 'original' || ratio === 'utuh') {
-                    this.videoEl.classList.remove('object-cover');
-                    this.videoEl.classList.add('object-contain');
-                } else {
-                    this.videoEl.classList.remove('object-contain');
-                    this.videoEl.classList.add('object-cover');
-                }
+                this.videoEl.classList.remove('object-contain');
+                this.videoEl.classList.add('object-cover');
             };
 
             updatePreviewRatioClass();
@@ -609,35 +603,8 @@
             const zoomLevel = window.MomentCreatorState.get('zoom') || 1.0;
             const filterCss = this.getFilterCss(activeFilter);
 
-            let naturalWidth = this.videoEl.videoWidth || 1080;
-            let naturalHeight = this.videoEl.videoHeight || 1920;
-            let sourceImage = this.videoEl;
-            let bitmapToClose = null;
-
-            // Step 3: Hardware Sensor Capture via ImageCapture API jika tersedia
-            // Mengambil still snapshot langsung dari sensor kamera native (12 MP, 48 MP, dll.)
-            const videoTrack = (this.stream && this.stream.getVideoTracks) ? this.stream.getVideoTracks()[0] : null;
-            if (window.ImageCapture && videoTrack && videoTrack.readyState === 'live') {
-                try {
-                    const imageCapture = new window.ImageCapture(videoTrack);
-                    const photoSettings = {};
-                    if (this.isTorchActive) {
-                        photoSettings.fillLightMode = 'flash';
-                    }
-                    const photoBlob = await imageCapture.takePhoto(photoSettings);
-                    if (photoBlob && photoBlob.size > 0 && typeof createImageBitmap === 'function') {
-                        const imgBitmap = await createImageBitmap(photoBlob);
-                        if (imgBitmap && imgBitmap.width > 0 && imgBitmap.height > 0) {
-                            sourceImage = imgBitmap;
-                            bitmapToClose = imgBitmap;
-                            naturalWidth = imgBitmap.width;
-                            naturalHeight = imgBitmap.height;
-                        }
-                    }
-                } catch (captureErr) {
-                    console.info('[CameraEngine] ImageCapture takePhoto fallback ke video frame preview:', captureErr);
-                }
-            }
+            const naturalWidth = this.videoEl.videoWidth || 1080;
+            const naturalHeight = this.videoEl.videoHeight || 1920;
 
             const canvas = document.createElement('canvas');
             canvas.width = naturalWidth;
@@ -648,7 +615,6 @@
             ctx.imageSmoothingQuality = 'high';
 
             // Cerminkan foto agar identik dengan apa yang dilihat pengguna di pratinjau kamera (WYSIWYG)
-            // Kamera depan secara alami di-mirror di layar pratinjau, kecuali tombol cermin manual diaktifkan/dinonaktifkan
             const isSelfie = (facingMode === 'user');
             const shouldMirror = isSelfie ? !isManualMirrored : !!isManualMirrored;
 
@@ -662,58 +628,20 @@
                 ctx.filter = filterCss;
             }
 
-            // Jika zoom digital aktif (hardware zoom tidak aktif dan zoom > 1.0):
-            // Lakukan crop di tengah canvas agar hasil foto 100% identik dengan yang terlihat di layar
+            // Jika zoom digital aktif (hardware zoom tidak aktif dan zoom > 1.05)
             if (!this.isHardwareZoomActive && zoomLevel > 1.05) {
                 const cropW = naturalWidth / zoomLevel;
                 const cropH = naturalHeight / zoomLevel;
                 const cropX = (naturalWidth - cropW) / 2;
                 const cropY = (naturalHeight - cropH) / 2;
-                ctx.drawImage(sourceImage, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(this.videoEl, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
             } else {
-                ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
             }
 
-            if (bitmapToClose && typeof bitmapToClose.close === 'function') {
-                try { bitmapToClose.close(); } catch (e) {}
-            }
-
-            // Potong ke Rasio Kamera: 9:16 (Layar Penuh), 3:4 (Standar Ponsel), 1:1 (Persegi), atau Utuh (Original)
-            let finalCanvas = canvas;
-
-            const cropHelper = (ratioW, ratioH) => {
-                let targetW, targetH;
-                const targetRatio = ratioW / ratioH;
-                if (canvas.width / canvas.height > targetRatio) {
-                    targetH = canvas.height;
-                    targetW = Math.round(targetH * targetRatio);
-                } else {
-                    targetW = canvas.width;
-                    targetH = Math.round(targetW / targetRatio);
-                }
-                const cropped = document.createElement('canvas');
-                cropped.width = targetW;
-                cropped.height = targetH;
-                const cCtx = cropped.getContext('2d');
-                cCtx.imageSmoothingEnabled = true;
-                cCtx.imageSmoothingQuality = 'high';
-                const sx = (canvas.width - targetW) / 2;
-                const sy = (canvas.height - targetH) / 2;
-                cCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
-                return cropped;
-            };
-
-            if (aspectRatio === 'original' || aspectRatio === 'utuh') {
-                // RASIO UTUH / ASLI SENSOR: 100% FRAME ASLI KAMERA TANPA TERPOTONG
-                finalCanvas = canvas;
-            } else if (aspectRatio === 'square' || aspectRatio === '1:1') {
-                finalCanvas = cropHelper(1, 1);
-            } else if (aspectRatio === 'standard' || aspectRatio === '3:4') {
-                finalCanvas = cropHelper(3, 4);
-            } else {
-                // Default 9:16 (Layar Penuh Story & Reels)
-                finalCanvas = cropHelper(9, 16);
-            }
+            // RASIO UTUH / ASLI KAMERA 100% BEBAS POTONG:
+            // Tangkap seluruh bidang sensor video dalam bentuk persegi panjang (9:16) alami tanpa crop buatan / tanpa ngezoom
+            const finalCanvas = canvas;
 
             const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);
 

@@ -65,14 +65,14 @@
     <!-- SCREEN 1: FULLSCREEN CAMERA & RECORDER (FASE 1) -->
     <!-- ============================================================== -->
     <div id="screen-camera" class="relative w-full h-full flex flex-col justify-between transition-opacity duration-300">
-        <!-- 1. Fullscreen Viewfinder -->
+        <!-- 1. Fullscreen Viewfinder (Persegi Panjang 9:16 Utuh Bebas Potong) -->
         <div id="camera-viewfinder-container" class="absolute inset-0 w-full h-full bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer">
             <video 
                 id="camera-video-preview" 
                 autoplay 
                 playsinline 
                 muted 
-                class="w-full h-full object-contain pointer-events-none transition-all duration-300"
+                class="w-full h-full object-cover pointer-events-none transition-all duration-300"
             ></video>
 
             <!-- 3x3 Grid Overlay (Rule of Thirds) -->
@@ -86,20 +86,6 @@
                 <div class="grid-line-v"></div>
                 <div class="grid-line-v"></div>
                 <div></div>
-            </div>
-
-            <!-- 3:4 Framing Mask (Active when Aspect Ratio is 3:4) -->
-            <div id="camera-3-4-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
-                <div class="w-full flex-1 bg-black/75"></div>
-                <div class="w-full aspect-[3/4] max-h-[82vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
-                <div class="w-full flex-1 bg-black/75"></div>
-            </div>
-
-            <!-- Square Framing Mask (Active when Aspect Ratio is 1:1) -->
-            <div id="camera-square-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
-                <div class="w-full flex-1 bg-black/75"></div>
-                <div class="w-full aspect-square border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
-                <div class="w-full flex-1 bg-black/75"></div>
             </div>
 
             <!-- Filter Name Subtle Toast (Swipe Notification) -->
@@ -126,11 +112,8 @@
                     </span>
                 </button>
 
-                <!-- Aspect Ratio Toggle Button (Utuh / 9:16 / 3:4 / 1:1) -->
-                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (Utuh / 9:16 / 3:4 / 1:1)">
-                    <i id="aspect-ratio-icon" class="fa-solid fa-expand text-sky-400 text-xs"></i>
-                    <span id="aspect-ratio-label">Utuh</span>
-                </button>
+                <!-- Spacer to balance header with close button -->
+                <div class="w-9 h-9"></div>
             </div>
 
             <!-- Segmented Progress Bar Multi-Klip -->
@@ -266,7 +249,7 @@
                     </div>
                 </div>
 
-                <!-- Right: Undo Clip & Next / Checkmark / Native Camera -->
+                <!-- Right: Undo Clip & Next / Checkmark -->
                 <div class="w-14 flex items-center justify-center gap-2">
                     <button id="delete-last-clip-btn" class="hidden glass-btn w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:text-rose-300 active:scale-90 transition shadow-lg" title="Hapus klip terakhir">
                         <i class="fa-solid fa-delete-left text-sm"></i>
@@ -274,11 +257,6 @@
 
                     <button id="next-step-btn" class="hidden w-11 h-11 rounded-full bg-gradient-to-r from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white flex items-center justify-center active:scale-95 transition shadow-lg shadow-sky-500/30" title="Lanjut ke Editor">
                         <i class="fa-solid fa-check text-base font-black"></i>
-                    </button>
-
-                    <button id="native-camera-btn" class="glass-btn w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-sky-300 hover:text-white active:scale-90 transition shadow-lg border border-sky-400/30" title="Buka Kamera Asli HP (Resolusi 100% Penuh Bawaan)">
-                        <i class="fa-solid fa-camera-retro text-lg"></i>
-                        <span class="text-[8px] font-black tracking-tight mt-0.5 leading-none">Kamera HP</span>
                     </button>
                 </div>
             </div>
@@ -294,8 +272,6 @@
 
         <!-- Hidden Input for File Selection (Semua format foto & video) -->
         <input type="file" id="creator-hidden-file-input" accept="image/*,video/*,.heic,.heif" multiple class="hidden">
-        <!-- Hidden Input for Native Camera Direct (Kamera Asli Bawaan HP) -->
-        <input type="file" id="native-camera-direct-input" accept="image/*,video/*" capture="environment" class="hidden">
     </div>
 
     <!-- ============================================================== -->

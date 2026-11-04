@@ -128,49 +128,29 @@
             const videoPreviewEl = document.getElementById('camera-video-preview');
 
             const applyCameraRatioUI = (ratio) => {
-                const isOriginal = ratio === 'original' || ratio === 'utuh';
-                const isSquare = ratio === 'square' || ratio === '1:1';
-                const isStandard = ratio === 'standard' || ratio === '3:4';
-                const isPortrait = !isOriginal && !isSquare && !isStandard;
-
                 if (aspectLabel) {
-                    aspectLabel.textContent = this.state.getAspectRatioDisplay();
+                    aspectLabel.textContent = 'Utuh';
                 }
                 if (aspectIcon) {
-                    if (isOriginal) aspectIcon.className = 'fa-solid fa-expand text-sky-400 text-xs';
-                    else if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
-                    else if (isStandard) aspectIcon.className = 'fa-solid fa-camera text-sky-400 text-xs';
-                    else aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                    aspectIcon.className = 'fa-solid fa-expand text-sky-400 text-xs';
                 }
-                if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
-                if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
+                if (squareMask) squareMask.classList.add('hidden');
+                if (standardMask) standardMask.classList.add('hidden');
 
-                // Video preview kamera: jika 'original' (Utuh) atau 'standard' (3:4), gunakan object-contain agar 100% sensor kamera terlihat tanpa terpotong!
+                // Video preview kamera: tampil penuh persegi panjang (9:16) secara utuh
                 if (videoPreviewEl) {
-                    if (isOriginal || isStandard) {
-                        videoPreviewEl.classList.remove('object-cover');
-                        videoPreviewEl.classList.add('object-contain');
-                    } else {
-                        videoPreviewEl.classList.remove('object-contain');
-                        videoPreviewEl.classList.add('object-cover');
-                    }
+                    videoPreviewEl.classList.remove('object-contain');
+                    videoPreviewEl.classList.add('object-cover');
                 }
-
-                let msg = 'Rasio: Utuh / Asli Kamera (100% Tidak Terpotong)';
-                if (isPortrait) msg = 'Rasio: Layar Penuh (9:16)';
-                else if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
-                else if (isSquare) msg = 'Rasio: Persegi (1:1)';
-                this.showFilterToast(msg);
             };
 
-            // Set UI awal kamera ke Utuh (Original) bebas crop
-            applyCameraRatioUI(this.state.get('aspectRatio') || 'original');
+            // Set UI awal kamera ke Utuh (Persegi Panjang 9:16 Bebas Potong)
+            applyCameraRatioUI('original');
 
             if (aspectBtn) {
                 aspectBtn.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
-                    const nextRatio = this.state.toggleAspectRatio();
-                    applyCameraRatioUI(nextRatio);
+                    applyCameraRatioUI('original');
                     this.engine.vibrate(15);
                 };
             }
@@ -307,21 +287,6 @@
             const hiddenFileInput = document.getElementById('creator-hidden-file-input');
             if (hiddenFileInput) {
                 hiddenFileInput.onchange = (e) => this.handleFileSelection(e);
-            }
-
-            // Native camera shortcut trigger (Buka Kamera Bawaan HP)
-            const nativeCamBtn = document.getElementById('native-camera-btn');
-            const nativeCamInput = document.getElementById('native-camera-direct-input');
-            if (nativeCamBtn && nativeCamInput) {
-                nativeCamBtn.onclick = () => {
-                    const facing = this.state.get('facingMode') || 'environment';
-                    nativeCamInput.setAttribute('capture', facing === 'user' ? 'user' : 'environment');
-                    nativeCamInput.value = ''; // Reset agar bisa memilih file yang sama
-                    this.engine.vibrate(15);
-                    this.showFilterToast('Membuka Kamera Asli HP...');
-                    nativeCamInput.click();
-                };
-                nativeCamInput.onchange = (e) => this.handleFileSelection(e);
             }
 
             // Quick Zoom Selector Buttons (0.5x, 1x, 2x, 3x)
@@ -800,10 +765,6 @@
             }
             if (nextStepBtn) {
                 nextStepBtn.classList.toggle('hidden', !hasContent);
-            }
-            const nativeCamBtn = document.getElementById('native-camera-btn');
-            if (nativeCamBtn) {
-                nativeCamBtn.classList.toggle('hidden', hasContent);
             }
         }
 

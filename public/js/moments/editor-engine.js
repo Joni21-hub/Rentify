@@ -675,7 +675,7 @@
             const viewport = document.getElementById('editor-viewport');
             if (viewport) {
                 if (isOriginal) {
-                    viewport.style.aspectRatio = 'auto';
+                    viewport.style.aspectRatio = '9 / 16';
                     viewport.style.maxHeight = '';
                     viewport.style.maxWidth = '';
                     viewport.style.width = '100%';
@@ -708,10 +708,10 @@
             }
 
             if (this.imageEl) {
-                this.imageEl.style.objectFit = (isOriginal || isStandard) ? 'contain' : 'cover';
+                this.imageEl.style.objectFit = (isSquare || isStandard) ? 'contain' : 'cover';
             }
             if (this.videoEl) {
-                this.videoEl.style.objectFit = (isOriginal || isStandard) ? 'contain' : 'cover';
+                this.videoEl.style.objectFit = (isSquare || isStandard) ? 'contain' : 'cover';
             }
             this.applyCurrentTransforms();
         }
