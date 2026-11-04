@@ -27,7 +27,7 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
-    @if($errors->any())
+    @if(isset($errors) && $errors->any())
         <div class="px-4 py-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs font-bold shadow-xs">
             {{ $errors->first() }}
         </div>
