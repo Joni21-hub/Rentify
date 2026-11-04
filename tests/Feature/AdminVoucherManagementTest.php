@@ -129,4 +129,42 @@ class AdminVoucherManagementTest extends TestCase
         $response->assertRedirect('/admin/dashboard#tab-voucher');
         $this->assertDatabaseMissing('vouchers', ['kode_voucher' => 'CLR01']);
     }
+
+    public function test_platform_vouchers_seeder_catalog_has_exact_204_vouchers_structure(): void
+    {
+        $seeder = new \Database\Seeders\PlatformVouchersSeeder();
+        $catalog = $seeder->getCatalog();
+
+        $this->assertCount(204, $catalog);
+
+        $persen = array_filter($catalog, fn($v) => $v['tipe_diskon'] === 'persen');
+        $nominal = array_filter($catalog, fn($v) => $v['tipe_diskon'] === 'nominal');
+
+        $this->assertCount(125, $persen);
+        $this->assertCount(79, $nominal);
+
+        // All percentage vouchers must enforce max_quantity and have no maksimal_diskon cap
+        foreach ($persen as $v) {
+            $this->assertNotNull($v['max_quantity']);
+            $this->assertNull($v['maksimal_diskon']);
+            $this->assertSame(1, $v['min_quantity']);
+        }
+
+        // All nominal vouchers must enforce maksimal_diskon = nilai_diskon and max_quantity null
+        foreach ($nominal as $v) {
+            $this->assertNull($v['max_quantity']);
+            $this->assertSame($v['nilai_diskon'], $v['maksimal_diskon']);
+            $this->assertGreaterThan(0, $v['nilai_diskon']);
+        }
+    }
+
+    public function test_platform_vouchers_seeder_executes_successfully(): void
+    {
+        $seeder = new \Database\Seeders\PlatformVouchersSeeder();
+        $seeder->run();
+
+        $this->assertSame(204, Voucher::where('funding_source', 'platform')->count());
+        $this->assertSame(125, Voucher::where('funding_source', 'platform')->where('tipe_diskon', 'persen')->count());
+        $this->assertSame(79, Voucher::where('funding_source', 'platform')->where('tipe_diskon', 'nominal')->count());
+    }
 }
