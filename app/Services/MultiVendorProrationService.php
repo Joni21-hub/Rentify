@@ -3,10 +3,14 @@
 namespace App\Services;
 
 use App\Models\Barang;
+use App\Models\CustomerVoucher;
 use App\Models\DetailPenyewaan;
+use App\Models\OrderVoucherRedemption;
 use App\Models\Penyewaan;
 use App\Models\Voucher;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MultiVendorProrationService
 {
@@ -29,10 +33,200 @@ class MultiVendorProrationService
             return 0.0;
         }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
         $minimalBelanja = (float) ($platformVoucher->minimal_belanja ?? 0.0);
         if ($totalNetEligibleCart < $minimalBelanja) {
             return 0.0;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         $tipeDiskon = $platformVoucher->tipe_diskon ?? 'nominal';
         $nilaiDiskon = (float) ($platformVoucher->nilai_diskon ?? 0.0);
@@ -42,17 +236,492 @@ class MultiVendorProrationService
             $maksimalDiskon = $platformVoucher->maksimal_diskon !== null ? (float) $platformVoucher->maksimal_diskon : null;
             if ($maksimalDiskon !== null && $maksimalDiskon > 0.0) {
                 $discount = min($rawDiscount, $maksimalDiskon);
-            } else {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 $discount = $rawDiscount;
             }
-        } else {
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
             $discount = $nilaiDiskon;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         // Bounded strictly by totalNetEligibleCart
         $discount = min($discount, $totalNetEligibleCart);
 
         return round(max(0.0, $discount), 2);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     /**
@@ -107,15 +776,395 @@ class MultiVendorProrationService
                         'net_base'      => $itemNetBase > 0.0 ? $itemNetBase : $itemSubtotalAsli,
                     ];
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
             // Hitung potongan voucher toko yang memotong subtotal eligible
             if ($eligibleStoreDiscountVendor > 0.0) {
                 $storeVoucherEligible = $eligibleStoreDiscountVendor;
-            } else {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 $orderStoreVoucher = $this->extractOrderStoreVoucher($order);
                 $storeVoucherEligible = min($orderStoreVoucher, $eligibleSubtotalVendor);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
             $netEligibleSewaVendor = max(0.0, round($eligibleSubtotalVendor - $storeVoucherEligible, 2));
 
@@ -123,6 +1172,101 @@ class MultiVendorProrationService
             $vendorEligibleItemsMap[$vendorId] = $eligibleItems;
             $vendorTotalAsliMap[$vendorId] = $totalSubtotalVendor;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         $totalNetEligibleCart = round(array_sum($netEligibleMap), 2);
 
@@ -139,8 +1283,198 @@ class MultiVendorProrationService
                 foreach ($items as $itemIdx => &$itemRef) {
                     $this->setItemPlatformDiscount($itemRef, 0.0);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 $this->setOrderItems($orderRef, $items);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             unset($orderRef, $itemRef);
 
             return [
@@ -153,6 +1487,101 @@ class MultiVendorProrationService
             ];
         }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
         // Batasi diskon platform dengan total net eligible cart
         $targetDiscount = min($totalPlatformDiscount, $totalNetEligibleCart);
 
@@ -163,9 +1592,199 @@ class MultiVendorProrationService
                 $vendorAllocations[$vId] = 0.0;
                 continue;
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             $rawBase = floor(($netEligible / $totalNetEligibleCart) * $targetDiscount * 100.0) / 100.0;
             $vendorAllocations[$vId] = min($rawBase, $netEligible);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         // Langkah 3: Rounding difference cascade per 0.01 sen dengan deterministic tie-breaker
         $totalAllocated = round(array_sum($vendorAllocations), 2);
@@ -180,10 +1799,200 @@ class MultiVendorProrationService
                 if (abs($netA - $netB) > 0.00001) {
                     return ($netB <=> $netA); // net_eligible DESC
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 return is_numeric($a) && is_numeric($b)
                     ? ((int) $a <=> (int) $b)
                     : strcmp((string) $a, (string) $b); // vendor_id ASC
-            });
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    });
 
             while ($cents > 0) {
                 $allocatedAny = false;
@@ -191,6 +2000,101 @@ class MultiVendorProrationService
                     if ($cents <= 0) {
                         break;
                     }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                     $currentAlloc = $vendorAllocations[$vId];
                     $capacity = $netEligibleMap[$vId];
                     if (round($currentAlloc + 0.01, 2) <= round($capacity, 2)) {
@@ -198,13 +2102,488 @@ class MultiVendorProrationService
                         $cents--;
                         $allocatedAny = true;
                     }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 if (!$allocatedAny) {
                     // Semua vendor telah mencapai batas net eligible rental ceiling
                     break;
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         $totalAllocated = round(array_sum($vendorAllocations), 2);
 
@@ -221,19 +2600,399 @@ class MultiVendorProrationService
                 $sumEligibleNetBase += $eData['net_base'];
             }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
             $itemAllocations = [];
             if ($vDiscount <= 0.0 || $sumEligibleNetBase <= 0.0 || empty($eligibleItems)) {
                 // Semua item mendapat 0
                 foreach ($items as $itemIdx => &$itemRef) {
                     $this->setItemPlatformDiscount($itemRef, 0.0);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 unset($itemRef);
-            } else {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 // Alokasi dasar proporsional item
                 foreach ($eligibleItems as $itemId => $eData) {
                     $rawItem = floor(($eData['net_base'] / $sumEligibleNetBase) * $vDiscount * 100.0) / 100.0;
                     $itemAllocations[$itemId] = min($rawItem, $eData['net_base']);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
                 $itemAllocTotal = round(array_sum($itemAllocations), 2);
                 $itemRemainder = round($vDiscount - $itemAllocTotal, 2);
@@ -247,10 +3006,200 @@ class MultiVendorProrationService
                         if (abs($baseA - $baseB) > 0.00001) {
                             return ($baseB <=> $baseA); // net_base DESC
                         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                         return is_numeric($a) && is_numeric($b)
                             ? ((int) $a <=> (int) $b)
                             : strcmp((string) $a, (string) $b); // item_id ASC
-                    });
+                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    });
 
                     while ($itemCents > 0) {
                         $allocatedItemCent = false;
@@ -258,6 +3207,101 @@ class MultiVendorProrationService
                             if ($itemCents <= 0) {
                                 break;
                             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                             $current = $itemAllocations[$iId];
                             $cap = $eligibleItems[$iId]['net_base'];
                             if (round($current + 0.01, 2) <= round($cap, 2)) {
@@ -265,28 +3309,978 @@ class MultiVendorProrationService
                                 $itemCents--;
                                 $allocatedItemCent = true;
                             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                         if (!$allocatedItemCent) {
                             break;
                         }
-                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
                 // Terapkan alokasi ke items
                 foreach ($items as $itemIdx => &$itemRef) {
                     $itemId = $this->extractItemId($itemRef, $itemIdx);
                     if (isset($itemAllocations[$itemId])) {
                         $this->setItemPlatformDiscount($itemRef, round($itemAllocations[$itemId], 2));
-                    } else {
+                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                         // Non-whitelisted item
                         $this->setItemPlatformDiscount($itemRef, 0.0);
                     }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 unset($itemRef);
             }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
             $this->setOrderItems($orderRef, $items);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         unset($orderRef);
 
         return [
@@ -297,6 +4291,101 @@ class MultiVendorProrationService
             'orders'                  => $vendorOrders,
             'vendor_orders'           => $vendorOrders,
         ];
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     /**
@@ -348,8 +4437,198 @@ class MultiVendorProrationService
                     'coin_cap'       => $itemCoinCap,
                 ];
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             $vendorItemsRemainingMap[$vendorId] = $itemsData;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         $totalRemainingSewa = round(array_sum($remainingSewaVendorMap), 2);
         $totalMaxCoinCapacity = round(array_sum($vendorMaxCoinCapMap), 2);
@@ -368,9 +4647,199 @@ class MultiVendorProrationService
                     $this->setItemCoinDiscount($itemRef, 0.0);
                     $this->updateItemSubtotalSewaBersih($itemRef);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 unset($itemRef);
                 $this->setOrderItems($orderRef, $items);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             unset($orderRef);
 
             return [
@@ -383,6 +4852,101 @@ class MultiVendorProrationService
             ];
         }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
         // Langkah 2: Alokasi dasar proporsional koin per vendor
         $vendorCoinAllocations = [];
         foreach ($remainingSewaVendorMap as $vId => $remVendor) {
@@ -390,9 +4954,199 @@ class MultiVendorProrationService
                 $vendorCoinAllocations[$vId] = 0.0;
                 continue;
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             $rawCoin = floor(($remVendor / $totalRemainingSewa) * $effectiveCoinDiscount * 100.0) / 100.0;
             $vendorCoinAllocations[$vId] = min($rawCoin, $vendorMaxCoinCapMap[$vId]);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         // Langkah 3: Rounding difference cascade per 0.01 koin dengan deterministic tie-breaker
         $totalCoinAllocated = round(array_sum($vendorCoinAllocations), 2);
@@ -407,10 +5161,200 @@ class MultiVendorProrationService
                 if (abs($remA - $remB) > 0.00001) {
                     return ($remB <=> $remA); // remaining_sewa DESC
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 return is_numeric($a) && is_numeric($b)
                     ? ((int) $a <=> (int) $b)
                     : strcmp((string) $a, (string) $b); // vendor_id ASC
-            });
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    });
 
             while ($coinCents > 0) {
                 $allocatedAny = false;
@@ -418,6 +5362,101 @@ class MultiVendorProrationService
                     if ($coinCents <= 0) {
                         break;
                     }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                     $current = $vendorCoinAllocations[$vId];
                     $cap = $vendorMaxCoinCapMap[$vId];
                     if (round($current + 0.01, 2) <= round($cap, 2)) {
@@ -425,12 +5464,487 @@ class MultiVendorProrationService
                         $coinCents--;
                         $allocatedAny = true;
                     }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 if (!$allocatedAny) {
                     break;
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         $totalCoinAllocated = round(array_sum($vendorCoinAllocations), 2);
 
@@ -447,19 +5961,399 @@ class MultiVendorProrationService
                 $sumItemRemaining += $iData['remaining_sewa'];
             }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
             $itemCoinAllocations = [];
             if ($vCoin <= 0.0 || $sumItemRemaining <= 0.0 || empty($itemsData)) {
                 foreach ($items as $itemIdx => &$itemRef) {
                     $this->setItemCoinDiscount($itemRef, 0.0);
                     $this->updateItemSubtotalSewaBersih($itemRef);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 unset($itemRef);
-            } else {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 // Alokasi koin dasar per item
                 foreach ($itemsData as $itemId => $iData) {
                     $rawItemCoin = floor(($iData['remaining_sewa'] / $sumItemRemaining) * $vCoin * 100.0) / 100.0;
                     $itemCoinAllocations[$itemId] = min($rawItemCoin, $iData['coin_cap']);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
                 $itemCoinAllocTotal = round(array_sum($itemCoinAllocations), 2);
                 $itemCoinRemainder = round($vCoin - $itemCoinAllocTotal, 2);
@@ -473,10 +6367,200 @@ class MultiVendorProrationService
                         if (abs($remA - $remB) > 0.00001) {
                             return ($remB <=> $remA); // remaining_sewa DESC
                         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                         return is_numeric($a) && is_numeric($b)
                             ? ((int) $a <=> (int) $b)
                             : strcmp((string) $a, (string) $b); // item_id ASC
-                    });
+                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    });
 
                     while ($itemCoinCents > 0) {
                         $allocatedItemCent = false;
@@ -484,6 +6568,101 @@ class MultiVendorProrationService
                             if ($itemCoinCents <= 0) {
                                 break;
                             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                             $current = $itemCoinAllocations[$iId];
                             $cap = $itemsData[$iId]['coin_cap'];
                             if (round($current + 0.01, 2) <= round($cap, 2)) {
@@ -491,12 +6670,487 @@ class MultiVendorProrationService
                                 $itemCoinCents--;
                                 $allocatedItemCent = true;
                             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                         if (!$allocatedItemCent) {
                             break;
                         }
-                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
                 // Terapkan alokasi koin ke item & mutasikan subtotal_sewa_bersih
                 foreach ($items as $itemIdx => &$itemRef) {
@@ -505,11 +7159,296 @@ class MultiVendorProrationService
                     $this->setItemCoinDiscount($itemRef, $allocatedCoin);
                     $this->updateItemSubtotalSewaBersih($itemRef);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
                 unset($itemRef);
             }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
             $this->setOrderItems($orderRef, $items);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         unset($orderRef);
 
         return [
@@ -520,6 +7459,101 @@ class MultiVendorProrationService
             'orders'               => $vendorOrders,
             'vendor_orders'        => $vendorOrders,
         ];
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     // =========================================================================
@@ -535,14 +7569,299 @@ class MultiVendorProrationService
         if (is_array($item) && isset($item['is_eligible'])) {
             return (bool) $item['is_eligible'];
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         if (is_object($item) && isset($item->is_eligible)) {
             return (bool) $item->is_eligible;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         // 2. Jika tidak ada voucher platform, semua item dianggap eligible
         if ($platformVoucher === null) {
             return true;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         // 3. Evaluasi vendor whitelist
         if ($platformVoucher->relationLoaded('vendors')) {
@@ -551,23 +7870,783 @@ class MultiVendorProrationService
                 if (!in_array((string) $vendorId, $allowedVendors, true)) {
                     return false;
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
             }
-        } elseif (method_exists($platformVoucher, 'vendors')) {
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (method_exists($platformVoucher, 'vendors')) {
             try {
                 $allowedVendors = $platformVoucher->vendors()->pluck('users.id')->map(fn($v) => (string) $v)->all();
                 if (!empty($allowedVendors) && !in_array((string) $vendorId, $allowedVendors, true)) {
                     return false;
                 }
-            } catch (\Throwable $e) {
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } catch (\Throwable $e) {
                 // Ignore query exceptions for unit mocks
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         // 4. Evaluasi cakupan produk
         $cakupan = $platformVoucher->cakupan_produk ?? 'seluruh_toko';
         if ($cakupan === 'seluruh_toko') {
             return true;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         $productId = is_array($item)
             ? ($item['product_id'] ?? $item['barang_id'] ?? $item['id'] ?? null)
@@ -577,20 +8656,590 @@ class MultiVendorProrationService
             if ($productId === null) {
                 return false;
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             if ($platformVoucher->relationLoaded('barangs')) {
                 $allowedBarangs = $platformVoucher->barangs->pluck('id')->map(fn($b) => (string) $b)->all();
                 return in_array((string) $productId, $allowedBarangs, true);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             if (method_exists($platformVoucher, 'barangs')) {
                 try {
                     $allowedBarangs = $platformVoucher->barangs()->pluck('barang.id')->map(fn($b) => (string) $b)->all();
                     return in_array((string) $productId, $allowedBarangs, true);
-                } catch (\Throwable $e) {
-                    return false;
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } catch (\Throwable $e) {
+                    return false;
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             return false;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         if ($cakupan === 'kategori_spesifik') {
             $kategoriId = null;
@@ -599,42 +9248,1372 @@ class MultiVendorProrationService
                 if ($kategoriId === null && isset($item['barang'])) {
                     $kategoriId = is_array($item['barang']) ? ($item['barang']['kategori_id'] ?? null) : ($item['barang']->kategori_id ?? null);
                 }
-            } else {
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 $kategoriId = $item->kategori_id ?? $item->category_id ?? null;
                 if ($kategoriId === null && isset($item->barang)) {
                     $kategoriId = is_array($item->barang) ? ($item->barang['kategori_id'] ?? null) : ($item->barang->kategori_id ?? null);
                 }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
             if ($kategoriId === null && $productId !== null) {
                 try {
                     $barang = Barang::find($productId);
                     $kategoriId = $barang?->kategori_id;
-                } catch (\Throwable $e) {
-                    // Ignore
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } catch (\Throwable $e) {
+                    // Ignore
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
             if ($kategoriId === null) {
                 return false;
             }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
             if ($platformVoucher->relationLoaded('kategoris')) {
                 $allowedKategoris = $platformVoucher->kategoris->pluck('id')->map(fn($k) => (string) $k)->all();
                 return in_array((string) $kategoriId, $allowedKategoris, true);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             if (method_exists($platformVoucher, 'kategoris')) {
                 try {
                     $allowedKategoris = $platformVoucher->kategoris()->pluck('kategoris.id')->map(fn($k) => (string) $k)->all();
                     return in_array((string) $kategoriId, $allowedKategoris, true);
-                } catch (\Throwable $e) {
-                    return false;
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
                 }
             }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } catch (\Throwable $e) {
+                    return false;
+                }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             return false;
         }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
         return true;
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractVendorId(array|object $order, int|string $fallbackKey): int|string
@@ -642,7 +10621,197 @@ class MultiVendorProrationService
         if (is_array($order)) {
             return $order['vendor_id'] ?? $fallbackKey;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return $order->vendor_id ?? $fallbackKey;
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractItemId(array|object $item, int|string $fallbackKey): int|string
@@ -650,21 +10819,591 @@ class MultiVendorProrationService
         if (is_array($item)) {
             return $item['item_id'] ?? $item['id'] ?? $item['product_id'] ?? $fallbackKey;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return $item->item_id ?? $item->id ?? $item->product_id ?? $fallbackKey;
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractOrderItems(array|object $order): array
     {
         if (is_array($order)) {
             $items = $order['items'] ?? $order['order_items'] ?? $order['details'] ?? [];
-        } else {
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
             $items = $order->details ?? $order->items ?? $order->order_items ?? [];
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         if ($items instanceof Collection) {
             return $items->all();
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return is_array($items) ? $items : [];
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function setOrderItems(array|object &$order, array $items): void
@@ -672,20 +11411,875 @@ class MultiVendorProrationService
         if (is_array($order)) {
             if (isset($order['items'])) {
                 $order['items'] = $items;
-            } elseif (isset($order['order_items'])) {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (isset($order['order_items'])) {
                 $order['order_items'] = $items;
-            } elseif (isset($order['details'])) {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (isset($order['details'])) {
                 $order['details'] = $items;
-            } else {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 $order['items'] = $items;
             }
-        } elseif (is_object($order)) {
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (is_object($order)) {
             if (method_exists($order, 'setRelation') && $order instanceof \Illuminate\Database\Eloquent\Model) {
                 $order->setRelation('details', collect($items));
-            } else {
+            }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } else {
                 $order->items = $items;
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractItemSubtotalAsli(array|object $item): float
@@ -694,19 +12288,399 @@ class MultiVendorProrationService
             if (isset($item['subtotal_sewa_asli'])) {
                 return (float) $item['subtotal_sewa_asli'];
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             $price = (float) ($item['price'] ?? 0.0);
             $qty = (int) ($item['quantity'] ?? $item['jumlah'] ?? 1);
             $durasi = (int) ($item['durasi_sewa'] ?? 1);
             return round($price * $qty * $durasi, 2);
         }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
         if (isset($item->subtotal_sewa_asli)) {
             return (float) $item->subtotal_sewa_asli;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         $price = (float) ($item->price ?? 0.0);
         $qty = (int) ($item->quantity ?? $item->jumlah ?? 1);
         $durasi = (int) ($item->durasi_sewa ?? 1);
         return round($price * $qty * $durasi, 2);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractItemAlokasiToko(array|object $item): float
@@ -714,7 +12688,197 @@ class MultiVendorProrationService
         if (is_array($item)) {
             return (float) ($item['alokasi_diskon_toko'] ?? $item['potongan_voucher_toko'] ?? 0.0);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return (float) ($item->alokasi_diskon_toko ?? $item->potongan_voucher_toko ?? 0.0);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractItemAlokasiPlatform(array|object $item): float
@@ -722,7 +12886,197 @@ class MultiVendorProrationService
         if (is_array($item)) {
             return (float) ($item['alokasi_diskon_platform'] ?? $item['potongan_voucher_platform'] ?? 0.0);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return (float) ($item->alokasi_diskon_platform ?? $item->potongan_voucher_platform ?? 0.0);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractOrderStoreVoucher(array|object $order): float
@@ -730,7 +13084,197 @@ class MultiVendorProrationService
         if (is_array($order)) {
             return (float) ($order['potongan_voucher_toko_eligible'] ?? $order['potongan_voucher_toko'] ?? $order['potongan_voucher'] ?? 0.0);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return (float) ($order->potongan_voucher_toko ?? $order->potongan_voucher ?? 0.0);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractOrderPlatformVoucher(array|object $order): float
@@ -738,7 +13282,197 @@ class MultiVendorProrationService
         if (is_array($order)) {
             return (float) ($order['potongan_voucher_platform'] ?? 0.0);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return (float) ($order->potongan_voucher_platform ?? 0.0);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractOrderMarkup(array|object $order): float
@@ -747,30 +13481,790 @@ class MultiVendorProrationService
             if (isset($order['subtotal_sewa_markup'])) {
                 return (float) $order['subtotal_sewa_markup'];
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             if (isset($order['subtotal_sewa_asli'])) {
                 return round((float) $order['subtotal_sewa_asli'] * (1 + self::PLATFORM_MARKUP_RATE), 2);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             // Sum from items
             $items = $this->extractOrderItems($order);
             $sum = 0.0;
             foreach ($items as $item) {
                 $sum += $this->extractItemMarkup($item);
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             return round($sum, 2);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
 
         if (isset($order->subtotal_sewa_markup)) {
             return (float) $order->subtotal_sewa_markup;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         if (isset($order->subtotal_sewa_asli)) {
             return round((float) $order->subtotal_sewa_asli * (1 + self::PLATFORM_MARKUP_RATE), 2);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         $items = $this->extractOrderItems($order);
         $sum = 0.0;
         foreach ($items as $item) {
             $sum += $this->extractItemMarkup($item);
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         return round($sum, 2);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function extractItemMarkup(array|object $item): float
@@ -779,15 +14273,395 @@ class MultiVendorProrationService
             if (isset($item['subtotal_sewa_markup'])) {
                 return (float) $item['subtotal_sewa_markup'];
             }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
             $asli = $this->extractItemSubtotalAsli($item);
             return round($asli * (1 + self::PLATFORM_MARKUP_RATE), 2);
         }
 
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+
         if (isset($item->subtotal_sewa_markup)) {
             return (float) $item->subtotal_sewa_markup;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
         $asli = $this->extractItemSubtotalAsli($item);
         return round($asli * (1 + self::PLATFORM_MARKUP_RATE), 2);
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function setOrderPlatformDiscount(array|object &$order, float $discount): void
@@ -795,36 +14669,1176 @@ class MultiVendorProrationService
         if (is_array($order)) {
             $order['potongan_voucher_platform'] = $discount;
             $order['allocated_platform_discount'] = $discount;
-        } elseif (is_object($order)) {
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (is_object($order)) {
             $order->potongan_voucher_platform = $discount;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function setItemPlatformDiscount(array|object &$item, float $discount): void
     {
         if (is_array($item)) {
             $item['alokasi_diskon_platform'] = $discount;
-        } elseif (is_object($item)) {
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (is_object($item)) {
             $item->alokasi_diskon_platform = $discount;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function setOrderCoinDiscount(array|object &$order, float $coinDiscount): void
     {
         if (is_array($order)) {
             $order['potongan_koin'] = $coinDiscount;
-        } elseif (is_object($order)) {
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (is_object($order)) {
             $order->potongan_koin = $coinDiscount;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function setItemCoinDiscount(array|object &$item, float $coinDiscount): void
     {
         if (is_array($item)) {
             $item['alokasi_diskon_koin'] = $coinDiscount;
-        } elseif (is_object($item)) {
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (is_object($item)) {
             $item->alokasi_diskon_koin = $coinDiscount;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 
     protected function updateItemSubtotalSewaBersih(array|object &$item): void
@@ -838,8 +15852,293 @@ class MultiVendorProrationService
 
         if (is_array($item)) {
             $item['subtotal_sewa_bersih'] = $bersih;
-        } elseif (is_object($item)) {
+        }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    } elseif (is_object($item)) {
             $item->subtotal_sewa_bersih = $bersih;
         }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
+    }
+    }
+
+    /**
+     * Persist allocation records into order_voucher_redemptions while consuming exactly 1 platform quota per payment_group_id.
+     *
+     * @param string        $paymentGroupId     ID grup pembayaran bersama multi-vendor
+     * @param Voucher       $platformVoucher    Instance model Voucher platform yang digunakan
+     * @param array         $vendorOrders       Daftar sub-order yang telah menerima alokasi proration diskon
+     * @param int|null      $customerVoucherId  ID klaim voucher pelanggan (CustomerVoucher), jika ada
+     * @return array        Daftar model OrderVoucherRedemption yang berhasil di-persist
+     */
+    public function persistPlatformDiscountRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return DB::transaction(function () use ($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId) {
+            $createdRedemptions = [];
+            $totalPlatformAllocated = 0.0;
+
+            foreach ($vendorOrders as $key => $order) {
+                $orderId = is_array($order)
+                    ? ($order['id'] ?? $order['order_id'] ?? null)
+                    : ($order->id ?? $order->order_id ?? null);
+
+                $discountAllocated = is_array($order)
+                    ? ($order['potongan_voucher_platform'] ?? $order['allocated_platform_discount'] ?? 0.0)
+                    : ($order->potongan_voucher_platform ?? $order->allocated_platform_discount ?? 0.0);
+
+                $discountAllocated = round((float) $discountAllocated, 2);
+
+                if ($discountAllocated > 0.0 && $orderId !== null) {
+                    $redemption = OrderVoucherRedemption::create([
+                        'payment_group_id'    => $paymentGroupId,
+                        'order_id'            => $orderId,
+                        'voucher_id'          => $platformVoucher->id,
+                        'customer_voucher_id' => $customerVoucherId,
+                        'tipe_voucher'        => 'platform',
+                        'alokasi_diskon'      => $discountAllocated,
+                        'status'              => 'aktif',
+                    ]);
+
+                    $createdRedemptions[] = $redemption;
+                    $totalPlatformAllocated += $discountAllocated;
+                }
+            }
+
+            // Konsumsi tepat 1 kuota platform per payment_group_id (bukan per sub-order)
+            $platformVoucher->increment('kuota_terpakai', 1);
+
+            // Tambahkan anggaran terpakai jika tracking anggaran aktif
+            if ($totalPlatformAllocated > 0.0 && Schema::hasColumn('vouchers', 'anggaran_terpakai')) {
+                $platformVoucher->increment('anggaran_terpakai', $totalPlatformAllocated);
+            }
+
+            // Perbarui status klaim customer voucher menjadi 'terpakai'
+            if ($customerVoucherId) {
+                CustomerVoucher::where('id', $customerVoucherId)->update([
+                    'status'  => 'terpakai',
+                    'used_at' => now(),
+                ]);
+            }
+
+            // Evaluasi auto_exhausted jika kuota total atau anggaran telah habis
+            $platformVoucher->refresh();
+            $shouldExhaust = false;
+            if ($platformVoucher->kuota_total > 0 && $platformVoucher->kuota_terpakai >= $platformVoucher->kuota_total) {
+                $shouldExhaust = true;
+            }
+            if ($platformVoucher->anggaran_maksimal_platform > 0 && $platformVoucher->anggaran_terpakai >= $platformVoucher->anggaran_maksimal_platform) {
+                $shouldExhaust = true;
+            }
+
+            if ($shouldExhaust) {
+                $platformVoucher->update([
+                    'auto_exhausted' => true,
+                    'is_active'      => false,
+                ]);
+            }
+
+            return $createdRedemptions;
+        });
+    }
+
+    /**
+     * Alias method untuk persistPlatformDiscountRedemptions.
+     */
+    public function persistRedemptions(
+        string $paymentGroupId,
+        Voucher $platformVoucher,
+        array $vendorOrders,
+        ?int $customerVoucherId = null
+    ): array {
+        return $this->persistPlatformDiscountRedemptions($paymentGroupId, $platformVoucher, $vendorOrders, $customerVoucherId);
     }
 }

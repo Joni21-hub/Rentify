@@ -27,12 +27,25 @@ class DiscountCalculationEngine
      *
      * @param Voucher|array $voucher
      * @param float $eligibleRentalSubtotal  Subtotal sewa barang yang memenuhi syarat
+     * @param int   $totalQuantity           Jumlah kuantitas item dalam keranjang / pesanan
      * @return float Nilai diskon yang telah dibatasi dan dibulatkan
      */
-    public static function calculateRentalDiscount(Voucher|array $voucher, float $eligibleRentalSubtotal): float
-    {
+    public static function calculateRentalDiscount(
+        Voucher|array $voucher,
+        float $eligibleRentalSubtotal,
+        int $totalQuantity = 1
+    ): float {
         $eligibleRentalSubtotal = max(0.0, (float) $eligibleRentalSubtotal);
         if ($eligibleRentalSubtotal <= 0.0) {
+            return 0.0;
+        }
+
+        $minQuantity = (int) (is_array($voucher)
+            ? ($voucher['min_quantity'] ?? 1)
+            : ($voucher->min_quantity ?? 1));
+
+        // Penegakan batas kuantitas minimum (BOGO Quantity Guard)
+        if ($totalQuantity < $minQuantity) {
             return 0.0;
         }
 
@@ -57,8 +70,33 @@ class DiscountCalculationEngine
             ? ($voucher['maksimal_diskon'] ?? $voucher['max_discount'] ?? 0.0)
             : ($voucher->maksimal_diskon ?? 0.0));
 
-        // Kalkulasi diskon awal berdasarkan tipe persen atau nominal
-        if (in_array($tipeDiskon, ['persen', 'percentage', 'percent'])) {
+        $kodeVoucher = strtoupper((string) (is_array($voucher)
+            ? ($voucher['kode_voucher'] ?? $voucher['code'] ?? '')
+            : ($voucher->kode_voucher ?? '')));
+
+        // Evaluasi BOGO Sewa 3 Bayar 2 (Rasio Eksak Rasional 1/3: ceil(($eligibleSubtotal / 3.0) * 100) / 100)
+        $isBogo3b2 = in_array($tipeDiskon, ['bogo_3_bayar_2', 'bogo_3b2', 'bogo_3_2', 'sewa_3_bayar_2', 'sewa_3_2'])
+            || ($tipeDiskon === 'bogo' && $minQuantity === 3)
+            || (str_contains($kodeVoucher, '3B2') || str_contains($kodeVoucher, 'BOGO3') || str_contains($kodeVoucher, 'SEWA3'))
+            || ($minQuantity === 3 && abs($nilaiDiskon - (100.0 / 3.0)) < 0.5);
+
+        // Evaluasi BOGO Sewa 2 Bayar 1 (Diskon 50%)
+        $isBogo2b1 = in_array($tipeDiskon, ['bogo_2_bayar_1', 'bogo_2b1', 'bogo_2_1', 'sewa_2_bayar_1', 'sewa_2_1'])
+            || ($tipeDiskon === 'bogo' && ($minQuantity === 2 || $minQuantity === 1))
+            || (str_contains($kodeVoucher, '2B1') || str_contains($kodeVoucher, 'BOGO2') || str_contains($kodeVoucher, 'SEWA2'))
+            || ($minQuantity === 2 && in_array($tipeDiskon, ['persen', 'percentage', 'percent']) && abs($nilaiDiskon - 50.0) < 0.01);
+
+        if ($isBogo3b2) {
+            $discount = ceil(($eligibleRentalSubtotal / 3.0) * 100.0) / 100.0;
+            if ($maksimalDiskon > 0.0) {
+                $discount = min($discount, $maksimalDiskon);
+            }
+        } elseif ($isBogo2b1) {
+            $discount = ($eligibleRentalSubtotal * 50.0) / 100.0;
+            if ($maksimalDiskon > 0.0) {
+                $discount = min($discount, $maksimalDiskon);
+            }
+        } elseif (in_array($tipeDiskon, ['persen', 'percentage', 'percent'])) {
             $discount = ($eligibleRentalSubtotal * $nilaiDiskon) / 100.0;
             if ($maksimalDiskon > 0.0) {
                 $discount = min($discount, $maksimalDiskon);
