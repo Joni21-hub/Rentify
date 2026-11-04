@@ -219,34 +219,96 @@
                 
                 <!-- FOTO / MEDIA PAKET -->
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                    <div>
-                        <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-camera text-sky-500"></i> Foto Sampul Paket
-                        </h2>
-                        <p class="text-[11px] text-slate-400 mt-0.5">
-                            Unggah foto baru jika ingin mengganti sampul paket.
-                        </p>
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-images text-sky-500"></i> Foto & Galeri Paket
+                            </h2>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Kelola sampul utama dan foto galeri bundling paket.
+                            </p>
+                        </div>
                     </div>
 
+                    <!-- FOTO SAMPUL SAAT INI -->
                     @if($paket->cover_photo_url)
-                        <div class="relative rounded-2xl overflow-hidden border border-slate-200">
-                            <img src="{{ $paket->cover_photo_url }}" alt="{{ $paket->nama }}" class="w-full h-40 object-cover">
-                            <span class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white rounded-md text-[10px] font-bold">Foto Saat Ini</span>
+                        <div class="space-y-1.5">
+                            <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider block">Foto Sampul Utama:</span>
+                            <div class="relative rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-100 shadow-xs">
+                                <img id="currentCoverImg" src="{{ $paket->cover_photo_url }}" alt="{{ $paket->nama }}" class="w-full h-full object-cover">
+                                <span class="absolute bottom-2 left-2 px-2.5 py-1 bg-slate-900/80 backdrop-blur-xs text-white rounded-lg text-[10px] font-black tracking-wide flex items-center gap-1.5 shadow-xs">
+                                    <i class="fa-solid fa-star text-amber-400 text-[10px]"></i> Sampul Saat Ini
+                                </span>
+                            </div>
                         </div>
                     @endif
 
-                    <input type="file" name="fotos[]" id="fotos" accept="image/*" class="hidden">
+                    <!-- FOTO GALERI EKSIS (JIKA ADA) -->
+                    @if($paket->fotos && $paket->fotos->count() > 0)
+                        <div class="space-y-2 pt-2 border-t border-slate-100" id="existingGallerySection">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider">
+                                    Foto Galeri Saat Ini:
+                                </span>
+                                <span id="existingCountBadge" class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
+                                    {{ $paket->fotos->count() }} Foto
+                                </span>
+                            </div>
 
-                    <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-100/60 transition flex flex-col items-center justify-center text-center gap-2 text-sky-700">
-                        <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-base shadow-sm">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <div class="grid grid-cols-2 gap-2" id="existingGalleryGrid">
+                                @foreach($paket->fotos as $foto)
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 group shadow-xs" id="foto-card-{{ $foto->id }}">
+                                        <img src="{{ $foto->foto_url }}" alt="Galeri {{ $paket->nama }}" class="w-full h-full object-cover">
+                                        
+                                        <!-- Actions Overlay -->
+                                        <div class="absolute inset-0 bg-slate-900/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                                            <button type="button" onclick="setCoverAjax({{ $paket->id }}, {{ $foto->id }})" class="w-full py-1 px-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black flex items-center justify-center gap-1 transition shadow-xs cursor-pointer" title="Jadikan foto ini sebagai sampul utama">
+                                                <i class="fa-solid fa-star text-[9px]"></i> Set Sampul
+                                            </button>
+                                            <button type="button" onclick="deleteFotoAjax({{ $foto->id }})" class="w-full py-1 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black flex items-center justify-center gap-1 transition shadow-xs cursor-pointer" title="Hapus foto galeri ini">
+                                                <i class="fa-solid fa-trash text-[9px]"></i> Hapus
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                        <span class="text-xs font-black">Ganti Foto Sampul</span>
-                        <span class="text-[10px] text-slate-400 font-medium">JPG, PNG, WebP (Maks 100MB)</span>
-                    </label>
+                    @endif
 
-                    <div id="photoPreviewContainer" class="hidden">
-                        <img id="photoPreview" class="w-full h-40 object-cover rounded-xl border border-slate-200">
+                    <!-- UNGGAH FOTO BARU -->
+                    <div class="space-y-3 pt-2 border-t border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black text-slate-800">Unggah Foto Baru</span>
+                            <span id="photoCounter" class="text-[11px] font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg hidden shrink-0">
+                                0 Foto dipilih
+                            </span>
+                        </div>
+
+                        <input type="file" name="fotos[]" id="fotos" multiple accept="image/*,.heic,.heif,.avif,.webp" class="hidden">
+
+                        <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-100/60 transition flex flex-col items-center justify-center text-center gap-2 text-sky-700 active:scale-98">
+                            <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <span class="text-xs font-black">Pilih / Tambah Foto Baru</span>
+                            <span class="text-[10px] text-slate-400 font-medium">Bisa pilih lebih dari 1 foto (Maks 100MB)</span>
+                        </label>
+
+                        @if($paket->cover_photo_url)
+                            <label class="flex items-start gap-2.5 cursor-pointer bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+                                <input type="checkbox" name="replace_cover" id="replaceCoverCheckbox" value="1" checked class="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 mt-0.5">
+                                <div class="text-[11px] leading-tight">
+                                    <span class="font-bold text-slate-700 block">Jadikan foto baru pertama sebagai Sampul Utama</span>
+                                    <span class="text-[10px] text-slate-400">Jika tidak dicentang, semua foto baru ditambahkan ke galeri dan sampul saat ini dipertahankan.</span>
+                                </div>
+                            </label>
+                        @endif
+
+                        <!-- Live Previews Grid for Newly Selected Files -->
+                        <div id="newPhotoSection" class="hidden space-y-2">
+                            <span class="text-[11px] font-black text-slate-700 block">Pratinjau Foto Baru:</span>
+                            <div id="preview-container" class="grid grid-cols-2 gap-2.5"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -278,7 +340,74 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script>
+// AJAX Delete Foto
+async function deleteFotoAjax(fotoId) {
+    if (!confirm('Hapus foto ini dari galeri paket sewa?')) return;
+    try {
+        const token = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}';
+        const res = await fetch(`{{ url('vendor/fotos') }}/${fotoId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const card = document.getElementById(`foto-card-${fotoId}`);
+            if (card) {
+                card.classList.add('transition-all', 'duration-300', 'opacity-0', 'scale-90');
+                setTimeout(() => {
+                    card.remove();
+                    const grid = document.getElementById('existingGalleryGrid');
+                    const badge = document.getElementById('existingCountBadge');
+                    if (grid) {
+                        const remaining = grid.querySelectorAll('[id^="foto-card-"]').length;
+                        if (badge) badge.textContent = `${remaining} Foto`;
+                        if (remaining === 0) {
+                            const sec = document.getElementById('existingGallerySection');
+                            if (sec) sec.remove();
+                        }
+                    }
+                }, 300);
+            }
+        } else {
+            alert(data.message || 'Gagal menghapus foto.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Terjadi kesalahan saat menghapus foto.');
+    }
+}
+
+// AJAX Set Sampul Foto
+async function setCoverAjax(paketId, fotoId) {
+    if (!confirm('Jadikan foto ini sebagai foto sampul utama paket sewa?')) return;
+    try {
+        const token = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}';
+        const res = await fetch(`{{ url('vendor/barang') }}/${paketId}/fotos/${fotoId}/cover`, {
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Gagal mengubah foto sampul.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Terjadi kesalahan saat mengubah foto sampul.');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.item-checkbox');
     const badge = document.getElementById('bundleStockBadge');
@@ -286,22 +415,167 @@ document.addEventListener('DOMContentLoaded', function() {
     const estimateCard = document.getElementById('bundleEstimateCard');
     const estimateText = document.getElementById('bundleEstimateText');
     const sumHint = document.getElementById('sumItemsPriceHint');
-    const fotoInput = document.getElementById('fotos');
-    const previewContainer = document.getElementById('photoPreviewContainer');
-    const photoPreview = document.getElementById('photoPreview');
     const form = document.getElementById('formEditPaket');
 
+    // Multi-Foto Upload & Preview
+    const fotoInput = document.getElementById('fotos');
+    const newPhotoSection = document.getElementById('newPhotoSection');
+    const previewContainer = document.getElementById('preview-container');
+    const photoCounter = document.getElementById('photoCounter');
+    const replaceCoverCheckbox = document.getElementById('replaceCoverCheckbox');
+    let selectedFiles = [];
+
+    async function compressImageToWebp(file, maxDimension = 1920, quality = 0.85) {
+        if (!file || !file.type || !file.type.startsWith('image/') || file.type.includes('svg') || file.type.includes('gif')) {
+            return file;
+        }
+
+        return new Promise((resolve) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxDimension || height > maxDimension) {
+                    if (width > height) {
+                        height = Math.round((height * maxDimension) / width);
+                        width = maxDimension;
+                    } else {
+                        width = Math.round((width * maxDimension) / height);
+                        height = maxDimension;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+                    const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                    const webpFile = new File([blob], newName, { type: 'image/webp' });
+                    resolve(webpFile);
+                }, 'image/webp', quality);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(file);
+            };
+            img.src = url;
+        });
+    }
+
     if (fotoInput) {
-        fotoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    photoPreview.src = evt.target.result;
-                    previewContainer.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
+        fotoInput.addEventListener('change', async function(e) {
+            if (!e.target.files.length) return;
+            const incomingFiles = Array.from(e.target.files);
+            const processed = [];
+
+            if (photoCounter) {
+                photoCounter.classList.remove('hidden');
+                photoCounter.textContent = 'Memproses...';
             }
+
+            for (const file of incomingFiles) {
+                let currentFile = file;
+                const ext = (file.name || '').split('.').pop().toLowerCase();
+                const mime = file.type || '';
+
+                if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
+                    try {
+                        if (typeof heic2any === 'function') {
+                            const convertedBlob = await heic2any({
+                                blob: file,
+                                toType: 'image/jpeg',
+                                quality: 0.9
+                            });
+                            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            currentFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        }
+                    } catch (err) {
+                        console.warn('heic2any fallback:', err);
+                    }
+                }
+
+                try {
+                    const compressed = await compressImageToWebp(currentFile);
+                    processed.push(compressed);
+                } catch (err) {
+                    processed.push(currentFile);
+                }
+            }
+
+            selectedFiles = selectedFiles.concat(processed);
+            updateFileInput();
+            renderPreviews();
+        });
+    }
+
+    if (replaceCoverCheckbox) {
+        replaceCoverCheckbox.addEventListener('change', renderPreviews);
+    }
+
+    function updateFileInput() {
+        if (!fotoInput) return;
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fotoInput.files = dt.files;
+        if (photoCounter) {
+            photoCounter.textContent = `${selectedFiles.length} Foto baru dipilih`;
+            if (selectedFiles.length > 0) {
+                photoCounter.classList.remove('hidden');
+            } else {
+                photoCounter.classList.add('hidden');
+            }
+        }
+        if (newPhotoSection) {
+            if (selectedFiles.length > 0) {
+                newPhotoSection.classList.remove('hidden');
+            } else {
+                newPhotoSection.classList.add('hidden');
+            }
+        }
+    }
+
+    window.removePhoto = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFileInput();
+        renderPreviews();
+    };
+
+    function renderPreviews() {
+        if (!previewContainer) return;
+        previewContainer.innerHTML = '';
+        const willReplaceCover = replaceCoverCheckbox ? replaceCoverCheckbox.checked : true;
+
+        selectedFiles.forEach((file, index) => {
+            const card = document.createElement('div');
+            card.className = "relative rounded-2xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 shadow-xs group";
+
+            const isCover = (index === 0 && willReplaceCover);
+            const badgeHtml = isCover
+                ? `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[9px] font-black rounded-md shadow-sm tracking-wider z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[8px]"></i> SAMPUL BARU</div>`
+                : `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[9px] font-bold rounded-md shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-images text-sky-400 text-[8px]"></i> GALERI BARU</div>`;
+
+            const objectUrl = URL.createObjectURL(file);
+            card.innerHTML = `
+                <img src="${objectUrl}" alt="Preview" class="w-full h-full object-cover">
+                ${badgeHtml}
+                <button type="button" onclick="removePhoto(${index})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 text-[10px] cursor-pointer z-10 shadow-sm" title="Batal pilih foto">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+                <div class="absolute bottom-0 inset-x-0 p-1 bg-gradient-to-t from-slate-900/80 to-transparent text-[9px] text-white font-medium truncate px-1.5 z-10">
+                    ${file.name}
+                </div>
+            `;
+            previewContainer.appendChild(card);
         });
     }
 

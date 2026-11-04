@@ -86,7 +86,7 @@ class VendorPaketController extends Controller
         DB::beginTransaction();
         try {
             /** @var array<int, \Illuminate\Http\UploadedFile> $fotos */
-            $fotos = $request->file('fotos', []);
+            $fotos = array_values(array_filter($request->file('fotos', []) ?: []));
 
             $pathCover = null;
             if (!empty($fotos) && isset($fotos[0]) && $fotos[0] instanceof \Illuminate\Http\UploadedFile) {
@@ -251,20 +251,26 @@ class VendorPaketController extends Controller
             }
 
             /** @var array<int, \Illuminate\Http\UploadedFile> $fotos */
-            $fotos = $request->file('fotos', []);
-            if (!empty($fotos) && isset($fotos[0]) && $fotos[0] instanceof \Illuminate\Http\UploadedFile) {
-                $pathCover = StorageService::storeMedia($fotos[0], 'barang');
-                if ($paket->cover_photo && $paket->cover_photo !== $pathCover) {
-                    StorageService::deleteFile($paket->cover_photo);
+            $fotos = array_values(array_filter($request->file('fotos', []) ?: []));
+            $replaceCover = $request->boolean('replace_cover', true);
+
+            if (!empty($fotos)) {
+                $startIndex = 0;
+                // Jika paket belum memiliki cover atau vendor memilih mengganti cover
+                if (!$paket->cover_photo || $replaceCover) {
+                    $firstPhoto = $fotos[0];
+                    if ($firstPhoto instanceof \Illuminate\Http\UploadedFile) {
+                        $pathCover = StorageService::storeMedia($firstPhoto, 'barang');
+                        if ($paket->cover_photo && $paket->cover_photo !== $pathCover) {
+                            StorageService::deleteFile($paket->cover_photo);
+                        }
+                        $updateData['cover_photo'] = $pathCover;
+                    }
+                    $startIndex = 1;
                 }
-                $updateData['cover_photo'] = $pathCover;
-            }
 
-            $paket->update($updateData);
-
-            // Simpan foto galeri tambahan jika ada diunggah
-            if (count($fotos) > 1) {
-                for ($i = 1; $i < count($fotos); $i++) {
+                // Simpan sisa foto (atau semua foto jika cover tidak diganti) ke galeri
+                for ($i = $startIndex; $i < count($fotos); $i++) {
                     $foto = $fotos[$i];
                     if ($foto instanceof \Illuminate\Http\UploadedFile) {
                         $pathGaleri = StorageService::storeMedia($foto, 'barang/galeri');
@@ -275,6 +281,8 @@ class VendorPaketController extends Controller
                     }
                 }
             }
+
+            $paket->update($updateData);
 
             // Sinkronisasi ulang komposisi paket: hapus item lama, masukkan komposisi baru
             PaketSewaItem::where('paket_id', $paket->id)->delete();

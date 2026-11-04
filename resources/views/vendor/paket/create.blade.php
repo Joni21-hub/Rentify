@@ -232,27 +232,37 @@
                 
                 <!-- FOTO / MEDIA PAKET -->
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                    <div>
-                        <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-camera text-sky-500"></i> Foto Sampul Paket
-                        </h2>
-                        <p class="text-[11px] text-slate-400 mt-0.5">
-                            Opsional. Jika tidak diunggah, otomatis memakai foto cover barang pertama.
-                        </p>
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-images text-sky-500"></i> Foto & Galeri Paket
+                            </h2>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Bisa pilih lebih dari 1 foto. Foto #1 jadi sampul utama, sisanya jadi galeri.
+                            </p>
+                        </div>
+                        <span id="photoCounter" class="text-[11px] font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg shrink-0">
+                            0 Foto dipilih
+                        </span>
                     </div>
 
-                    <input type="file" name="fotos[]" id="fotos" accept="image/*" class="hidden">
+                    <input type="file" name="fotos[]" id="fotos" multiple accept="image/*,.heic,.heif,.avif,.webp" class="hidden">
 
-                    <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-100/60 transition flex flex-col items-center justify-center text-center gap-2 text-sky-700">
+                    <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-100/60 transition flex flex-col items-center justify-center text-center gap-2 text-sky-700 active:scale-98">
                         <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-base shadow-sm">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                         </div>
-                        <span class="text-xs font-black">Unggah Foto Paket</span>
-                        <span class="text-[10px] text-slate-400 font-medium">JPG, PNG, WebP (Maks 100MB)</span>
+                        <span class="text-xs font-black">Pilih Foto Paket</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Bisa pilih lebih dari satu (Maks 100MB/foto)</span>
                     </label>
 
-                    <div id="photoPreviewContainer" class="hidden">
-                        <img id="photoPreview" class="w-full h-40 object-cover rounded-xl border border-slate-200">
+                    <p class="text-[10px] text-slate-400 italic">
+                        * Opsional: Jika tidak diunggah, otomatis memakai foto cover barang komponen pertama.
+                    </p>
+
+                    <div id="newPhotoSection" class="hidden space-y-2">
+                        <span class="text-[11px] font-black text-slate-700 block">Pratinjau Foto Paket:</span>
+                        <div id="preview-container" class="grid grid-cols-2 gap-2.5"></div>
                     </div>
                 </div>
 
@@ -284,6 +294,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.item-checkbox');
@@ -295,23 +306,159 @@ document.addEventListener('DOMContentLoaded', function() {
     const hargaInput = document.getElementById('hargaSewaInput');
     const depositInput = document.getElementById('depositInput');
     const dendaInput = document.getElementById('dendaInput');
-    const fotoInput = document.getElementById('fotos');
-    const previewContainer = document.getElementById('photoPreviewContainer');
-    const photoPreview = document.getElementById('photoPreview');
     const form = document.getElementById('formUploadPaket');
 
-    // Handle foto preview
-    fotoInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                photoPreview.src = evt.target.result;
-                previewContainer.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
+    // Multi-Foto Upload & Preview
+    const fotoInput = document.getElementById('fotos');
+    const newPhotoSection = document.getElementById('newPhotoSection');
+    const previewContainer = document.getElementById('preview-container');
+    const photoCounter = document.getElementById('photoCounter');
+    let selectedFiles = [];
+
+    async function compressImageToWebp(file, maxDimension = 1920, quality = 0.85) {
+        if (!file || !file.type || !file.type.startsWith('image/') || file.type.includes('svg') || file.type.includes('gif')) {
+            return file;
         }
-    });
+
+        return new Promise((resolve) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxDimension || height > maxDimension) {
+                    if (width > height) {
+                        height = Math.round((height * maxDimension) / width);
+                        width = maxDimension;
+                    } else {
+                        width = Math.round((width * maxDimension) / height);
+                        height = maxDimension;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+                    const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                    const webpFile = new File([blob], newName, { type: 'image/webp' });
+                    resolve(webpFile);
+                }, 'image/webp', quality);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(file);
+            };
+            img.src = url;
+        });
+    }
+
+    if (fotoInput) {
+        fotoInput.addEventListener('change', async function(e) {
+            if (!e.target.files.length) return;
+            const incomingFiles = Array.from(e.target.files);
+            const processed = [];
+
+            if (photoCounter) photoCounter.textContent = 'Memproses...';
+
+            for (const file of incomingFiles) {
+                let currentFile = file;
+                const ext = (file.name || '').split('.').pop().toLowerCase();
+                const mime = file.type || '';
+
+                if (['heic', 'heif'].includes(ext) || mime.includes('heic') || mime.includes('heif')) {
+                    try {
+                        if (typeof heic2any === 'function') {
+                            const convertedBlob = await heic2any({
+                                blob: file,
+                                toType: 'image/jpeg',
+                                quality: 0.9
+                            });
+                            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            currentFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        }
+                    } catch (err) {
+                        console.warn('heic2any fallback:', err);
+                    }
+                }
+
+                try {
+                    const compressed = await compressImageToWebp(currentFile);
+                    processed.push(compressed);
+                } catch (err) {
+                    processed.push(currentFile);
+                }
+            }
+
+            selectedFiles = selectedFiles.concat(processed);
+            updateFileInput();
+            renderPreviews();
+        });
+    }
+
+    function updateFileInput() {
+        if (!fotoInput) return;
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fotoInput.files = dt.files;
+        if (photoCounter) {
+            photoCounter.textContent = `${selectedFiles.length} Foto dipilih`;
+            if (selectedFiles.length > 0) {
+                photoCounter.className = "text-[11px] font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg shrink-0";
+            } else {
+                photoCounter.className = "text-[11px] font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg shrink-0";
+            }
+        }
+        if (newPhotoSection) {
+            if (selectedFiles.length > 0) {
+                newPhotoSection.classList.remove('hidden');
+            } else {
+                newPhotoSection.classList.add('hidden');
+            }
+        }
+    }
+
+    window.removePhoto = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFileInput();
+        renderPreviews();
+    };
+
+    function renderPreviews() {
+        if (!previewContainer) return;
+        previewContainer.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const card = document.createElement('div');
+            card.className = "relative rounded-2xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 shadow-xs group";
+
+            const isCover = index === 0;
+            const badgeHtml = isCover
+                ? `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[9px] font-black rounded-md shadow-sm tracking-wider z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[8px]"></i> SAMPUL</div>`
+                : `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[9px] font-bold rounded-md shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-images text-sky-400 text-[8px]"></i> GALERI #${index}</div>`;
+
+            const objectUrl = URL.createObjectURL(file);
+            card.innerHTML = `
+                <img src="${objectUrl}" alt="Preview" class="w-full h-full object-cover">
+                ${badgeHtml}
+                <button type="button" onclick="removePhoto(${index})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 text-[10px] cursor-pointer z-10 shadow-sm" title="Hapus foto">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+                <div class="absolute bottom-0 inset-x-0 p-1 bg-gradient-to-t from-slate-900/80 to-transparent text-[9px] text-white font-medium truncate px-1.5 z-10">
+                    ${file.name}
+                </div>
+            `;
+            previewContainer.appendChild(card);
+        });
+    }
 
     function updateComposition() {
         hiddenContainer.innerHTML = '';

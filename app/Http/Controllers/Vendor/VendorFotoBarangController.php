@@ -64,6 +64,14 @@ class VendorFotoBarangController extends Controller
         // Hapus foto yang sekarang jadi cover dari galeri
         $foto->delete();
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto cover utama produk berhasil diperbarui!',
+                'cover_url' => $barang->cover_photo_url,
+            ]);
+        }
+
         return back()->with('success', 'Foto cover utama produk berhasil diperbarui!');
     }
 
@@ -80,6 +88,13 @@ class VendorFotoBarangController extends Controller
 
         // Event deleting pada FotoBarang akan otomatis menghapus file dari Cloudinary & disk lokal
         $foto->delete();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto galeri berhasil dihapus!'
+            ]);
+        }
 
         return back()->with('success', 'Foto galeri berhasil dihapus!');
     }

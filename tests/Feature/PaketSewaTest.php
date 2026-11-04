@@ -436,4 +436,55 @@ class PaketSewaTest extends TestCase
         $errorMessage = session('error');
         $this->assertStringContainsString('tidak mencukupi', $errorMessage);
     }
+
+    public function test_vendor_can_upload_multiple_photos_for_paket_sewa()
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $file1 = \Illuminate\Http\UploadedFile::fake()->image('cover.jpg', 600, 600);
+        $file2 = \Illuminate\Http\UploadedFile::fake()->image('gallery1.jpg', 600, 600);
+        $file3 = \Illuminate\Http\UploadedFile::fake()->image('gallery2.jpg', 600, 600);
+
+        $response = $this->actingAs($this->vendor)->post(route('vendor.paket.store'), [
+            'nama' => 'Paket Glamping Mewah Multi Foto',
+            'kategori_id' => $this->kategori->id,
+            'deskripsi' => 'Paket lengkap dengan banyak dokumentasi foto',
+            'harga_sewa_harian' => 50000,
+            'items' => [
+                ['barang_id' => $this->itemA->id, 'quantity' => 1],
+            ],
+            'fotos' => [$file1, $file2, $file3],
+        ]);
+
+        $response->assertRedirect(route('vendor.barang.index', ['tipe' => 'paket']));
+
+        $paket = Barang::where('nama', 'Paket Glamping Mewah Multi Foto')->first();
+        $this->assertNotNull($paket);
+        $this->assertNotNull($paket->cover_photo);
+
+        // Foto 2 dan 3 harus tersimpan di tabel foto_barangs
+        $this->assertCount(2, $paket->fotos);
+
+        // Uji update dengan menambah foto baru tanpa mengganti cover
+        $file4 = \Illuminate\Http\UploadedFile::fake()->image('gallery3.jpg', 600, 600);
+        $oldCover = $paket->cover_photo;
+
+        $updateResponse = $this->actingAs($this->vendor)->put(route('vendor.paket.update', $paket->id), [
+            'nama' => 'Paket Glamping Mewah Multi Foto Updated',
+            'kategori_id' => $this->kategori->id,
+            'deskripsi' => 'Update deskripsi paket',
+            'harga_sewa_harian' => 55000,
+            'items' => [
+                ['barang_id' => $this->itemA->id, 'quantity' => 1],
+            ],
+            'replace_cover' => 0,
+            'fotos' => [$file4],
+        ]);
+
+        $updateResponse->assertRedirect(route('vendor.barang.index', ['tipe' => 'paket']));
+
+        $paket->refresh();
+        $this->assertEquals($oldCover, $paket->cover_photo);
+        $this->assertCount(3, $paket->fotos);
+    }
 }
