@@ -214,7 +214,8 @@ class CustomerHomeController extends Controller
 
         $fullyBookedDates = $barang->getFullyBookedDates();
         $bookedDatesInfo = $barang->getBookedDatesInfo();
+        $bookedSlots = $barang->getBookedSlots();
 
-        return view('customer.barang-detail', compact('barang', 'fullyBookedDates', 'bookedDatesInfo'));
+        return view('customer.barang-detail', compact('barang', 'fullyBookedDates', 'bookedDatesInfo', 'bookedSlots'));
     }
 }

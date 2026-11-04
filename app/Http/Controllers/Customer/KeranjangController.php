@@ -24,16 +24,18 @@ class KeranjangController extends Controller
         // Kumpulkan tanggal yang penuh dibooking untuk seluruh barang di keranjang
         $fullyBookedByBarang = [];
         $allFullyBookedDates = [];
+        $bookedSlotsByBarang = [];
         foreach ($keranjangs as $item) {
             if ($item->barang) {
                 $dates = $item->barang->getFullyBookedDates();
                 $fullyBookedByBarang[$item->id] = $dates;
                 $allFullyBookedDates = array_merge($allFullyBookedDates, $dates);
+                $bookedSlotsByBarang[$item->id] = $item->barang->getBookedSlots();
             }
         }
         $fullyBookedDates = array_values(array_unique($allFullyBookedDates));
 
-        return view('customer.keranjang', compact('keranjangs', 'fullyBookedDates', 'fullyBookedByBarang'));
+        return view('customer.keranjang', compact('keranjangs', 'fullyBookedDates', 'fullyBookedByBarang', 'bookedSlotsByBarang'));
     }
 
     /**

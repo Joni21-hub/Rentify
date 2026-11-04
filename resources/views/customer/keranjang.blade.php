@@ -384,6 +384,7 @@
 <script>
     // DATA DARI CONTROLLER UNTUK DETEKSI JADWAL BENTROK PER BARANG
     const fullyBookedByBarang = @json($fullyBookedByBarang ?? []);
+    const bookedSlotsByBarang = @json($bookedSlotsByBarang ?? []);
     const allFullyBookedDates = @json($fullyBookedDates ?? []);
 
     function setModalDurasi(val) {
@@ -412,6 +413,7 @@
         const calMonthYear = document.getElementById('cal-month-year');
         const calDaysGrid = document.getElementById('cal-days-grid');
         const modalDateInput = document.getElementById('modal-date');
+        const modalTimeSelect = document.getElementById('modal-time');
         const displaySelectedDate = document.getElementById('display-selected-date');
         const calSelectedBadge = document.getElementById('cal-selected-badge');
         const calMiniAlert = document.getElementById('cal-mini-alert');
@@ -489,6 +491,59 @@
             return Array.from(datesSet);
         }
 
+        const defaultTimeOptions = [
+            { value: '08:00', label: '08:00 WIB (Pagi)' },
+            { value: '09:00', label: '09:00 WIB' },
+            { value: '10:00', label: '10:00 WIB' },
+            { value: '11:00', label: '11:00 WIB' },
+            { value: '12:00', label: '12:00 WIB (Siang)' },
+            { value: '13:00', label: '13:00 WIB' },
+            { value: '14:00', label: '14:00 WIB' },
+            { value: '15:00', label: '15:00 WIB (Sore)' },
+            { value: '16:00', label: '16:00 WIB' },
+            { value: '17:00', label: '17:00 WIB' },
+            { value: '18:00', label: '18:00 WIB (Malam)' },
+            { value: '19:00', label: '19:00 WIB' },
+            { value: '20:00', label: '20:00 WIB' }
+        ];
+
+        function getSelectedItemsBookedSlots(dateStr) {
+            const checkedBoxes = Array.from(itemCheckboxes).filter(cb => cb.checked);
+            const slotsSet = new Set();
+            checkedBoxes.forEach(cb => {
+                const card = cb.closest('.card-item');
+                const cartId = card.dataset.id;
+                const bSlotsMap = bookedSlotsByBarang[cartId] || {};
+                const bSlots = bSlotsMap[dateStr] || [];
+                bSlots.forEach(s => slotsSet.add(s));
+            });
+            return Array.from(slotsSet);
+        }
+
+        function updateModalTimeOptions(dateStr) {
+            if (!modalTimeSelect) return;
+            const bookedForDate = dateStr ? getSelectedItemsBookedSlots(dateStr) : [];
+            const curVal = modalTimeSelect.value;
+            let curValValid = false;
+
+            let html = '<option value="">-- Pilih Jam (WIB) --</option>';
+            defaultTimeOptions.forEach(opt => {
+                const isBooked = bookedForDate.includes(opt.value);
+                if (isBooked) {
+                    html += `<option value="${opt.value}" disabled class="text-slate-300 bg-slate-50">${opt.label} (Penuh)</option>`;
+                } else {
+                    const sel = (opt.value === curVal);
+                    if (sel) curValValid = true;
+                    html += `<option value="${opt.value}" ${sel ? 'selected' : ''}>${opt.label}</option>`;
+                }
+            });
+
+            modalTimeSelect.innerHTML = html;
+            if (!curValValid && curVal !== '') {
+                modalTimeSelect.value = '';
+            }
+        }
+
         function renderCalendar() {
             if (!calDaysGrid || !calMonthYear) return;
 
@@ -560,6 +615,7 @@
                         }
                         if (calSelectedBadge) calSelectedBadge.classList.remove('hidden');
 
+                        updateModalTimeOptions(dayStr);
                         renderCalendar();
                     });
                 }
@@ -622,6 +678,7 @@
                 document.getElementById('modal-durasi').value = curDur;
             }
             bookingModal.classList.remove('hidden');
+            updateModalTimeOptions(selectedDateStr);
             renderCalendar();
         });
 
@@ -650,6 +707,12 @@
             if(!time) { 
                 showMiniAlert('⚠️ Silakan pilih Jam Pengambilan!'); 
                 return; 
+            }
+
+            const bookedSlots = getSelectedItemsBookedSlots(date);
+            if(bookedSlots.includes(time)) {
+                showMiniAlert(`⚠️ Jam ${time} WIB pada tanggal tersebut sudah penuh dibooking! Silakan pilih jam lain.`);
+                return;
             }
 
             if(!durasi || durasi < 1) { 

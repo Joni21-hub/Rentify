@@ -297,125 +297,164 @@ class Barang extends Model
     }
 
     /**
-     * Menghitung tanggal-tanggal di mana stok barang ini sudah habis / penuh dibooking.
-     * Sesuai aturan: jika total akumulasi unit yang disewa pada tanggal tersebut >= stok_total,
-     * maka tanggal tersebut berstatus FULL BOOKED (ditampilkan dengan efek glass di kalender).
+     * Jam operasional sewa harian Rentify.
+     */
+    public const OPERATIONAL_HOURS = [
+        '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+        '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+    ];
+
+    /**
+     * Menghitung ketersediaan stok sewa harian dan jam operasional untuk rentang horizon hari ke depan.
+     * Menggunakan kalkulasi interval overlap exact:
+     * - Suatu jam pada tanggal tertentu bentrok jika: start_order < jam_selesai_sewa && end_order > jam_mulai_sewa.
+     * - Suatu tanggal berstatus FULL BOOKED (ditampilkan efek glass) jika SELURUH jam operasional pada hari tersebut penuh.
+     * - Jika pesanan sebelumnya selesai pada jam 08:00, maka jam setelahnya (misal 09:00) pada hari tersebut tetap TERSEDIA.
+     *
+     * @param int $horizonDays Jumlah hari ke depan yang dicek (default 120 hari)
+     * @return array [fully_booked_dates, booked_slots, booked_info]
+     */
+    public function getAvailabilityData(int $horizonDays = 120): array
+    {
+        $stokTotal = (int) ($this->stok_total ?? 0);
+        if ($stokTotal <= 0) {
+            return [
+                'fully_booked_dates' => [],
+                'booked_slots' => [],
+                'booked_info' => [],
+            ];
+        }
+
+        $today = now()->startOfDay();
+        $horizon = now()->copy()->addDays($horizonDays)->endOfDay();
+
+        $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.product_id', $this->id)
+            ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED', 'Menunggu Ulasan'])
+            ->where(function ($query) use ($today) {
+                $todayDate = $today->toDateString();
+                $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
+                      ->orWhereDate('orders.end_rent', '>=', $todayDate);
+            })
+            ->select([
+                'order_items.quantity',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+            ])
+            ->get();
+
+        $parsedBookings = [];
+        $relevantDates = [];
+
+        foreach ($activeBookings as $booking) {
+            if (!$booking->start_rent_time || !$booking->end_rent_time) {
+                continue;
+            }
+
+            $start = \Carbon\Carbon::parse($booking->start_rent_time);
+            $end = \Carbon\Carbon::parse($booking->end_rent_time);
+            $qty = max(1, (int) $booking->quantity);
+
+            $parsedBookings[] = [
+                'start' => $start,
+                'end'   => $end,
+                'qty'   => $qty,
+            ];
+
+            $curr = $start->copy()->startOfDay();
+            $endDay = $end->copy()->startOfDay();
+            while ($curr->lte($endDay)) {
+                if ($curr->gte($today) && $curr->lte($horizon)) {
+                    $relevantDates[$curr->format('Y-m-d')] = true;
+                }
+                $curr->addDay();
+            }
+        }
+
+        $fullyBookedDates = [];
+        $bookedSlots = [];
+        $bookedInfo = [];
+
+        foreach (array_keys($relevantDates) as $dateKey) {
+            $slotsBookedOnThisDate = [];
+            $maxUsedInAnySlot = 0;
+
+            foreach (self::OPERATIONAL_HOURS as $slot) {
+                $slotStart = \Carbon\Carbon::parse($dateKey . ' ' . $slot);
+                $slotEnd = $slotStart->copy()->addDay(); // Standar peminjaman minimal 1 hari (24 jam)
+
+                $usedQty = 0;
+                foreach ($parsedBookings as $pb) {
+                    // Formula overlap interval: pb.start < slotEnd AND pb.end > slotStart
+                    if ($pb['start']->lt($slotEnd) && $pb['end']->gt($slotStart)) {
+                        $usedQty += $pb['qty'];
+                    }
+                }
+
+                if ($usedQty > $maxUsedInAnySlot) {
+                    $maxUsedInAnySlot = $usedQty;
+                }
+
+                if ($usedQty >= $stokTotal) {
+                    $slotsBookedOnThisDate[] = $slot;
+                }
+            }
+
+            $isFull = (count($slotsBookedOnThisDate) === count(self::OPERATIONAL_HOURS));
+            if ($isFull) {
+                $fullyBookedDates[] = $dateKey;
+            }
+
+            if (!empty($slotsBookedOnThisDate)) {
+                $bookedSlots[$dateKey] = $slotsBookedOnThisDate;
+            }
+
+            $bookedInfo[$dateKey] = [
+                'used' => $maxUsedInAnySlot,
+                'total' => $stokTotal,
+                'remaining' => max(0, $stokTotal - $maxUsedInAnySlot),
+                'is_full' => $isFull,
+                'booked_slots' => $slotsBookedOnThisDate,
+            ];
+        }
+
+        sort($fullyBookedDates);
+
+        return [
+            'fully_booked_dates' => array_values(array_unique($fullyBookedDates)),
+            'booked_slots' => $bookedSlots,
+            'booked_info' => $bookedInfo,
+        ];
+    }
+
+    /**
+     * Menghitung tanggal-tanggal di mana stok barang ini sudah habis / penuh dibooking di semua slot jam.
+     * Sesuai aturan: tanggal berstatus FULL BOOKED (ditampilkan dengan efek glass di kalender)
+     * hanya jika seluruh slot jam pada tanggal tersebut sudah penuh terisi.
      *
      * @param int $horizonDays Jumlah hari ke depan yang dicek (default 120 hari)
      * @return array List tanggal 'YYYY-MM-DD' yang penuh dibooking
      */
     public function getFullyBookedDates(int $horizonDays = 120): array
     {
-        $stokTotal = (int) ($this->stok_total ?? 0);
-        if ($stokTotal <= 0) {
-            return [];
-        }
-
-        $today = now()->startOfDay();
-        $horizon = now()->copy()->addDays($horizonDays)->endOfDay();
-
-        $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
-            ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->where('order_items.product_id', $this->id)
-            ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED'])
-            ->where(function ($query) use ($today) {
-                $todayDate = $today->toDateString();
-                $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
-                      ->orWhereDate('orders.end_rent', '>=', $todayDate);
-            })
-            ->select([
-                'order_items.quantity',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
-            ])
-            ->get();
-
-        $dailyUsage = [];
-
-        foreach ($activeBookings as $booking) {
-            if (!$booking->start_rent_time || !$booking->end_rent_time) {
-                continue;
-            }
-
-            $orderStart = \Carbon\Carbon::parse($booking->start_rent_time)->startOfDay();
-            $orderEnd = \Carbon\Carbon::parse($booking->end_rent_time)->startOfDay();
-            $qty = max(1, (int) $booking->quantity);
-
-            $curr = $orderStart->copy();
-            while ($curr->lte($orderEnd)) {
-                if ($curr->gte($today) && $curr->lte($horizon)) {
-                    $key = $curr->format('Y-m-d');
-                    $dailyUsage[$key] = ($dailyUsage[$key] ?? 0) + $qty;
-                }
-                $curr->addDay();
-            }
-        }
-
-        $fullyBooked = [];
-        foreach ($dailyUsage as $dateKey => $usedQty) {
-            if ($usedQty >= $stokTotal) {
-                $fullyBooked[] = $dateKey;
-            }
-        }
-
-        return array_values(array_unique($fullyBooked));
+        return $this->getAvailabilityData($horizonDays)['fully_booked_dates'];
     }
 
     /**
-     * Ringkasan stok harian (terpakai, sisa, status) untuk rentang waktu ke depan.
+     * Mengambil daftar slot jam yang sudah penuh per tanggal.
+     * Contoh: ['2026-11-04' => ['08:00', '09:00', ...]]
+     */
+    public function getBookedSlots(int $horizonDays = 120): array
+    {
+        return $this->getAvailabilityData($horizonDays)['booked_slots'];
+    }
+
+    /**
+     * Ringkasan stok harian (terpakai, sisa, status, slot terisi) untuk rentang waktu ke depan.
      */
     public function getBookedDatesInfo(int $horizonDays = 120): array
     {
-        $stokTotal = (int) ($this->stok_total ?? 0);
-        $today = now()->startOfDay();
-        $horizon = now()->copy()->addDays($horizonDays)->endOfDay();
-
-        $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
-            ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->where('order_items.product_id', $this->id)
-            ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED'])
-            ->where(function ($query) use ($today) {
-                $todayDate = $today->toDateString();
-                $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
-                      ->orWhereDate('orders.end_rent', '>=', $todayDate);
-            })
-            ->select([
-                'order_items.quantity',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
-            ])
-            ->get();
-
-        $dailyUsage = [];
-        foreach ($activeBookings as $booking) {
-            if (!$booking->start_rent_time || !$booking->end_rent_time) {
-                continue;
-            }
-            $orderStart = \Carbon\Carbon::parse($booking->start_rent_time)->startOfDay();
-            $orderEnd = \Carbon\Carbon::parse($booking->end_rent_time)->startOfDay();
-            $qty = max(1, (int) $booking->quantity);
-
-            $curr = $orderStart->copy();
-            while ($curr->lte($orderEnd)) {
-                if ($curr->gte($today) && $curr->lte($horizon)) {
-                    $key = $curr->format('Y-m-d');
-                    $dailyUsage[$key] = ($dailyUsage[$key] ?? 0) + $qty;
-                }
-                $curr->addDay();
-            }
-        }
-
-        $info = [];
-        foreach ($dailyUsage as $dateKey => $usedQty) {
-            $remaining = max(0, $stokTotal - $usedQty);
-            $info[$dateKey] = [
-                'used' => $usedQty,
-                'total' => $stokTotal,
-                'remaining' => $remaining,
-                'is_full' => $usedQty >= $stokTotal,
-            ];
-        }
-
-        return $info;
+        return $this->getAvailabilityData($horizonDays)['booked_info'];
     }
 }

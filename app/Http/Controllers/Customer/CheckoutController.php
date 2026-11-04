@@ -315,7 +315,7 @@ class CheckoutController extends Controller
                 $bookedQty = DB::table('order_items')
                     ->join('orders', 'order_items.order_id', '=', 'orders.id')
                     ->where('order_items.product_id', $item->barang_id)
-                    ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak'])
+                    ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED', 'Menunggu Ulasan'])
                     ->where(function($query) use ($waktuMulai, $waktuKembaliCek) {
                         $query->where('orders.start_rent', '<', $waktuKembaliCek)
                               ->where('orders.end_rent', '>', $waktuMulai);

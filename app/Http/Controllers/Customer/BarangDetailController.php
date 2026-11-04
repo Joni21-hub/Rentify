@@ -52,8 +52,9 @@ public function show($slug)
 
         $fullyBookedDates = $barang->getFullyBookedDates();
         $bookedDatesInfo = $barang->getBookedDatesInfo();
+        $bookedSlots = $barang->getBookedSlots();
 
-        return view('customer.barang-detail', compact('barang', 'fullyBookedDates', 'bookedDatesInfo'));
+        return view('customer.barang-detail', compact('barang', 'fullyBookedDates', 'bookedDatesInfo', 'bookedSlots'));
     }
 
     /**
@@ -70,6 +71,7 @@ public function show($slug)
             'success' => true,
             'stok_total' => (int) $barang->stok_total,
             'fully_booked_dates' => $barang->getFullyBookedDates(),
+            'booked_slots' => $barang->getBookedSlots(),
             'booked_info' => $barang->getBookedDatesInfo(),
         ]);
     }
