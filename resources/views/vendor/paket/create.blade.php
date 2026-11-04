@@ -54,10 +54,64 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- KOLOM KIRI (2 SPAN): KOMPOSISI BARANG & INFORMASI PAKET -->
+            <!-- KOLOM KIRI (2 SPAN): MEDIA, KOMPOSISI BARANG & INFORMASI PAKET -->
             <div class="lg:col-span-2 space-y-6">
                 
-                <!-- 1. PILIH KOMPOSISI BARANG -->
+                <!-- 1. MEDIA PAKET (FOTO / VIDEO) — MATCHING HALAMAN UPLOAD PRODUK -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-photo-film text-sky-500"></i> Media Paket (Foto / Video)
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Bisa pilih lebih dari 1 foto/video (berkas pertama jadi Cover). Foto dikompresi otomatis ke WebP/AVIF HD.
+                            </p>
+                        </div>
+                        <span id="photoCounter" class="text-xs font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg">
+                            0 Media dipilih
+                        </span>
+                    </div>
+
+                    <!-- Hidden Input -->
+                    <input type="file" name="fotos[]" id="fotos" multiple accept="image/*,video/*,.heic,.heif,.avif,.webp,.mp4,.mov,.mkv,.webm" class="hidden">
+
+                    <!-- Mobile-First Big Touch Area -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                        <!-- Tombol Buka Kamera / Galeri -->
+                        <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-400/80 bg-sky-50/60 hover:bg-sky-100/70 transition flex items-center justify-center gap-3 text-sky-700 active:scale-98">
+                            <div class="w-11 h-11 rounded-xl bg-sky-500 text-white flex items-center justify-center text-lg shadow-sm">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-xs font-black">Buka Kamera / Galeri</span>
+                                <span class="block text-[11px] text-sky-600/80 font-medium">Bisa pilih foto & video</span>
+                            </div>
+                        </label>
+
+                        <!-- Tips Foto HP -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-3 text-slate-600">
+                            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-lightbulb text-sm"></i>
+                            </div>
+                            <p class="text-[11px] leading-snug">
+                                Gunakan foto jelas yang menampilkan keseluruhan isi bundling paket sewa Anda!
+                            </p>
+                        </div>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 italic">
+                        * Opsional: Jika tidak diunggah, otomatis memakai foto cover dan galeri barang komponen penyusun paket.
+                    </p>
+
+                    <!-- Live Previews Grid -->
+                    <div id="newPhotoSection" class="hidden space-y-2 pt-2 border-t border-slate-100">
+                        <span class="text-[11px] font-black text-slate-700 block">Pratinjau Media Paket:</span>
+                        <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                    </div>
+                </div>
+
+                <!-- 2. PILIH KOMPOSISI BARANG -->
                 <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
                         <div>
@@ -227,45 +281,9 @@
 
             </div>
 
-            <!-- KOLOM KANAN (1 SPAN): FOTO COVER & PENGIRIMAN -->
+            <!-- KOLOM KANAN (1 SPAN): PENGIRIMAN & AKSI -->
             <div class="space-y-6">
                 
-                <!-- FOTO / MEDIA PAKET -->
-                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div>
-                            <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-images text-sky-500"></i> Foto & Galeri Paket
-                            </h2>
-                            <p class="text-[11px] text-slate-400 mt-0.5">
-                                Bisa pilih lebih dari 1 foto. Foto #1 jadi sampul utama, sisanya jadi galeri.
-                            </p>
-                        </div>
-                        <span id="photoCounter" class="text-[11px] font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg shrink-0">
-                            0 Foto dipilih
-                        </span>
-                    </div>
-
-                    <input type="file" name="fotos[]" id="fotos" multiple accept="image/*,.heic,.heif,.avif,.webp" class="hidden">
-
-                    <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-100/60 transition flex flex-col items-center justify-center text-center gap-2 text-sky-700 active:scale-98">
-                        <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-base shadow-sm">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                        </div>
-                        <span class="text-xs font-black">Pilih Foto Paket</span>
-                        <span class="text-[10px] text-slate-400 font-medium">Bisa pilih lebih dari satu (Maks 100MB/foto)</span>
-                    </label>
-
-                    <p class="text-[10px] text-slate-400 italic">
-                        * Opsional: Jika tidak diunggah, otomatis memakai foto cover barang komponen pertama.
-                    </p>
-
-                    <div id="newPhotoSection" class="hidden space-y-2">
-                        <span class="text-[11px] font-black text-slate-700 block">Pratinjau Foto Paket:</span>
-                        <div id="preview-container" class="grid grid-cols-2 gap-2.5"></div>
-                    </div>
-                </div>
-
                 <!-- DUKUNGAN DELIVERY -->
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
                     <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
@@ -411,11 +429,11 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFiles.forEach(file => dt.items.add(file));
         fotoInput.files = dt.files;
         if (photoCounter) {
-            photoCounter.textContent = `${selectedFiles.length} Foto dipilih`;
+            photoCounter.textContent = `${selectedFiles.length} Media dipilih`;
             if (selectedFiles.length > 0) {
-                photoCounter.className = "text-[11px] font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg shrink-0";
+                photoCounter.className = "text-xs font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg";
             } else {
-                photoCounter.className = "text-[11px] font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg shrink-0";
+                photoCounter.className = "text-xs font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg";
             }
         }
         if (newPhotoSection) {
@@ -437,22 +455,31 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!previewContainer) return;
         previewContainer.innerHTML = '';
         selectedFiles.forEach((file, index) => {
+            const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|quicktime|webm|mkv|avi|3gp|m4v)$/i.test(file.name);
             const card = document.createElement('div');
             card.className = "relative rounded-2xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 shadow-xs group";
 
             const isCover = index === 0;
-            const badgeHtml = isCover
-                ? `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[9px] font-black rounded-md shadow-sm tracking-wider z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[8px]"></i> SAMPUL</div>`
-                : `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[9px] font-bold rounded-md shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-images text-sky-400 text-[8px]"></i> GALERI #${index}</div>`;
+            const coverBadge = isCover 
+                ? `<div class="absolute top-2 left-2 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-black rounded-lg shadow-sm tracking-wider z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[8px]"></i> COVER UTAMA</div>`
+                : `<div class="absolute top-2 left-2 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-images text-sky-400 text-[9px]"></i> GALERI #${index}</div>`;
+            const videoBadge = isVideo
+                ? `<div class="absolute ${isCover ? 'top-8' : 'top-8'} left-2 px-2 py-0.5 bg-slate-900/80 text-white text-[10px] font-bold rounded-lg shadow-sm flex items-center gap-1 z-10"><i class="fa-solid fa-video text-rose-400 text-[9px]"></i> VIDEO</div>`
+                : '';
 
             const objectUrl = URL.createObjectURL(file);
+            const mediaHtml = isVideo
+                ? `<video src="${objectUrl}" class="w-full h-full object-cover" muted playsinline></video>`
+                : `<img src="${objectUrl}" alt="Preview" class="w-full h-full object-cover">`;
+
             card.innerHTML = `
-                <img src="${objectUrl}" alt="Preview" class="w-full h-full object-cover">
-                ${badgeHtml}
-                <button type="button" onclick="removePhoto(${index})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 text-[10px] cursor-pointer z-10 shadow-sm" title="Hapus foto">
-                    <i class="fa-solid fa-trash"></i>
+                ${mediaHtml}
+                ${coverBadge}
+                ${videoBadge}
+                <button type="button" onclick="removePhoto(${index})" class="absolute top-2 right-2 w-7 h-7 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 shadow-sm cursor-pointer z-10" title="Hapus berkas">
+                    <i class="fa-solid fa-trash text-[10px]"></i>
                 </button>
-                <div class="absolute bottom-0 inset-x-0 p-1 bg-gradient-to-t from-slate-900/80 to-transparent text-[9px] text-white font-medium truncate px-1.5 z-10">
+                <div class="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-slate-900/75 to-transparent text-[10px] text-white font-medium truncate px-2 z-10">
                     ${file.name}
                 </div>
             `;

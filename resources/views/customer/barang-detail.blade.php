@@ -24,6 +24,26 @@
     .detail-container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; }
     .swiper-pagination-bullet { background: #cbd5e1; opacity: 1; }
     .swiper-pagination-bullet-active { background: #0ea5e9; width: 16px; border-radius: 8px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .swiper-button-next, .swiper-button-prev {
+        color: #0284c7 !important;
+        width: 36px !important;
+        height: 36px !important;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 9999px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        backdrop-filter: blur(4px);
+        transition: all 0.2s ease;
+    }
+    .swiper-button-next:after, .swiper-button-prev:after {
+        font-size: 13px !important;
+        font-weight: 900;
+    }
+    .swiper-button-next:hover, .swiper-button-prev:hover {
+        background: #ffffff;
+        transform: scale(1.08);
+    }
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     @keyframes bounceCart {
@@ -123,48 +143,154 @@
         </span>
     </a>
 
-    <div class="swiper productSwiper w-full aspect-square bg-white border-b border-slate-100">
-        <div class="swiper-wrapper">
-            
-            <div class="swiper-slide flex items-center justify-center p-4">
-                @php
-                    $coverUrl = $barang->cover_photo_url;
-                    $namaLower = strtolower($barang->nama ?? '');
-                    $fallbackImg = str_contains($namaLower, 'kurs') 
-                        ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
-                        : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
-                    $isCoverVideo = \App\Services\StorageService::isVideoMedia($barang->cover_photo);
-                @endphp
-                @if($isCoverVideo)
-                    <video src="{{ $coverUrl }}" class="w-full h-full object-contain rounded-2xl" controls playsinline></video>
-                @else
-                    <img src="{{ $coverUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
-                @endif
-            </div>
+    @php
+        $galleryItems = [];
+        $namaLower = strtolower($barang->nama ?? '');
+        $fallbackImg = str_contains($namaLower, 'kurs') 
+            ? asset('barang/5I0op8pdywH1SopGwP36pKBhx6y44N6tbBVzcSPx.png') 
+            : (str_contains($namaLower, 'meja') ? asset('barang/4yEbGpYvTYYai8LZHVP3jFNNO5WBPUokdCJggGBy.png') : asset('storage/placeholders/placeholder-barang.png'));
 
-            @if(isset($barang->fotos) && $barang->fotos->count() > 0)
-                @foreach($barang->fotos as $foto)
-                @php
-                    $rawPath = (string)($foto->foto_path ?? $foto->foto ?? $foto->gambar ?? '');
-                    $fotoUrl = \App\Services\StorageService::getPublicUrl($rawPath, 'placeholders/placeholder-barang.png');
-                    $isItemVideo = \App\Services\StorageService::isVideoMedia($rawPath);
-                @endphp
-                
-                @if(!empty($rawPath))
-                <div class="swiper-slide flex items-center justify-center p-4">
-                    @if($isItemVideo)
-                        <video src="{{ $fotoUrl }}" class="w-full h-full object-contain rounded-2xl" controls playsinline></video>
+        // 1. Cover Foto Utama Barang / Paket
+        if (!empty($barang->cover_photo)) {
+            $galleryItems[] = [
+                'url' => $barang->cover_photo_url,
+                'is_video' => \App\Services\StorageService::isVideoMedia($barang->cover_photo),
+                'label' => $barang->is_paket ? 'Sampul Paket' : 'Foto Sampul',
+                'badge' => $barang->is_paket ? 'PAKET' : 'COVER',
+            ];
+        }
+
+        // 2. Foto Galeri Tambahan Barang / Paket
+        if (isset($barang->fotos) && $barang->fotos->isNotEmpty()) {
+            foreach ($barang->fotos as $f) {
+                $fpath = (string)($f->foto_path ?? $f->foto ?? $f->gambar ?? '');
+                if (!empty($fpath)) {
+                    $galleryItems[] = [
+                        'url' => \App\Services\StorageService::getPublicUrl($fpath, 'placeholders/placeholder-barang.png'),
+                        'is_video' => \App\Services\StorageService::isVideoMedia($fpath),
+                        'label' => $barang->is_paket ? 'Galeri Paket' : 'Galeri Produk',
+                        'badge' => 'GALERI',
+                    ];
+                }
+            }
+        }
+
+        // 3. Khusus Paket Sewa: Sertakan foto barang-barang komponen penyusun paket
+        if ($barang->is_paket && isset($barang->paketItems)) {
+            foreach ($barang->paketItems as $pItem) {
+                $comp = $pItem->barang;
+                if (!$comp) continue;
+
+                // Cover barang komponen jika belum ada di list
+                if (!empty($comp->cover_photo)) {
+                    $compCover = $comp->cover_photo_url;
+                    $alreadyExists = collect($galleryItems)->contains('url', $compCover);
+                    if (!$alreadyExists) {
+                        $galleryItems[] = [
+                            'url' => $compCover,
+                            'is_video' => \App\Services\StorageService::isVideoMedia($comp->cover_photo),
+                            'label' => $comp->nama . ' (' . $pItem->quantity . 'x)',
+                            'badge' => 'ISI PAKET',
+                        ];
+                    }
+                }
+
+                // Galeri komponen jika ada
+                if (isset($comp->fotos) && $comp->fotos->isNotEmpty()) {
+                    foreach ($comp->fotos as $cF) {
+                        $cfPath = (string)($cF->foto_path ?? $cF->foto ?? $cF->gambar ?? '');
+                        if (!empty($cfPath)) {
+                            $cfUrl = \App\Services\StorageService::getPublicUrl($cfPath, 'placeholders/placeholder-barang.png');
+                            $alreadyExists = collect($galleryItems)->contains('url', $cfUrl);
+                            if (!$alreadyExists) {
+                                $galleryItems[] = [
+                                    'url' => $cfUrl,
+                                    'is_video' => \App\Services\StorageService::isVideoMedia($cfPath),
+                                    'label' => $comp->nama . ' (Galeri)',
+                                    'badge' => 'ISI PAKET',
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback jika kosong sama sekali
+        if (empty($galleryItems)) {
+            $galleryItems[] = [
+                'url' => $fallbackImg,
+                'is_video' => false,
+                'label' => $barang->nama,
+                'badge' => 'PRODUK',
+            ];
+        }
+    @endphp
+
+    <div class="relative w-full aspect-square bg-white border-b border-slate-100 overflow-hidden group">
+        <div class="swiper productSwiper w-full h-full">
+            <div class="swiper-wrapper">
+                @foreach($galleryItems as $idx => $gItem)
+                <div class="swiper-slide flex items-center justify-center p-4 relative">
+                    @if($gItem['is_video'])
+                        <video src="{{ $gItem['url'] }}" class="w-full h-full object-contain rounded-2xl" controls playsinline></video>
                     @else
-                        <img src="{{ $fotoUrl }}" class="w-full h-full object-contain" alt="{{ $barang->nama }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                        <img src="{{ $gItem['url'] }}" class="w-full h-full object-contain" alt="{{ $gItem['label'] }}" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                    @endif
+                    @if(!empty($gItem['badge']))
+                        <span class="absolute top-4 left-4 bg-slate-900/75 backdrop-blur-xs text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm z-10 flex items-center gap-1.5 pointer-events-none">
+                            @if($gItem['badge'] === 'PAKET' || $gItem['badge'] === 'ISI PAKET')
+                                <i class="fa-solid fa-boxes-stacked text-indigo-400 text-[9px]"></i>
+                            @else
+                                <i class="fa-solid fa-camera text-sky-400 text-[9px]"></i>
+                            @endif
+                            {{ $gItem['label'] }}
+                        </span>
                     @endif
                 </div>
-                @endif
                 @endforeach
+            </div>
+
+            @if(count($galleryItems) > 1)
+                <!-- Navigation Arrows -->
+                <div class="swiper-button-prev opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="swiper-button-next opacity-0 group-hover:opacity-100 transition-opacity"></div>
             @endif
 
+            <div class="swiper-pagination !bottom-2.5"></div>
         </div>
-        <div class="swiper-pagination"></div>
+
+        @if(count($galleryItems) > 1)
+            <!-- Photo Counter Badge (1/N) -->
+            <div class="absolute bottom-3 right-3 bg-slate-900/75 backdrop-blur-xs text-white text-[11px] font-black px-3 py-1 rounded-full shadow-md z-10 flex items-center gap-1.5 pointer-events-none">
+                <i class="fa-solid fa-camera text-[10px] text-sky-400"></i>
+                <span id="gallery-counter">1 / {{ count($galleryItems) }}</span>
+            </div>
+        @endif
     </div>
+
+    @if(count($galleryItems) > 1)
+        <!-- Interactive Thumbnails Strip -->
+        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar" id="gallery-thumb-strip">
+            @foreach($galleryItems as $idx => $gItem)
+                <button type="button" 
+                        onclick="window.goToProductSlide({{ $idx }})" 
+                        class="gallery-thumb-item relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer {{ $idx === 0 ? 'border-sky-500 ring-2 ring-sky-200 scale-102 shadow-xs' : 'border-slate-200 opacity-65 hover:opacity-100' }}"
+                        data-index="{{ $idx }}"
+                        title="{{ $gItem['label'] }}">
+                    @if($gItem['is_video'])
+                        <video src="{{ $gItem['url'] }}" class="w-full h-full object-cover" muted></video>
+                        <span class="absolute inset-0 bg-slate-900/35 flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-play"></i></span>
+                    @else
+                        <img src="{{ $gItem['url'] }}" alt="{{ $gItem['label'] }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                    @endif
+                    @if($gItem['badge'] === 'ISI PAKET')
+                        <span class="absolute bottom-0 inset-x-0 bg-indigo-900/85 text-white text-[7.5px] font-black py-0.5 text-center leading-none truncate px-0.5">Isi</span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+    @endif
 
     <div class="p-4 border-b border-slate-100 bg-white">
         <div class="flex items-center justify-between mb-2">
@@ -1004,11 +1130,40 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        var swiper = new Swiper(".productSwiper", {
+        var totalGallerySlides = {{ count($galleryItems ?? []) }};
+        var productSwiperInstance = new Swiper(".productSwiper", {
             pagination: { el: ".swiper-pagination", clickable: true },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
             loop: false,
             spaceBetween: 10,
+            on: {
+                slideChange: function() {
+                    const activeIndex = this.activeIndex;
+                    const counterEl = document.getElementById('gallery-counter');
+                    if (counterEl) {
+                        counterEl.textContent = `${activeIndex + 1} / ${totalGallerySlides}`;
+                    }
+                    const thumbItems = document.querySelectorAll('.gallery-thumb-item');
+                    thumbItems.forEach((btn, i) => {
+                        if (i === activeIndex) {
+                            btn.className = "gallery-thumb-item relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer border-sky-500 ring-2 ring-sky-200 scale-102 shadow-xs";
+                            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        } else {
+                            btn.className = "gallery-thumb-item relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer border-slate-200 opacity-65 hover:opacity-100";
+                        }
+                    });
+                }
+            }
         });
+
+        window.goToProductSlide = function(idx) {
+            if (productSwiperInstance) {
+                productSwiperInstance.slideTo(idx);
+            }
+        };
 
         const btnSewaSekarang = document.getElementById('btn-sewa-sekarang');
         const bookingModal = document.getElementById('booking-modal');

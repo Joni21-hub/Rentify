@@ -48,10 +48,107 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- KOLOM KIRI (2 SPAN): KOMPOSISI BARANG & INFORMASI PAKET -->
+            <!-- KOLOM KIRI (2 SPAN): MEDIA, KOMPOSISI BARANG & INFORMASI PAKET -->
             <div class="lg:col-span-2 space-y-6">
                 
-                <!-- 1. PILIH KOMPOSISI BARANG -->
+                <!-- 1. FOTO & MEDIA PAKET (MATCHING HALAMAN EDIT PRODUK) -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-photo-film text-sky-500"></i> Media Paket (Foto & Galeri)
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Kelola foto cover utama, foto galeri paket, atau unggah foto/video baru.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- FOTO SAMPUL SAAT INI -->
+                    @if($paket->cover_photo_url)
+                        <div class="space-y-1.5">
+                            <span class="text-xs font-black text-slate-700 uppercase tracking-wider block">Foto Sampul Utama Saat Ini:</span>
+                            <div class="relative rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-100 shadow-xs max-w-md">
+                                <img id="currentCoverImg" src="{{ $paket->cover_photo_url }}" alt="{{ $paket->nama }}" class="w-full h-full object-cover">
+                                <span class="absolute bottom-2 left-2 px-2.5 py-1 bg-slate-900/80 backdrop-blur-xs text-white rounded-lg text-[10px] font-black tracking-wide flex items-center gap-1.5 shadow-xs">
+                                    <i class="fa-solid fa-star text-amber-400 text-[10px]"></i> Sampul Saat Ini
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- FOTO GALERI EKSIS (JIKA ADA) -->
+                    @if($paket->fotos && $paket->fotos->count() > 0)
+                        <div class="space-y-2 pt-2 border-t border-slate-100" id="existingGallerySection">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">
+                                    Foto Galeri Paket:
+                                </span>
+                                <span id="existingCountBadge" class="text-xs font-black px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                                    {{ $paket->fotos->count() }} Foto
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="existingGalleryGrid">
+                                @foreach($paket->fotos as $foto)
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 group shadow-xs" id="foto-card-{{ $foto->id }}">
+                                        <img src="{{ $foto->foto_url }}" alt="Galeri {{ $paket->nama }}" class="w-full h-full object-cover">
+                                        
+                                        <!-- Actions Overlay -->
+                                        <div class="absolute inset-0 bg-slate-900/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                                            <button type="button" onclick="setCoverAjax({{ $paket->id }}, {{ $foto->id }})" class="w-full py-1.5 px-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black flex items-center justify-center gap-1 transition shadow-xs cursor-pointer" title="Jadikan foto ini sebagai sampul utama">
+                                                <i class="fa-solid fa-star text-[9px]"></i> Set Sampul
+                                            </button>
+                                            <button type="button" onclick="deleteFotoAjax({{ $foto->id }})" class="w-full py-1.5 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black flex items-center justify-center gap-1 transition shadow-xs cursor-pointer" title="Hapus foto galeri ini">
+                                                <i class="fa-solid fa-trash text-[9px]"></i> Hapus
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- UNGGAH FOTO BARU -->
+                    <div class="space-y-3 pt-2 border-t border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Unggah Foto / Video Baru (Opsional)</span>
+                            <span id="photoCounter" class="text-xs font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg hidden shrink-0">
+                                0 Media dipilih
+                            </span>
+                        </div>
+
+                        <input type="file" name="fotos[]" id="fotos" multiple accept="image/*,video/*,.heic,.heif,.avif,.webp,.mp4,.mov,.mkv,.webm" class="hidden">
+
+                        <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-400/80 bg-sky-50/60 hover:bg-sky-100/70 transition flex items-center justify-center gap-3 text-sky-700 active:scale-98">
+                            <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-xs font-black">Pilih / Tambah Media Baru</span>
+                                <span class="block text-[11px] text-sky-600 font-medium">Bisa pilih lebih dari satu foto & video (Maks 100MB)</span>
+                            </div>
+                        </label>
+
+                        @if($paket->cover_photo_url)
+                            <label class="flex items-start gap-2.5 cursor-pointer bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                                <input type="checkbox" name="replace_cover" id="replaceCoverCheckbox" value="1" checked class="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 mt-0.5">
+                                <div class="text-[11px] leading-tight">
+                                    <span class="font-bold text-slate-700 block">Jadikan foto baru pertama sebagai Sampul Utama</span>
+                                    <span class="text-[10px] text-slate-400">Jika tidak dicentang, semua foto baru ditambahkan ke galeri dan sampul saat ini dipertahankan.</span>
+                                </div>
+                            </label>
+                        @endif
+
+                        <!-- Live Previews Grid for Newly Selected Files -->
+                        <div id="newPhotoSection" class="hidden space-y-2 pt-2 border-t border-slate-100">
+                            <span class="text-xs font-black text-slate-700 block">Pratinjau Media Baru yang Dipilih:</span>
+                            <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. PILIH KOMPOSISI BARANG -->
                 <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
                         <div>
@@ -214,104 +311,9 @@
 
             </div>
 
-            <!-- KOLOM KANAN (1 SPAN): FOTO & PENGIRIMAN -->
+            <!-- KOLOM KANAN (1 SPAN): PENGIRIMAN & AKSI -->
             <div class="space-y-6">
                 
-                <!-- FOTO / MEDIA PAKET -->
-                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div>
-                            <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-images text-sky-500"></i> Foto & Galeri Paket
-                            </h2>
-                            <p class="text-[11px] text-slate-400 mt-0.5">
-                                Kelola sampul utama dan foto galeri bundling paket.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- FOTO SAMPUL SAAT INI -->
-                    @if($paket->cover_photo_url)
-                        <div class="space-y-1.5">
-                            <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider block">Foto Sampul Utama:</span>
-                            <div class="relative rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-100 shadow-xs">
-                                <img id="currentCoverImg" src="{{ $paket->cover_photo_url }}" alt="{{ $paket->nama }}" class="w-full h-full object-cover">
-                                <span class="absolute bottom-2 left-2 px-2.5 py-1 bg-slate-900/80 backdrop-blur-xs text-white rounded-lg text-[10px] font-black tracking-wide flex items-center gap-1.5 shadow-xs">
-                                    <i class="fa-solid fa-star text-amber-400 text-[10px]"></i> Sampul Saat Ini
-                                </span>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- FOTO GALERI EKSIS (JIKA ADA) -->
-                    @if($paket->fotos && $paket->fotos->count() > 0)
-                        <div class="space-y-2 pt-2 border-t border-slate-100" id="existingGallerySection">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider">
-                                    Foto Galeri Saat Ini:
-                                </span>
-                                <span id="existingCountBadge" class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
-                                    {{ $paket->fotos->count() }} Foto
-                                </span>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2" id="existingGalleryGrid">
-                                @foreach($paket->fotos as $foto)
-                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 group shadow-xs" id="foto-card-{{ $foto->id }}">
-                                        <img src="{{ $foto->foto_url }}" alt="Galeri {{ $paket->nama }}" class="w-full h-full object-cover">
-                                        
-                                        <!-- Actions Overlay -->
-                                        <div class="absolute inset-0 bg-slate-900/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
-                                            <button type="button" onclick="setCoverAjax({{ $paket->id }}, {{ $foto->id }})" class="w-full py-1 px-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black flex items-center justify-center gap-1 transition shadow-xs cursor-pointer" title="Jadikan foto ini sebagai sampul utama">
-                                                <i class="fa-solid fa-star text-[9px]"></i> Set Sampul
-                                            </button>
-                                            <button type="button" onclick="deleteFotoAjax({{ $foto->id }})" class="w-full py-1 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black flex items-center justify-center gap-1 transition shadow-xs cursor-pointer" title="Hapus foto galeri ini">
-                                                <i class="fa-solid fa-trash text-[9px]"></i> Hapus
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- UNGGAH FOTO BARU -->
-                    <div class="space-y-3 pt-2 border-t border-slate-100">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-slate-800">Unggah Foto Baru</span>
-                            <span id="photoCounter" class="text-[11px] font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg hidden shrink-0">
-                                0 Foto dipilih
-                            </span>
-                        </div>
-
-                        <input type="file" name="fotos[]" id="fotos" multiple accept="image/*,.heic,.heif,.avif,.webp" class="hidden">
-
-                        <label for="fotos" class="cursor-pointer p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-100/60 transition flex flex-col items-center justify-center text-center gap-2 text-sky-700 active:scale-98">
-                            <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-base shadow-sm">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                            </div>
-                            <span class="text-xs font-black">Pilih / Tambah Foto Baru</span>
-                            <span class="text-[10px] text-slate-400 font-medium">Bisa pilih lebih dari 1 foto (Maks 100MB)</span>
-                        </label>
-
-                        @if($paket->cover_photo_url)
-                            <label class="flex items-start gap-2.5 cursor-pointer bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                                <input type="checkbox" name="replace_cover" id="replaceCoverCheckbox" value="1" checked class="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 mt-0.5">
-                                <div class="text-[11px] leading-tight">
-                                    <span class="font-bold text-slate-700 block">Jadikan foto baru pertama sebagai Sampul Utama</span>
-                                    <span class="text-[10px] text-slate-400">Jika tidak dicentang, semua foto baru ditambahkan ke galeri dan sampul saat ini dipertahankan.</span>
-                                </div>
-                            </label>
-                        @endif
-
-                        <!-- Live Previews Grid for Newly Selected Files -->
-                        <div id="newPhotoSection" class="hidden space-y-2">
-                            <span class="text-[11px] font-black text-slate-700 block">Pratinjau Foto Baru:</span>
-                            <div id="preview-container" class="grid grid-cols-2 gap-2.5"></div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- DUKUNGAN DELIVERY -->
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
                     <h2 class="text-sm font-black text-slate-800 flex items-center gap-2">
@@ -528,10 +530,12 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFiles.forEach(file => dt.items.add(file));
         fotoInput.files = dt.files;
         if (photoCounter) {
-            photoCounter.textContent = `${selectedFiles.length} Foto baru dipilih`;
+            photoCounter.textContent = `${selectedFiles.length} Media baru dipilih`;
             if (selectedFiles.length > 0) {
+                photoCounter.className = "text-xs font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg";
                 photoCounter.classList.remove('hidden');
             } else {
+                photoCounter.className = "text-xs font-black px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg";
                 photoCounter.classList.add('hidden');
             }
         }
@@ -556,22 +560,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const willReplaceCover = replaceCoverCheckbox ? replaceCoverCheckbox.checked : true;
 
         selectedFiles.forEach((file, index) => {
+            const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|quicktime|webm|mkv|avi|3gp|m4v)$/i.test(file.name);
             const card = document.createElement('div');
             card.className = "relative rounded-2xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 shadow-xs group";
 
             const isCover = (index === 0 && willReplaceCover);
-            const badgeHtml = isCover
-                ? `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[9px] font-black rounded-md shadow-sm tracking-wider z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[8px]"></i> SAMPUL BARU</div>`
-                : `<div class="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[9px] font-bold rounded-md shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-images text-sky-400 text-[8px]"></i> GALERI BARU</div>`;
+            const coverBadge = isCover 
+                ? `<div class="absolute top-2 left-2 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-black rounded-lg shadow-sm tracking-wider z-10 flex items-center gap-1"><i class="fa-solid fa-star text-[8px]"></i> SAMPUL BARU</div>`
+                : `<div class="absolute top-2 left-2 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg shadow-sm z-10 flex items-center gap-1"><i class="fa-solid fa-images text-sky-400 text-[9px]"></i> GALERI BARU</div>`;
+            const videoBadge = isVideo
+                ? `<div class="absolute ${isCover ? 'top-8' : 'top-8'} left-2 px-2 py-0.5 bg-slate-900/80 text-white text-[10px] font-bold rounded-lg shadow-sm flex items-center gap-1 z-10"><i class="fa-solid fa-video text-rose-400 text-[9px]"></i> VIDEO</div>`
+                : '';
 
             const objectUrl = URL.createObjectURL(file);
+            const mediaHtml = isVideo
+                ? `<video src="${objectUrl}" class="w-full h-full object-cover" muted playsinline></video>`
+                : `<img src="${objectUrl}" alt="Preview" class="w-full h-full object-cover">`;
+
             card.innerHTML = `
-                <img src="${objectUrl}" alt="Preview" class="w-full h-full object-cover">
-                ${badgeHtml}
-                <button type="button" onclick="removePhoto(${index})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 text-[10px] cursor-pointer z-10 shadow-sm" title="Batal pilih foto">
-                    <i class="fa-solid fa-trash"></i>
+                ${mediaHtml}
+                ${coverBadge}
+                ${videoBadge}
+                <button type="button" onclick="removePhoto(${index})" class="absolute top-2 right-2 w-7 h-7 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition active:scale-90 shadow-sm cursor-pointer z-10" title="Batal pilih berkas">
+                    <i class="fa-solid fa-trash text-[10px]"></i>
                 </button>
-                <div class="absolute bottom-0 inset-x-0 p-1 bg-gradient-to-t from-slate-900/80 to-transparent text-[9px] text-white font-medium truncate px-1.5 z-10">
+                <div class="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-slate-900/75 to-transparent text-[10px] text-white font-medium truncate px-2 z-10">
                     ${file.name}
                 </div>
             `;

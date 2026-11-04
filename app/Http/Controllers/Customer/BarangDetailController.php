@@ -15,7 +15,7 @@ class BarangDetailController extends Controller
      */
 public function show($slug)
     {
-        $barang = Barang::with(['fotos', 'vendor', 'kategori', 'ulasans.user', 'paketItems.barang'])
+        $barang = Barang::with(['fotos', 'vendor', 'kategori', 'ulasans.user', 'paketItems.barang.fotos'])
                         ->where(function ($query) use ($slug) {
                             $query->where('slug', $slug)
                                   ->orWhere('id', $slug);

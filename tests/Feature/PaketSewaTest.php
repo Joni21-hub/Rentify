@@ -487,4 +487,33 @@ class PaketSewaTest extends TestCase
         $this->assertEquals($oldCover, $paket->cover_photo);
         $this->assertCount(3, $paket->fotos);
     }
+
+    public function test_customer_page_displays_all_gallery_photos_and_thumbnails_for_paket_sewa()
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $file1 = \Illuminate\Http\UploadedFile::fake()->image('cover.jpg', 600, 600);
+        $file2 = \Illuminate\Http\UploadedFile::fake()->image('gallery1.jpg', 600, 600);
+
+        $this->actingAs($this->vendor)->post(route('vendor.paket.store'), [
+            'nama' => 'Paket Glamping Visual Customer',
+            'kategori_id' => $this->kategori->id,
+            'deskripsi' => 'Paket dengan multi-foto untuk customer view',
+            'harga_sewa_harian' => 60000,
+            'items' => [
+                ['barang_id' => $this->itemA->id, 'quantity' => 1],
+                ['barang_id' => $this->itemB->id, 'quantity' => 1],
+            ],
+            'fotos' => [$file1, $file2],
+        ]);
+
+        $paket = Barang::where('nama', 'Paket Glamping Visual Customer')->first();
+        $this->assertNotNull($paket);
+
+        $response = $this->get(route('customer.barang.show', $paket->slug));
+        $response->assertStatus(200);
+        $response->assertSee('gallery-thumb-strip');
+        $response->assertSee('gallery-counter');
+        $response->assertSee('productSwiper');
+    }
 }
