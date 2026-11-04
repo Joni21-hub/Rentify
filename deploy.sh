@@ -12,8 +12,9 @@ sudo -u www-data git pull origin main
 echo "=== [3/7] Menginstal Dependensi PHP ==="
 sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction
 
-echo "=== [4/7] Menjalankan Database Migration ==="
+echo "=== [4/7] Menjalankan Database Migration & Platform Seeder ==="
 sudo -u www-data php artisan migrate --force
+sudo -u www-data php artisan db:seed --class=PlatformVouchersSeeder --force
 
 echo "=== [5/7] Mengoptimasi Cache Laravel ==="
 sudo -u www-data php artisan optimize:clear
