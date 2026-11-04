@@ -237,6 +237,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Relasi ke Paket Sewa yang dimiliki oleh Vendor
+     */
+    public function paketSewas()
+    {
+        return $this->hasMany(PaketSewa::class, 'vendor_id');
+    }
+
+    /**
      * Relasi Postingan Momen Milik User
      */
     public function moments()
