@@ -119,38 +119,64 @@
                 };
             }
 
-            // Header: Aspect Ratio Toggle (9:16 -> 3:4 -> 1:1 -> Utuh -> 9:16)
+            // Header: Aspect Ratio Toggle (8:14 -> 9:16 -> 3:4 -> 1:1 -> Utuh -> 8:14)
             const aspectBtn = document.getElementById('btn-toggle-aspect-ratio');
             const aspectLabel = document.getElementById('aspect-ratio-label');
             const aspectIcon = document.getElementById('aspect-ratio-icon');
+            const mask8_14 = document.getElementById('camera-8-14-mask');
             const squareMask = document.getElementById('camera-square-mask');
             const standardMask = document.getElementById('camera-3-4-mask');
             const videoPreviewEl = document.getElementById('camera-video-preview');
 
             const applyCameraRatioUI = (ratio) => {
+                const is8_14 = ratio === '8:14' || ratio === '8/14';
+                const isOriginal = ratio === 'original' || ratio === 'utuh';
+                const isSquare = ratio === 'square' || ratio === '1:1';
+                const isStandard = ratio === 'standard' || ratio === '3:4';
+                const is9_16 = ratio === '9:16' || ratio === 'portrait';
+
                 if (aspectLabel) {
-                    aspectLabel.textContent = 'Utuh';
+                    aspectLabel.textContent = this.state.getAspectRatioDisplay();
                 }
                 if (aspectIcon) {
-                    aspectIcon.className = 'fa-solid fa-expand text-sky-400 text-xs';
+                    if (is8_14) aspectIcon.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                    else if (isOriginal) aspectIcon.className = 'fa-solid fa-expand text-sky-400 text-xs';
+                    else if (isSquare) aspectIcon.className = 'fa-regular fa-square text-sky-400 text-xs';
+                    else if (isStandard) aspectIcon.className = 'fa-solid fa-camera text-sky-400 text-xs';
+                    else aspectIcon.className = 'fa-solid fa-mobile-screen-button text-sky-400 text-xs';
                 }
-                if (squareMask) squareMask.classList.add('hidden');
-                if (standardMask) standardMask.classList.add('hidden');
 
-                // Video preview kamera: tampil penuh persegi panjang (9:16) secara utuh
+                if (mask8_14) mask8_14.classList.toggle('hidden', !is8_14);
+                if (squareMask) squareMask.classList.toggle('hidden', !isSquare);
+                if (standardMask) standardMask.classList.toggle('hidden', !isStandard);
+
+                // Video preview kamera: jika 'original' (Utuh), gunakan object-contain agar 100% sensor kamera terlihat tanpa terpotong!
                 if (videoPreviewEl) {
-                    videoPreviewEl.classList.remove('object-contain');
-                    videoPreviewEl.classList.add('object-cover');
+                    if (isOriginal) {
+                        videoPreviewEl.classList.remove('object-cover');
+                        videoPreviewEl.classList.add('object-contain');
+                    } else {
+                        videoPreviewEl.classList.remove('object-contain');
+                        videoPreviewEl.classList.add('object-cover');
+                    }
                 }
+
+                let msg = 'Rasio: Persegi Panjang (8:14 Bebas Zoom)';
+                if (isOriginal) msg = 'Rasio: Utuh / Asli Sensor (100% Bebas Potong)';
+                else if (is9_16) msg = 'Rasio: Layar Penuh (9:16)';
+                else if (isStandard) msg = 'Rasio: Standar Foto (3:4)';
+                else if (isSquare) msg = 'Rasio: Persegi (1:1)';
+                this.showFilterToast(msg);
             };
 
-            // Set UI awal kamera ke Utuh (Persegi Panjang 9:16 Bebas Potong)
-            applyCameraRatioUI('original');
+            // Set UI awal kamera sesuai state (default 8:14)
+            applyCameraRatioUI(this.state.get('aspectRatio') || '8:14');
 
             if (aspectBtn) {
                 aspectBtn.onclick = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
-                    applyCameraRatioUI('original');
+                    const nextRatio = this.state.toggleAspectRatio();
+                    applyCameraRatioUI(nextRatio);
                     this.engine.vibrate(15);
                 };
             }

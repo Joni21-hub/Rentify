@@ -176,7 +176,28 @@
                 : { facingMode: { ideal: facingMode } };
 
             const constraintsList = isMobile ? [
-                // 1. Mobile Portrait 1080x1920 (9:16 Full HD Layar Penuh)
+                // 1. Mobile Portrait 8:14 (Persegi Panjang Bebas Zoom 1080x1890)
+                {
+                    video: {
+                        ...baseVideoConstraint,
+                        width: { ideal: 1080 },
+                        height: { ideal: 1890 },
+                        aspectRatio: { ideal: 8 / 14 },
+                        frameRate: { ideal: 30, max: 60 }
+                    },
+                    audio: false
+                },
+                // 2. Mobile Fallback HD 8:14 (720x1260)
+                {
+                    video: {
+                        ...baseVideoConstraint,
+                        width: { ideal: 720 },
+                        height: { ideal: 1260 },
+                        aspectRatio: { ideal: 8 / 14 }
+                    },
+                    audio: false
+                },
+                // 3. Mobile Portrait 1080x1920 (9:16 Full HD Layar Penuh)
                 {
                     video: {
                         ...baseVideoConstraint,
@@ -312,8 +333,14 @@
             this.videoEl.style.imageRendering = 'auto'; // Rendering halus natural bebas pixelation
 
             const updatePreviewRatioClass = () => {
-                this.videoEl.classList.remove('object-contain');
-                this.videoEl.classList.add('object-cover');
+                const ratio = window.MomentCreatorState.get('aspectRatio') || '8:14';
+                if (ratio === 'original' || ratio === 'utuh') {
+                    this.videoEl.classList.remove('object-cover');
+                    this.videoEl.classList.add('object-contain');
+                } else {
+                    this.videoEl.classList.remove('object-contain');
+                    this.videoEl.classList.add('object-cover');
+                }
             };
 
             updatePreviewRatioClass();
@@ -639,9 +666,44 @@
                 ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
             }
 
-            // RASIO UTUH / ASLI KAMERA 100% BEBAS POTONG:
-            // Tangkap seluruh bidang sensor video dalam bentuk persegi panjang (9:16) alami tanpa crop buatan / tanpa ngezoom
-            const finalCanvas = canvas;
+            // Potong ke Rasio Kamera: 8:14 (Persegi Panjang Bebas Zoom), 9:16 (Layar Penuh), 3:4 (Standar Ponsel), 1:1 (Persegi), atau Utuh (Original)
+            let finalCanvas = canvas;
+
+            const cropHelper = (ratioW, ratioH) => {
+                let targetW, targetH;
+                const targetRatio = ratioW / ratioH;
+                if (canvas.width / canvas.height > targetRatio) {
+                    targetH = canvas.height;
+                    targetW = Math.round(targetH * targetRatio);
+                } else {
+                    targetW = canvas.width;
+                    targetH = Math.round(targetW / targetRatio);
+                }
+                const cropped = document.createElement('canvas');
+                cropped.width = targetW;
+                cropped.height = targetH;
+                const cCtx = cropped.getContext('2d');
+                cCtx.imageSmoothingEnabled = true;
+                cCtx.imageSmoothingQuality = 'high';
+                const sx = (canvas.width - targetW) / 2;
+                const sy = (canvas.height - targetH) / 2;
+                cCtx.drawImage(canvas, sx, sy, targetW, targetH, 0, 0, targetW, targetH);
+                return cropped;
+            };
+
+            if (aspectRatio === 'original' || aspectRatio === 'utuh') {
+                // RASIO UTUH / ASLI SENSOR: 100% FRAME ASLI KAMERA TANPA TERPOTONG
+                finalCanvas = canvas;
+            } else if (aspectRatio === 'square' || aspectRatio === '1:1') {
+                finalCanvas = cropHelper(1, 1);
+            } else if (aspectRatio === 'standard' || aspectRatio === '3:4') {
+                finalCanvas = cropHelper(3, 4);
+            } else if (aspectRatio === '9:16' || aspectRatio === 'portrait') {
+                finalCanvas = cropHelper(9, 16);
+            } else {
+                // Default 8:14 (Persegi Panjang 8:14 Bebas Zoom)
+                finalCanvas = cropHelper(8, 14);
+            }
 
             const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);
 

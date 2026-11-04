@@ -155,8 +155,12 @@
                 <i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i> <span>Dashboard</span>
             </a>
 
-            <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.barang.*') ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
+            <a href="{{ route('vendor.barang.index') }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.barang.*') && !request('tipe') ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
                 <i class="fa-solid fa-box-open w-5 text-center text-sm"></i> <span>Kelola Produk</span>
+            </a>
+
+            <a href="{{ route('vendor.barang.index', ['tipe' => 'paket']) }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.paket.*') || request('tipe') === 'paket' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
+                <i class="fa-solid fa-layer-group w-5 text-center text-sm"></i> <span>Paket Sewa</span>
             </a>
 
             <a href="{{ route('vendor.stok') }}" class="flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-xs transition-all {{ request()->routeIs('vendor.stok*') ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">

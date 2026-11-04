@@ -666,78 +666,329 @@
             </div>
 
             <!-- ===================== TAB 3: MONITOR VOUCHER ===================== -->
-            <div id="tab-voucher" class="tab-content hidden">
-                <section class="rentify-card border border-slate-200/80 overflow-hidden bg-white">
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50/10">
-                        <h3 class="text-base font-black text-slate-800"><i class="fas fa-ticket-alt text-rose-500 mr-2"></i>Pemantauan Voucher & Kill-Switch</h3>
-                        <p class="text-[10px] text-slate-500 font-bold bg-white px-3 py-1 rounded-full border border-slate-200">Matikan paksa voucher yang melanggar aturan</p>
+            <div id="tab-voucher" class="tab-content hidden space-y-6">
+                <!-- KPI SUMMARY CARDS PROMO & SUBSIDI PLATFORM -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="rentify-card p-5 border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-white relative overflow-hidden shadow-xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md">Voucher Platform</span>
+                            <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-xs">
+                                <i class="fas fa-shield-halved"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-slate-800">{{ $voucherStats['platform_count'] ?? 0 }} <span class="text-xs font-bold text-slate-400">Master Kode</span></div>
+                        <p class="text-[11px] text-indigo-900/70 mt-1 font-semibold flex items-center gap-1">
+                            <i class="fas fa-circle-check text-indigo-500 text-[10px]"></i> 100% Subsidi Penuh Rentify
+                        </p>
                     </div>
+
+                    <div class="rentify-card p-5 border border-emerald-100 bg-gradient-to-br from-emerald-50/70 via-white to-white relative overflow-hidden shadow-xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">Kapasitas Kuota</span>
+                            <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm shadow-xs">
+                                <i class="fas fa-ticket"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-slate-800">{{ number_format($voucherStats['platform_kuota_total'] ?? 0, 0, ',', '.') }} <span class="text-xs font-bold text-slate-400">Kuota</span></div>
+                        <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+                            <span class="text-emerald-700 font-bold">{{ number_format($voucherStats['platform_kuota_terpakai'] ?? 0, 0, ',', '.') }} Terpakai</span>
+                            <span>•</span>
+                            <span class="text-amber-600 font-semibold">{{ number_format($voucherStats['platform_kuota_reserved'] ?? 0, 0, ',', '.') }} Hold</span>
+                        </p>
+                    </div>
+
+                    <div class="rentify-card p-5 border border-sky-100 bg-gradient-to-br from-sky-50/70 via-white to-white relative overflow-hidden shadow-xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-sky-700 bg-sky-100/80 px-2 py-0.5 rounded-md">Plafond Anggaran</span>
+                            <div class="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-sm shadow-xs">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-slate-800">Rp {{ number_format(($voucherStats['platform_anggaran_total'] ?? 0) / 1000000, 1, ',', '.') }} <span class="text-xs font-bold text-slate-400">Juta</span></div>
+                        <p class="text-[11px] text-slate-500 mt-1 font-medium">
+                            Terserap: <span class="text-slate-800 font-bold">Rp {{ number_format($voucherStats['platform_anggaran_terpakai'] ?? 0, 0, ',', '.') }}</span>
+                        </p>
+                    </div>
+
+                    <div class="rentify-card p-5 border border-slate-200 bg-white relative overflow-hidden shadow-xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">Status Operasional</span>
+                            <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-sm shadow-xs">
+                                <i class="fas fa-toggle-on"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-2xl font-black text-emerald-600">{{ $voucherStats['total_active'] ?? 0 }}</span>
+                            <span class="text-xs font-bold text-slate-400">Aktif</span>
+                            <span class="text-slate-300">/</span>
+                            <span class="text-2xl font-black text-rose-500">{{ $voucherStats['total_suspended'] ?? 0 }}</span>
+                            <span class="text-xs font-bold text-slate-400">Dimatikan</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1 font-medium">
+                            Voucher Toko Vendor: <span class="font-bold text-slate-700">{{ $voucherStats['vendor_count'] ?? 0 }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- TABEL MONITORING VOUCHER TERPADU -->
+                <section class="rentify-card border border-slate-200/80 overflow-hidden bg-white shadow-xs">
+                    <!-- HEADER & FILTER TOOLBAR -->
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/40">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm shadow-xs">
+                                        <i class="fas fa-ticket-alt"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base font-black text-slate-800">Pemantauan Terpadu Voucher & Kill-Switch</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Monitoring terpusat {{ $voucherStats['platform_count'] ?? 0 }} Voucher Master Platform Rentify & Voucher Mitra Toko</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- PENCARIAN REAL-TIME & AKSI ADMIN -->
+                            <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                                <div class="relative flex-1 lg:w-64">
+                                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    <input type="text" id="voucherSearchInput" onkeyup="filterVouchers()" placeholder="Cari kode (FREEITEM, BOGO, DISKON...)" class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition shadow-2xs">
+                                </div>
+                                <button type="button" onclick="openCreateVoucherModal()" class="px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-sky-600 to-sky-500 hover:from-indigo-700 hover:to-sky-600 text-white font-black text-xs rounded-xl shadow-xs shadow-indigo-500/20 transition active:scale-95 shrink-0 flex items-center gap-1.5">
+                                    <i class="fas fa-plus"></i> Tambah Voucher
+                                </button>
+                                @if(($voucherStats['platform_count'] ?? 0) > 0)
+                                <form action="/admin/vouchers/clear-platform" method="POST" onsubmit="return confirm('PERINGATAN: Hapus seluruh voucher platform Rentify? Seluruh data voucher platform akan dikosongkan agar siap diisi manual.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="px-3 py-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 font-bold text-xs rounded-xl transition shadow-xs flex items-center gap-1.5" title="Kosongkan Seluruh Voucher Platform">
+                                        <i class="fas fa-trash-can"></i> Hapus Semua Platform
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- FILTER PILLS -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-200/60">
+                            <div class="flex flex-wrap items-center gap-1.5" id="voucherFilterPills">
+                                <button type="button" onclick="filterVouchers('all')" id="vbtn-all" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-sky-600 text-white shadow-xs">
+                                    Semua ({{ count($allVouchers ?? []) }})
+                                </button>
+                                <button type="button" onclick="filterVouchers('platform')" id="vbtn-platform" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    <i class="fas fa-shield-alt text-indigo-500 mr-1"></i> Platform Rentify ({{ $voucherStats['platform_count'] ?? 0 }})
+                                </button>
+                                <button type="button" onclick="filterVouchers('vendor')" id="vbtn-vendor" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    <i class="fas fa-store text-slate-400 mr-1"></i> Mitra Toko ({{ $voucherStats['vendor_count'] ?? 0 }})
+                                </button>
+                                <button type="button" onclick="filterVouchers('bogo')" id="vbtn-bogo" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    <i class="fas fa-gift text-amber-500 mr-1"></i> Free & BOGO
+                                </button>
+                                <button type="button" onclick="filterVouchers('persen')" id="vbtn-persen" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    Diskon %
+                                </button>
+                                <button type="button" onclick="filterVouchers('nominal')" id="vbtn-nominal" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    Potongan Rp
+                                </button>
+                                <button type="button" onclick="filterVouchers('active')" id="vbtn-active" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    <i class="fas fa-circle-check text-emerald-500 mr-1"></i> Aktif ({{ $voucherStats['total_active'] ?? 0 }})
+                                </button>
+                                <button type="button" onclick="filterVouchers('suspended')" id="vbtn-suspended" class="voucher-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200/70">
+                                    <i class="fas fa-ban text-rose-500 mr-1"></i> Dimatikan ({{ $voucherStats['total_suspended'] ?? 0 }})
+                                </button>
+                            </div>
+                            <span id="voucherShowingCount" class="text-xs font-bold text-slate-500">
+                                Menampilkan {{ count($allVouchers ?? []) }} voucher
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- TABEL KONTEN -->
                     <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
+                        <table class="w-full text-left border-collapse text-xs" id="voucherTable">
                             <thead>
-                                <tr class="border-b border-slate-200 bg-slate-50/50 font-bold text-slate-500 uppercase tracking-wider">
-                                    <th class="p-4 pl-6">Kode & Pemilik Toko</th>
-                                    <th class="p-4 text-center">Tipe Diskon</th>
-                                    <th class="p-4 text-center">Kuota Pakai</th>
+                                <tr class="border-b border-slate-200 bg-slate-50 font-bold text-slate-500 uppercase tracking-wider text-[11px]">
+                                    <th class="p-4 pl-6">Kode & Sumber Subsidi</th>
+                                    <th class="p-4">Skema Promo & Aturan</th>
+                                    <th class="p-4 text-center">Kuota & Anggaran</th>
                                     <th class="p-4 text-center">Masa Berlaku</th>
                                     <th class="p-4 text-center">Status</th>
                                     <th class="p-4 text-center">Aksi (Kill Switch)</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody class="divide-y divide-slate-100" id="voucherTableBody">
                                 @forelse($allVouchers ?? [] as $v)
-                                <tr class="hover:bg-slate-50/60 transition">
+                                @php
+                                    $isPlatform = ($v->funding_source === 'platform');
+                                    $tipe = $v->tipe_diskon ?? $v->discount_type ?? 'nominal';
+                                    $isFixed = in_array($tipe, ['nominal', 'fixed']);
+                                    $nilai = (float)($v->nilai_diskon ?? $v->discount_value ?? 0);
+                                    $minQty = (int)($v->min_quantity ?? 1);
+                                    $isBogo = ($minQty >= 2);
+                                    $isFree = (!$isBogo && $nilai == 100);
+                                    
+                                    $categoryTag = 'nominal';
+                                    if ($isBogo) $categoryTag = 'bogo';
+                                    elseif ($isFree) $categoryTag = 'free';
+                                    elseif (!$isFixed) $categoryTag = 'persen';
+                                @endphp
+                                <tr class="voucher-table-row hover:bg-slate-50/80 transition"
+                                    data-code="{{ strtolower($v->kode_voucher ?? $v->code ?? '') }}"
+                                    data-source="{{ $isPlatform ? 'platform' : 'vendor' }}"
+                                    data-category="{{ $categoryTag }}"
+                                    data-status="{{ $v->is_active ? '1' : '0' }}">
+                                    <!-- KODE & PENERBIT -->
                                     <td class="p-4 pl-6">
-                                        <p class="font-black text-slate-800 text-sm tracking-wide">{{ $v->kode_voucher ?? $v->code ?? '-' }}</p>
-                                        <p class="text-[10px] text-slate-400"><i class="fas fa-store mr-1"></i>{{ $v->vendor?->vendor_name ?? $v->vendor?->name ?? 'Vendor Umum' }}</p>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-black text-slate-800 text-sm tracking-wider font-mono bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/80">
+                                                {{ $v->kode_voucher ?? $v->code ?? '-' }}
+                                            </span>
+                                        </div>
+                                        <div class="mt-1.5 flex items-center gap-1.5">
+                                            @if($isPlatform)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                                                    <i class="fas fa-shield-alt text-indigo-500"></i> Platform Rentify
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700">
+                                                    <i class="fas fa-store text-slate-400"></i> {{ $v->vendor?->vendor_name ?? $v->vendor?->name ?? 'Toko Vendor' }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </td>
+
+                                    <!-- SKEMA PROMO & ATURAN -->
+                                    <td class="p-4">
+                                        @if($isBogo)
+                                            <div class="flex flex-col gap-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200/80 w-fit">
+                                                    <i class="fas fa-gift text-amber-600"></i> BOGO: Sewa {{ $minQty }} Bayar {{ $minQty - 1 }}
+                                                </span>
+                                                <span class="text-[11px] font-bold text-slate-700">Diskon {{ $nilai }}% • Min. {{ $minQty }} Unit</span>
+                                                @if($v->maksimal_diskon)
+                                                    <span class="text-[10px] text-slate-400 font-medium">Plafon Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
+                                                @endif
+                                            </div>
+                                        @elseif($isFree)
+                                            <div class="flex flex-col gap-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200/80 w-fit">
+                                                    <i class="fas fa-star text-emerald-600"></i> SEWA GRATIS 100%
+                                                </span>
+                                                @if($v->maksimal_diskon)
+                                                    <span class="text-[11px] font-bold text-slate-700">Plafon Bebas Sewa s/d Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
+                                                @endif
+                                                <span class="text-[10px] text-slate-400 font-medium">Biaya sewa 100% gratis, fee platform 5% & ongkir tetap berlaku</span>
+                                            </div>
+                                        @elseif(!$isFixed)
+                                            <div class="flex flex-col gap-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200/80 w-fit">
+                                                    Diskon {{ $nilai }}%
+                                                </span>
+                                                @if($v->maksimal_diskon)
+                                                    <span class="text-[11px] font-bold text-slate-700">Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
+                                                @else
+                                                    <span class="text-[10px] text-slate-400 font-medium">Tanpa Batas Plafon</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="flex flex-col gap-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200/80 w-fit">
+                                                    Potongan Rp {{ number_format($nilai, 0, ',', '.') }}
+                                                </span>
+                                                <span class="text-[10px] text-slate-400 font-medium">Potongan Langsung Tunai</span>
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <!-- KUOTA & ANGGARAN SUBSIDI -->
                                     <td class="p-4 text-center">
-                                        @php
-                                            $tipe = $v->tipe_diskon ?? $v->discount_type ?? 'nominal';
-                                            $isFixed = in_array($tipe, ['nominal', 'fixed']);
-                                            $nilai = $v->nilai_diskon ?? $v->discount_value ?? 0;
-                                        @endphp
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $isFixed ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700' }}">
-                                            {{ $isFixed ? 'Potongan Rp ' . number_format($nilai, 0, ',', '.') : 'Diskon ' . (float)$nilai . '%' }}
-                                        </span>
+                                        <div class="font-black text-slate-800 text-sm">
+                                            {{ number_format($v->kuota_terpakai ?? 0, 0, ',', '.') }} <span class="text-xs text-slate-400 font-normal">/ {{ $v->kuota_total ? number_format($v->kuota_total, 0, ',', '.') : '∞' }}</span>
+                                        </div>
+                                        @if(($v->kuota_reserved ?? 0) > 0)
+                                            <div class="text-[10px] font-bold text-amber-600 mt-0.5">
+                                                (+{{ $v->kuota_reserved }} di keranjang/checkout)
+                                            </div>
+                                        @endif
+                                        @if($v->anggaran_maksimal_platform)
+                                            <div class="text-[10px] text-slate-500 font-medium mt-1">
+                                                Pagu: Rp {{ number_format($v->anggaran_maksimal_platform, 0, ',', '.') }}
+                                            </div>
+                                        @endif
                                     </td>
-                                    <td class="p-4 text-center font-bold text-slate-700">
-                                        {{ $v->kuota_terpakai ?? $v->used_count ?? 0 }} / {{ $v->kuota_total ?? $v->usage_limit ?? '∞' }}
-                                    </td>
-                                    <td class="p-4 text-center text-slate-500">
+
+                                    <!-- MASA BERLAKU -->
+                                    <td class="p-4 text-center text-slate-600">
                                         @php
+                                            $tglMulai = $v->tanggal_mulai ?? null;
                                             $tglSelesai = $v->tanggal_selesai ?? $v->valid_until ?? null;
                                         @endphp
-                                        {{ $tglSelesai ? \Carbon\Carbon::parse($tglSelesai)->format('d M Y') : 'Selamanya' }}
-                                    </td>
-                                    <td class="p-4 text-center">
-                                        @if($v->is_active)
-                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">Aktif</span>
-                                        @else
-                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-100 text-rose-800">Dimatikan</span>
+                                        <div class="font-bold text-xs text-slate-700">
+                                            {{ $tglSelesai ? \Carbon\Carbon::parse($tglSelesai)->format('d M Y') : 'Selamanya' }}
+                                        </div>
+                                        @if($tglMulai)
+                                            <div class="text-[10px] text-slate-400 mt-0.5">
+                                                Mulai: {{ \Carbon\Carbon::parse($tglMulai)->format('d M Y') }}
+                                            </div>
                                         @endif
                                     </td>
+
+                                    <!-- STATUS KEAMANAN -->
                                     <td class="p-4 text-center">
                                         @if($v->is_active)
-                                            <form action="/admin/vouchers/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Matikan paksa voucher ini?')">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 px-3 py-1 rounded-lg font-bold transition shadow-xs text-xs">
-                                                    <i class="fas fa-power-off mr-1"></i> Matikan
-                                                </button>
-                                            </form>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Aktif
+                                            </span>
                                         @else
-                                            <form action="/admin/vouchers/{{ $v->id }}/activate" method="POST" onsubmit="return confirm('Aktifkan kembali voucher ini?')">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 px-3 py-1 rounded-lg font-bold transition shadow-xs text-xs">
-                                                    <i class="fas fa-play mr-1"></i> Aktifkan
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+                                                <i class="fas fa-ban text-xs"></i> Dimatikan
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <!-- KILL-SWITCH & ACTIONS -->
+                                    <td class="p-4 text-center">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            @if($v->is_active)
+                                                <form action="/admin/vouchers/{{ $v->id }}/suspend" method="POST" onsubmit="return confirm('Peringatan: Matikan paksa voucher {{ $v->kode_voucher }} ini seketika?')">
+                                                    @csrf @method('PATCH')
+                                                    <button type="submit" class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 px-2.5 py-1.5 rounded-lg font-bold transition shadow-xs text-xs inline-flex items-center gap-1" title="Matikan Paksa">
+                                                        <i class="fas fa-power-off"></i> Matikan
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <form action="/admin/vouchers/{{ $v->id }}/activate" method="POST" onsubmit="return confirm('Aktifkan kembali voucher {{ $v->kode_voucher }} ini?')">
+                                                    @csrf @method('PATCH')
+                                                    <button type="submit" class="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 px-2.5 py-1.5 rounded-lg font-bold transition shadow-xs text-xs inline-flex items-center gap-1" title="Aktifkan">
+                                                        <i class="fas fa-play"></i> Aktifkan
+                                                    </button>
+                                                </form>
+                                            @endif
+                                            <form action="/admin/vouchers/{{ $v->id }}" method="POST" onsubmit="return confirm('Hapus permanen voucher {{ $v->kode_voucher }} ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="bg-slate-50 hover:bg-rose-600 text-slate-500 hover:text-white border border-slate-200 hover:border-rose-300 p-1.5 rounded-lg font-bold transition shadow-xs text-xs inline-flex items-center" title="Hapus Permanen">
+                                                    <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
-                                        @endif
+                                        </div>
                                     </td>
                                 </tr>
                                 @empty
-                                <tr><td colspan="6" class="p-12 text-center text-slate-400">Belum ada voucher terdaftar di platform.</td></tr>
+                                <tr id="voucherDefaultEmpty">
+                                    <td colspan="6" class="p-12 text-center text-slate-400">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <i class="fas fa-ticket-alt text-slate-300 text-4xl mb-3"></i>
+                                            <p class="font-bold text-slate-600">Belum ada voucher terdaftar di platform.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                                 @endforelse
+                                <tr id="voucherEmptyState" style="display: none;">
+                                    <td colspan="6" class="p-12 text-center text-slate-400">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <i class="fas fa-filter-circle-xmark text-slate-300 text-4xl mb-3"></i>
+                                            <p class="font-bold text-slate-600">Tidak ada voucher yang cocok dengan filter atau kata kunci pencarian.</p>
+                                            <button type="button" onclick="resetVoucherFilters()" class="mt-2 text-xs font-bold text-sky-600 hover:underline">Reset Filter</button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1150,6 +1401,156 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL TAMBAH VOUCHER PLATFORM MANUAL ===================== -->
+    <div id="createVoucherModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[92vh] overflow-y-auto border-t-8 border-indigo-600 shadow-2xl space-y-6">
+            <div class="flex justify-between items-start border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shadow-xs">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-xl text-slate-800 tracking-tight">Buat Voucher Platform Manual</h3>
+                        <p class="text-xs text-slate-500">Tambahkan kode promo platform Rentify dengan subsidi penuh 100%</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCreateVoucherModal()" class="text-slate-400 hover:text-rose-500 text-3xl font-light transition">&times;</button>
+            </div>
+
+            <form action="/admin/vouchers" method="POST" class="space-y-4">
+                @csrf
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- KODE VOUCHER -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Kode Voucher <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" name="kode_voucher" required placeholder="cth: SEWAHEMAT, FREEITEM01, BOGO2B1" 
+                            class="w-full text-xs font-mono uppercase bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                        <p class="text-[11px] text-slate-400 mt-1">Kode otomatis diubah ke huruf kapital dan karakter alfanumerik.</p>
+                    </div>
+
+                    <!-- TIPE DISKON / KOHOR -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Skema / Tipe Diskon <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="tipe_diskon" id="modal_tipe_diskon" onchange="adjustVoucherForm()" required
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                            <option value="persen">Diskon Persentase (%)</option>
+                            <option value="nominal">Potongan Tunai Langsung (Rp)</option>
+                            <option value="bogo_2_bayar_1">BOGO: Sewa 2 Bayar 1 (50%)</option>
+                            <option value="bogo_3_bayar_2">BOGO: Sewa 3 Bayar 2 (33.33%)</option>
+                        </select>
+                    </div>
+
+                    <!-- NILAI DISKON -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" id="label_nilai_diskon">
+                            Nilai Diskon Persentase (%) <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" step="any" name="nilai_diskon" id="input_nilai_diskon" required value="10" min="0" placeholder="10"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- MAKSIMAL DISKON (PLAFON) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Maksimal Plafon Diskon (Rp)
+                        </label>
+                        <input type="number" name="maksimal_diskon" placeholder="cth: 50000 (Kosongkan jika tanpa limit)" min="0"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- MINIMAL BELANJA -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Minimal Belanja (Rp)
+                        </label>
+                        <input type="number" name="minimal_belanja" value="0" min="0" placeholder="0"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- MINIMAL KUANTITAS BARANG -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Min. Kuantitas Barang (Unit)
+                        </label>
+                        <input type="number" name="min_quantity" id="input_min_quantity" value="1" min="1" placeholder="1"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- KUOTA TOTAL -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Total Kuota Pemakaian
+                        </label>
+                        <input type="number" name="kuota_total" value="100" min="1" placeholder="100"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- PAGU ANGGARAN SUBSIDI PLATFORM -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Pagu Maksimal Anggaran Subsidi Rentify (Rp)
+                        </label>
+                        <input type="number" name="anggaran_maksimal_platform" placeholder="cth: 5000000 (Kosongkan jika tak terbatas)" min="0"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- TANGGAL MULAI -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Tanggal Mulai Berlaku <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_mulai" required value="{{ date('Y-m-d') }}"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- TANGGAL SELESAI -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Tanggal Berakhir <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_selesai" required value="{{ date('Y-12-31') }}"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- VISIBILITAS -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Visibilitas Katalog
+                        </label>
+                        <select name="visibilitas" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                            <option value="publik">Publik (Tampil di Katalog / Promo)</option>
+                            <option value="rahasia">Rahasia (Hanya via Input Kode Langsung)</option>
+                        </select>
+                    </div>
+
+                    <!-- CAKUPAN PRODUK -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Cakupan Produk
+                        </label>
+                        <select name="cakupan_produk" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                            <option value="seluruh_toko">Seluruh Toko & Produk</option>
+                            <option value="produk_tertentu">Produk Tertentu (Whitelist)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeCreateVoucherModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white text-xs font-black shadow-xs shadow-indigo-500/25 transition active:scale-95 flex items-center gap-1.5">
+                        <i class="fas fa-check"></i> Simpan Voucher Platform
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1633,6 +2034,131 @@
                 row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
             });
         }
+
+        // ================= VOUCHER MONITORING & FILTERING =================
+        window.currentVoucherFilter = 'all';
+
+        function filterVouchers(filterType) {
+            if (filterType !== undefined) {
+                window.currentVoucherFilter = filterType;
+                document.querySelectorAll('.voucher-filter-btn').forEach(btn => {
+                    btn.classList.remove('bg-sky-600', 'text-white', 'shadow-xs');
+                    btn.classList.add('bg-slate-100', 'text-slate-600');
+                });
+                const activeBtn = document.getElementById('vbtn-' + filterType);
+                if (activeBtn) {
+                    activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+                    activeBtn.classList.add('bg-sky-600', 'text-white', 'shadow-xs');
+                }
+            }
+
+            const currentFilter = window.currentVoucherFilter || 'all';
+            const query = (document.getElementById('voucherSearchInput')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('.voucher-table-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const code = (row.getAttribute('data-code') || '').toLowerCase();
+                const source = row.getAttribute('data-source') || '';
+                const category = row.getAttribute('data-category') || '';
+                const status = row.getAttribute('data-status') || '';
+                const textContent = row.textContent.toLowerCase();
+
+                const matchesSearch = query === '' || textContent.includes(query) || code.includes(query);
+                let matchesFilter = true;
+
+                if (currentFilter === 'platform') matchesFilter = (source === 'platform');
+                else if (currentFilter === 'vendor') matchesFilter = (source !== 'platform');
+                else if (currentFilter === 'bogo') matchesFilter = (category === 'bogo' || category === 'free');
+                else if (currentFilter === 'persen') matchesFilter = (category === 'persen');
+                else if (currentFilter === 'nominal') matchesFilter = (category === 'nominal');
+                else if (currentFilter === 'active') matchesFilter = (status === '1');
+                else if (currentFilter === 'suspended') matchesFilter = (status === '0');
+
+                if (matchesSearch && matchesFilter) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const countEl = document.getElementById('voucherShowingCount');
+            if (countEl) countEl.innerText = `Menampilkan ${visibleCount} voucher`;
+
+            const emptyState = document.getElementById('voucherEmptyState');
+            if (emptyState) {
+                emptyState.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function resetVoucherFilters() {
+            const searchInput = document.getElementById('voucherSearchInput');
+            if (searchInput) searchInput.value = '';
+            filterVouchers('all');
+        }
+
+        // ================= VOUCHER MODAL & DYNAMIC FORM =================
+        function openCreateVoucherModal() {
+            const modal = document.getElementById('createVoucherModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeCreateVoucherModal() {
+            const modal = document.getElementById('createVoucherModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function adjustVoucherForm() {
+            const tipe = document.getElementById('modal_tipe_diskon')?.value;
+            const inputNilai = document.getElementById('input_nilai_diskon');
+            const inputMinQty = document.getElementById('input_min_quantity');
+            const labelNilai = document.getElementById('label_nilai_diskon');
+
+            if (!tipe || !inputNilai || !labelNilai) return;
+
+            if (tipe === 'bogo_2_bayar_1') {
+                inputNilai.value = 50;
+                inputNilai.readOnly = true;
+                if (inputMinQty) inputMinQty.value = 2;
+                labelNilai.innerText = 'Nilai Diskon Otomatis (50%) *';
+            } else if (tipe === 'bogo_3_bayar_2') {
+                inputNilai.value = 33.3333;
+                inputNilai.readOnly = true;
+                if (inputMinQty) inputMinQty.value = 3;
+                labelNilai.innerText = 'Nilai Diskon Otomatis (33.33%) *';
+            } else if (tipe === 'nominal') {
+                inputNilai.readOnly = false;
+                if (inputNilai.value == 50 || inputNilai.value == 33.3333) inputNilai.value = 10000;
+                labelNilai.innerText = 'Nominal Potongan Tunai (Rp) *';
+            } else {
+                inputNilai.readOnly = false;
+                if (inputNilai.value == 10000) inputNilai.value = 10;
+                labelNilai.innerText = 'Nilai Diskon Persentase (%) *';
+            }
+        }
+
+        // Auto Open Tab from URL Hash (e.g. #tab-voucher)
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash) {
+                const tab = window.location.hash.substring(1);
+                if (document.getElementById(tab)) {
+                    const tabTitleMap = {
+                        'tab-dashboard': 'Pusat Kendali Sistem Utama',
+                        'tab-feed': 'Pusat Notifikasi & Feed Aktivitas Vendor',
+                        'tab-transaksi': 'Manajemen Transaksi Pesanan',
+                        'tab-voucher': 'Pemantauan Keamanan Promo & Voucher',
+                        'tab-produk': 'Master Data: Seluruh Produk (God-Mode)',
+                        'tab-vendor': 'Master Data: Seluruh Mitra Vendor'
+                    };
+                    switchTab(tab, tabTitleMap[tab] || 'Dashboard Admin');
+                }
+            }
+        });
     </script>
 </body>
 </html>

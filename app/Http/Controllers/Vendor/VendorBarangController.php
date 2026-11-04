@@ -18,13 +18,20 @@ class VendorBarangController extends Controller
     public function index(Request $request)
     {
         $vendorId = Auth::user()->id;
-        $query = Barang::with('kategori')->where('vendor_id', $vendorId);
+        $query = Barang::with(['kategori', 'paketItems.barang'])->where('vendor_id', $vendorId);
 
         if ($request->has('search') && $request->search != '') {
             $query->where('nama', 'like', '%' . $request->search . '%');
         }
         if ($request->has('status') && $request->status != '') {
             $query->where('status_barang', $request->status);
+        }
+        if ($request->has('tipe') && $request->tipe != '') {
+            if ($request->tipe === 'paket') {
+                $query->where('is_paket', 1);
+            } elseif ($request->tipe === 'satuan') {
+                $query->where('is_paket', 0);
+            }
         }
 
         $barangs = $query->latest()->get();
@@ -120,6 +127,9 @@ class VendorBarangController extends Controller
     public function edit($id)
     {
         $barang = Barang::where('vendor_id', Auth::user()->id)->findOrFail($id);
+        if ($barang->is_paket) {
+            return redirect()->route('vendor.paket.edit', $barang->id);
+        }
         $kategoris = Kategori::where('is_active', 1)->get();
         return view('vendor.barang.edit', compact('barang', 'kategoris'));
     }

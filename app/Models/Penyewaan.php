@@ -19,6 +19,7 @@ class Penyewaan extends Model
         'cabang_id', 'total_biaya', 'total_price', 'total_deposit', 'total_denda',
         'vendor_earning', 'rentify_fee', 'completed_at',
         'status', 'tanggal_mulai', 'tanggal_selesai', 'tanggal_kembali_aktual',
+        'start_rent', 'end_rent',
         'payment_expired_at', 'paid_at',
     ];
 

@@ -29,36 +29,71 @@ class TransactionCalculationService
         float $shippingFee = 0.0,
         float $voucherDiscount = 0.0,
         int $kodeUnik = 0,
-        float $coinDiscount = 0.0
+        float $coinDiscount = 0.0,
+        float $potonganVoucherPlatform = 0.0,
+        ?string $voucherFundingSource = null,
+        float $potonganVoucherToko = 0.0,
+        float $totalDeposit = 0.0
     ): array {
-        $subtotalSewaAsli = max(0, $subtotalSewaAsli);
-        $shippingFee = max(0, $shippingFee);
-        $voucherDiscount = max(0, $voucherDiscount);
-        $kodeUnik = max(0, $kodeUnik);
-        $coinDiscount = max(0, $coinDiscount);
+        $subtotalSewaAsli = max(0.0, (float) $subtotalSewaAsli);
+        $shippingFee = max(0.0, (float) $shippingFee);
+        $voucherDiscount = max(0.0, (float) $voucherDiscount);
+        $kodeUnik = max(0, (int) $kodeUnik);
+        $coinDiscount = max(0.0, (float) $coinDiscount);
+        $potonganVoucherPlatform = max(0.0, (float) $potonganVoucherPlatform);
+        $potonganVoucherToko = max(0.0, (float) $potonganVoucherToko);
+        $totalDeposit = max(0.0, (float) $totalDeposit);
+
+        // Backward compatibility: petakan parameter ke-3 jika legacy voucherDiscount digunakan
+        if ($voucherFundingSource === 'platform') {
+            if ($potonganVoucherPlatform === 0.0 && $voucherDiscount > 0.0) {
+                $potonganVoucherPlatform = $voucherDiscount;
+            }
+            $potonganVoucherToko = 0.0;
+        } else {
+            if ($potonganVoucherToko === 0.0 && $voucherDiscount > 0.0 && $potonganVoucherPlatform === 0.0) {
+                $potonganVoucherToko = $voucherDiscount;
+            }
+        }
 
         // Fee platform 5% dihitung dari harga sewa barang murni sebelum diskon voucher & koin
         $subtotalSewaMarkup = round($subtotalSewaAsli * (1 + self::PLATFORM_FEE_RATE), 2);
         $rentifyFee = round($subtotalSewaMarkup - $subtotalSewaAsli, 2);
 
         // Hak penghasilan vendor: Harga sewa dasar dikurangi diskon voucher toko + ongkir utuh
-        // (Diskon Koin Rentify adalah program loyalitas platform, TIDAK mengurangi hak vendor)
-        $vendorEarning = round(max(0, $subtotalSewaAsli - $voucherDiscount) + $shippingFee, 2);
+        // Diskon platform Rentify & koin TIDAK mengurangi hak vendor
+        $vendorEarning = round(max(0.0, $subtotalSewaAsli - $potonganVoucherToko) + $shippingFee, 2);
 
-        // Total tagihan akhir pelanggan: (Sewa Markup - Voucher - Koin) + Ongkir + Kode Unik
-        $totalCustomer = round(max(0, $subtotalSewaMarkup - $voucherDiscount - $coinDiscount) + $shippingFee + $kodeUnik, 2);
+        // Waterfall deduction: Diskon hanya memotong harga sewa asli, tidak meluap ke ongkir, deposit, atau fee platform
+        $remainingRental = $subtotalSewaAsli;
+        $effectiveVoucherToko = min($remainingRental, $potonganVoucherToko);
+        $remainingRental = max(0.0, $remainingRental - $effectiveVoucherToko);
+
+        $effectiveVoucherPlatform = min($remainingRental, $potonganVoucherPlatform);
+        $remainingRental = max(0.0, $remainingRental - $effectiveVoucherPlatform);
+
+        $effectiveCoin = min($remainingRental, $coinDiscount);
+        $netRentalCustomer = max(0.0, $remainingRental - $effectiveCoin);
+
+        // Total tagihan akhir pelanggan
+        $totalCustomer = round($netRentalCustomer + $rentifyFee + $shippingFee + $totalDeposit + $kodeUnik, 2);
+
+        $totalPotonganVoucher = round($potonganVoucherToko + $potonganVoucherPlatform, 2);
 
         return [
-            'subtotal_sewa_asli'   => $subtotalSewaAsli,
-            'subtotal_sewa_markup' => $subtotalSewaMarkup,
-            'rentify_fee'          => $rentifyFee,
-            'potongan_voucher'     => $voucherDiscount,
-            'potongan_koin'        => $coinDiscount,
-            'shipping_fee'         => $shippingFee,
-            'kode_unik'            => $kodeUnik,
-            'vendor_earning'       => $vendorEarning,
-            'total_biaya'          => $totalCustomer,
-            'total_price'          => $totalCustomer,
+            'subtotal_sewa_asli'        => $subtotalSewaAsli,
+            'subtotal_sewa_markup'      => $subtotalSewaMarkup,
+            'rentify_fee'               => $rentifyFee,
+            'potongan_voucher'          => $totalPotonganVoucher,
+            'potongan_voucher_toko'     => $potonganVoucherToko,
+            'potongan_voucher_platform' => $potonganVoucherPlatform,
+            'potongan_koin'             => $coinDiscount,
+            'shipping_fee'              => $shippingFee,
+            'total_deposit'             => $totalDeposit,
+            'kode_unik'                 => $kodeUnik,
+            'vendor_earning'            => $vendorEarning,
+            'total_biaya'               => $totalCustomer,
+            'total_price'               => $totalCustomer,
         ];
     }
 

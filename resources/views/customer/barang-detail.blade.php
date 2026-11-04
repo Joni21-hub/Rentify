@@ -169,6 +169,11 @@
     <div class="p-4 border-b border-slate-100 bg-white">
         <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
+                @if($barang->is_paket)
+                    <span class="inline-flex items-center gap-1.5 text-[11px] font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200/80 shadow-2xs">
+                        <i class="fa-solid fa-boxes-stacked text-indigo-500"></i> Paket Sewa
+                    </span>
+                @endif
                 <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-sky-700 bg-sky-50 px-3 py-1 rounded-full border border-sky-200/80 shadow-2xs">
                     @if($barang->is_have_fun)
                         <svg class="w-3.5 h-3.5 text-sky-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m11.9 12.1 4.514-4.514"/><path d="M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z"/><path d="m6 16 2 2"/><path d="M8.2 9.9C8.7 8.8 9.8 8 11 8c2.8 0 5 2.2 5 5 0 1.2-.8 2.3-1.9 2.8l-.9.4A2 2 0 0 0 12 18a4 4 0 0 1-4 4c-3.3 0-6-2.7-6-6a4 4 0 0 1 4-4 2 2 0 0 0 1.8-1.2z"/><circle cx="11.5" cy="12.5" r=".5" fill="currentColor"/></svg>
@@ -219,6 +224,49 @@
             </div>
         @endif
     </div>
+
+    @if($barang->is_paket && $barang->paketItems->isNotEmpty())
+    <!-- ============================================== -->
+    <!-- KOMPOSISI ISI PAKET SEWA (RENTAL BUNDLE ITEMS) -->
+    <!-- ============================================== -->
+    <div class="p-4 bg-gradient-to-r from-indigo-50/70 via-sky-50/40 to-white border-b border-slate-100">
+        <div class="flex items-center justify-between mb-2.5">
+            <h3 class="text-xs font-black text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                <span>Komposisi Isi Paket ({{ $barang->paketItems->count() }} Jenis Barang)</span>
+            </h3>
+            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-100/60 px-2.5 py-0.5 rounded-full">
+                Inventaris Terpadu
+            </span>
+        </div>
+        <p class="text-[11px] text-slate-500 font-medium mb-3">
+            Paket ini menggabungkan barang-barang asli dari inventaris toko. Stok dan ketersediaan jadwal terhubung secara otomatis:
+        </p>
+        <div class="space-y-2">
+            @foreach($barang->paketItems as $pItem)
+                @php
+                    $comp = $pItem->barang;
+                @endphp
+                @if($comp)
+                    <div class="p-2.5 bg-white rounded-xl border border-indigo-100 flex items-center gap-3 shadow-2xs">
+                        <div class="w-11 h-11 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                            <img src="{{ $comp->cover_photo_url }}" alt="{{ $comp->nama }}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-black text-slate-800 truncate">{{ $comp->nama }}</h4>
+                            <span class="text-[10px] text-slate-400 font-medium">{{ $comp->kategori->nama ?? 'Umum' }}</span>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 font-black text-xs rounded-lg border border-indigo-200/60">
+                                {{ $pItem->quantity }}x unit
+                            </span>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     <!-- ============================================== -->
     <!-- DESKRIPSI & SPESIFIKASI PRODUK (UNIFIED & COLLAPSIBLE) -->

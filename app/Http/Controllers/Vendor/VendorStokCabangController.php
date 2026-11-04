@@ -15,7 +15,7 @@ class VendorStokCabangController extends Controller
     public function index(Request $request)
     {
         $vendorId = Auth::id();
-        $query = Barang::with('kategori')->where('vendor_id', $vendorId);
+        $query = Barang::with('kategori')->where('vendor_id', $vendorId)->where('is_paket', 0);
 
         if ($request->filled('search')) {
             $query->where('nama', 'like', '%' . $request->search . '%');
@@ -45,6 +45,7 @@ class VendorStokCabangController extends Controller
                 $stokInt = max(0, (int) $stok);
                 $affected = Barang::where('id', $barangId)
                     ->where('vendor_id', $vendorId)
+                    ->where('is_paket', 0)
                     ->update(['stok_total' => $stokInt]);
                 if ($affected) $updated++;
             }

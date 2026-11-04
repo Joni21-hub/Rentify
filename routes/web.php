@@ -21,7 +21,8 @@ use App\Http\Controllers\Admin\{
 // Vendor Controllers
 use App\Http\Controllers\Vendor\{
     VendorController, VendorDashboardController, VendorBarangController, 
-    VendorFotoBarangController, VendorStokCabangController, VendorPenyewaanController
+    VendorFotoBarangController, VendorStokCabangController, VendorPenyewaanController,
+    VendorPaketController
 };
 
 // Customer Controllers
@@ -170,7 +171,10 @@ Route::prefix('admin')->name('admin.')
     Route::patch('/vendors/{id}/suspend', [AdminDashboardController::class, 'suspendVendor']);
     Route::patch('/vendors/{id}/activate', [AdminDashboardController::class, 'activateVendor']);
     
-    // PERBAIKAN: Rute Kill-Switch Voucher Vendor
+    // PERBAIKAN: Rute Moderasi & Manajemen Voucher Admin
+    Route::post('/vouchers', [AdminDashboardController::class, 'storeVoucher'])->name('vouchers.store');
+    Route::delete('/vouchers/clear-platform', [AdminDashboardController::class, 'clearPlatformVouchers'])->name('vouchers.clear_platform');
+    Route::delete('/vouchers/{id}', [AdminDashboardController::class, 'destroyVoucher'])->name('vouchers.destroy');
     Route::patch('/vouchers/{id}/suspend', [AdminDashboardController::class, 'suspendVoucher']);
     Route::patch('/vouchers/{id}/activate', [AdminDashboardController::class, 'activateVoucher']);
 
@@ -200,6 +204,7 @@ Route::prefix('vendor')->name('vendor.')
     Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('barang', VendorBarangController::class);
+    Route::resource('paket', VendorPaketController::class);
     Route::post('barang/{id}/fotos', [VendorFotoBarangController::class, 'upload'])->name('barang.fotos.upload');
     Route::patch('barang/{id}/fotos/{foto}/cover', [VendorFotoBarangController::class, 'setCover'])->name('barang.fotos.cover');
     Route::delete('fotos/{foto}', [VendorFotoBarangController::class, 'destroy'])->name('fotos.destroy');

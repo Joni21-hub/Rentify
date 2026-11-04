@@ -20,7 +20,7 @@
                 torchActive: false,
                 facingMode: 'environment', // 'environment' (belakang) | 'user' (depan)
                 isMirrored: false,         // Mirror horizontal untuk selfie/preview/capture
-                aspectRatio: 'original',   // 'original' (Utuh Persegi Panjang Bebas Potong / Tanpa Zoom)
+                aspectRatio: '8:14',       // '8:14' (Persegi Panjang Bebas Zoom) | '9:16' (Layar Penuh Story) | 'standard' (3:4) | 'square' (1:1) | 'original' (Utuh)
                 zoom: 1.0,
                 isRecording: false,
                 recordingElapsed: 0,   // detik saat ini pada klip yang sedang direkam
@@ -160,24 +160,35 @@
         }
 
         setAspectRatio(ratio) {
-            let normalized = 'original';
-            if (ratio === 'square' || ratio === '1:1') normalized = 'square';
-            else if (ratio === 'standard' || ratio === '3:4') normalized = 'standard';
-            else normalized = 'original';
+            let normalized = '8:14';
+            if (ratio === '8:14' || ratio === '8/14') normalized = '8:14';
+            else if (ratio === '9:16' || ratio === 'portrait' || ratio === 'penuh') normalized = '9:16';
+            else if (ratio === '3:4' || ratio === 'standard') normalized = 'standard';
+            else if (ratio === '1:1' || ratio === 'square' || ratio === 'persegi') normalized = 'square';
+            else if (ratio === 'original' || ratio === 'utuh' || ratio === 'fit' || ratio === 'asli') normalized = 'original';
+            else normalized = '8:14';
 
             this.set('aspectRatio', normalized);
         }
 
         toggleAspectRatio() {
-            // Rasio default utuh bebas potong
-            this.setAspectRatio('original');
-            return 'original';
+            // Siklus rasio kamera: 8:14 (Persegi Panjang 8:14) -> 9:16 (Layar Penuh Story) -> 3:4 (Standar Foto) -> 1:1 (Persegi) -> Utuh (Asli Bebas Potong) -> 8:14
+            const sequence = ['8:14', '9:16', 'standard', 'square', 'original'];
+            const cur = this.state.aspectRatio || '8:14';
+            const curIndex = sequence.indexOf(cur);
+            const nextIndex = curIndex >= 0 ? (curIndex + 1) % sequence.length : 0;
+            const next = sequence[nextIndex];
+            this.setAspectRatio(next);
+            return next;
         }
 
         getAspectRatioDisplay() {
-            if (this.state.aspectRatio === 'square' || this.state.aspectRatio === '1:1') return '1:1';
+            if (this.state.aspectRatio === '8:14' || this.state.aspectRatio === '8/14') return '8:14';
+            if (this.state.aspectRatio === '9:16' || this.state.aspectRatio === 'portrait') return '9:16';
             if (this.state.aspectRatio === 'standard' || this.state.aspectRatio === '3:4') return '3:4';
-            return 'Utuh';
+            if (this.state.aspectRatio === 'square' || this.state.aspectRatio === '1:1') return '1:1';
+            if (this.state.aspectRatio === 'original' || this.state.aspectRatio === 'utuh') return 'Utuh';
+            return '8:14';
         }
 
         setZoom(zoom) {

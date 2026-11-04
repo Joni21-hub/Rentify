@@ -12,10 +12,16 @@
             <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">{{ count($barangs) }} produk terdaftar di toko Anda</p>
         </div>
         
-        <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 text-white rounded-xl text-xs font-black shadow-sm transition active:scale-95">
-            <i class="fa-solid fa-plus text-xs"></i>
-            <span>Tambah Produk</span>
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('vendor.paket.create') }}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 text-white rounded-xl text-xs font-black shadow-sm transition active:scale-95">
+                <i class="fa-solid fa-boxes-stacked text-xs"></i>
+                <span>Buat Paket Sewa</span>
+            </a>
+            <a href="{{ route('vendor.barang.create') }}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 text-white rounded-xl text-xs font-black shadow-sm transition active:scale-95">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Tambah Produk</span>
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -29,9 +35,14 @@
     <form method="GET" action="{{ route('vendor.barang.index') }}" class="flex flex-col sm:flex-row gap-2.5">
         <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk..." class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 shadow-xs transition">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama produk atau paket..." class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 shadow-xs transition">
         </div>
         <div class="flex gap-2">
+            <select name="tipe" class="flex-1 sm:flex-none px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-sky-500 shadow-xs transition">
+                <option value="">Semua Tipe</option>
+                <option value="satuan" {{ request('tipe') == 'satuan' ? 'selected' : '' }}>Barang Satuan</option>
+                <option value="paket" {{ request('tipe') == 'paket' ? 'selected' : '' }}>Paket Sewa</option>
+            </select>
             <select name="status" class="flex-1 sm:flex-none px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-sky-500 shadow-xs transition">
                 <option value="">Semua Status</option>
                 <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Aktif</option>
@@ -62,9 +73,16 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between gap-1 mb-0.5">
-                            <span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md truncate">
-                                {{ $barang->kategori->nama ?? 'Umum' }}
-                            </span>
+                            <div class="flex items-center gap-1 overflow-hidden">
+                                <span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md truncate">
+                                    {{ $barang->kategori->nama ?? 'Umum' }}
+                                </span>
+                                @if($barang->is_paket)
+                                    <span class="text-[9px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-2 py-0.5 rounded-md shrink-0">
+                                        <i class="fa-solid fa-boxes-stacked mr-0.5"></i> Paket
+                                    </span>
+                                @endif
+                            </div>
                             @if($barang->is_approved == 1 || $barang->status_barang == 'disetujui')
                                 <span class="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">
                                     Aktif
@@ -76,6 +94,17 @@
                             @endif
                         </div>
                         <h3 class="text-xs font-black text-slate-800 truncate">{{ $barang->nama }}</h3>
+                        
+                        @if($barang->is_paket && $barang->paketItems->isNotEmpty())
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                @foreach($barang->paketItems as $pItem)
+                                    <span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                                        {{ $pItem->quantity }}x {{ $pItem->barang->nama ?? 'Produk' }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
+
                         <p class="text-xs font-black text-slate-900 mt-1">
                             Rp {{ number_format($barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[10px] font-normal text-slate-400">/hari</span>
                         </p>
@@ -84,22 +113,40 @@
 
                 <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                     <span class="text-[11px] font-bold text-slate-500">
-                        Stok: <strong class="text-slate-800">{{ $barang->stok_total }} unit</strong>
+                        @if($barang->is_paket)
+                            Stok: <strong class="text-indigo-700">{{ $barang->stok_total }} paket</strong>
+                            <span class="text-[9px] text-slate-400 font-medium">(sinkron)</span>
+                        @else
+                            Stok: <strong class="text-slate-800">{{ $barang->stok_total }} unit</strong>
+                        @endif
                     </span>
                     <div class="flex items-center gap-1.5">
                         <a href="{{ route('vendor.barang.show', $barang->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition">
                             Detail
                         </a>
-                        <a href="{{ route('vendor.barang.edit', $barang->id) }}" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-[11px] font-bold transition">
-                            Edit
-                        </a>
-                        <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini secara permanen?');" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition">
-                                Hapus
-                            </button>
-                        </form>
+                        @if($barang->is_paket)
+                            <a href="{{ route('vendor.paket.edit', $barang->id) }}" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold transition">
+                                Edit
+                            </a>
+                            <form action="{{ route('vendor.paket.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus paket sewa ini?');" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition">
+                                    Hapus
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('vendor.barang.edit', $barang->id) }}" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-[11px] font-bold transition">
+                                Edit
+                            </a>
+                            <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini secara permanen?');" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition">
+                                    Hapus
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -141,8 +188,25 @@
                                     @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <h3 class="font-black text-slate-800 truncate text-xs">{{ $barang->nama }}</h3>
+                                    <div class="flex items-center gap-1.5">
+                                        <h3 class="font-black text-slate-800 truncate text-xs">{{ $barang->nama }}</h3>
+                                        @if($barang->is_paket)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                                                <i class="fa-solid fa-boxes-stacked"></i> Paket
+                                            </span>
+                                        @endif
+                                    </div>
                                     <span class="text-[10px] font-bold text-sky-600">{{ $barang->kategori->nama ?? 'Tanpa Kategori' }}</span>
+                                    
+                                    @if($barang->is_paket && $barang->paketItems->isNotEmpty())
+                                        <div class="mt-1 flex flex-wrap gap-1">
+                                            @foreach($barang->paketItems as $pItem)
+                                                <span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                    {{ $pItem->quantity }}x {{ $pItem->barang->nama ?? 'Produk' }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </td>
@@ -150,7 +214,12 @@
                             Rp {{ number_format($barang->harga_sewa_harian, 0, ',', '.') }}<span class="text-[10px] font-normal text-slate-400">/hari</span>
                         </td>
                         <td class="px-6 py-3.5 font-bold text-slate-700">
-                            {{ $barang->stok_total }} unit
+                            @if($barang->is_paket)
+                                <span class="text-indigo-700 font-black">{{ $barang->stok_total }} paket</span>
+                                <span class="text-[9px] text-slate-400 block font-normal">(sinkron otomatis)</span>
+                            @else
+                                {{ $barang->stok_total }} unit
+                            @endif
                         </td>
                         <td class="px-6 py-3.5">
                             @if($barang->is_approved == 1 || $barang->status_barang == 'disetujui')
@@ -168,16 +237,43 @@
                                 <a href="{{ route('vendor.barang.show', $barang->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
                                     Detail
                                 </a>
-                                <a href="{{ route('vendor.barang.edit', $barang->id) }}" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-xs font-bold transition">
-                                    Edit
-                                </a>
-                                <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini?');" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition">
-                                        Hapus
-                                    </button>
-                                </form>
+                                @if($barang->is_paket)
+                                    <a href="{{ route('vendor.paket.edit', $barang->id) }}" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition">
+                                        Edit
+                                    </a>
+                                    <form action="{{ route('vendor.paket.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus paket sewa ini?');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('vendor.barang.edit', $barang->id) }}" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-xs font-bold transition">
+                                        Edit
+                                    </a>
+                                    <form action="{{ route('vendor.barang.destroy', $barang->id) }}" method="POST" onsubmit="return confirm('Hapus barang ini?');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                            <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
+                            <p class="text-xs font-medium">Belum ada produk di etalase toko.</p>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
                             </div>
                         </td>
                     </tr>

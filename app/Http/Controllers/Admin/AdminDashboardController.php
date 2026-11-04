@@ -42,6 +42,19 @@ class AdminDashboardController extends Controller
         // --- FITUR BARU: AMBIL DATA VOUCHER UNTUK PEMANTAUAN ADMIN ---
         $allVouchers = Voucher::with('vendor')->latest()->get();
 
+        $voucherStats = [
+            'total' => $allVouchers->count(),
+            'platform_count' => $allVouchers->where('funding_source', 'platform')->count(),
+            'vendor_count' => $allVouchers->where('funding_source', '!=', 'platform')->count(),
+            'platform_kuota_total' => (int) $allVouchers->where('funding_source', 'platform')->sum('kuota_total'),
+            'platform_kuota_terpakai' => (int) $allVouchers->where('funding_source', 'platform')->sum('kuota_terpakai'),
+            'platform_kuota_reserved' => (int) $allVouchers->where('funding_source', 'platform')->sum('kuota_reserved'),
+            'platform_anggaran_total' => (float) $allVouchers->where('funding_source', 'platform')->sum('anggaran_maksimal_platform'),
+            'platform_anggaran_terpakai' => (float) $allVouchers->where('funding_source', 'platform')->sum('anggaran_terpakai'),
+            'total_active' => $allVouchers->where('is_active', 1)->count(),
+            'total_suspended' => $allVouchers->where('is_active', 0)->count(),
+        ];
+
         // --- PUSAT NOTIFIKASI & FEED AKTIVITAS TERPADU (GOD-MODE) ---
         $pendingWithdrawals = DB::table('withdrawals')
             ->leftJoin('users', 'withdrawals.vendor_id', '=', 'users.id')
@@ -128,7 +141,7 @@ class AdminDashboardController extends Controller
         return view('admin.dashboard', compact(
             'banners', 'pendingBarangs', 'pendingVendors', 
             'allBarangs', 'allVendors', 'allCustomers', 'stats', 
-            'allTransaksi', 'allVouchers', 'kategoris', 'pendingWithdrawals', 'activityAlerts'
+            'allTransaksi', 'allVouchers', 'voucherStats', 'kategoris', 'pendingWithdrawals', 'activityAlerts'
         ));
     }
 
@@ -225,17 +238,108 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('success', "Banned dibuka! Vendor '{$vendor->vendor_name}' dan produknya telah aktif kembali.");
     }
 
-    // --- FITUR BARU: MODERASI VOUCHER VENDOR (KILL-SWITCH) ---
+    // --- FITUR BARU: MODERASI & MANAJEMEN VOUCHER ADMIN ---
     
+    public function storeVoucher(Request $request)
+    {
+        $request->validate([
+            'kode_voucher' => 'required|string|max:50|unique:vouchers,kode_voucher',
+            'tipe_diskon' => 'required|in:persen,nominal,bogo_2_bayar_1,bogo_3_bayar_2',
+            'nilai_diskon' => 'required|numeric|min:0',
+            'maksimal_diskon' => 'nullable|numeric|min:0',
+            'minimal_belanja' => 'nullable|numeric|min:0',
+            'min_quantity' => 'nullable|integer|min:1',
+            'kuota_total' => 'nullable|integer|min:1',
+            'anggaran_maksimal_platform' => 'nullable|numeric|min:0',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'visibilitas' => 'required|in:publik,rahasia',
+            'cakupan_produk' => 'required|in:seluruh_toko,produk_tertentu',
+        ], [
+            'kode_voucher.unique' => 'Kode voucher ini sudah digunakan, silakan gunakan kode lain.',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
+        ]);
+
+        $kodeClean = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $request->kode_voucher));
+
+        $tipeDiskon = $request->tipe_diskon;
+        $nilaiDiskon = (float) $request->nilai_diskon;
+        $minQuantity = (int) ($request->min_quantity ?: 1);
+
+        if ($tipeDiskon === 'bogo_2_bayar_1') {
+            $tipeDiskon = 'persen';
+            $nilaiDiskon = 50.00;
+            $minQuantity = 2;
+        } elseif ($tipeDiskon === 'bogo_3_bayar_2') {
+            $tipeDiskon = 'persen';
+            $nilaiDiskon = 33.3333;
+            $minQuantity = 3;
+        }
+
+        Voucher::create([
+            'vendor_id' => null, // Platform master voucher
+            'kode_voucher' => $kodeClean,
+            'tipe_voucher' => 'platform',
+            'funding_source' => 'platform',
+            'tipe_diskon' => $tipeDiskon,
+            'nilai_diskon' => $nilaiDiskon,
+            'maksimal_diskon' => $request->filled('maksimal_diskon') ? (float) $request->maksimal_diskon : null,
+            'minimal_belanja' => (float) ($request->minimal_belanja ?? 0.0),
+            'min_quantity' => $minQuantity,
+            'kuota_total' => $request->filled('kuota_total') ? (int) $request->kuota_total : 100,
+            'kuota_terpakai' => 0,
+            'kuota_reserved' => 0,
+            'anggaran_maksimal_platform' => $request->filled('anggaran_maksimal_platform') ? (float) $request->anggaran_maksimal_platform : null,
+            'anggaran_terpakai' => 0.0,
+            'anggaran_reserved' => 0.0,
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_selesai' => $request->tanggal_selesai,
+            'visibilitas' => $request->visibilitas ?? 'publik',
+            'cakupan_produk' => $request->cakupan_produk ?? 'seluruh_toko',
+            'is_active' => 1,
+            'suspended_by_admin' => 0,
+            'auto_exhausted' => 0,
+        ]);
+
+        return redirect('/admin/dashboard#tab-voucher')->with('success', "Voucher Master Platform [{$kodeClean}] berhasil ditambahkan secara manual!");
+    }
+
+    public function destroyVoucher(string $id)
+    {
+        $voucher = Voucher::findOrFail($id);
+        $kode = $voucher->kode_voucher;
+
+        if (\App\Models\OrderVoucherRedemption::where('voucher_id', $id)->exists()) {
+            return redirect('/admin/dashboard#tab-voucher')->with('error', "Gagal menghapus voucher [{$kode}]! Voucher telah memiliki riwayat transaksi/redemption.");
+        }
+
+        $voucher->delete();
+        return redirect('/admin/dashboard#tab-voucher')->with('success', "Voucher [{$kode}] berhasil dihapus permanen.");
+    }
+
+    public function clearPlatformVouchers()
+    {
+        $deletedCount = Voucher::where('funding_source', 'platform')->delete();
+        return redirect('/admin/dashboard#tab-voucher')->with('success', "Berhasil membersihkan {$deletedCount} voucher platform. Katalog voucher kini bersih dan siap diisi manual.");
+    }
+
     public function suspendVoucher(string $id)
     {
-        DB::table('vouchers')->where('id', $id)->update(['is_active' => 0]);
-        return redirect()->back()->with('error', "Voucher telah DIMATIKAN PAKSA! Customer tidak akan bisa lagi mengklaim voucher ini.");
+        DB::table('vouchers')->where('id', $id)->update([
+            'is_active' => 0,
+            'suspended_by_admin' => 1,
+            'updated_at' => now(),
+        ]);
+        return redirect('/admin/dashboard#tab-voucher')->with('error', "Voucher telah DIMATIKAN PAKSA! Customer tidak akan bisa lagi mengklaim atau memakai voucher ini.");
     }
 
     public function activateVoucher(string $id)
     {
-        DB::table('vouchers')->where('id', $id)->update(['is_active' => 1]);
-        return redirect()->back()->with('success', "Voucher diaktifkan kembali! Customer kini bisa menggunakannya lagi.");
+        DB::table('vouchers')->where('id', $id)->update([
+            'is_active' => 1,
+            'suspended_by_admin' => 0,
+            'updated_at' => now(),
+        ]);
+        return redirect('/admin/dashboard#tab-voucher')->with('success', "Voucher diaktifkan kembali! Customer kini dapat menggunakannya kembali.");
     }
 }

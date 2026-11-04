@@ -621,18 +621,26 @@
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
             this.closeRatioDrawer();
-            let label = 'Rasio: Layar Penuh (9:16)';
-            if (ratioKey === 'original' || ratioKey === 'utuh') label = 'Rasio: Utuh / Asli (Tidak Terpotong)';
+            let label = 'Rasio: Persegi Panjang (8:14)';
+            if (ratioKey === '8:14' || ratioKey === '8/14') label = 'Rasio: Persegi Panjang (8:14 Pas Bebas Zoom)';
+            else if (ratioKey === 'original' || ratioKey === 'utuh') label = 'Rasio: Utuh / Asli (Tidak Terpotong)';
             else if (ratioKey === 'square' || ratioKey === '1:1') label = 'Rasio: Persegi (1:1)';
             else if (ratioKey === 'standard' || ratioKey === '3:4') label = 'Rasio: Standar Foto (3:4)';
+            else if (ratioKey === 'portrait' || ratioKey === '9:16') label = 'Rasio: Layar Penuh (9:16)';
             this.showToast(label);
         }
 
         updateRatioDrawerActiveState() {
-            const cur = this.state.get('aspectRatio') || 'original';
+            const cur = this.state.get('aspectRatio') || '8:14';
             document.querySelectorAll('.ratio-item-btn').forEach(btn => {
                 const key = btn.getAttribute('data-ratio-key');
-                if (key === cur) {
+                const isMatch = (key === cur) || 
+                                (key === 'portrait' && (cur === '9:16' || cur === 'portrait')) ||
+                                (key === 'standard' && (cur === '3:4' || cur === 'standard')) ||
+                                (key === 'square' && (cur === '1:1' || cur === 'square')) ||
+                                (key === 'original' && (cur === 'utuh' || cur === 'original')) ||
+                                (key === '8:14' && (cur === '8:14' || cur === '8/14'));
+                if (isMatch) {
                     btn.classList.add('border-sky-400', 'bg-sky-500/20');
                     btn.classList.remove('border-white/10', 'bg-white/5');
                 } else {
@@ -646,19 +654,22 @@
             const next = this.state.toggleAspectRatio();
             this.applyAspectRatioStyle();
             this.updateRatioDrawerActiveState();
-            let label = 'Rasio: Layar Penuh (9:16)';
-            if (next === 'original') label = 'Rasio: Utuh / Asli (100% Bebas Potong)';
+            let label = 'Rasio: Persegi Panjang (8:14)';
+            if (next === '8:14') label = 'Rasio: Persegi Panjang (8:14 Pas Bebas Zoom)';
+            else if (next === 'original') label = 'Rasio: Utuh / Asli (100% Bebas Potong)';
             else if (next === 'square') label = 'Rasio: Persegi (1:1)';
             else if (next === 'standard') label = 'Rasio: Standar Foto (3:4)';
+            else if (next === '9:16') label = 'Rasio: Layar Penuh (9:16)';
             this.showToast(label);
         }
 
         applyAspectRatioStyle() {
-            const ratio = this.state.get('aspectRatio') || 'original';
+            const ratio = this.state.get('aspectRatio') || '8:14';
+            const is8_14 = ratio === '8:14' || ratio === '8/14';
             const isOriginal = ratio === 'original' || ratio === 'utuh';
             const isSquare = ratio === 'square' || ratio === '1:1';
             const isStandard = ratio === 'standard' || ratio === '3:4';
-            const isPortrait = !isOriginal && !isSquare && !isStandard;
+            const is9_16 = ratio === '9:16' || ratio === 'portrait';
 
             const labelEl = document.getElementById('editor-aspect-label');
             const iconEl = document.getElementById('editor-aspect-icon');
@@ -666,16 +677,17 @@
                 labelEl.textContent = this.state.getAspectRatioDisplay();
             }
             if (iconEl) {
-                if (isOriginal) iconEl.className = 'fa-solid fa-expand text-sky-400 text-xs';
+                if (is8_14) iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                else if (isOriginal) iconEl.className = 'fa-solid fa-expand text-sky-400 text-xs';
                 else if (isSquare) iconEl.className = 'fa-regular fa-square text-sky-400 text-xs';
                 else if (isStandard) iconEl.className = 'fa-solid fa-camera text-sky-400 text-xs';
-                else iconEl.className = 'fa-solid fa-mobile-screen text-sky-400 text-xs';
+                else iconEl.className = 'fa-solid fa-mobile-screen-button text-sky-400 text-xs';
             }
 
             const viewport = document.getElementById('editor-viewport');
             if (viewport) {
                 if (isOriginal) {
-                    viewport.style.aspectRatio = '9 / 16';
+                    viewport.style.aspectRatio = 'auto';
                     viewport.style.maxHeight = '';
                     viewport.style.maxWidth = '';
                     viewport.style.width = '100%';
@@ -696,6 +708,13 @@
                     viewport.style.width = '90vw';
                     viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
                     viewport.classList.remove('w-full', 'h-full');
+                } else if (is8_14) {
+                    viewport.style.aspectRatio = '8 / 14';
+                    viewport.style.maxHeight = '84vh';
+                    viewport.style.maxWidth = 'calc(84vh * 8 / 14)';
+                    viewport.style.width = '92vw';
+                    viewport.classList.add('rounded-3xl', 'my-auto', 'mx-auto', 'border', 'border-white/20', 'shadow-2xl');
+                    viewport.classList.remove('w-full', 'h-full');
                 } else {
                     viewport.style.aspectRatio = '9 / 16';
                     viewport.style.maxHeight = '';
@@ -708,10 +727,10 @@
             }
 
             if (this.imageEl) {
-                this.imageEl.style.objectFit = (isSquare || isStandard) ? 'contain' : 'cover';
+                this.imageEl.style.objectFit = (isSquare || isStandard || is8_14 || isOriginal) ? 'contain' : 'cover';
             }
             if (this.videoEl) {
-                this.videoEl.style.objectFit = (isSquare || isStandard) ? 'contain' : 'cover';
+                this.videoEl.style.objectFit = (isSquare || isStandard || is8_14 || isOriginal) ? 'contain' : 'cover';
             }
             this.applyCurrentTransforms();
         }

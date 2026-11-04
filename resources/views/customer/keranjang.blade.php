@@ -136,7 +136,14 @@
                             </button>
 
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate mb-0.5">{{ $vendorNama }}</p>
-                            <h4 class="font-extrabold text-slate-800 text-[13.5px] truncate leading-tight mb-1.5">{{ $barangNama }}</h4>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                @if($item->barang && $item->barang->is_paket)
+                                    <span class="inline-flex items-center gap-1 text-[9.5px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded shrink-0">
+                                        <i class="fa-solid fa-boxes-stacked"></i> Paket
+                                    </span>
+                                @endif
+                                <h4 class="font-extrabold text-slate-800 text-[13.5px] truncate leading-tight">{{ $barangNama }}</h4>
+                            </div>
                             
                             <!-- DURASI STEPPER -->
                             <div class="inline-flex items-center gap-1.5 bg-sky-50/80 text-sky-700 text-[11px] font-extrabold px-2 py-0.5 rounded-lg border border-sky-100 mb-2">

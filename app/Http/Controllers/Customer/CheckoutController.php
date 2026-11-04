@@ -312,20 +312,13 @@ class CheckoutController extends Controller
                     return redirect()->back()->with('error', "⚠️ Produk tidak ditemukan di database.");
                 }
 
-                $bookedQty = DB::table('order_items')
-                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
-                    ->where('order_items.product_id', $item->barang_id)
-                    ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED', 'Menunggu Ulasan'])
-                    ->where(function($query) use ($waktuMulai, $waktuKembaliCek) {
-                        $query->where('orders.start_rent', '<', $waktuKembaliCek)
-                              ->where('orders.end_rent', '>', $waktuMulai);
-                    })
-                    ->sum('order_items.quantity');
-
-                $stokTersedia = $barangCek->stok_total - $bookedQty;
+                $stokTersedia = $barangCek->getAvailableStockInPeriod($waktuMulai, $waktuKembaliCek);
 
                 if ($stokTersedia < $item->jumlah) {
                     $tglStr = $waktuMulai->format('d M Y (H:i)');
+                    if ($barangCek->is_paket) {
+                        return redirect()->back()->with('error', "⚠️ Maaf, stok untuk paket '{$item->barang->nama}' pada jadwal {$tglStr} tidak mencukupi karena ada barang penyusun yang sudah penuh dibooking! (Tersedia: {$stokTersedia} paket). Silakan pilih tanggal atau jam lain.");
+                    }
                     return redirect()->back()->with('error', "⚠️ Maaf, stok untuk barang '{$item->barang->nama}' pada jadwal {$tglStr} sudah habis diboking pengguna lain! (Tersedia: {$stokTersedia} unit). Silakan pilih tanggal atau jam lain.");
                 }
             }

@@ -88,6 +88,27 @@
                 <div></div>
             </div>
 
+            <!-- 8:14 Framing Mask (Active when Aspect Ratio is 8:14) -->
+            <div id="camera-8-14-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/60"></div>
+                <div class="w-full aspect-[8/14] max-h-[86vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/60"></div>
+            </div>
+
+            <!-- 3:4 Framing Mask (Active when Aspect Ratio is 3:4) -->
+            <div id="camera-3-4-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/75"></div>
+                <div class="w-full aspect-[3/4] max-h-[82vh] border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
+            </div>
+
+            <!-- Square Framing Mask (Active when Aspect Ratio is 1:1) -->
+            <div id="camera-square-mask" class="hidden absolute inset-0 pointer-events-none z-20 flex flex-col justify-between transition-all duration-300">
+                <div class="w-full flex-1 bg-black/75"></div>
+                <div class="w-full aspect-square border-2 border-white/40 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] mx-auto relative pointer-events-none"></div>
+                <div class="w-full flex-1 bg-black/75"></div>
+            </div>
+
             <!-- Filter Name Subtle Toast (Swipe Notification) -->
             <div id="filter-name-toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300 glass-pill px-4 py-1.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-1.5">
                 <i class="fa-solid fa-wand-magic-sparkles text-sky-400 text-[11px]"></i>
@@ -112,8 +133,11 @@
                     </span>
                 </button>
 
-                <!-- Spacer to balance header with close button -->
-                <div class="w-9 h-9"></div>
+                <!-- Aspect Ratio Toggle Button (8:14 / 9:16 / 3:4 / 1:1 / Utuh) -->
+                <button id="btn-toggle-aspect-ratio" type="button" class="glass-pill px-3 py-1.5 rounded-full text-xs font-black text-white flex items-center gap-1.5 shadow-lg active:scale-95 transition hover:border-sky-400" title="Ganti Rasio (8:14 / 9:16 / 3:4 / 1:1 / Utuh)">
+                    <i id="aspect-ratio-icon" class="fa-solid fa-mobile-screen text-sky-400 text-xs"></i>
+                    <span id="aspect-ratio-label">8:14</span>
+                </button>
             </div>
 
             <!-- Segmented Progress Bar Multi-Klip -->
@@ -477,53 +501,65 @@
                 </button>
             </div>
 
-            <!-- Pilihan Rasio: 9:16 / 3:4 / 1:1 / Utuh (Tidak Terpotong) -->
-            <div class="grid grid-cols-4 gap-2 mb-3">
-                <!-- 9:16 Fullscreen -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
+            <!-- Pilihan Rasio: 8:14 / 9:16 / 3:4 / 1:1 / Utuh (Tidak Terpotong) -->
+            <div class="grid grid-cols-5 gap-1.5 mb-3">
+                <!-- 8:14 Persegi Panjang Bebas Zoom -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('8:14')" class="ratio-item-btn p-2 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="8:14">
                     <div class="flex items-center justify-between">
                         <span class="w-3.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-[11px] font-black text-sky-400">9:16</span>
+                        <span class="text-[10px] font-black text-sky-400">8:14</span>
                     </div>
                     <div>
-                        <p class="text-[11px] font-bold text-white leading-tight">Penuh</p>
-                        <p class="text-[8px] text-slate-400">Story/Reels</p>
+                        <p class="text-[10px] font-bold text-white leading-tight">8:14</p>
+                        <p class="text-[7.5px] text-slate-400 leading-none">Pas Layar</p>
+                    </div>
+                </button>
+
+                <!-- 9:16 Fullscreen -->
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('portrait')" class="ratio-item-btn p-2 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="portrait">
+                    <div class="flex items-center justify-between">
+                        <span class="w-3 h-6 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-[10px] font-black text-sky-400">9:16</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-white leading-tight">Penuh</p>
+                        <p class="text-[7.5px] text-slate-400 leading-none">Story/Reels</p>
                     </div>
                 </button>
 
                 <!-- 3:4 Standar -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('standard')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="standard">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('standard')" class="ratio-item-btn p-2 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="standard">
                     <div class="flex items-center justify-between">
-                        <span class="w-4.5 h-6 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-[11px] font-black text-sky-400">3:4</span>
+                        <span class="w-4 h-5.5 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-[10px] font-black text-sky-400">3:4</span>
                     </div>
                     <div>
-                        <p class="text-[11px] font-bold text-white leading-tight">Standar</p>
-                        <p class="text-[8px] text-slate-400">Kamera</p>
+                        <p class="text-[10px] font-bold text-white leading-tight">Standar</p>
+                        <p class="text-[7.5px] text-slate-400 leading-none">Kamera</p>
                     </div>
                 </button>
 
                 <!-- 1:1 Persegi -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('square')" class="ratio-item-btn p-2 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="square">
                     <div class="flex items-center justify-between">
-                        <span class="w-5 h-5 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-[11px] font-black text-sky-400">1:1</span>
+                        <span class="w-4.5 h-4.5 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-[10px] font-black text-sky-400">1:1</span>
                     </div>
                     <div>
-                        <p class="text-[11px] font-bold text-white leading-tight">Persegi</p>
-                        <p class="text-[8px] text-slate-400">Feed</p>
+                        <p class="text-[10px] font-bold text-white leading-tight">Persegi</p>
+                        <p class="text-[7.5px] text-slate-400 leading-none">Feed</p>
                     </div>
                 </button>
 
                 <!-- Utuh / Asli Sensor (Tidak Terpotong) -->
-                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-2.5 rounded-2xl bg-sky-500/20 border border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
+                <button type="button" onclick="window.MomentEditorEngine.selectRatio('original')" class="ratio-item-btn p-2 rounded-2xl bg-white/5 border border-white/10 hover:border-sky-400 text-left transition flex flex-col justify-between h-20 active:scale-95" data-ratio-key="original">
                     <div class="flex items-center justify-between">
-                        <span class="w-5.5 h-4 border-2 border-sky-400/80 rounded-md"></span>
-                        <span class="text-[11px] font-black text-sky-400">Utuh</span>
+                        <span class="w-5 h-3.5 border-2 border-sky-400/80 rounded-md"></span>
+                        <span class="text-[10px] font-black text-sky-400">Utuh</span>
                     </div>
                     <div>
-                        <p class="text-[11px] font-bold text-white leading-tight">Asli</p>
-                        <p class="text-[8px] text-slate-400">Tanpa Potong</p>
+                        <p class="text-[10px] font-bold text-white leading-tight">Asli</p>
+                        <p class="text-[7.5px] text-slate-400 leading-none">Tanpa Crop</p>
                     </div>
                 </button>
             </div>
