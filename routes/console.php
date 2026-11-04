@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -29,7 +30,7 @@ Artisan::command('wa:reset-sessions', function () {
 |
 */
 Schedule::command('rentify:generate-daily-content')
-    ->dailyAt(config('rentify_ai.automation.schedule_time', '08:00'))
+    ->dailyAt(Config::get('rentify_ai.automation.schedule_time', '08:00'))
     ->name('rentify-ai-marketing-daily')
     ->withoutOverlapping();
 
@@ -80,6 +81,17 @@ Schedule::command('rentify:customers:reengage-inactive --days=60')
     ->name('rentify-reengage-inactive-60')
     ->withoutOverlapping();
 
-
-
+/*
+|--------------------------------------------------------------------------
+| Release Expired Bundle & Item Reservations Schedule
+|--------------------------------------------------------------------------
+|
+| Membatalkan pesanan yang belum dibayar melewati batas 15 menit (payment_expired_at),
+| sehingga stok unit dan slot kalender langsung dilepaskan kembali.
+|
+*/
+Schedule::command('rentify:release-expired-bundle-reservations')
+    ->everyMinute()
+    ->name('rentify-release-expired-bundle-reservations')
+    ->withoutOverlapping();
 
