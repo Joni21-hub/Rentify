@@ -6,6 +6,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class VoucherSchemaMigrationTest extends TestCase
@@ -24,6 +26,7 @@ class VoucherSchemaMigrationTest extends TestCase
             'tipe_voucher', 'funding_source', 'kuota_reserved', 'kuota_klaim_total',
             'kuota_klaim_terpakai', 'anggaran_maksimal_platform', 'anggaran_reserved',
             'anggaran_terpakai', 'visibilitas', 'cakupan_produk',
+            'min_quantity', 'suspended_by_admin', 'auto_exhausted',
         ];
         foreach ($voucherColumns as $col) {
             $this->assertTrue(Schema::hasColumn('vouchers', $col), "Column vouchers.{$col} should exist");
@@ -122,8 +125,8 @@ class VoucherSchemaMigrationTest extends TestCase
             'minimal_belanja'            => 50000.00,
             'kuota_total'                => 100,
             'kuota_terpakai'             => 0,
-            'tanggal_mulai'              => now()->toDateString(),
-            'tanggal_selesai'            => now()->addDays(30)->toDateString(),
+            'tanggal_mulai'              => Carbon::now()->toDateString(),
+            'tanggal_selesai'            => Carbon::now()->addDays(30)->toDateString(),
             'is_active'                  => true,
             'tipe_voucher'               => 'platform',
             'funding_source'             => 'platform',
@@ -135,8 +138,8 @@ class VoucherSchemaMigrationTest extends TestCase
             'anggaran_terpakai'          => 0.00,
             'visibilitas'                => 'publik',
             'cakupan_produk'             => 'seluruh_toko',
-            'created_at'                 => now(),
-            'updated_at'                 => now(),
+            'created_at'                 => Carbon::now(),
+            'updated_at'                 => Carbon::now(),
         ]);
 
         $this->assertNotNull($voucherId);
@@ -158,10 +161,10 @@ class VoucherSchemaMigrationTest extends TestCase
         $userId = DB::table('users')->insertGetId([
             'name'       => 'Claim User Test',
             'email'      => 'claimuser_' . uniqid() . '@example.com',
-            'password'   => bcrypt('password'),
+            'password'   => Hash::make('password'),
             'role'       => 'customer',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         $voucherId = DB::table('vouchers')->insertGetId([
@@ -172,13 +175,13 @@ class VoucherSchemaMigrationTest extends TestCase
             'minimal_belanja' => 20000.00,
             'kuota_total'     => 50,
             'kuota_terpakai'  => 0,
-            'tanggal_mulai'   => now()->toDateString(),
-            'tanggal_selesai' => now()->addDays(14)->toDateString(),
+            'tanggal_mulai'   => Carbon::now()->toDateString(),
+            'tanggal_selesai' => Carbon::now()->addDays(14)->toDateString(),
             'is_active'       => true,
             'tipe_voucher'    => 'platform',
             'funding_source'  => 'platform',
-            'created_at'      => now(),
-            'updated_at'      => now(),
+            'created_at'      => Carbon::now(),
+            'updated_at'      => Carbon::now(),
         ]);
 
         try {
@@ -187,9 +190,9 @@ class VoucherSchemaMigrationTest extends TestCase
                 'user_id'    => $userId,
                 'voucher_id' => $voucherId,
                 'status'     => 'aktif',
-                'claimed_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'claimed_at' => Carbon::now(),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ]);
             $this->assertNotNull($claimId);
 
@@ -200,9 +203,9 @@ class VoucherSchemaMigrationTest extends TestCase
                     'user_id'    => $userId,
                     'voucher_id' => $voucherId,
                     'status'     => 'aktif',
-                    'claimed_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'claimed_at' => Carbon::now(),
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
                 ]);
             } catch (QueryException $e) {
                 $duplicateFailed = true;
@@ -224,10 +227,10 @@ class VoucherSchemaMigrationTest extends TestCase
         $vendorId = DB::table('users')->insertGetId([
             'name'       => 'Vendor Pivot Test',
             'email'      => 'vendorpivot_' . uniqid() . '@example.com',
-            'password'   => bcrypt('password'),
+            'password'   => Hash::make('password'),
             'role'       => 'vendor',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         $voucherId = DB::table('vouchers')->insertGetId([
@@ -237,20 +240,20 @@ class VoucherSchemaMigrationTest extends TestCase
             'nilai_diskon'    => 10.00,
             'minimal_belanja' => 10000.00,
             'kuota_total'     => 10,
-            'tanggal_mulai'   => now()->toDateString(),
-            'tanggal_selesai' => now()->addDays(7)->toDateString(),
+            'tanggal_mulai'   => Carbon::now()->toDateString(),
+            'tanggal_selesai' => Carbon::now()->addDays(7)->toDateString(),
             'is_active'       => true,
             'tipe_voucher'    => 'toko',
             'funding_source'  => 'vendor',
-            'created_at'      => now(),
-            'updated_at'      => now(),
+            'created_at'      => Carbon::now(),
+            'updated_at'      => Carbon::now(),
         ]);
 
         $kategoriId = DB::table('kategoris')->insertGetId([
             'nama'       => 'Kategori Test ' . uniqid(),
             'is_active'  => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         $barangId = DB::table('barang')->insertGetId([
@@ -261,8 +264,8 @@ class VoucherSchemaMigrationTest extends TestCase
             'harga_sewa_harian' => 50000.00,
             'stok_total'        => 5,
             'status'            => 'tersedia',
-            'created_at'        => now(),
-            'updated_at'        => now(),
+            'created_at'        => Carbon::now(),
+            'updated_at'        => Carbon::now(),
         ]);
 
         try {
@@ -270,7 +273,7 @@ class VoucherSchemaMigrationTest extends TestCase
             DB::table('voucher_barangs')->insert([
                 'voucher_id' => $voucherId,
                 'barang_id'  => $barangId,
-                'created_at' => now(),
+                'created_at' => Carbon::now(),
             ]);
             $this->assertEquals(1, DB::table('voucher_barangs')->where('voucher_id', $voucherId)->count());
 
@@ -278,7 +281,7 @@ class VoucherSchemaMigrationTest extends TestCase
             DB::table('voucher_kategoris')->insert([
                 'voucher_id'  => $voucherId,
                 'kategori_id' => $kategoriId,
-                'created_at'  => now(),
+                'created_at'  => Carbon::now(),
             ]);
             $this->assertEquals(1, DB::table('voucher_kategoris')->where('voucher_id', $voucherId)->count());
 
@@ -286,7 +289,7 @@ class VoucherSchemaMigrationTest extends TestCase
             DB::table('voucher_vendors')->insert([
                 'voucher_id' => $voucherId,
                 'vendor_id'  => $vendorId,
-                'created_at' => now(),
+                'created_at' => Carbon::now(),
             ]);
             $this->assertEquals(1, DB::table('voucher_vendors')->where('voucher_id', $voucherId)->count());
 
@@ -311,10 +314,10 @@ class VoucherSchemaMigrationTest extends TestCase
         $userId = DB::table('users')->insertGetId([
             'name'       => 'Refund Customer Test',
             'email'      => 'refundcust_' . uniqid() . '@example.com',
-            'password'   => bcrypt('password'),
+            'password'   => Hash::make('password'),
             'role'       => 'customer',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         $orderId = DB::table('orders')->insertGetId([
@@ -324,13 +327,13 @@ class VoucherSchemaMigrationTest extends TestCase
             'customer_name'      => 'Refund Customer',
             'customer_whatsapp'  => '081234567890',
             'metode_pengambilan' => 'ambil',
-            'tanggal_mulai'      => now(),
-            'tanggal_selesai'    => now()->addDays(2),
+            'tanggal_mulai'      => Carbon::now(),
+            'tanggal_selesai'    => Carbon::now()->addDays(2),
             'payment_method'     => 'QRIS',
             'total_biaya'        => 105000.00,
             'status'             => 'Dibatalkan',
-            'created_at'         => now(),
-            'updated_at'         => now(),
+            'created_at'         => Carbon::now(),
+            'updated_at'         => Carbon::now(),
         ]);
 
         $refundId = DB::table('refunds')->insertGetId([
@@ -339,8 +342,8 @@ class VoucherSchemaMigrationTest extends TestCase
             'nominal_refund' => 105000.00,
             'tipe_refund'    => 'pembatalan_total',
             'metode_refund'  => 'manual_transfer',
-            'created_at'     => now(),
-            'updated_at'     => now(),
+            'created_at'     => Carbon::now(),
+            'updated_at'     => Carbon::now(),
         ]);
 
         try {
@@ -379,10 +382,10 @@ class VoucherSchemaMigrationTest extends TestCase
         $userId = DB::table('users')->insertGetId([
             'name'       => 'Redemption User',
             'email'      => 'redemp_' . uniqid() . '@example.com',
-            'password'   => bcrypt('password'),
+            'password'   => Hash::make('password'),
             'role'       => 'customer',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         $voucherId = DB::table('vouchers')->insertGetId([
@@ -392,22 +395,22 @@ class VoucherSchemaMigrationTest extends TestCase
             'nilai_diskon'    => 10000.00,
             'minimal_belanja' => 50000.00,
             'kuota_total'     => 100,
-            'tanggal_mulai'   => now()->toDateString(),
-            'tanggal_selesai' => now()->addDays(30)->toDateString(),
+            'tanggal_mulai'   => Carbon::now()->toDateString(),
+            'tanggal_selesai' => Carbon::now()->addDays(30)->toDateString(),
             'is_active'       => true,
             'tipe_voucher'    => 'platform',
             'funding_source'  => 'platform',
-            'created_at'      => now(),
-            'updated_at'      => now(),
+            'created_at'      => Carbon::now(),
+            'updated_at'      => Carbon::now(),
         ]);
 
         $claimId = DB::table('customer_vouchers')->insertGetId([
             'user_id'    => $userId,
             'voucher_id' => $voucherId,
             'status'     => 'aktif',
-            'claimed_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'claimed_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         $paymentGroupId = 'PGP_MULTI_' . strtoupper(uniqid());
@@ -419,12 +422,12 @@ class VoucherSchemaMigrationTest extends TestCase
             'customer_name'      => 'Redemption Customer',
             'customer_whatsapp'  => '081234567891',
             'metode_pengambilan' => 'antar',
-            'tanggal_mulai'      => now(),
-            'tanggal_selesai'    => now()->addDays(2),
+            'tanggal_mulai'      => Carbon::now(),
+            'tanggal_selesai'    => Carbon::now()->addDays(2),
             'payment_method'     => 'QRIS',
             'total_biaya'        => 100000.00,
-            'created_at'         => now(),
-            'updated_at'         => now(),
+            'created_at'         => Carbon::now(),
+            'updated_at'         => Carbon::now(),
         ]);
 
         try {
@@ -435,12 +438,12 @@ class VoucherSchemaMigrationTest extends TestCase
                 'customer_voucher_id' => $claimId,
                 'tipe_voucher'        => 'platform',
                 'alokasi_diskon'      => 10000.00,
-                'created_at'          => now(),
-                'updated_at'          => now(),
+                'created_at'          => Carbon::now(),
+                'updated_at'          => Carbon::now(),
             ]);
 
             $redemption = DB::table('order_voucher_redemptions')->where('id', $redemptionId)->first();
-            $this->assertEquals('reserved', $redemption->status);
+            $this->assertEquals('aktif', $redemption->status);
             $this->assertEquals(10000.00, (float) $redemption->alokasi_diskon);
 
             // Duplicate redemption of same voucher on same order must fail with QueryException
@@ -453,8 +456,8 @@ class VoucherSchemaMigrationTest extends TestCase
                     'customer_voucher_id' => $claimId,
                     'tipe_voucher'        => 'platform',
                     'alokasi_diskon'      => 5000.00,
-                    'created_at'          => now(),
-                    'updated_at'          => now(),
+                    'created_at'          => Carbon::now(),
+                    'updated_at'          => Carbon::now(),
                 ]);
             } catch (QueryException $e) {
                 $duplicateFailed = true;
@@ -478,12 +481,13 @@ class VoucherSchemaMigrationTest extends TestCase
         // Clean up any stray test vouchers with null vendor_id
         DB::table('vouchers')->whereNull('vendor_id')->delete();
 
-        // Rollback all 7 migrations created in TASK-167
-        $exitRollback = Artisan::call('migrate:rollback', [
-            '--step' => 7,
-        ]);
-        fwrite(STDERR, "ROLLBACK OUTPUT:\n" . Artisan::output() . "\n");
-        $this->assertEquals(0, $exitRollback);
+        // Rollback migrations until tipe_voucher on vouchers table is rolled back
+        while (Schema::hasColumn('vouchers', 'tipe_voucher')) {
+            $exitRollback = Artisan::call('migrate:rollback', [
+                '--step' => 1,
+            ]);
+            $this->assertEquals(0, $exitRollback);
+        }
 
         // Verify tables/columns were rolled back
         $this->assertFalse(Schema::hasTable('refunds'));

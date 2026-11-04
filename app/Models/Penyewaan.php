@@ -70,6 +70,14 @@ class Penyewaan extends Model
     /**
      * Relasi Voucher Platform
      */
+    public function platformVoucher()
+    {
+        return $this->belongsTo(Voucher::class, 'voucher_platform_id');
+    }
+
+    /**
+     * Alias relasi Voucher Platform (kompatibilitas)
+     */
     public function voucherPlatform()
     {
         return $this->belongsTo(Voucher::class, 'voucher_platform_id');
@@ -77,6 +85,14 @@ class Penyewaan extends Model
 
     /**
      * Relasi ke Catatan Pemakaian / Penukaran Voucher (OrderVoucherRedemption)
+     */
+    public function voucherRedemptions()
+    {
+        return $this->hasMany(OrderVoucherRedemption::class, 'order_id');
+    }
+
+    /**
+     * Alias relasi ke Catatan Pemakaian Voucher (kompatibilitas)
      */
     public function redemptions()
     {

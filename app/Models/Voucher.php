@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,13 +31,18 @@ class Voucher extends Model
         'anggaran_terpakai',
         'visibilitas',
         'cakupan_produk',
+        'min_quantity',
         'tanggal_mulai',
         'tanggal_selesai',
         'is_active',
+        'suspended_by_admin',
+        'auto_exhausted',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'suspended_by_admin' => 'boolean',
+        'auto_exhausted' => 'boolean',
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
         'nilai_diskon' => 'float',
@@ -50,6 +56,7 @@ class Voucher extends Model
         'kuota_reserved' => 'integer',
         'kuota_klaim_total' => 'integer',
         'kuota_klaim_terpakai' => 'integer',
+        'min_quantity' => 'integer',
     ];
 
     // Relasi: Voucher ini milik siapa?
@@ -96,6 +103,41 @@ class Voucher extends Model
     public function redemptions()
     {
         return $this->hasMany(OrderVoucherRedemption::class, 'voucher_id');
+    }
+
+    /**
+     * Scope query untuk platform voucher yang aktif, tidak disuspend admin, belum exhausted,
+     * dan berada dalam rentang tanggal berlaku saat ini.
+     */
+    public function scopePlatformActive($query)
+    {
+        $today = Carbon::now()->toDateString();
+
+        return $query->where(function ($q) {
+                $q->where('funding_source', 'platform')
+                  ->orWhere('tipe_voucher', 'platform');
+            })
+            ->where('is_active', true)
+            ->where('suspended_by_admin', false)
+            ->where('auto_exhausted', false)
+            ->where('tanggal_mulai', '<=', $today)
+            ->where('tanggal_selesai', '>=', $today);
+    }
+
+    /**
+     * Cek apakah voucher ini didanai oleh platform.
+     */
+    public function isPlatform(): bool
+    {
+        return ($this->funding_source ?? '') === 'platform' || ($this->tipe_voucher ?? '') === 'platform';
+    }
+
+    /**
+     * Cek apakah voucher ini merupakan penawaran BOGO (Buy One Get One / Sewa X Bayar Y).
+     */
+    public function isBogo(): bool
+    {
+        return (int) ($this->min_quantity ?? 1) > 1 || str_starts_with(strtoupper($this->kode_voucher ?? ''), 'BOGO');
     }
 
     // Accessor aliases untuk kompatibilitas

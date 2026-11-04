@@ -24,6 +24,7 @@ class OrderVoucherRedemption extends Model
 
     protected $casts = [
         'alokasi_diskon' => 'decimal:2',
+        'status' => 'string',
     ];
 
     /**
