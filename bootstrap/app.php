@@ -35,5 +35,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // ...
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => config('app.debug') ? $e->getMessage() : 'Terjadi kendala pada server saat memproses permintaan.',
+                ], 500);
+            }
+        });
     })->create();

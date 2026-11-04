@@ -17,19 +17,23 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('paket_sewa_items') && !Schema::hasColumn('paket_sewa_items', 'paket_id')) {
-            Schema::dropIfExists('paket_sewa_items');
-        }
-
         if (!Schema::hasTable('paket_sewa_items')) {
             Schema::create('paket_sewa_items', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('paket_id')->constrained('barang')->onDelete('cascade');
+                $table->foreignId('paket_sewa_id')->nullable()->constrained('paket_sewa')->onDelete('cascade');
+                $table->foreignId('paket_id')->nullable()->constrained('barang')->onDelete('cascade');
                 $table->foreignId('barang_id')->constrained('barang')->onDelete('cascade');
                 $table->unsignedInteger('quantity')->default(1);
                 $table->timestamps();
-
-                $table->unique(['paket_id', 'barang_id']);
+            });
+        } else {
+            Schema::table('paket_sewa_items', function (Blueprint $table) {
+                if (!Schema::hasColumn('paket_sewa_items', 'paket_id')) {
+                    $table->foreignId('paket_id')->nullable()->after('id')->constrained('barang')->onDelete('cascade');
+                }
+                if (!Schema::hasColumn('paket_sewa_items', 'paket_sewa_id')) {
+                    $table->foreignId('paket_sewa_id')->nullable()->after('id')->constrained('paket_sewa')->onDelete('cascade');
+                }
             });
         }
     }
@@ -39,7 +43,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('paket_sewa_items');
+        if (Schema::hasTable('paket_sewa_items') && Schema::hasColumn('paket_sewa_items', 'paket_id')) {
+            Schema::table('paket_sewa_items', function (Blueprint $table) {
+                $table->dropForeign(['paket_id']);
+                $table->dropColumn('paket_id');
+            });
+        }
 
         if (Schema::hasColumn('barang', 'is_paket')) {
             Schema::table('barang', function (Blueprint $table) {

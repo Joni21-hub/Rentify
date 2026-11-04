@@ -12,6 +12,7 @@ class PaketSewaItem extends Model
     protected $table = 'paket_sewa_items';
 
     protected $fillable = [
+        'paket_id',
         'paket_sewa_id',
         'barang_id',
         'quantity',
@@ -20,6 +21,14 @@ class PaketSewaItem extends Model
     protected $casts = [
         'quantity' => 'integer',
     ];
+
+    /**
+     * Relasi ke Paket (Barang dengan is_paket = 1)
+     */
+    public function paket()
+    {
+        return $this->belongsTo(Barang::class, 'paket_id');
+    }
 
     /**
      * Relasi ke Paket Sewa Induk

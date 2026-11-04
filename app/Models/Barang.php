@@ -14,7 +14,7 @@ class Barang extends Model
     protected $fillable = [
         'vendor_id', 'cabang_id', 'kategori_id', 'nama', 'slug', 'deskripsi', 
         'harga_sewa_harian', 'deposit', 'denda_per_hari', 'kondisi', 
-        'stok_total', 'berat_gram', 'status', 'status_barang', 'is_approved', 'approved_at', 'cover_photo',
+        'is_paket', 'stok_total', 'berat_gram', 'status', 'status_barang', 'is_approved', 'approved_at', 'cover_photo',
         'is_delivery_supported', 'alamat', 'latitude', 'longitude', 'spesifikasi'
     ];
 
@@ -31,6 +31,7 @@ class Barang extends Model
         'denda_per_hari'    => 'decimal:2',
         'berat_gram'        => 'integer',
         'is_approved'       => 'boolean',
+        'is_paket'          => 'boolean',
         'approved_at'       => 'datetime',
     ];
 
@@ -132,6 +133,36 @@ class Barang extends Model
         return str_contains(strtolower($this->kategori->nama ?? ''), 'outdoor');
     }
 
+    /**
+     * Accessor stok_total dinamis: jika produk adalah paket (is_paket = 1),
+     * stok total dihitung dari kapasitas terendah komponen pembentuknya.
+     */
+    public function getStokTotalAttribute($value)
+    {
+        if (!empty($this->attributes['is_paket'])) {
+            $items = $this->relationLoaded('paketItems')
+                ? $this->paketItems
+                : $this->paketItems()->with('barang')->get();
+
+            if ($items->isEmpty()) {
+                return 0;
+            }
+
+            $minKapasitas = null;
+            foreach ($items as $item) {
+                $barang = $item->barang;
+                $qtyPerPaket = max(1, (int) $item->quantity);
+                $stokKomponen = $barang ? (int) ($barang->getRawOriginal('stok_total') ?? $barang->stok_total ?? 0) : 0;
+                $kapasitas = (int) floor($stokKomponen / $qtyPerPaket);
+                $minKapasitas = ($minKapasitas === null) ? $kapasitas : min($minKapasitas, $kapasitas);
+            }
+
+            return max(0, (int) ($minKapasitas ?? 0));
+        }
+
+        return (int) ($value ?? 0);
+    }
+
     public function getIsHaveFunAttribute(): bool
     {
         return str_contains(strtolower($this->kategori->nama ?? ''), 'have fun');
@@ -154,6 +185,11 @@ class Barang extends Model
     public function cabang()
     {
         return $this->belongsTo(Cabang::class, 'cabang_id');
+    }
+
+    public function paketItems()
+    {
+        return $this->hasMany(PaketSewaItem::class, 'paket_id');
     }
 
     public function paketSewaItems()
@@ -479,5 +515,124 @@ class Barang extends Model
     public function getBookedDatesInfo(int $horizonDays = 120): array
     {
         return $this->getAvailabilityData($horizonDays)['booked_info'];
+    }
+
+    /**
+     * Menghitung total kuantitas barang ini yang sedang dibooking / disewa pada rentang waktu tertentu.
+     * Memperhitungkan pesanan langsung maupun pesanan paket bundling yang mengandung barang ini.
+     *
+     * @param mixed $start Waktu mulai sewa (Carbon|string)
+     * @param mixed $end Waktu selesai sewa (Carbon|string)
+     * @return int
+     */
+    public function getBookedQuantityInPeriod($start, $end): int
+    {
+        $startRent = \Carbon\Carbon::parse($start);
+        $endRent   = \Carbon\Carbon::parse($end);
+
+        $inactiveStatuses = ['Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED'];
+
+        // 1. Pesanan langsung untuk barang ini
+        $directBookings = \Illuminate\Support\Facades\DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.product_id', $this->id)
+            ->whereNotIn('orders.status', $inactiveStatuses)
+            ->select([
+                'order_items.quantity',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+            ])
+            ->get();
+
+        $totalBooked = 0;
+        foreach ($directBookings as $b) {
+            if (!$b->start_rent_time || !$b->end_rent_time) continue;
+            $bStart = \Carbon\Carbon::parse($b->start_rent_time);
+            $bEnd   = \Carbon\Carbon::parse($b->end_rent_time);
+            if ($bStart->lt($endRent) && $bEnd->gt($startRent)) {
+                $totalBooked += max(0, (int) $b->quantity);
+            }
+        }
+
+        // 2. Pesanan paket bundling yang mengandung barang ini sebagai komponen
+        if (\Illuminate\Support\Facades\Schema::hasTable('paket_sewa_items')) {
+            $column = \Illuminate\Support\Facades\Schema::hasColumn('paket_sewa_items', 'paket_id') ? 'paket_id' : 'paket_sewa_id';
+            $packageItems = \Illuminate\Support\Facades\DB::table('paket_sewa_items')
+                ->where('barang_id', $this->id)
+                ->get();
+
+            foreach ($packageItems as $pi) {
+                $packageId = $pi->paket_id ?? $pi->paket_sewa_id ?? null;
+                if (!$packageId) continue;
+                $qtyPerPaket = max(1, (int) $pi->quantity);
+
+                $packageBookings = \Illuminate\Support\Facades\DB::table('order_items')
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->where('order_items.product_id', $packageId)
+                    ->whereNotIn('orders.status', $inactiveStatuses)
+                    ->select([
+                        'order_items.quantity',
+                        \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                        \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+                    ])
+                    ->get();
+
+                foreach ($packageBookings as $pb) {
+                    if (!$pb->start_rent_time || !$pb->end_rent_time) continue;
+                    $pbStart = \Carbon\Carbon::parse($pb->start_rent_time);
+                    $pbEnd   = \Carbon\Carbon::parse($pb->end_rent_time);
+                    if ($pbStart->lt($endRent) && $pbEnd->gt($startRent)) {
+                        $totalBooked += max(0, (int) $pb->quantity) * $qtyPerPaket;
+                    }
+                }
+            }
+        }
+
+        return $totalBooked;
+    }
+
+    /**
+     * Menghitung sisa stok barang yang tersedia untuk disewa pada rentang waktu tertentu.
+     * Jika produk adalah paket bundling (is_paket = 1), ketersediaan dihitung dari
+     * ketersediaan seluruh komponennya pada rentang waktu yang sama.
+     *
+     * @param mixed $start Waktu mulai sewa (Carbon|string)
+     * @param mixed $end Waktu selesai sewa (Carbon|string)
+     * @return int
+     */
+    public function getAvailableStockInPeriod($start, $end): int
+    {
+        $startRent = \Carbon\Carbon::parse($start);
+        $endRent   = \Carbon\Carbon::parse($end);
+
+        if (!empty($this->is_paket)) {
+            $components = $this->relationLoaded('paketItems')
+                ? $this->paketItems
+                : $this->paketItems()->with('barang')->get();
+
+            if ($components->isEmpty()) {
+                return 0;
+            }
+
+            $minAvailable = null;
+            foreach ($components as $component) {
+                $barangKomponen = $component->barang;
+                if (!$barangKomponen) {
+                    return 0;
+                }
+                $qtyNeeded = max(1, (int) $component->quantity);
+                $availableKomponen = $barangKomponen->getAvailableStockInPeriod($startRent, $endRent);
+                $possible = (int) floor($availableKomponen / $qtyNeeded);
+
+                $minAvailable = ($minAvailable === null) ? $possible : min($minAvailable, $possible);
+            }
+
+            return max(0, (int) ($minAvailable ?? 0));
+        }
+
+        $booked = $this->getBookedQuantityInPeriod($startRent, $endRent);
+        $stokTotal = (int) ($this->getRawOriginal('stok_total') ?? $this->stok_total ?? 0);
+
+        return max(0, $stokTotal - $booked);
     }
 }
