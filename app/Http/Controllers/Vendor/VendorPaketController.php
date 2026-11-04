@@ -17,6 +17,14 @@ use App\Rules\ValidMedia;
 class VendorPaketController extends Controller
 {
     /**
+     * Tampilkan daftar paket sewa vendor (dialihkan ke katalog dengan filter tipe=paket)
+     */
+    public function index(Request $request)
+    {
+        return redirect()->route('vendor.barang.index', ['tipe' => 'paket']);
+    }
+
+    /**
      * Form pembuatan Paket Sewa baru
      */
     public function create()

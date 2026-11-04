@@ -821,8 +821,9 @@
                                     $isFixed = in_array($tipe, ['nominal', 'fixed']);
                                     $nilai = (float)($v->nilai_diskon ?? $v->discount_value ?? 0);
                                     $minQty = (int)($v->min_quantity ?? 1);
-                                    $isBogo = ($minQty >= 2);
-                                    $isFree = (!$isBogo && $nilai == 100);
+                                    $maxQty = $v->max_quantity ? (int)$v->max_quantity : null;
+                                    $isBogo = ($minQty >= 2 && !$maxQty);
+                                    $isFree = ($nilai == 100);
                                     
                                     $categoryTag = 'nominal';
                                     if ($isBogo) $categoryTag = 'bogo';
@@ -871,20 +872,44 @@
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200/80 w-fit">
                                                     <i class="fas fa-star text-emerald-600"></i> SEWA GRATIS 100%
                                                 </span>
+                                                <div class="text-[11px] font-bold text-slate-700">
+                                                    @if($maxQty)
+                                                        <span class="text-emerald-700">Maks. {{ $maxQty }} Unit di CO</span>
+                                                    @else
+                                                        <span>Bebas Jumlah Barang</span>
+                                                    @endif
+                                                    @if($minQty > 1)
+                                                        <span>• Min. {{ $minQty }} Unit</span>
+                                                    @endif
+                                                </div>
                                                 @if($v->maksimal_diskon)
-                                                    <span class="text-[11px] font-bold text-slate-700">Plafon Bebas Sewa s/d Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
+                                                    <span class="text-[10px] text-slate-500 font-semibold">Plafon Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
+                                                @else
+                                                    <span class="text-[10px] text-slate-400 font-medium">Biaya sewa 100% gratis</span>
                                                 @endif
-                                                <span class="text-[10px] text-slate-400 font-medium">Biaya sewa 100% gratis, fee platform 5% & ongkir tetap berlaku</span>
                                             </div>
                                         @elseif(!$isFixed)
                                             <div class="flex flex-col gap-1">
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200/80 w-fit">
                                                     Diskon {{ $nilai }}%
                                                 </span>
-                                                @if($v->maksimal_diskon)
-                                                    <span class="text-[11px] font-bold text-slate-700">Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
-                                                @else
-                                                    <span class="text-[10px] text-slate-400 font-medium">Tanpa Batas Plafon</span>
+                                                <div class="text-[11px] font-bold text-slate-700">
+                                                    @if($maxQty)
+                                                        <span class="text-sky-700">Maks. {{ $maxQty }} Unit di CO</span>
+                                                    @endif
+                                                    @if($minQty > 1)
+                                                        <span>{{ $maxQty ? '• ' : '' }}Min. {{ $minQty }} Unit</span>
+                                                    @endif
+                                                    @if(!$maxQty && $minQty <= 1)
+                                                        @if($v->maksimal_diskon)
+                                                            <span>Maks. Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
+                                                        @else
+                                                            <span class="text-slate-400 font-medium">Semua Jumlah Item</span>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                                @if($v->maksimal_diskon && ($maxQty || $minQty > 1))
+                                                    <span class="text-[10px] text-slate-400 font-medium">Plafon: Rp {{ number_format($v->maksimal_diskon, 0, ',', '.') }}</span>
                                                 @endif
                                             </div>
                                         @else
@@ -892,7 +917,14 @@
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200/80 w-fit">
                                                     Potongan Rp {{ number_format($nilai, 0, ',', '.') }}
                                                 </span>
-                                                <span class="text-[10px] text-slate-400 font-medium">Potongan Langsung Tunai</span>
+                                                <div class="text-[11px] font-bold text-slate-700">
+                                                    @if($maxQty)
+                                                        <span class="text-sky-700">Maks. {{ $maxQty }} Unit di CO</span>
+                                                    @endif
+                                                    @if($minQty > 1)
+                                                        <span>{{ $maxQty ? '• ' : '' }}Min. {{ $minQty }} Unit</span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         @endif
                                     </td>
@@ -1442,8 +1474,6 @@
                             class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
                             <option value="persen">Diskon Persentase (%)</option>
                             <option value="nominal">Potongan Tunai Langsung (Rp)</option>
-                            <option value="bogo_2_bayar_1">BOGO: Sewa 2 Bayar 1 (50%)</option>
-                            <option value="bogo_3_bayar_2">BOGO: Sewa 3 Bayar 2 (33.33%)</option>
                         </select>
                     </div>
 
@@ -1480,6 +1510,15 @@
                             Min. Kuantitas Barang (Unit)
                         </label>
                         <input type="number" name="min_quantity" id="input_min_quantity" value="1" min="1" placeholder="1"
+                            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+                    </div>
+
+                    <!-- MAKSIMAL KUANTITAS BARANG (UNIT DI-CO) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Maks. Kuantitas Barang (Unit)
+                        </label>
+                        <input type="number" name="max_quantity" id="input_max_quantity" min="1" placeholder="cth: 3 (Kosongkan jika bebas)"
                             class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
                     </div>
 
@@ -2116,27 +2155,15 @@
         function adjustVoucherForm() {
             const tipe = document.getElementById('modal_tipe_diskon')?.value;
             const inputNilai = document.getElementById('input_nilai_diskon');
-            const inputMinQty = document.getElementById('input_min_quantity');
             const labelNilai = document.getElementById('label_nilai_diskon');
 
             if (!tipe || !inputNilai || !labelNilai) return;
 
-            if (tipe === 'bogo_2_bayar_1') {
-                inputNilai.value = 50;
-                inputNilai.readOnly = true;
-                if (inputMinQty) inputMinQty.value = 2;
-                labelNilai.innerText = 'Nilai Diskon Otomatis (50%) *';
-            } else if (tipe === 'bogo_3_bayar_2') {
-                inputNilai.value = 33.3333;
-                inputNilai.readOnly = true;
-                if (inputMinQty) inputMinQty.value = 3;
-                labelNilai.innerText = 'Nilai Diskon Otomatis (33.33%) *';
-            } else if (tipe === 'nominal') {
-                inputNilai.readOnly = false;
-                if (inputNilai.value == 50 || inputNilai.value == 33.3333) inputNilai.value = 10000;
+            inputNilai.readOnly = false;
+            if (tipe === 'nominal') {
+                if (inputNilai.value == 10 || inputNilai.value == 50 || inputNilai.value == 100) inputNilai.value = 10000;
                 labelNilai.innerText = 'Nominal Potongan Tunai (Rp) *';
             } else {
-                inputNilai.readOnly = false;
                 if (inputNilai.value == 10000) inputNilai.value = 10;
                 labelNilai.innerText = 'Nilai Diskon Persentase (%) *';
             }

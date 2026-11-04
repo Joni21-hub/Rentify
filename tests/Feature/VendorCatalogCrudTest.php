@@ -101,4 +101,77 @@ class VendorCatalogCrudTest extends TestCase
         $deletedBarang = DB::table('barang')->where('id', $barang->id)->first();
         $this->assertNull($deletedBarang, 'Item must be removed from `barang` table after destroy');
     }
+
+    public function test_vendor_can_browse_katalog_and_manage_stock_and_bundles(): void
+    {
+        $vendor = User::create([
+            'name' => 'Vendor Paket Test',
+            'email' => 'vendor_paket_' . uniqid() . '@example.com',
+            'password' => bcrypt('secret123'),
+            'role' => 'vendor',
+            'is_active' => 1,
+        ]);
+        $vendor->markEmailAsVerified();
+
+        $kategori = Kategori::create([
+            'nama' => 'Elektronik Audio',
+            'slug' => 'elektronik-audio-' . uniqid(),
+            'is_active' => 1,
+        ]);
+
+        $itemA = Barang::create([
+            'vendor_id' => $vendor->id,
+            'kategori_id' => $kategori->id,
+            'nama' => 'Speaker Portable',
+            'slug' => 'speaker-portable-' . uniqid(),
+            'deskripsi' => 'Speaker bluetooth',
+            'harga_sewa_harian' => 50000,
+            'stok_total' => 10,
+            'status' => 'tersedia',
+            'status_barang' => 'disetujui',
+            'is_approved' => 1,
+            'is_paket' => 0,
+        ]);
+
+        $paket = Barang::create([
+            'vendor_id' => $vendor->id,
+            'kategori_id' => $kategori->id,
+            'nama' => 'Paket Acara Ultah',
+            'slug' => 'paket-acara-ultah-' . uniqid(),
+            'deskripsi' => 'Paket sound system lengkap',
+            'harga_sewa_harian' => 120000,
+            'stok_total' => 0,
+            'status' => 'tersedia',
+            'status_barang' => 'disetujui',
+            'is_approved' => 1,
+            'is_paket' => 1,
+        ]);
+
+        \App\Models\PaketSewaItem::create([
+            'paket_id' => $paket->id,
+            'barang_id' => $itemA->id,
+            'quantity' => 2,
+        ]);
+
+        // 1. Akses index katalog barang umum
+        $resBarang = $this->actingAs($vendor)->get(route('vendor.barang.index'));
+        $resBarang->assertStatus(200);
+        $resBarang->assertSee('Paket Acara Ultah');
+        $resBarang->assertSee('5 paket'); // Stok terhitung: 10 / 2 = 5 paket
+
+        // 2. Akses index katalog terfilter paket sewa
+        $resPaketFilter = $this->actingAs($vendor)->get(route('vendor.barang.index', ['tipe' => 'paket']));
+        $resPaketFilter->assertStatus(200);
+        $resPaketFilter->assertSee('Paket Acara Ultah');
+
+        // 3. Akses route vendor.paket.index (harus redirect ke vendor.barang.index dengan tipe=paket)
+        $resPaketIndex = $this->actingAs($vendor)->get(route('vendor.paket.index'));
+        $resPaketIndex->assertRedirect(route('vendor.barang.index', ['tipe' => 'paket']));
+
+        // 4. Akses halaman kelola stok vendor
+        $resStok = $this->actingAs($vendor)->get(route('vendor.stok'));
+        $resStok->assertStatus(200);
+        $resStok->assertSee('Kelola Stok Unit Rental');
+        $resStok->assertSee('Speaker Portable');
+    }
 }

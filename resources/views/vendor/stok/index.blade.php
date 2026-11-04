@@ -33,6 +33,16 @@
         </div>
     @endif
 
+    <div class="px-4 py-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900 shadow-xs">
+        <div class="flex items-center gap-2.5">
+            <i class="fa-solid fa-circle-info text-indigo-600 text-sm shrink-0"></i>
+            <span>Stok <strong>Paket Sewa</strong> disinkronkan otomatis dari ketersediaan unit fisik produk satuan di bawah ini.</span>
+        </div>
+        <a href="{{ route('vendor.barang.index', ['tipe' => 'paket']) }}" class="shrink-0 text-[11px] font-bold text-indigo-700 hover:text-indigo-800 underline">
+            Lihat Paket Sewa &rarr;
+        </a>
+    </div>
+
     <!-- Toolbar Pencarian & Filter -->
     <form method="GET" action="{{ route('vendor.stok') }}" class="flex flex-col sm:flex-row gap-2.5">
         <div class="relative flex-1">

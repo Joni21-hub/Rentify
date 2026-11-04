@@ -69,6 +69,57 @@ class CheckoutController extends Controller
             ]);
         }
 
+        // Hitung total unit barang di keranjang/checkout (termasuk deteksi komponen paket jika produk berupa paket)
+        $totalItemsCount = 0;
+        if (auth()->check()) {
+            $directId = session('checkout_direct_id') ?? $request->direct_barang_id;
+            if ($directId) {
+                $dirBarang = \App\Models\Barang::with('paketItems')->find($directId);
+                if ($dirBarang && (!$targetVendorId || $dirBarang->vendor_id == $targetVendorId)) {
+                    $qty = (int) ($request->input('jumlah', 1));
+                    if (!empty($dirBarang->is_paket)) {
+                        $compCount = $dirBarang->paketItems->sum('quantity');
+                        $totalItemsCount += max(1, (int) $compCount) * $qty;
+                    } else {
+                        $totalItemsCount += $qty;
+                    }
+                }
+            } else {
+                $cartQuery = \App\Models\Keranjang::with('barang.paketItems')->where('user_id', auth()->id());
+                $selectedIds = session('checkout_selected_ids') ?? $request->selected_items;
+                if (!empty($selectedIds)) {
+                    $cartQuery->whereIn('id', is_array($selectedIds) ? $selectedIds : [$selectedIds]);
+                }
+                $cartItems = $cartQuery->get();
+                foreach ($cartItems as $cItem) {
+                    if ($cItem->barang && (!$targetVendorId || $cItem->barang->vendor_id == $targetVendorId)) {
+                        if (!empty($cItem->barang->is_paket)) {
+                            $compCount = $cItem->barang->paketItems->sum('quantity');
+                            $totalItemsCount += max(1, (int) $compCount) * (int) $cItem->jumlah;
+                        } else {
+                            $totalItemsCount += (int) $cItem->jumlah;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Validasi kuantitas minimal & maksimal barang
+        if ($totalItemsCount > 0) {
+            if ($voucher->min_quantity && $totalItemsCount < (int) $voucher->min_quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Voucher ini membutuhkan minimal sewa ' . $voucher->min_quantity . ' barang (saat ini ' . $totalItemsCount . ' barang).'
+                ]);
+            }
+            if ($voucher->max_quantity && $totalItemsCount > (int) $voucher->max_quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Voucher ini hanya berlaku untuk maksimal ' . $voucher->max_quantity . ' barang yang di-checkout (saat ini ' . $totalItemsCount . ' barang).'
+                ]);
+            }
+        }
+
         $nilaiDiskon = $voucher->tipe_diskon === 'nominal' ? (float) $voucher->nilai_diskon : ($subtotalToko * (float) $voucher->nilai_diskon) / 100;
         
         if ($voucher->tipe_diskon === 'persen' && !is_null($voucher->maksimal_diskon) && $nilaiDiskon > (float) $voucher->maksimal_diskon) {
@@ -417,10 +468,18 @@ class CheckoutController extends Controller
                 $subtotalSewa = 0;
                 $subtotalSewaAsli = 0;
 
+                $totalVendorItems = 0;
                 foreach ($items as $item) {
                     $subtotalSewaAsli += ((float)$item->barang->harga_sewa_harian * $item->jumlah * $durasi);
                     $hargaMarkup = $item->barang->harga_sewa_harian * 1.05;
                     $subtotalSewa += ($hargaMarkup * $item->jumlah * $durasi);
+
+                    if (!empty($item->barang->is_paket)) {
+                        $compCount = $item->barang->paketItems()->sum('quantity');
+                        $totalVendorItems += (max(1, (int) $compCount) * (int) $item->jumlah);
+                    } else {
+                        $totalVendorItems += (int) $item->jumlah;
+                    }
                 }
 
                 // PERUBAHAN: Validasi voucher ketat di sisi server (mencegah manipulasi diskon dari client/AJAX)
@@ -430,7 +489,10 @@ class CheckoutController extends Controller
                 if (isset($voucherData['vendor_id']) && $voucherData['vendor_id'] == $vendorId && !empty($voucherData['voucher_id'])) {
                     $vId = (int) $voucherData['voucher_id'];
                     $dbVoucher = Voucher::where('id', $vId)
-                        ->where('vendor_id', $vendorId)
+                        ->where(function ($q) use ($vendorId) {
+                            $q->where('vendor_id', $vendorId)
+                              ->orWhereNull('vendor_id');
+                        })
                         ->where('is_active', 1)
                         ->whereDate('tanggal_mulai', '<=', now())
                         ->whereDate('tanggal_selesai', '>=', now())
@@ -438,7 +500,12 @@ class CheckoutController extends Controller
                         ->first();
 
                     if ($dbVoucher && $dbVoucher->kuota_terpakai < $dbVoucher->kuota_total) {
-                        if ($subtotalSewaAsli >= (float) $dbVoucher->minimal_belanja) {
+                        $minQty = (int) ($dbVoucher->min_quantity ?: 1);
+                        $maxQty = $dbVoucher->max_quantity ? (int) $dbVoucher->max_quantity : null;
+
+                        $isQtyValid = ($totalVendorItems >= $minQty) && ($maxQty === null || $totalVendorItems <= $maxQty);
+
+                        if ($isQtyValid && $subtotalSewaAsli >= (float) $dbVoucher->minimal_belanja) {
                             if ($dbVoucher->tipe_diskon === 'nominal') {
                                 $calc = (float) $dbVoucher->nilai_diskon;
                             } else {

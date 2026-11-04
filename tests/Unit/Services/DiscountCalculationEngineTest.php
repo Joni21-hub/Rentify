@@ -417,4 +417,52 @@ class DiscountCalculationEngineTest extends TestCase
 
         $this->assertSame($resStatic, $resInstance);
     }
+
+    /**
+     * Test diskon 100% maksimal 3 barang yang di-CO (berfungsi untuk <= 3 barang, ditolak jika > 3 barang).
+     */
+    public function test_100_percent_discount_with_max_quantity_limit(): void
+    {
+        $voucher = [
+            'tipe_diskon'  => 'persen',
+            'nilai_diskon' => 100.0,
+            'max_quantity' => 3,
+        ];
+
+        // 2 barang: lolos, diskon 100%
+        $discount2 = DiscountCalculationEngine::calculateRentalDiscount($voucher, 150000.00, 2);
+        $this->assertSame(150000.00, $discount2);
+
+        // 3 barang: lolos, diskon 100%
+        $discount3 = DiscountCalculationEngine::calculateRentalDiscount($voucher, 225000.00, 3);
+        $this->assertSame(225000.00, $discount3);
+
+        // 4 barang: melebihi maksimal 3 barang -> diskon 0 (voucher ditolak)
+        $discount4 = DiscountCalculationEngine::calculateRentalDiscount($voucher, 300000.00, 4);
+        $this->assertSame(0.0, $discount4);
+    }
+
+    /**
+     * Test diskon 50% maksimal 5 barang (berfungsi jika <= 5 barang, ditolak jika > 5 barang).
+     */
+    public function test_50_percent_discount_with_max_quantity_5(): void
+    {
+        $voucher = [
+            'tipe_diskon'  => 'persen',
+            'nilai_diskon' => 50.0,
+            'max_quantity' => 5,
+        ];
+
+        // 3 barang (< 5): tetap berfungsi diskon 50%
+        $discount3 = DiscountCalculationEngine::calculateRentalDiscount($voucher, 300000.00, 3);
+        $this->assertSame(150000.00, $discount3);
+
+        // 5 barang (tepat 5): berfungsi diskon 50%
+        $discount5 = DiscountCalculationEngine::calculateRentalDiscount($voucher, 500000.00, 5);
+        $this->assertSame(250000.00, $discount5);
+
+        // 6 barang (> 5): ditolak
+        $discount6 = DiscountCalculationEngine::calculateRentalDiscount($voucher, 600000.00, 6);
+        $this->assertSame(0.0, $discount6);
+    }
 }

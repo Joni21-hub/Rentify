@@ -107,8 +107,11 @@
                         </div>
                     </div>
 
-                    <div class="p-2.5 bg-gradient-to-r from-sky-50/80 to-white/90 rounded-xl text-[11px] text-slate-600 flex items-center justify-between border border-sky-100">
+                    <div class="p-2.5 bg-gradient-to-r from-sky-50/80 to-white/90 rounded-xl text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-1 border border-sky-100">
                         <span>Min. Belanja: <strong class="text-slate-800">Rp {{ number_format($searchedVoucher->minimal_belanja, 0, ',', '.') }}</strong></span>
+                        @if($searchedVoucher->max_quantity)
+                            <span>Maks. Item: <strong class="text-sky-700">{{ $searchedVoucher->max_quantity }} barang</strong></span>
+                        @endif
                         <span>Berlaku s/d: <strong class="text-slate-800">{{ \Carbon\Carbon::parse($searchedVoucher->tanggal_selesai)->translatedFormat('d M Y') }}</strong></span>
                     </div>
 
@@ -180,8 +183,11 @@
 
                         <!-- TICKET BODY -->
                         <div class="p-3.5 pt-3 bg-gradient-to-b from-transparent to-sky-50/40 flex flex-col gap-2">
-                            <div class="flex items-center justify-between text-[11px] text-slate-500">
+                            <div class="flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-1">
                                 <span>Min. Belanja: <strong class="text-slate-700">Rp {{ number_format($voucher->minimal_belanja, 0, ',', '.') }}</strong></span>
+                                @if($voucher->max_quantity)
+                                    <span>Maks. Item: <strong class="text-sky-700">{{ $voucher->max_quantity }} barang</strong></span>
+                                @endif
                                 <span>Berlaku s/d: <strong class="text-slate-700">{{ \Carbon\Carbon::parse($voucher->tanggal_selesai)->translatedFormat('d M Y') }}</strong></span>
                             </div>
 

@@ -274,20 +274,6 @@
             </tbody>
         </table>
     </div>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
-                            <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
-                            <p class="text-xs font-medium">Belum ada produk di etalase toko.</p>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
 
 </div>
 @endsection

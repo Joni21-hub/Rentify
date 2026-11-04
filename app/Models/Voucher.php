@@ -32,6 +32,7 @@ class Voucher extends Model
         'visibilitas',
         'cakupan_produk',
         'min_quantity',
+        'max_quantity',
         'tanggal_mulai',
         'tanggal_selesai',
         'is_active',
@@ -57,6 +58,7 @@ class Voucher extends Model
         'kuota_klaim_total' => 'integer',
         'kuota_klaim_terpakai' => 'integer',
         'min_quantity' => 'integer',
+        'max_quantity' => 'integer',
     ];
 
     // Relasi: Voucher ini milik siapa?

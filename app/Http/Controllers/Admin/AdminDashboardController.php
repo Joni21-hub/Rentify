@@ -244,11 +244,12 @@ class AdminDashboardController extends Controller
     {
         $request->validate([
             'kode_voucher' => 'required|string|max:50|unique:vouchers,kode_voucher',
-            'tipe_diskon' => 'required|in:persen,nominal,bogo_2_bayar_1,bogo_3_bayar_2',
+            'tipe_diskon' => 'required|in:persen,nominal',
             'nilai_diskon' => 'required|numeric|min:0',
             'maksimal_diskon' => 'nullable|numeric|min:0',
             'minimal_belanja' => 'nullable|numeric|min:0',
             'min_quantity' => 'nullable|integer|min:1',
+            'max_quantity' => 'nullable|integer|min:1',
             'kuota_total' => 'nullable|integer|min:1',
             'anggaran_maksimal_platform' => 'nullable|numeric|min:0',
             'tanggal_mulai' => 'required|date',
@@ -260,20 +261,15 @@ class AdminDashboardController extends Controller
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
         ]);
 
-        $kodeClean = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $request->kode_voucher));
+        $kodeClean = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', (string) $request->kode_voucher));
 
         $tipeDiskon = $request->tipe_diskon;
         $nilaiDiskon = (float) $request->nilai_diskon;
         $minQuantity = (int) ($request->min_quantity ?: 1);
+        $maxQuantity = $request->filled('max_quantity') ? (int) $request->max_quantity : null;
 
-        if ($tipeDiskon === 'bogo_2_bayar_1') {
-            $tipeDiskon = 'persen';
-            $nilaiDiskon = 50.00;
-            $minQuantity = 2;
-        } elseif ($tipeDiskon === 'bogo_3_bayar_2') {
-            $tipeDiskon = 'persen';
-            $nilaiDiskon = 33.3333;
-            $minQuantity = 3;
+        if ($maxQuantity !== null && $maxQuantity < $minQuantity) {
+            return redirect()->back()->with('error', 'Maksimal kuantitas barang tidak boleh lebih kecil dari minimal kuantitas.')->withInput();
         }
 
         Voucher::create([
@@ -286,6 +282,7 @@ class AdminDashboardController extends Controller
             'maksimal_diskon' => $request->filled('maksimal_diskon') ? (float) $request->maksimal_diskon : null,
             'minimal_belanja' => (float) ($request->minimal_belanja ?? 0.0),
             'min_quantity' => $minQuantity,
+            'max_quantity' => $maxQuantity,
             'kuota_total' => $request->filled('kuota_total') ? (int) $request->kuota_total : 100,
             'kuota_terpakai' => 0,
             'kuota_reserved' => 0,

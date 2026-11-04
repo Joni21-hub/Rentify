@@ -44,8 +44,16 @@ class DiscountCalculationEngine
             ? ($voucher['min_quantity'] ?? 1)
             : ($voucher->min_quantity ?? 1));
 
-        // Penegakan batas kuantitas minimum (BOGO Quantity Guard)
+        $maxQuantity = (int) (is_array($voucher)
+            ? ($voucher['max_quantity'] ?? 0)
+            : ($voucher->max_quantity ?? 0));
+
+        // Penegakan batas kuantitas minimum & maksimum (Quantity Guards)
         if ($totalQuantity < $minQuantity) {
+            return 0.0;
+        }
+
+        if ($maxQuantity > 0 && $totalQuantity > $maxQuantity) {
             return 0.0;
         }
 
