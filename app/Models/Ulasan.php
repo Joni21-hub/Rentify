@@ -15,6 +15,7 @@ class Ulasan extends Model
         'order_id',
         'user_id',
         'barang_id',
+        'paket_sewa_id',
         'rating',
         'komentar',
     ];
@@ -43,5 +44,10 @@ class Ulasan extends Model
     public function barang()
     {
         return $this->belongsTo(Barang::class, 'barang_id');
+    }
+
+    public function paketSewa()
+    {
+        return $this->belongsTo(PaketSewa::class, 'paket_sewa_id');
     }
 }

@@ -14,6 +14,8 @@ class DetailPenyewaan extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'paket_sewa_id',
+        'item_type',
         'product_name',
         'price',
         'quantity',
@@ -60,5 +62,21 @@ class DetailPenyewaan extends Model
     public function barang()
     {
         return $this->belongsTo(Barang::class, 'product_id');
+    }
+
+    /**
+     * Relasi ke Paket Sewa (jika item_type = 'paket')
+     */
+    public function paketSewa()
+    {
+        return $this->belongsTo(PaketSewa::class, 'paket_sewa_id');
+    }
+
+    /**
+     * Relasi ke Komponen Detail Item Pesanan (tabel order_item_components)
+     */
+    public function components()
+    {
+        return $this->hasMany(OrderItemComponent::class, 'order_item_id');
     }
 }

@@ -12,9 +12,9 @@ class Barang extends Model
     protected $table = 'barang';
 
     protected $fillable = [
-        'vendor_id', 'kategori_id', 'nama', 'slug', 'deskripsi', 
+        'vendor_id', 'cabang_id', 'kategori_id', 'nama', 'slug', 'deskripsi', 
         'harga_sewa_harian', 'deposit', 'denda_per_hari', 'kondisi', 
-        'stok_total', 'status', 'status_barang', 'is_approved', 'approved_at', 'cover_photo',
+        'stok_total', 'berat_gram', 'status', 'status_barang', 'is_approved', 'approved_at', 'cover_photo',
         'is_delivery_supported', 'alamat', 'latitude', 'longitude', 'spesifikasi'
     ];
 
@@ -29,6 +29,7 @@ class Barang extends Model
         'harga_sewa_harian' => 'decimal:2',
         'deposit'           => 'decimal:2',
         'denda_per_hari'    => 'decimal:2',
+        'berat_gram'        => 'integer',
         'is_approved'       => 'boolean',
         'approved_at'       => 'datetime',
     ];
@@ -148,6 +149,28 @@ class Barang extends Model
     public function vendor()
     {
         return $this->belongsTo(User::class, 'vendor_id');
+    }
+
+    public function cabang()
+    {
+        return $this->belongsTo(Cabang::class, 'cabang_id');
+    }
+
+    public function paketSewaItems()
+    {
+        return $this->hasMany(PaketSewaItem::class, 'barang_id');
+    }
+
+    public function paketSewas()
+    {
+        return $this->belongsToMany(PaketSewa::class, 'paket_sewa_items', 'barang_id', 'paket_sewa_id')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function orderItemComponents()
+    {
+        return $this->hasMany(OrderItemComponent::class, 'barang_id');
     }
 
     public function kategori()
