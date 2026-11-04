@@ -88,11 +88,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
-Route::get('/logout', function () {
+Route::get('/logout', function (\Illuminate\Http\Request $request) {
     Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-    return redirect('/');
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return \Illuminate\Support\Facades\Redirect::to('/');
 });
 
 // ─── DUAL ROLE SELECTION & SWITCHING ──────────────────────────────────────────
@@ -205,6 +205,8 @@ Route::prefix('vendor')->name('vendor.')
 
     Route::resource('barang', VendorBarangController::class);
     Route::resource('paket', VendorPaketController::class);
+    Route::resource('bundle', \App\Http\Controllers\Vendor\VendorBundleController::class);
+    Route::patch('bundle/{id}/toggle', [\App\Http\Controllers\Vendor\VendorBundleController::class, 'toggleStatus'])->name('bundle.toggle');
     Route::post('barang/{id}/fotos', [VendorFotoBarangController::class, 'upload'])->name('barang.fotos.upload');
     Route::patch('barang/{id}/fotos/{foto}/cover', [VendorFotoBarangController::class, 'setCover'])->name('barang.fotos.cover');
     Route::delete('fotos/{foto}', [VendorFotoBarangController::class, 'destroy'])->name('fotos.destroy');
@@ -332,7 +334,7 @@ Route::post('/webhook/whatsapp', [\App\Http\Controllers\WhatsAppWebhookControlle
 
 // ─── PWA & SYSTEM APP VERSION API (AUTO-UPDATE REALTIME) ──────────────────────
 Route::get('/api/app-version', function () {
-    return response()->json([
+    return \Illuminate\Support\Facades\Response::json([
         'status'    => 'success',
         'name'      => 'Rentify',
         'version'   => \App\Helpers\AppVersion::get(),
@@ -406,15 +408,15 @@ Route::prefix('api/wallet')->group(function () {
 });
 
 Route::get('/email/verify', function () {
-    return view('auth.verify-email');
+    return \Illuminate\Support\Facades\View::make('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $request) {
     $request->fulfill();
-    return redirect('/redirect-role');
+    return \Illuminate\Support\Facades\Redirect::to('/redirect-role');
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
-Route::post('/email/verification-notification', function (Request $request) {
+Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
     $request->user()->sendEmailVerificationNotification();
-    return back()->with('success', 'Tautan verifikasi telah dikirim ulang!');
+    return \Illuminate\Support\Facades\Redirect::back()->with('success', 'Tautan verifikasi telah dikirim ulang!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');

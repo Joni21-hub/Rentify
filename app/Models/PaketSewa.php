@@ -85,4 +85,48 @@ class PaketSewa extends Model
     {
         return round((float)$this->harga_sewa_harian_paket * 1.05, 2);
     }
+
+    /**
+     * Requirement 3.2:
+     * Accessor deposit agregat paket sewa (total deposit dari seluruh item penyusun x kuantitas).
+     */
+    public function getDepositAttribute(): float
+    {
+        return (float) $this->items()->with('barang')->get()->sum(function ($item) {
+            return (float) ($item->barang?->deposit ?? 0) * (int) $item->quantity;
+        });
+    }
+
+    /**
+     * Requirement 3.2:
+     * Accessor denda harian agregat paket sewa (total denda per hari dari seluruh item penyusun x kuantitas).
+     */
+    public function getDendaPerHariAttribute(): float
+    {
+        return (float) $this->items()->with('barang')->get()->sum(function ($item) {
+            return (float) ($item->barang?->denda_per_hari ?? 0) * (int) $item->quantity;
+        });
+    }
+
+    public function getTotalDepositAttribute(): float
+    {
+        return $this->deposit;
+    }
+
+    public function getTotalDendaPerHariAttribute(): float
+    {
+        return $this->denda_per_hari;
+    }
+
+    /**
+     * Requirement 3.2:
+     * Menghitung ulang deposit dan denda paket sewa berdasarkan barang penyusun.
+     */
+    public function recalculateDepositAndDenda(): array
+    {
+        return [
+            'deposit'        => $this->deposit,
+            'denda_per_hari' => $this->denda_per_hari,
+        ];
+    }
 }

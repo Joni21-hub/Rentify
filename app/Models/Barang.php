@@ -37,10 +37,12 @@ class Barang extends Model
 
     /**
      * The "booted" method of the model.
-     * Membersihkan berkas media di Cloudinary dan penyimpanan lokal saat produk dihapus.
+     * Mendaftarkan BarangObserver untuk reaktivitas bundle serta pembersihan berkas media saat produk dihapus.
      */
     protected static function booted(): void
     {
+        static::observe(\App\Observers\BarangObserver::class);
+
         static::deleting(function (Barang $barang) {
             // 1. Hapus cover photo produk dari Cloudinary atau disk lokal
             if (!empty($barang->cover_photo)) {
@@ -384,8 +386,8 @@ class Barang extends Model
             ];
         }
 
-        $today = now()->startOfDay();
-        $horizon = now()->copy()->addDays($horizonDays)->endOfDay();
+        $today = \Illuminate\Support\Carbon::now()->startOfDay();
+        $horizon = \Illuminate\Support\Carbon::now()->addDays($horizonDays)->endOfDay();
 
         $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
