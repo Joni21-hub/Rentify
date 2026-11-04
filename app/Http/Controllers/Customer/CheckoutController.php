@@ -590,7 +590,8 @@ class CheckoutController extends Controller
                     'koin_digunakan' => $orderCoins,
                     'potongan_koin' => $orderCoinDiscount,
 
-                    'status' => $metodeInput === 'COD' ? 'Menunggu Konfirmasi' : 'PENDING_PAYMENT',
+                    'status' => $metodeInput === 'COD' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran',
+                    'payment_expired_at' => $metodeInput === 'COD' ? null : $waktuSekarang->copy()->addMinutes(15),
                     'created_at' => $waktuSekarang,
                     'updated_at' => $waktuSekarang
                 ];

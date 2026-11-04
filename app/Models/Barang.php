@@ -369,14 +369,17 @@ class Barang extends Model
      * Menghitung ketersediaan stok sewa harian dan jam operasional untuk rentang horizon hari ke depan.
      * Menggunakan kalkulasi interval overlap exact:
      * - Suatu jam pada tanggal tertentu bentrok jika: start_order < jam_selesai_sewa && end_order > jam_mulai_sewa.
+     * - Suatu jam berstatus UNAVAILABLE jika usedQty + requiredQty > stokTotal.
      * - Suatu tanggal berstatus FULL BOOKED (ditampilkan efek glass) jika SELURUH jam operasional pada hari tersebut penuh.
      * - Jika pesanan sebelumnya selesai pada jam 08:00, maka jam setelahnya (misal 09:00) pada hari tersebut tetap TERSEDIA.
      *
      * @param int $horizonDays Jumlah hari ke depan yang dicek (default 120 hari)
+     * @param int $requiredQty Kuantitas unit yang diminta untuk disewa (default 1 unit)
      * @return array [fully_booked_dates, booked_slots, booked_info]
      */
-    public function getAvailabilityData(int $horizonDays = 120): array
+    public function getAvailabilityData(int $horizonDays = 120, int $requiredQty = 1): array
     {
+        $requiredQty = max(1, $requiredQty);
         $stokTotal = (int) ($this->stok_total ?? 0);
         if ($stokTotal <= 0) {
             return [
@@ -389,24 +392,84 @@ class Barang extends Model
         $today = \Illuminate\Support\Carbon::now()->startOfDay();
         $horizon = \Illuminate\Support\Carbon::now()->addDays($horizonDays)->endOfDay();
 
-        $activeBookings = \Illuminate\Support\Facades\DB::table('order_items')
+        $excludedStatuses = [
+            'Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED', 'Menunggu Ulasan',
+            'selesai', 'batal', 'dibatalkan', 'ditolak', 'cancelled', 'expired', 'menunggu ulasan'
+        ];
+
+        // 1. Pesanan langsung untuk barang fisik ini dari order_items
+        $directBookingsQuery = \Illuminate\Support\Facades\DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('order_items.product_id', $this->id)
-            ->whereNotIn('orders.status', ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED', 'Menunggu Ulasan'])
+            ->whereNotIn('orders.status', $excludedStatuses)
             ->where(function ($query) use ($today) {
                 $todayDate = $today->toDateString();
                 $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
-                      ->orWhereDate('orders.end_rent', '>=', $todayDate);
-            })
-            ->select([
-                'order_items.quantity',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
-            ])
-            ->get();
+                      ->orWhereDate('orders.end_rent', '>=', $todayDate)
+                      ->orWhere(function ($q) {
+                          $q->whereNull('orders.tanggal_selesai')
+                            ->whereNull('orders.end_rent');
+                      });
+            });
+
+        // Hindari double counting jika order_items memiliki komponen di order_item_components
+        if (\Illuminate\Support\Facades\Schema::hasTable('order_item_components')) {
+            $directBookingsQuery->whereNotExists(function ($q) {
+                $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                  ->from('order_item_components')
+                  ->whereColumn('order_item_components.order_item_id', 'order_items.id')
+                  ->where('order_item_components.barang_id', $this->id);
+            });
+        }
+
+        $directBookings = $directBookingsQuery->select([
+            'order_items.quantity',
+            \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+            \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+        ])->get();
+
+        // 2. Pesanan paket bundling di mana barang ini menjadi salah satu komponen fisik di order_item_components
+        $bundleBookings = new \Illuminate\Support\Collection();
+        if (\Illuminate\Support\Facades\Schema::hasTable('order_item_components')) {
+            $bundleBookings = \Illuminate\Support\Facades\DB::table('order_item_components')
+                ->join('order_items', 'order_item_components.order_item_id', '=', 'order_items.id')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('order_item_components.barang_id', $this->id)
+                ->whereNotIn('orders.status', $excludedStatuses)
+                ->where(function ($query) {
+                    $query->whereNull('order_item_components.status_komponen')
+                          ->orWhere('order_item_components.status_komponen', '!=', 'dikembalikan');
+                })
+                ->where(function ($query) use ($today) {
+                    $todayDate = $today->toDateString();
+                    $query->whereDate('orders.tanggal_selesai', '>=', $todayDate)
+                          ->orWhereDate('orders.end_rent', '>=', $todayDate)
+                          ->orWhere(function ($q) {
+                              $q->whereNull('orders.tanggal_selesai')
+                                ->whereNull('orders.end_rent');
+                          });
+                })
+                ->select([
+                    'order_item_components.quantity',
+                    \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                    \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+                ])
+                ->get();
+        }
+
+        $activeBookings = $directBookings->concat($bundleBookings);
 
         $parsedBookings = [];
         $relevantDates = [];
+
+        // Jika kuantitas yang diminta melebihi total stok fisik, tandai seluruh rentang tanggal horizon sebagai tidak tersedia
+        if ($requiredQty > $stokTotal) {
+            $curr = $today->copy();
+            while ($curr->lte($horizon)) {
+                $relevantDates[$curr->format('Y-m-d')] = true;
+                $curr->addDay();
+            }
+        }
 
         foreach ($activeBookings as $booking) {
             if (!$booking->start_rent_time || !$booking->end_rent_time) {
@@ -415,6 +478,12 @@ class Barang extends Model
 
             $start = \Carbon\Carbon::parse($booking->start_rent_time);
             $end = \Carbon\Carbon::parse($booking->end_rent_time);
+            if (strlen(trim((string) $booking->end_rent_time)) <= 10) {
+                $end = $end->copy()->endOfDay();
+            }
+            if ($end->lte($start)) {
+                $end = $start->copy()->addDay();
+            }
             $qty = max(1, (int) $booking->quantity);
 
             $parsedBookings[] = [
@@ -457,7 +526,7 @@ class Barang extends Model
                     $maxUsedInAnySlot = $usedQty;
                 }
 
-                if ($usedQty >= $stokTotal) {
+                if (($usedQty + $requiredQty) > $stokTotal) {
                     $slotsBookedOnThisDate[] = $slot;
                 }
             }
@@ -495,28 +564,29 @@ class Barang extends Model
      * hanya jika seluruh slot jam pada tanggal tersebut sudah penuh terisi.
      *
      * @param int $horizonDays Jumlah hari ke depan yang dicek (default 120 hari)
+     * @param int $requiredQty Kuantitas unit yang diminta (default 1)
      * @return array List tanggal 'YYYY-MM-DD' yang penuh dibooking
      */
-    public function getFullyBookedDates(int $horizonDays = 120): array
+    public function getFullyBookedDates(int $horizonDays = 120, int $requiredQty = 1): array
     {
-        return $this->getAvailabilityData($horizonDays)['fully_booked_dates'];
+        return $this->getAvailabilityData($horizonDays, $requiredQty)['fully_booked_dates'];
     }
 
     /**
      * Mengambil daftar slot jam yang sudah penuh per tanggal.
      * Contoh: ['2026-11-04' => ['08:00', '09:00', ...]]
      */
-    public function getBookedSlots(int $horizonDays = 120): array
+    public function getBookedSlots(int $horizonDays = 120, int $requiredQty = 1): array
     {
-        return $this->getAvailabilityData($horizonDays)['booked_slots'];
+        return $this->getAvailabilityData($horizonDays, $requiredQty)['booked_slots'];
     }
 
     /**
      * Ringkasan stok harian (terpakai, sisa, status, slot terisi) untuk rentang waktu ke depan.
      */
-    public function getBookedDatesInfo(int $horizonDays = 120): array
+    public function getBookedDatesInfo(int $horizonDays = 120, int $requiredQty = 1): array
     {
-        return $this->getAvailabilityData($horizonDays)['booked_info'];
+        return $this->getAvailabilityData($horizonDays, $requiredQty)['booked_info'];
     }
 
     /**
@@ -532,14 +602,24 @@ class Barang extends Model
         $startRent = \Carbon\Carbon::parse($start);
         $endRent   = \Carbon\Carbon::parse($end);
 
-        $inactiveStatuses = ['Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED'];
+        $inactiveStatuses = ['Selesai', 'Batal', 'Dibatalkan', 'Ditolak', 'CANCELLED', 'EXPIRED', 'Menunggu Ulasan', 'selesai', 'batal', 'dibatalkan', 'ditolak', 'cancelled', 'expired', 'menunggu ulasan'];
 
         // 1. Pesanan langsung untuk barang ini
-        $directBookings = \Illuminate\Support\Facades\DB::table('order_items')
+        $directQuery = \Illuminate\Support\Facades\DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('order_items.product_id', $this->id)
-            ->whereNotIn('orders.status', $inactiveStatuses)
-            ->select([
+            ->whereNotIn('orders.status', $inactiveStatuses);
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('order_item_components')) {
+            $directQuery->whereNotExists(function ($q) {
+                $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                  ->from('order_item_components')
+                  ->whereColumn('order_item_components.order_item_id', 'order_items.id')
+                  ->where('order_item_components.barang_id', $this->id);
+            });
+        }
+
+        $directBookings = $directQuery->select([
                 'order_items.quantity',
                 \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
                 \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
@@ -551,8 +631,42 @@ class Barang extends Model
             if (!$b->start_rent_time || !$b->end_rent_time) continue;
             $bStart = \Carbon\Carbon::parse($b->start_rent_time);
             $bEnd   = \Carbon\Carbon::parse($b->end_rent_time);
+            if (strlen(trim((string) $b->end_rent_time)) <= 10) {
+                $bEnd = $bEnd->copy()->endOfDay();
+            }
             if ($bStart->lt($endRent) && $bEnd->gt($startRent)) {
                 $totalBooked += max(0, (int) $b->quantity);
+            }
+        }
+
+        // 2. Pesanan komponen bundling dari order_item_components
+        if (\Illuminate\Support\Facades\Schema::hasTable('order_item_components')) {
+            $componentBookings = \Illuminate\Support\Facades\DB::table('order_item_components')
+                ->join('order_items', 'order_item_components.order_item_id', '=', 'order_items.id')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('order_item_components.barang_id', $this->id)
+                ->whereNotIn('orders.status', $inactiveStatuses)
+                ->where(function ($query) {
+                    $query->whereNull('order_item_components.status_komponen')
+                          ->orWhere('order_item_components.status_komponen', '!=', 'dikembalikan');
+                })
+                ->select([
+                    'order_item_components.quantity',
+                    \Illuminate\Support\Facades\DB::raw('COALESCE(orders.start_rent, orders.tanggal_mulai) as start_rent_time'),
+                    \Illuminate\Support\Facades\DB::raw('COALESCE(orders.end_rent, orders.tanggal_selesai) as end_rent_time'),
+                ])
+                ->get();
+
+            foreach ($componentBookings as $cb) {
+                if (!$cb->start_rent_time || !$cb->end_rent_time) continue;
+                $cbStart = \Carbon\Carbon::parse($cb->start_rent_time);
+                $cbEnd   = \Carbon\Carbon::parse($cb->end_rent_time);
+                if (strlen(trim((string) $cb->end_rent_time)) <= 10) {
+                    $cbEnd = $cbEnd->copy()->endOfDay();
+                }
+                if ($cbStart->lt($endRent) && $cbEnd->gt($startRent)) {
+                    $totalBooked += max(0, (int) $cb->quantity);
+                }
             }
         }
 
