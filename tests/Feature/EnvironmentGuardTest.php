@@ -29,7 +29,7 @@ class EnvironmentGuardTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_local_database_connection_succeeds_on_localhost(): void
+    public function test_local_database_connection_succeeds_on_local_environment(): void
     {
         $pdo = DB::connection()->getPdo();
         $this->assertNotNull($pdo);

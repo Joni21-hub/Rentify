@@ -54,7 +54,7 @@ class CleanUnusedCloudinaryImages extends Command
         $this->line("Mode: " . ($isForce ? "<fg=red;options=bold>EKSEKUSI HAPUS PERMANEN (--force)</>" : "<fg=yellow;options=bold>DRY RUN (SIMULASI AMAN)</>"));
         $this->newLine();
 
-        // Safety Guard: Larang eksekusi --force di localhost agar tidak menghapus aset milik production
+        // Safety Guard: Larang eksekusi --force di lingkungan lokal agar tidak menghapus aset milik production
         if ($isForce && !app()->isProduction()) {
             $this->error("PERINGATAN KEAMANAN: Eksekusi --force dilarang di lingkungan local/non-production!");
             $this->line("Database lokal tidak memiliki daftar aset lengkap seperti server production. Perintah ini hanya boleh dieksekusi langsung di server production untuk mencegah hilangnya aset aktif.");

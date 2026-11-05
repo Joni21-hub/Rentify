@@ -101,6 +101,19 @@ class OrderNotificationService
     }
 
     /**
+     * Dapatkan URL publik resmi Rentify (mencegah leak localhost di WhatsApp)
+     */
+    public static function getPublicUrl(string $path = ''): string
+    {
+        $appUrl = config('app.url');
+        $baseUrl = (!empty($appUrl) && !str_contains($appUrl, 'localhost') && !str_contains($appUrl, '127.0.0.1'))
+            ? rtrim($appUrl, '/')
+            : 'https://rentify21.my.id';
+
+        return $baseUrl . '/' . ltrim($path, '/');
+    }
+
+    /**
      * 1. Notifikasi saat Pesanan Baru Dibuat (QRIS / COD)
      */
     public static function notifyOrderCreated($order): void
@@ -115,9 +128,9 @@ class OrderNotificationService
             $kodeBooking = $order->kode_booking ?? ('RNT' . $orderId);
             $paymentMethod = strtoupper($order->payment_method ?? 'QRIS');
 
-            $strukUrl = url("/customer/struk/INV-{$orderId}");
-            $qrisUrl = url("/qris/INV-{$orderId}");
-            $vendorPesananUrl = url('/vendor/pesanan');
+            $strukUrl = self::getPublicUrl("/customer/struk/INV-{$orderId}");
+            $qrisUrl = self::getPublicUrl("/qris/INV-{$orderId}");
+            $vendorPesananUrl = self::getPublicUrl('/vendor/pesanan');
 
             // --- Kirim ke Customer ---
             if (!empty($custPhone)) {
@@ -200,8 +213,8 @@ class OrderNotificationService
             $nominalFinal = $nominal ?: ($order->total_biaya ?? $order->total_price ?? 0);
             $nominalFormatted = self::formatRupiah($nominalFinal);
 
-            $strukUrl = url("/customer/struk/INV-{$orderId}");
-            $vendorPesananUrl = url('/vendor/pesanan');
+            $strukUrl = self::getPublicUrl("/customer/struk/INV-{$orderId}");
+            $vendorPesananUrl = self::getPublicUrl('/vendor/pesanan');
             $waktu = Carbon::now('Asia/Jakarta')->format('d M Y, H:i');
 
             // --- Kirim Struk & Konfirmasi ke Customer ---
@@ -264,8 +277,8 @@ class OrderNotificationService
             $items = self::getOrderItemsSummary($order);
             $orderId = $order->id;
             $customerName = $order->customer_name ?? 'Pelanggan';
-            $strukUrl = url("/customer/struk/INV-{$orderId}");
-            $vendorPesananUrl = url('/vendor/pesanan');
+            $strukUrl = self::getPublicUrl("/customer/struk/INV-{$orderId}");
+            $vendorPesananUrl = self::getPublicUrl('/vendor/pesanan');
             $vendorName = $vendor ? ($vendor->vendor_name ?? $vendor->name ?? 'Vendor Rental') : 'Vendor Rental';
 
             switch ($newStatus) {

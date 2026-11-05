@@ -194,7 +194,7 @@ php artisan storage:link
 ```bash
 php artisan serve
 ```
-Buka browser dan akses aplikasi melalui: `http://localhost:8000`
+Buka browser dan akses aplikasi melalui: `http://127.0.0.1:8000`
 
 ---
 
@@ -207,7 +207,7 @@ cd whatsapp-gateway
 npm install
 node server.js
 ```
-Akses `http://localhost:3000` untuk memindai kode QR WhatsApp session.
+Akses `http://127.0.0.1:3000` untuk memindai kode QR WhatsApp session.
 
 ---
 

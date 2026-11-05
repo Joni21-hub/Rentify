@@ -72,7 +72,6 @@ const CANDIDATE_WEBHOOK_URLS = Array.from(new Set([
     WEBHOOK_URL,
     'http://127.0.0.1:8000/webhook/whatsapp',
     'http://127.0.0.1/rentify/public/webhook/whatsapp',
-    'http://localhost/rentify/public/webhook/whatsapp',
 ]));
 const isSandbox = process.env.GATEWAY_SANDBOX_MODE === 'true';
 
